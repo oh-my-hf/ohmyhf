@@ -1,0 +1,14 @@
+{
+  "title": "Upload to the Hub",
+  "hint": "Create a new repository from a local folder. Requires the write-repos scope.",
+  "chooseFolder": "Choose folder…",
+  "noFolder": "No folder selected",
+  "name": "Repository name",
+  "namePlaceholder": "my-cool-model",
+  "kind": "Type",
+  "private": "Private repository",
+  "create": "Create repository",
+  "creating": "Creating…",
+  "todo": "The upload pipeline is under construction — the request is wired end-to-end, but files are not pushed yet.",
+  "signIn": "Sign in to upload."
+}

@@ -1,0 +1,36 @@
+{
+  "title": "Settings",
+  "appearance": {
+    "title": "Appearance",
+    "language": "Language"
+  },
+  "downloads": {
+    "title": "Downloads",
+    "concurrency": "Parallel downloads",
+    "speedLimit": "Speed limit",
+    "speedPerSecond": "{{value}}/s",
+    "unlimited": "Unlimited",
+    "cacheDir": "HF cache directory",
+    "cacheDirDefault": "System default",
+    "choose": "Choose…",
+    "reset": "Reset"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "enabled": "System notifications",
+    "pollInterval": "Check follows every",
+    "minutes": "{{count}} min"
+  },
+  "account": {
+    "title": "Account"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version {{version}}",
+    "unofficialTitle": "UNOFFICIAL",
+    "disclaimer": "This application is not affiliated with, endorsed by, or sponsored by Hugging Face, Inc. \"Hugging Face\" is a trademark of Hugging Face, Inc., used here only to refer to the service this application connects to.",
+    "privacy": "Privacy: everything stays on your machine. No telemetry, no analytics. Your token is encrypted with your OS keychain and stored locally.",
+    "license": "Licensed under Apache-2.0",
+    "github": "Source code on GitHub"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "title": "Local cache",
+  "scan": "Rescan",
+  "scanning": "Scanning…",
+  "totalOnDisk": "{{size}} on disk",
+  "reposCount": "{{count}} cached repositories",
+  "location": "Cache location",
+  "empty": {
+    "title": "Cache is empty",
+    "body": "Downloads from this app (and from transformers or the CLI) will show up here."
+  },
+  "revisions": "{{count}} revisions",
+  "files": "{{count}} files",
+  "noRefs": "no refs",
+  "deleteRevision": "Delete revision",
+  "deleteStale": "Clean revisions without refs",
+  "confirmDelete": {
+    "title": "Delete {{count}} revision(s)?",
+    "body": "This frees {{size}} on disk. Files shared with other revisions are kept. This cannot be undone."
+  },
+  "deleted": "Deleted. {{size}} freed."
+}

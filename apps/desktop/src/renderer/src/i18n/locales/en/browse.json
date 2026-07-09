@@ -1,0 +1,39 @@
+{
+  "searchPlaceholder": {
+    "model": "Search models…",
+    "dataset": "Search datasets…",
+    "space": "Search Spaces…"
+  },
+  "sort": {
+    "label": "Sort",
+    "trending": "Trending",
+    "downloads": "Downloads",
+    "likes": "Likes",
+    "updated": "Recently updated",
+    "created": "Recently created"
+  },
+  "filter": {
+    "task": "Task",
+    "library": "Library",
+    "license": "License",
+    "params": "Parameters",
+    "clear": "Clear filters",
+    "all": "All",
+    "clientSide": "filters loaded results only"
+  },
+  "params": {
+    "lt1b": "< 1B",
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B"
+  },
+  "empty": {
+    "title": "No results",
+    "body": "Try a different search, or clear the active filters."
+  },
+  "endOfResults": "End of results",
+  "likes": "Likes",
+  "downloads": "Downloads",
+  "updated": "Updated {{time}}",
+  "paramsBadge": "{{value}} params"
+}

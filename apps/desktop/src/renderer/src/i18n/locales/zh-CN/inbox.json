@@ -1,0 +1,30 @@
+{
+  "title": "收件箱",
+  "empty": {
+    "title": "全部处理完毕",
+    "body": "关注用户、组织、仓库或每日论文摘要，动态会汇聚到这里。"
+  },
+  "markAllRead": "全部标为已读",
+  "clear": "清空收件箱",
+  "checkNow": "立即检查",
+  "checking": "检查中…",
+  "checked": "{{count}} 条新动态",
+  "follows": {
+    "title": "正在关注",
+    "empty": "还没有关注任何内容。",
+    "placeholder": "用户名、组织名，或 model:org/name",
+    "add": "关注",
+    "papers": "每日论文摘要",
+    "type": {
+      "user": "用户",
+      "org": "组织",
+      "repo": "仓库",
+      "papers": "论文"
+    }
+  },
+  "kind": {
+    "repo-update": "更新",
+    "new-repo": "新建",
+    "paper": "论文"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "models": "Models",
+  "datasets": "Datasets",
+  "spaces": "Spaces",
+  "papers": "Papers",
+  "favorites": "Favorites",
+  "downloads": "Downloads",
+  "cache": "Cache",
+  "inbox": "Inbox",
+  "compare": "Compare",
+  "upload": "Upload",
+  "settings": "Settings",
+  "browse": "Browse",
+  "library": "Library",
+  "commandPalette": "Command palette",
+  "search": "Search…"
+}

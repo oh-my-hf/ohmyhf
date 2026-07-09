@@ -1,0 +1,20 @@
+{
+  "title": "Compare models",
+  "hint": "Compare 2–4 models side by side.",
+  "addPlaceholder": "Add a model by id, e.g. meta-llama/Llama-3-8B…",
+  "add": "Add",
+  "remove": "Remove",
+  "max": "You can compare up to 4 models.",
+  "empty": "Search and add models to compare.",
+  "attr": {
+    "params": "Parameters",
+    "license": "License",
+    "task": "Task",
+    "library": "Library",
+    "downloads": "Downloads",
+    "likes": "Likes",
+    "updated": "Updated",
+    "tags": "Tags"
+  },
+  "benchmarksTodo": "Benchmark scores (from model-index metadata) are on the roadmap."
+}

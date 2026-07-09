@@ -1,0 +1,197 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens (see DESIGN.md). Restrained strategy: pure neutral surfaces,
+ * one crimson primary carrying actions, selection, and focus.
+ */
+:root {
+  --c-bg: oklch(1 0 0);
+  --c-panel: oklch(0.972 0 0);
+  --c-panel-2: oklch(0.945 0 0);
+  --c-border: oklch(0.908 0 0);
+  --c-ink: oklch(0.205 0 0);
+  --c-ink-muted: oklch(0.462 0 0);
+  --c-ink-faint: oklch(0.602 0 0);
+  --c-primary: oklch(0.578 0.226 22);
+  --c-primary-ink: oklch(0.995 0 0);
+  --c-accent: oklch(0.472 0.185 18);
+  --c-success: oklch(0.6 0.14 150);
+  --c-warning: oklch(0.72 0.15 75);
+  --c-error: oklch(0.55 0.2 27);
+  --c-info: oklch(0.6 0.12 240);
+}
+
+.dark {
+  --c-bg: oklch(0.185 0 0);
+  --c-panel: oklch(0.225 0 0);
+  --c-panel-2: oklch(0.26 0 0);
+  --c-border: oklch(0.31 0 0);
+  --c-ink: oklch(0.93 0 0);
+  --c-ink-muted: oklch(0.712 0 0);
+  --c-ink-faint: oklch(0.58 0 0);
+  --c-primary: oklch(0.64 0.216 21);
+  --c-primary-ink: oklch(0.995 0 0);
+  --c-accent: oklch(0.72 0.185 19);
+  --c-success: oklch(0.68 0.14 150);
+  --c-warning: oklch(0.78 0.15 80);
+  --c-error: oklch(0.66 0.19 25);
+  --c-info: oklch(0.68 0.12 240);
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-panel: var(--c-panel);
+  --color-panel-2: var(--c-panel-2);
+  --color-border: var(--c-border);
+  --color-ink: var(--c-ink);
+  --color-ink-muted: var(--c-ink-muted);
+  --color-ink-faint: var(--c-ink-faint);
+  --color-primary: var(--c-primary);
+  --color-primary-ink: var(--c-primary-ink);
+  --color-accent: var(--c-accent);
+  --color-success: var(--c-success);
+  --color-warning: var(--c-warning);
+  --color-error: var(--c-error);
+  --color-info: var(--c-info);
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg font-sans text-[14px] text-ink antialiased;
+  overflow: hidden;
+}
+
+/* Keyboard-first: one consistent, visible focus treatment everywhere. */
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--c-primary) 25%, transparent);
+}
+
+*,
+::before,
+::after {
+  border-color: var(--c-border);
+}
+
+/* Slim, unobtrusive scrollbars that match both themes. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--c-ink-faint) 42%, transparent);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--c-ink-faint) 65%, transparent);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* macOS hiddenInset titlebar: the shell header doubles as the drag region. */
+.app-drag {
+  -webkit-app-region: drag;
+}
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Rendered model cards (sanitized markdown). */
+.prose-card {
+  @apply max-w-[72ch] leading-relaxed;
+}
+.prose-card h1,
+.prose-card h2,
+.prose-card h3,
+.prose-card h4 {
+  @apply mt-6 mb-2 font-semibold text-ink;
+  text-wrap: balance;
+}
+.prose-card h1 {
+  @apply border-b pb-2 text-xl;
+}
+.prose-card h2 {
+  @apply text-lg;
+}
+.prose-card h3 {
+  @apply text-base;
+}
+.prose-card p,
+.prose-card ul,
+.prose-card ol {
+  @apply mb-3 text-ink;
+  text-wrap: pretty;
+}
+.prose-card ul {
+  @apply list-disc pl-5;
+}
+.prose-card ol {
+  @apply list-decimal pl-5;
+}
+.prose-card li {
+  @apply mb-1;
+}
+.prose-card a {
+  @apply text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary;
+}
+.prose-card blockquote {
+  @apply my-3 border-l border-border pl-3 text-ink-muted;
+}
+.prose-card table {
+  @apply my-3 block w-max max-w-full border-collapse overflow-x-auto text-[13px];
+}
+.prose-card th,
+.prose-card td {
+  @apply border px-2 py-1 text-left;
+}
+.prose-card th {
+  @apply bg-panel font-medium;
+}
+.prose-card code {
+  @apply rounded bg-panel px-1 py-0.5 font-mono text-[12.5px];
+}
+.prose-card pre {
+  @apply my-3 overflow-x-auto rounded-lg border bg-panel p-3;
+}
+.prose-card pre code {
+  @apply bg-transparent p-0;
+}
+.prose-card img {
+  @apply my-3 h-auto max-w-full rounded-md;
+}
+.prose-card hr {
+  @apply my-5 border-border;
+}
+.prose-card .shiki {
+  background: transparent !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

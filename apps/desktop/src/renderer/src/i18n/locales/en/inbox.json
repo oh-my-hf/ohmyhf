@@ -1,0 +1,30 @@
+{
+  "title": "Inbox",
+  "empty": {
+    "title": "You're all caught up",
+    "body": "Follow users, orgs, repositories, or the Daily Papers digest and updates will land here."
+  },
+  "markAllRead": "Mark all read",
+  "clear": "Clear inbox",
+  "checkNow": "Check now",
+  "checking": "Checking…",
+  "checked": "{{count}} new item(s)",
+  "follows": {
+    "title": "Following",
+    "empty": "Not following anything yet.",
+    "placeholder": "username, org, or model:org/name",
+    "add": "Follow",
+    "papers": "Daily Papers digest",
+    "type": {
+      "user": "User",
+      "org": "Organization",
+      "repo": "Repository",
+      "papers": "Papers"
+    }
+  },
+  "kind": {
+    "repo-update": "Updated",
+    "new-repo": "New",
+    "paper": "Paper"
+  }
+}

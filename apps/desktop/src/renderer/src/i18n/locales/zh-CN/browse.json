@@ -1,0 +1,39 @@
+{
+  "searchPlaceholder": {
+    "model": "搜索模型…",
+    "dataset": "搜索数据集…",
+    "space": "搜索 Spaces…"
+  },
+  "sort": {
+    "label": "排序",
+    "trending": "热门趋势",
+    "downloads": "下载量",
+    "likes": "点赞数",
+    "updated": "最近更新",
+    "created": "最新创建"
+  },
+  "filter": {
+    "task": "任务",
+    "library": "框架",
+    "license": "许可证",
+    "params": "参数量",
+    "clear": "清除筛选",
+    "all": "全部",
+    "clientSide": "仅筛选已加载结果"
+  },
+  "params": {
+    "lt1b": "< 1B",
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B"
+  },
+  "empty": {
+    "title": "没有结果",
+    "body": "换个搜索词，或清除当前筛选条件。"
+  },
+  "endOfResults": "已加载全部结果",
+  "likes": "点赞",
+  "downloads": "下载",
+  "updated": "更新于 {{time}}",
+  "paramsBadge": "{{value}} 参数"
+}

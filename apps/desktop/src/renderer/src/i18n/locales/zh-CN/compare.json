@@ -1,0 +1,20 @@
+{
+  "title": "模型对比",
+  "hint": "并排对比 2–4 个模型。",
+  "addPlaceholder": "输入模型 id 添加，例如 meta-llama/Llama-3-8B…",
+  "add": "添加",
+  "remove": "移除",
+  "max": "最多可对比 4 个模型。",
+  "empty": "搜索并添加要对比的模型。",
+  "attr": {
+    "params": "参数量",
+    "license": "许可证",
+    "task": "任务",
+    "library": "框架",
+    "downloads": "下载量",
+    "likes": "点赞数",
+    "updated": "更新时间",
+    "tags": "标签"
+  },
+  "benchmarksTodo": "基准评分（来自 model-index 元数据）已在开发计划中。"
+}

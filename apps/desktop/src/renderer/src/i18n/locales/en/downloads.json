@@ -1,0 +1,26 @@
+{
+  "title": "Downloads",
+  "empty": {
+    "title": "No downloads yet",
+    "body": "Find a model you like and hit Download — files land in the standard HF cache, ready for transformers, llama.cpp, and friends."
+  },
+  "status": {
+    "queued": "Queued",
+    "running": "Downloading",
+    "paused": "Paused",
+    "completed": "Completed",
+    "error": "Failed",
+    "canceled": "Canceled"
+  },
+  "actions": {
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancel": "Cancel",
+    "remove": "Remove from list",
+    "openFolder": "Show in folder"
+  },
+  "files": "{{done}}/{{total}} files",
+  "speed": "{{speed}}/s",
+  "verified": "sha256 verified",
+  "revision": "Revision {{revision}}"
+}

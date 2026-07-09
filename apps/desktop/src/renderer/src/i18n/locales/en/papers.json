@@ -1,0 +1,9 @@
+{
+  "title": "Daily Papers",
+  "upvotes": "Upvotes",
+  "readOnArxiv": "Read on arXiv",
+  "readOnHub": "Open on the Hub",
+  "empty": "No papers loaded yet.",
+  "authors": "Authors",
+  "published": "Published {{time}}"
+}
