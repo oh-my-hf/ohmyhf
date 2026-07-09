@@ -50,9 +50,18 @@ port.on('message', (msg: { type?: string }) => {
   }
 })
 
-function baseHeaders(): Record<string, string> {
-  const h: Record<string, string> = { 'User-Agent': job.userAgent }
-  if (job.authToken) h.Authorization = `Bearer ${job.authToken}`
+/**
+ * Auth is only sent to the Hub host itself, never across redirects to CDNs —
+ * signed storage URLs reject requests carrying a second auth mechanism.
+ */
+function requestHeaders(url: string): Record<string, string> {
+  const h: Record<string, string> = {
+    'User-Agent': job.userAgent,
+    'Accept-Encoding': 'identity'
+  }
+  if (job.authToken && new URL(url).host === new URL(job.url).host) {
+    h.Authorization = `Bearer ${job.authToken}`
+  }
   return h
 }
 
@@ -71,7 +80,7 @@ interface FileMetadata {
 async function fetchMetadata(): Promise<FileMetadata> {
   const res = await fetch(job.url, {
     method: 'HEAD',
-    headers: { ...baseHeaders(), 'Accept-Encoding': 'identity' },
+    headers: requestHeaders(job.url),
     redirect: 'manual',
     signal: abortController.signal
   })
@@ -84,10 +93,27 @@ async function fetchMetadata(): Promise<FileMetadata> {
   if (!etag) throw new Error('No ETag on resolve response')
   const commit = res.headers.get('x-repo-commit') ?? ''
   if (!commit) throw new Error('No x-repo-commit header on resolve response')
-  const size = Number(res.headers.get('x-linked-size') ?? res.headers.get('content-length') ?? 0)
   const location = res.headers.get('location')
   const downloadUrl = location ? new URL(location, job.url).toString() : job.url
-  return { commit, etag, size, isLfs: Boolean(linkedEtag), downloadUrl }
+
+  // x-linked-size is authoritative. Without it, content-length only counts when the
+  // response is the file itself — on a redirect it describes the redirect body.
+  let size = Number(res.headers.get('x-linked-size') ?? Number.NaN)
+  if (!Number.isFinite(size)) {
+    if (res.status >= 300 && location) {
+      const head = await fetch(downloadUrl, {
+        method: 'HEAD',
+        headers: requestHeaders(downloadUrl),
+        signal: abortController.signal
+      })
+      size = Number(head.headers.get('content-length') ?? 0)
+    } else {
+      size = Number(res.headers.get('content-length') ?? 0)
+    }
+  }
+  // LFS etags are sha256 (64 hex); git blob etags are 40 hex and cannot be verified.
+  const isLfs = Boolean(linkedEtag) && /^[0-9a-f]{64}$/.test(etag)
+  return { commit, etag, size, isLfs, downloadUrl }
 }
 
 function sha256OfFile(path: string): Promise<string> {
@@ -149,7 +175,7 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
   if (offset < meta.size || meta.size === 0) {
     abortController = new AbortController()
     if (aborted) throw new Error('aborted')
-    const headers: Record<string, string> = { ...baseHeaders() }
+    const headers: Record<string, string> = requestHeaders(meta.downloadUrl)
     if (offset > 0) headers.Range = `bytes=${offset}-`
     const res = await fetch(meta.downloadUrl, { headers, signal: abortController.signal })
     if (res.status === 200 && offset > 0) {
