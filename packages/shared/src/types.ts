@@ -281,9 +281,11 @@ export interface ExportTarget {
   path?: string
 }
 
+/** messageKey resolves in the renderer's `integrations` i18n namespace. */
 export interface ExportResult {
   ok: boolean
-  message?: string
+  messageKey: string
+  params?: Record<string, string>
 }
 
 export interface InferenceRequest {
@@ -297,6 +299,13 @@ export interface InferenceResult {
   error?: string
 }
 
+export interface InferenceStreamEvent {
+  id: string
+  delta?: string
+  done?: boolean
+  error?: string
+}
+
 export interface UploadRequest {
   kind: RepoKind
   name: string
@@ -307,5 +316,45 @@ export interface UploadRequest {
 export interface UploadResult {
   ok: boolean
   repoUrl?: string
-  message?: string
+  messageKey: string
+  params?: Record<string, string>
+}
+
+export interface UploadProgress {
+  phase: 'preparing' | 'hashing' | 'uploading' | 'done' | 'error'
+  /** 0..1 overall */
+  progress: number
+  path?: string
+  messageKey?: string
+  params?: Record<string, string>
+}
+
+export interface FileTextResult {
+  content: string
+  truncated: boolean
+  size: number
+}
+
+export interface SafetensorsTensor {
+  name: string
+  dtype: string
+  shape: number[]
+}
+
+export interface SafetensorsHeader {
+  tensors: SafetensorsTensor[]
+  metadata?: Record<string, string>
+  totalParams: number
+}
+
+export interface DatasetSplit {
+  config: string
+  split: string
+}
+
+export interface DatasetRows {
+  columns: string[]
+  /** Cell values pre-stringified and truncated for display. */
+  rows: string[][]
+  total?: number
 }

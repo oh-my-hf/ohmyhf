@@ -99,6 +99,27 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     num: z.number().int().min(1),
     comment: z.string().min(1).max(65536)
   }),
+  'hub:fileText': z.object({
+    kind: repoKind,
+    repoId,
+    path: relPath,
+    revision: revision.optional(),
+    maxBytes: z.number().int().min(1).max(8 * 1024 * 1024).optional()
+  }),
+  'hub:safetensorsHeader': z.object({
+    kind: repoKind,
+    repoId,
+    path: relPath,
+    revision: revision.optional()
+  }),
+  'hub:datasetSplits': z.object({ repoId }),
+  'hub:datasetRows': z.object({
+    repoId,
+    config: z.string().min(1).max(256),
+    split: z.string().min(1).max(256),
+    offset: z.number().int().min(0).max(1_000_000).optional(),
+    length: z.number().int().min(1).max(100).optional()
+  }),
   'favorites:add': z.object({ summary: repoSummary }),
   'favorites:remove': z.object({ kind: repoKind, repoId }),
   'history:record': z.object({ summary: repoSummary }),
@@ -139,5 +160,10 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   }),
   'inference:run': z.object({
     request: z.object({ model: repoId, input: z.string().max(65536) })
-  })
+  }),
+  'inference:stream': z.object({
+    id: z.uuid(),
+    request: z.object({ model: repoId, input: z.string().max(65536) })
+  }),
+  'inference:cancel': z.object({ id: z.uuid() })
 }

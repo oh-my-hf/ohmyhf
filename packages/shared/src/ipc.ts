@@ -8,6 +8,8 @@ import type {
   AppSettings,
   AuthState,
   CacheReport,
+  DatasetRows,
+  DatasetSplit,
   DiscussionDetail,
   DiscussionSummary,
   DownloadRequest,
@@ -16,6 +18,7 @@ import type {
   ExportTarget,
   ExportTool,
   FavoriteItem,
+  FileTextResult,
   FileTreeEntry,
   Follow,
   FollowTargetType,
@@ -24,12 +27,15 @@ import type {
   InboxItem,
   InferenceRequest,
   InferenceResult,
+  InferenceStreamEvent,
   Page,
   PaperSummary,
   RepoDetail,
   RepoKind,
   RepoSummary,
+  SafetensorsHeader,
   SearchQuery,
+  UploadProgress,
   UploadRequest,
   UploadResult
 } from './types'
@@ -65,6 +71,19 @@ export interface IpcInvokeContract {
     res: void
   }
   'hub:notifications': { req: void; res: Page<HubNotification> }
+  'hub:fileText': {
+    req: { kind: RepoKind; repoId: string; path: string; revision?: string; maxBytes?: number }
+    res: FileTextResult
+  }
+  'hub:safetensorsHeader': {
+    req: { kind: RepoKind; repoId: string; path: string; revision?: string }
+    res: SafetensorsHeader
+  }
+  'hub:datasetSplits': { req: { repoId: string }; res: DatasetSplit[] }
+  'hub:datasetRows': {
+    req: { repoId: string; config: string; split: string; offset?: number; length?: number }
+    res: DatasetRows
+  }
 
   'auth:getState': { req: void; res: AuthState }
   'auth:signIn': { req: void; res: AuthState }
@@ -109,6 +128,9 @@ export interface IpcInvokeContract {
   'upload:createRepo': { req: { request: UploadRequest }; res: UploadResult }
 
   'inference:run': { req: { request: InferenceRequest }; res: InferenceResult }
+  /** Streams deltas through the `evt:inference` channel, correlated by id. */
+  'inference:stream': { req: { id: string; request: InferenceRequest }; res: void }
+  'inference:cancel': { req: { id: string }; res: void }
 }
 
 export type IpcInvokeChannel = keyof IpcInvokeContract
@@ -122,6 +144,8 @@ export interface IpcEventContract {
   'evt:inbox': InboxItem[]
   /** Ask the renderer to navigate to an in-app route (menu items, notification clicks). */
   'evt:navigate': string
+  'evt:upload': UploadProgress
+  'evt:inference': InferenceStreamEvent
 }
 
 export type IpcEventChannel = keyof IpcEventContract
@@ -143,6 +167,10 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:discussionDetail',
   'hub:discussionComment',
   'hub:notifications',
+  'hub:fileText',
+  'hub:safetensorsHeader',
+  'hub:datasetSplits',
+  'hub:datasetRows',
   'auth:getState',
   'auth:signIn',
   'auth:signOut',
@@ -170,14 +198,18 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'export:targets',
   'export:run',
   'upload:createRepo',
-  'inference:run'
+  'inference:run',
+  'inference:stream',
+  'inference:cancel'
 ] as const
 
 export const IPC_EVENT_CHANNELS: readonly IpcEventChannel[] = [
   'evt:downloads',
   'evt:auth',
   'evt:inbox',
-  'evt:navigate'
+  'evt:navigate',
+  'evt:upload',
+  'evt:inference'
 ] as const
 
 /** Shape of the API exposed on `window.omh` by the preload script. */

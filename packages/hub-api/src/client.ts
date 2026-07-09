@@ -1,6 +1,9 @@
 import type {
+  DatasetRows,
+  DatasetSplit,
   DiscussionDetail,
   DiscussionSummary,
+  FileTextResult,
   FileTreeEntry,
   HubNotification,
   Page,
@@ -8,6 +11,8 @@ import type {
   RepoDetail,
   RepoKind,
   RepoSummary,
+  SafetensorsHeader,
+  SafetensorsTensor,
   SearchQuery,
   UserProfile
 } from '@oh-my-huggingface/shared'
@@ -23,6 +28,8 @@ import {
 } from './mappers'
 
 export const DEFAULT_ENDPOINT = 'https://huggingface.co'
+
+export const DATASETS_SERVER = 'https://datasets-server.huggingface.co'
 
 export const API_PATH: Record<RepoKind, string> = {
   model: 'models',
@@ -78,6 +85,12 @@ export interface HubClientOptions {
   fetchImpl?: typeof fetch
   /** TTL for the in-memory GET cache. 0 disables caching. */
   cacheTtlMs?: number
+  /** Maximum number of requests in flight at once. */
+  maxConcurrent?: number
+  /** Minimum delay between request starts, spreading bursts to dodge rate limits. */
+  minRequestGapMs?: number
+  /** Retries for 429/503 responses, in addition to the initial attempt. */
+  maxRetries?: number
   /** Called on every request; return undefined when signed out. */
   getAccessToken?: () => string | undefined
 }
@@ -98,23 +111,89 @@ function parseLinkNext(header: string | null): string | undefined {
   return undefined
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const RETRY_AFTER_CAP_MS = 60_000
+
+/** Retry-After is either seconds or an HTTP date; without it, full-jitter backoff from 1s. */
+function retryDelayMs(header: string | null, attempt: number): number {
+  if (header) {
+    const seconds = Number(header)
+    if (Number.isFinite(seconds)) {
+      return Math.min(Math.max(seconds, 0) * 1000, RETRY_AFTER_CAP_MS)
+    }
+    const date = Date.parse(header)
+    if (!Number.isNaN(date)) {
+      return Math.min(Math.max(date - Date.now(), 0), RETRY_AFTER_CAP_MS)
+    }
+  }
+  return Math.min(Math.random() * 1000 * 2 ** attempt, RETRY_AFTER_CAP_MS)
+}
+
+/** Failures where an expired cache entry is still better than an error. */
+function isTransientFailure(err: unknown): boolean {
+  if (!(err instanceof HubApiError)) return true // network-level failure
+  return err.status === 429 || err.status === 503
+}
+
+/** Total file size: Content-Range "bytes 0-x/TOTAL" wins over Content-Length. */
+function totalSizeFrom(res: Response, received: number): number {
+  const total = res.headers.get('Content-Range')?.match(/\/(\d+)$/)?.[1]
+  if (total) return Number(total)
+  const length = Number(res.headers.get('Content-Length'))
+  return Number.isFinite(length) && length > 0 ? length : received
+}
+
+const MAX_CELL_CHARS = 200
+
+/** Pre-stringify a dataset cell for display, truncating long values. */
+function formatCell(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  const text = typeof value === 'string' ? value : (JSON.stringify(value) ?? '')
+  return text.length > MAX_CELL_CHARS ? `${text.slice(0, MAX_CELL_CHARS)}…` : text
+}
+
+const SAFETENSORS_MAX_HEADER_BYTES = 8 * 1024 * 1024
+
 /**
  * Thin, cached client over the Hub REST API. All requests carry a descriptive
  * User-Agent and are centrally cached so UI-driven refetches never hammer the API.
+ * Every fetch funnels through a global limiter (concurrency cap + start gap) with
+ * 429/503 retries, and expired cache entries are served when a refresh fails.
  */
 export class HubClient {
   private readonly endpoint: string
+  private readonly endpointHost: string
   private readonly userAgent: string
   private readonly fetchImpl: typeof fetch
   private readonly cacheTtlMs: number
+  private readonly maxConcurrent: number
+  private readonly minRequestGapMs: number
+  private readonly maxRetries: number
   private readonly getAccessToken: () => string | undefined
   private readonly cache = new Map<string, CacheEntry>()
+  private readonly inflight = new Map<string, Promise<unknown>>()
+  private active = 0
+  private nextStartAt = 0
+  private readonly slotWaiters: Array<() => void> = []
 
   constructor(options: HubClientOptions = {}) {
     this.endpoint = (options.endpoint ?? DEFAULT_ENDPOINT).replace(/\/$/, '')
+    let endpointHost = ''
+    try {
+      endpointHost = new URL(this.endpoint).hostname
+    } catch {
+      // Non-URL endpoint: auth only attaches to *.huggingface.co hosts.
+    }
+    this.endpointHost = endpointHost
     this.userAgent = options.userAgent ?? 'oh-my-huggingface (unofficial desktop client)'
     this.fetchImpl = options.fetchImpl ?? fetch
     this.cacheTtlMs = options.cacheTtlMs ?? 30_000
+    this.maxConcurrent = Math.max(1, options.maxConcurrent ?? 4)
+    this.minRequestGapMs = Math.max(0, options.minRequestGapMs ?? 120)
+    this.maxRetries = Math.max(0, options.maxRetries ?? 2)
     this.getAccessToken = options.getAccessToken ?? (() => undefined)
   }
 
@@ -122,10 +201,25 @@ export class HubClient {
     return this.endpoint
   }
 
-  private headers(): Record<string, string> {
+  /** Never send the token to hosts other than the configured endpoint or *.huggingface.co. */
+  private allowsAuth(url: string): boolean {
+    let host: string
+    try {
+      host = new URL(url).hostname
+    } catch {
+      return false
+    }
+    return (
+      (this.endpointHost !== '' && host === this.endpointHost) ||
+      host === 'huggingface.co' ||
+      host.endsWith('.huggingface.co')
+    )
+  }
+
+  private headers(url: string): Record<string, string> {
     const h: Record<string, string> = { 'User-Agent': this.userAgent }
     const token = this.getAccessToken()
-    if (token) h.Authorization = `Bearer ${token}`
+    if (token && this.allowsAuth(url)) h.Authorization = `Bearer ${token}`
     return h
   }
 
@@ -138,7 +232,60 @@ export class HubClient {
     this.cache.clear()
   }
 
-  private async getJson<T>(url: string, opts: { ttl?: number } = {}): Promise<{
+  /** Admits a request start: caps concurrency and spaces starts by minRequestGapMs. */
+  private async acquireSlot(): Promise<void> {
+    while (this.active >= this.maxConcurrent) {
+      await new Promise<void>((resolve) => this.slotWaiters.push(resolve))
+    }
+    this.active += 1
+    const startAt = Math.max(Date.now(), this.nextStartAt)
+    this.nextStartAt = startAt + this.minRequestGapMs
+    const delay = startAt - Date.now()
+    if (delay > 0) await sleep(delay)
+  }
+
+  private releaseSlot(): void {
+    this.active -= 1
+    this.slotWaiters.shift()?.()
+  }
+
+  /** All network access funnels through here: limiter plus 429/503 retry with Retry-After. */
+  private async fetchWithPolicy(
+    url: string,
+    init?: RequestInit,
+    opts: { retryStatuses?: number[] } = {}
+  ): Promise<Response> {
+    const retryStatuses = opts.retryStatuses ?? [429, 503]
+    for (let attempt = 0; ; attempt++) {
+      await this.acquireSlot()
+      let res: Response
+      try {
+        res = await this.fetchImpl(url, init)
+      } finally {
+        this.releaseSlot()
+      }
+      if (retryStatuses.includes(res.status) && attempt < this.maxRetries) {
+        void res.body?.cancel().catch(() => undefined)
+        await sleep(retryDelayMs(res.headers.get('Retry-After'), attempt))
+        continue
+      }
+      return res
+    }
+  }
+
+  private throwHttpError(res: Response, url: string): never {
+    const detail = res.status === 429 ? ' (rate limited)' : ''
+    throw new HubApiError(
+      `GET ${url} failed: ${res.status} ${res.statusText}${detail}`,
+      res.status,
+      url
+    )
+  }
+
+  private async getJson<T>(
+    url: string,
+    opts: { ttl?: number } = {}
+  ): Promise<{
     body: T
     nextUrl?: string
   }> {
@@ -148,27 +295,78 @@ export class HubClient {
     if (hit && Date.now() - hit.at < ttl) {
       return { body: hit.body as T, nextUrl: hit.nextUrl }
     }
-    const res = await this.fetchImpl(url, { headers: this.headers() })
-    if (!res.ok) {
-      throw new HubApiError(`GET ${url} failed: ${res.status} ${res.statusText}`, res.status, url)
+    // Coalesce identical concurrent GETs into a single request.
+    const inflightKey = `json:${key}`
+    const pending = this.inflight.get(inflightKey)
+    if (pending) return pending as Promise<{ body: T; nextUrl?: string }>
+    const request = this.fetchJson<T>(url, key, ttl).finally(() => {
+      this.inflight.delete(inflightKey)
+    })
+    this.inflight.set(inflightKey, request)
+    return request
+  }
+
+  private async fetchJson<T>(
+    url: string,
+    key: string,
+    ttl: number
+  ): Promise<{ body: T; nextUrl?: string }> {
+    try {
+      const res = await this.fetchWithPolicy(url, { headers: this.headers(url) })
+      if (!res.ok) this.throwHttpError(res, url)
+      const body = (await res.json()) as T
+      const nextUrl = parseLinkNext(res.headers.get('Link'))
+      if (ttl > 0) this.cache.set(key, { at: Date.now(), status: res.status, body, nextUrl })
+      return { body, nextUrl }
+    } catch (err) {
+      // Stale-on-error: an expired entry beats surfacing a transient failure.
+      const stale = this.cache.get(key)
+      if (stale && isTransientFailure(err)) return { body: stale.body as T, nextUrl: stale.nextUrl }
+      throw err
     }
-    const body = (await res.json()) as T
-    const nextUrl = parseLinkNext(res.headers.get('Link'))
-    if (ttl > 0) this.cache.set(key, { at: Date.now(), status: res.status, body, nextUrl })
-    return { body, nextUrl }
   }
 
   private async getText(url: string): Promise<string> {
     const key = this.cacheKey(url)
     const hit = this.cache.get(key)
     if (hit && Date.now() - hit.at < this.cacheTtlMs) return hit.body as string
-    const res = await this.fetchImpl(url, { headers: this.headers() })
-    if (!res.ok) {
-      throw new HubApiError(`GET ${url} failed: ${res.status} ${res.statusText}`, res.status, url)
+    const inflightKey = `text:${key}`
+    const pending = this.inflight.get(inflightKey)
+    if (pending) return pending as Promise<string>
+    const request = this.fetchText(url, key).finally(() => {
+      this.inflight.delete(inflightKey)
+    })
+    this.inflight.set(inflightKey, request)
+    return request
+  }
+
+  private async fetchText(url: string, key: string): Promise<string> {
+    try {
+      const res = await this.fetchWithPolicy(url, { headers: this.headers(url) })
+      if (!res.ok) this.throwHttpError(res, url)
+      const body = await res.text()
+      if (this.cacheTtlMs > 0) this.cache.set(key, { at: Date.now(), status: res.status, body })
+      return body
+    } catch (err) {
+      const stale = this.cache.get(key)
+      if (stale && isTransientFailure(err)) return stale.body as string
+      throw err
     }
-    const body = await res.text()
-    if (this.cacheTtlMs > 0) this.cache.set(key, { at: Date.now(), status: res.status, body })
-    return body
+  }
+
+  /** Ranged GET returning the requested byte window even when the server ignores Range. */
+  private async fetchRange(url: string, start: number, end: number): Promise<Uint8Array> {
+    const res = await this.fetchWithPolicy(url, {
+      headers: {
+        ...this.headers(url),
+        Range: `bytes=${start}-${end}`,
+        'Accept-Encoding': 'identity'
+      }
+    })
+    if (res.status !== 200 && res.status !== 206) this.throwHttpError(res, url)
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    const want = end - start + 1
+    return res.status === 200 && bytes.byteLength > want ? bytes.slice(start, end + 1) : bytes
   }
 
   /** Build the search URL for a query; exposed for tests. */
@@ -262,13 +460,23 @@ export class HubClient {
     comment: string
   ): Promise<void> {
     const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/comment`
-    const res = await this.fetchImpl(url, {
-      method: 'POST',
-      headers: { ...this.headers(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ comment })
-    })
+    // Retry only on 429 (request was rejected); a 503 POST may have side effects.
+    const res = await this.fetchWithPolicy(
+      url,
+      {
+        method: 'POST',
+        headers: { ...this.headers(url), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment })
+      },
+      { retryStatuses: [429] }
+    )
     if (!res.ok) {
-      throw new HubApiError(`POST ${url} failed: ${res.status} ${res.statusText}`, res.status, url)
+      const detail = res.status === 429 ? ' (rate limited)' : ''
+      throw new HubApiError(
+        `POST ${url} failed: ${res.status} ${res.statusText}${detail}`,
+        res.status,
+        url
+      )
     }
   }
 
@@ -315,5 +523,109 @@ export class HubClient {
   async listByAuthor(kind: RepoKind, author: string, limit = 20): Promise<RepoSummary[]> {
     const page = await this.searchRepos({ kind, author, sort: 'updated', limit })
     return page.items
+  }
+
+  /** Fetch a text file (size-capped) for in-app preview. Throws on binary content. */
+  async getFileText(
+    kind: RepoKind,
+    repoId: string,
+    path: string,
+    revision = 'main',
+    maxBytes = 512 * 1024
+  ): Promise<FileTextResult> {
+    const url = this.resolveUrl(kind, repoId, revision, path)
+    const res = await this.fetchWithPolicy(url, {
+      headers: {
+        ...this.headers(url),
+        Range: `bytes=0-${maxBytes - 1}`,
+        // Byte ranges are only meaningful without transfer compression.
+        'Accept-Encoding': 'identity'
+      }
+    })
+    if (res.status !== 200 && res.status !== 206) this.throwHttpError(res, url)
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    if (bytes.includes(0)) throw new HubApiError('binary file', undefined, url)
+    const size = totalSizeFrom(res, bytes.byteLength)
+    return {
+      content: new TextDecoder().decode(bytes),
+      truncated: size > bytes.byteLength,
+      size
+    }
+  }
+
+  /** Parse the safetensors JSON header via ranged requests (never downloads tensors). */
+  async getSafetensorsHeader(
+    kind: RepoKind,
+    repoId: string,
+    path: string,
+    revision = 'main'
+  ): Promise<SafetensorsHeader> {
+    const url = this.resolveUrl(kind, repoId, revision, path)
+    const lenBytes = await this.fetchRange(url, 0, 7)
+    if (lenBytes.byteLength < 8) {
+      throw new HubApiError('safetensors: file too short for a header', undefined, url)
+    }
+    // First 8 bytes are the little-endian u64 length of the JSON header.
+    const headerLen = new DataView(lenBytes.buffer, lenBytes.byteOffset, 8).getBigUint64(0, true)
+    if (headerLen <= 0n || headerLen > BigInt(SAFETENSORS_MAX_HEADER_BYTES)) {
+      throw new HubApiError(`safetensors: implausible header length ${headerLen}`, undefined, url)
+    }
+    const len = Number(headerLen)
+    const jsonBytes = await this.fetchRange(url, 8, 8 + len - 1)
+    const parsed = JSON.parse(new TextDecoder().decode(jsonBytes)) as Record<string, unknown>
+    let metadata: Record<string, string> | undefined
+    const tensors: SafetensorsTensor[] = []
+    let totalParams = 0
+    for (const [name, value] of Object.entries(parsed)) {
+      if (name === '__metadata__') {
+        metadata = value as Record<string, string>
+        continue
+      }
+      const entry = value as { dtype?: string; shape?: unknown }
+      const shape = Array.isArray(entry.shape)
+        ? entry.shape.filter((dim): dim is number => typeof dim === 'number')
+        : []
+      tensors.push({ name, dtype: entry.dtype ?? '', shape })
+      // A scalar (empty shape) holds one element.
+      totalParams += shape.reduce((acc, dim) => acc * dim, 1)
+    }
+    tensors.sort((a, b) => a.name.localeCompare(b.name))
+    return { tensors, metadata, totalParams }
+  }
+
+  /** Dataset viewer config/split list via the datasets-server API. */
+  async getDatasetSplits(repoId: string): Promise<DatasetSplit[]> {
+    const url = `${DATASETS_SERVER}/splits?dataset=${encodeURIComponent(repoId)}`
+    const { body } = await this.getJson<{ splits?: Array<{ config?: string; split?: string }> }>(
+      url
+    )
+    return (body.splits ?? []).map((s) => ({ config: s.config ?? '', split: s.split ?? '' }))
+  }
+
+  /** Paged dataset rows via the datasets-server API. */
+  async getDatasetRows(
+    repoId: string,
+    config: string,
+    split: string,
+    offset = 0,
+    length = 20
+  ): Promise<DatasetRows> {
+    const url = new URL(`${DATASETS_SERVER}/rows`)
+    url.searchParams.set('dataset', repoId)
+    url.searchParams.set('config', config)
+    url.searchParams.set('split', split)
+    url.searchParams.set('offset', String(offset))
+    url.searchParams.set('length', String(length))
+    const { body } = await this.getJson<{
+      features?: Array<{ name?: string }>
+      rows?: Array<{ row?: Record<string, unknown> }>
+      num_rows_total?: number
+    }>(url.toString())
+    const columns = (body.features ?? []).map((f) => f.name ?? '')
+    const rows = (body.rows ?? []).map((r) => {
+      const record = r.row ?? {}
+      return columns.map((col) => formatCell(record[col]))
+    })
+    return { columns, rows, total: body.num_rows_total }
   }
 }

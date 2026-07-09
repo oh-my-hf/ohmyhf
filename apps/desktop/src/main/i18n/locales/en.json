@@ -48,7 +48,11 @@
     "downloadFailed": "Download failed",
     "downloadFailedBody": "{{repo}}: {{error}}",
     "inboxUpdates": "{{count}} new update(s) from your follows",
-    "inboxSingle": "{{title}}"
+    "inboxSingle": "{{title}}",
+    "exportComplete": "Export complete",
+    "exportCompleteBody": "{{name}} is now available in Ollama.",
+    "uploadComplete": "Upload complete",
+    "uploadCompleteBody": "{{repo}} was uploaded to the Hub."
   },
   "dialogs": {
     "aboutDetail": "An unofficial desktop client for the Hugging Face Hub.\nVersion {{version}}\n\nUNOFFICIAL: this application is not affiliated with, endorsed by, or sponsored by Hugging Face, Inc. \"Hugging Face\" is a trademark of Hugging Face, Inc., used here only to refer to the service this application connects to.\n\nLicensed under Apache-2.0.",

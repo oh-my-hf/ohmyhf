@@ -48,7 +48,11 @@
     "downloadFailed": "下载失败",
     "downloadFailedBody": "{{repo}}：{{error}}",
     "inboxUpdates": "你的关注有 {{count}} 条新动态",
-    "inboxSingle": "{{title}}"
+    "inboxSingle": "{{title}}",
+    "exportComplete": "导出完成",
+    "exportCompleteBody": "{{name}} 已在 Ollama 中可用。",
+    "uploadComplete": "上传完成",
+    "uploadCompleteBody": "{{repo}} 已上传到 Hub。"
   },
   "dialogs": {
     "aboutDetail": "一个非官方的 Hugging Face Hub 桌面客户端。\n版本 {{version}}\n\n非官方声明：本应用与 Hugging Face, Inc. 无任何隶属、背书或赞助关系。“Hugging Face” 是 Hugging Face, Inc. 的商标，此处仅用于指称本应用所连接的服务。\n\n基于 Apache-2.0 许可证发布。",

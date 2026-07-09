@@ -39,7 +39,19 @@ export interface AuthorizeUrlOptions {
   endpoint?: string
 }
 
-export const DEFAULT_SCOPES = ['openid', 'profile', 'read-repos']
+/**
+ * write-repos enables the upload workflow, write-discussions enables replies,
+ * inference-api enables the playground. Users who signed in before these scopes
+ * were added must sign out and back in to pick them up.
+ */
+export const DEFAULT_SCOPES = [
+  'openid',
+  'profile',
+  'read-repos',
+  'write-repos',
+  'write-discussions',
+  'inference-api'
+]
 
 export function buildAuthorizeUrl(opts: AuthorizeUrlOptions): string {
   const url = new URL(`${opts.endpoint ?? DEFAULT_ENDPOINT}/oauth/authorize`)

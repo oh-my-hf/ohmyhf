@@ -6,6 +6,8 @@
 import { app, dialog, ipcMain, shell } from 'electron'
 import type {
   AppInfo,
+  IpcEventChannel,
+  IpcEventPayload,
   IpcInvokeChannel,
   IpcRequest,
   IpcResponse
@@ -20,7 +22,14 @@ import type { FollowsPoller } from './follows'
 import type { MainI18n } from './i18n'
 import type { Library } from './library'
 import type { SettingsStore } from './settings'
-import { createRepoAndUpload, detectExportTargets, runExport, runInference } from './integrations'
+import {
+  cancelInference,
+  createRepoAndUpload,
+  detectExportTargets,
+  runExport,
+  runInference,
+  runInferenceStream
+} from './integrations'
 import { matchLocale } from './i18n'
 
 export interface AppContext {
@@ -33,6 +42,7 @@ export interface AppContext {
   follows: FollowsPoller
   i18n: MainI18n
   rebuildMenu: () => void
+  broadcast: <C extends IpcEventChannel>(channel: C, payload: IpcEventPayload<C>) => void
 }
 
 function handle<C extends IpcInvokeChannel>(
@@ -106,6 +116,16 @@ export function registerIpcHandlers(ctx: AppContext): void {
     ctx.hub.commentOnDiscussion(kind, repoId, num, comment)
   )
   handle('hub:notifications', () => ctx.hub.getNotifications())
+  handle('hub:fileText', ({ kind, repoId, path, revision, maxBytes }) =>
+    ctx.hub.getFileText(kind, repoId, path, revision, maxBytes)
+  )
+  handle('hub:safetensorsHeader', ({ kind, repoId, path, revision }) =>
+    ctx.hub.getSafetensorsHeader(kind, repoId, path, revision)
+  )
+  handle('hub:datasetSplits', ({ repoId }) => ctx.hub.getDatasetSplits(repoId))
+  handle('hub:datasetRows', ({ repoId, config, split, offset, length }) =>
+    ctx.hub.getDatasetRows(repoId, config, split, offset, length)
+  )
 
   // --- auth ---------------------------------------------------------------------
   handle('auth:getState', () => ctx.auth.getState())
@@ -145,7 +165,25 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- phase E ----------------------------------------------------------------------------
   handle('export:targets', () => detectExportTargets())
-  handle('export:run', ({ tool, repoId, filePath }) => runExport(tool, repoId, filePath))
-  handle('upload:createRepo', ({ request }) => createRepoAndUpload(request))
+  handle('export:run', ({ tool, repoId, filePath }) =>
+    runExport(tool, repoId, filePath, { cacheDir: ctx.cache.cacheDir() })
+  )
+  handle('upload:createRepo', ({ request }) => {
+    const state = ctx.auth.getState()
+    return createRepoAndUpload(request, {
+      accessToken: ctx.auth.accessToken(),
+      username: state.status === 'signedIn' ? state.user.name : undefined,
+      broadcast: ctx.broadcast
+    })
+  })
   handle('inference:run', ({ request }) => runInference(request, ctx.auth.accessToken()))
+  handle('inference:stream', ({ id, request }) =>
+    runInferenceStream(id, request, {
+      accessToken: ctx.auth.accessToken(),
+      broadcast: ctx.broadcast
+    })
+  )
+  handle('inference:cancel', ({ id }) => {
+    cancelInference(id)
+  })
 }

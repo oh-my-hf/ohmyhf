@@ -132,7 +132,8 @@ if (!gotLock) {
       cache,
       follows,
       i18n,
-      rebuildMenu
+      rebuildMenu,
+      broadcast
     })
     rebuildMenu()
     createWindow()
