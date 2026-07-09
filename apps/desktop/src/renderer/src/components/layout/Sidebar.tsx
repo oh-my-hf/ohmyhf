@@ -15,6 +15,7 @@ import {
   UploadCloud,
   UserCircle2
 } from 'lucide-react'
+import logo from '@/assets/logo.png'
 import { invoke } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
@@ -95,9 +96,7 @@ export function Sidebar(): React.JSX.Element {
       {/* Drag region under the macOS traffic lights. */}
       <div className={cn('app-drag flex items-end px-3', isMac ? 'h-11' : 'h-3')} />
       <div className="app-no-drag flex items-center gap-2 px-3 pt-1 pb-3">
-        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-[11px] font-bold text-primary-ink">
-          {'HF'}
-        </div>
+        <img src={logo} alt="" className="size-6 shrink-0 select-none" draggable={false} />
         <div className="hidden min-w-0 min-[860px]:block">
           <div className="truncate text-[13px] leading-4 font-semibold">{t('appName', { ns: 'common' })}</div>
           <div className="text-[10.5px] leading-3 text-ink-faint uppercase tracking-wide">
