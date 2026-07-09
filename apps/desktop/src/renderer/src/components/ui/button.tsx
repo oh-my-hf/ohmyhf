@@ -8,11 +8,15 @@ const buttonVariants = cva(
   'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors duration-150 select-none disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1 whitespace-nowrap',
   {
     variants: {
+      // Pressed = one color step past hover (no scale, no filters).
       variant: {
-        primary: 'bg-primary text-primary-ink hover:bg-accent active:bg-accent',
-        secondary: 'bg-panel text-ink hover:bg-panel-2 active:bg-panel-2 border',
+        primary:
+          'bg-primary text-primary-ink hover:bg-accent active:bg-[color-mix(in_oklch,var(--c-accent)_92%,black)]',
+        secondary:
+          'bg-panel text-ink hover:bg-panel-2 active:bg-[color-mix(in_oklch,var(--c-panel-2)_94%,var(--c-ink))] border',
         ghost: 'text-ink-muted hover:bg-panel hover:text-ink active:bg-panel-2',
-        danger: 'bg-error text-primary-ink hover:opacity-90 active:opacity-80',
+        danger:
+          'bg-error text-primary-ink hover:bg-[color-mix(in_oklch,var(--c-error)_92%,black)] active:bg-[color-mix(in_oklch,var(--c-error)_85%,black)]',
         outline: 'border text-ink hover:bg-panel active:bg-panel-2'
       },
       size: {
@@ -27,8 +31,7 @@ const buttonVariants = cva(
 )
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean
   loading?: boolean
 }
@@ -39,8 +42,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
+        // Loading reads as busy (70%), not unavailable (50%); twMerge keeps the last.
+        className={cn(
+          buttonVariants({ variant, size }),
+          loading && 'disabled:opacity-70',
+          className
+        )}
         disabled={disabled ?? loading ?? undefined}
+        aria-busy={loading || undefined}
         {...props}
       >
         {loading ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}

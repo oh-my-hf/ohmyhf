@@ -28,6 +28,20 @@ import { useAppStore } from '@/stores/app'
 
 type Page = 'root' | 'task' | 'library' | 'license' | 'params' | 'sort'
 
+// Key glyphs for the footer hint bar (not user copy; the labels are localized).
+const KEY_UP = '↑'
+const KEY_DOWN = '↓'
+const KEY_ENTER = '↵'
+const KEY_ESC = 'Esc'
+
+function Kbd({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return (
+    <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded-[4px] border bg-panel px-1 text-[10px] leading-none text-ink-muted">
+      {children}
+    </kbd>
+  )
+}
+
 const KIND_BY_PATH: Record<string, RepoKind> = {
   '/models': 'model',
   '/datasets': 'dataset',
@@ -103,8 +117,8 @@ export function CommandPalette(): React.JSX.Element {
       onOpenChange={onOpenChange}
       label={t('nav:commandPalette')}
       shouldFilter={page === 'root' ? true : true}
-      className="fixed top-[18%] left-1/2 z-50 w-[36rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border bg-bg shadow-2xl"
-      overlayClassName="fixed inset-0 z-40 bg-black/30"
+      className="animate-fade-rise fixed top-[18%] left-1/2 z-50 w-[36rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border bg-bg shadow-overlay"
+      overlayClassName="animate-fade fixed inset-0 z-40 bg-black/30"
     >
       <div className="flex items-center gap-2 border-b px-3">
         <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
@@ -115,7 +129,7 @@ export function CommandPalette(): React.JSX.Element {
           className="h-11 w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint"
         />
       </div>
-      <Command.List className="max-h-80 overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1 [&_[cmdk-group-heading]]:text-[10.5px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-ink-faint [&_[cmdk-group-heading]]:uppercase [&_[cmdk-item]]:flex [&_[cmdk-item]]:cursor-default [&_[cmdk-item]]:items-center [&_[cmdk-item]]:gap-2.5 [&_[cmdk-item]]:rounded-md [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]]:text-[13px] [&_[cmdk-item][data-selected=true]]:bg-panel [&_[cmdk-item][data-selected=true]]:text-ink">
+      <Command.List className="max-h-80 overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-ink-faint [&_[cmdk-group-heading]]:uppercase [&_[cmdk-item]]:flex [&_[cmdk-item]]:cursor-default [&_[cmdk-item]]:items-center [&_[cmdk-item]]:gap-2.5 [&_[cmdk-item]]:rounded-md [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]]:text-[13px] [&_[cmdk-item][data-selected=true]]:bg-primary/10 [&_[cmdk-item][data-selected=true]]:text-primary [&_[cmdk-item][data-selected=true]_svg]:text-primary">
         <Command.Empty className="px-3 py-6 text-center text-[13px] text-ink-muted">
           {t('browse:empty.title')}
         </Command.Empty>
@@ -170,7 +184,9 @@ export function CommandPalette(): React.JSX.Element {
               </Command.Item>
             </Command.Group>
             <Command.Group heading={t('common:theme.label')}>
-              <Command.Item onSelect={() => closeAnd(() => void updateSettings({ theme: 'light' }))}>
+              <Command.Item
+                onSelect={() => closeAnd(() => void updateSettings({ theme: 'light' }))}
+              >
                 <Sun className="size-4 text-ink-faint" aria-hidden />
                 {t('common:theme.light')}
               </Command.Item>
@@ -222,6 +238,22 @@ export function CommandPalette(): React.JSX.Element {
             </Command.Item>
           ))}
       </Command.List>
+
+      <div className="flex items-center gap-4 border-t bg-panel/50 px-3 py-2 text-[11px] text-ink-faint">
+        <span className="flex items-center gap-1.5">
+          <Kbd>{KEY_UP}</Kbd>
+          <Kbd>{KEY_DOWN}</Kbd>
+          {t('nav:palette.navigate', 'Navigate')}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd>{KEY_ENTER}</Kbd>
+          {t('nav:palette.select', 'Select')}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd>{KEY_ESC}</Kbd>
+          {t('nav:palette.close', 'Close')}
+        </span>
+      </div>
     </Command.Dialog>
   )
 }

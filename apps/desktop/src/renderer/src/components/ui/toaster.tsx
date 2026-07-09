@@ -47,8 +47,8 @@ export function Toaster(): React.JSX.Element {
             type="button"
             onClick={() => dismiss(toast.id)}
             className={cn(
-              'pointer-events-auto flex items-start gap-2 rounded-lg border bg-bg p-3 text-left text-[13px] text-ink shadow-md',
-              'transition-opacity duration-200'
+              'pointer-events-auto flex items-start gap-2 rounded-lg border bg-bg p-3 text-left text-[13px] text-ink shadow-overlay',
+              'animate-toast-in transition-opacity duration-200'
             )}
           >
             <Icon

@@ -10,6 +10,15 @@
   "card": {
     "empty": "This repository has no card."
   },
+  "datasetPreview": {
+    "config": "Config",
+    "next": "Next page",
+    "prev": "Previous page",
+    "range": "Rows {{from}}–{{to}} of {{total}}",
+    "rangeNoTotal": "Rows {{from}}–{{to}}",
+    "split": "Split",
+    "unavailable": "The dataset viewer isn't available for this dataset. You can still browse its files, or open it on the Hub."
+  },
   "discussions": {
     "comments": "{{count}} comments",
     "empty": "No discussions yet.",
@@ -28,6 +37,18 @@
   },
   "downloadFailed": "Could not start the download: {{error}}",
   "downloadStarted": "Added to downloads",
+  "editor": {
+    "bold": "Bold",
+    "bulletList": "Bullet list",
+    "charCount": "Character count",
+    "code": "Inline code",
+    "italic": "Italic",
+    "link": "Link",
+    "preview": "Preview",
+    "previewEmpty": "Nothing to preview yet — write something first.",
+    "quote": "Quote",
+    "write": "Write"
+  },
   "files": {
     "download": "Download file",
     "empty": "This directory is empty.",
@@ -56,7 +77,19 @@
     "run": "Run",
     "running": "Running…",
     "signIn": "Sign in to use the inference playground.",
+    "stop": "Stop",
     "unavailable": "Inference is unavailable for this model: {{error}}"
+  },
+  "preview": {
+    "colDtype": "Dtype",
+    "colShape": "Shape",
+    "colTensor": "Tensor",
+    "copyRawUrl": "Copy raw URL",
+    "noPreviewBody": "This file type can't be previewed here. Download it to inspect locally.",
+    "noPreviewTitle": "No preview available",
+    "tensors": "Tensors",
+    "totalParams": "Total parameters",
+    "truncated": "Preview truncated — showing the first {{size}}."
   },
   "select": {
     "body": "Pick an item from the list — or press ⌘K to search everything.",
@@ -67,6 +100,7 @@
     "discussions": "Discussions",
     "files": "Files",
     "info": "Info",
-    "playground": "Playground"
+    "playground": "Playground",
+    "preview": "Preview"
   }
 }

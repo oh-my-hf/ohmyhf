@@ -110,9 +110,12 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
   }
 
   if (error) {
+    const rateLimited = /429|rate.?limit/i.test(error.message)
     return (
       <div className="flex flex-col items-center gap-3 p-8 text-center">
-        <p className="text-[13px] text-ink-muted">{t('common:error.network')}</p>
+        <p className="max-w-72 text-[13px] text-ink-muted">
+          {rateLimited ? t('browse:error.rateLimited') : t('common:error.network')}
+        </p>
         <Button size="sm" onClick={() => void refetch()}>
           {t('common:retry')}
         </Button>
@@ -171,9 +174,14 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
                   {repo.author && <span className="text-ink-muted">{repo.author}/</span>}
                   <span className="font-medium">{repo.name}</span>
                 </span>
-                {repo.private && <Lock className="size-3 shrink-0 text-warning" aria-label={t('common:private')} />}
+                {repo.private && (
+                  <Lock className="size-3 shrink-0 text-warning" aria-label={t('common:private')} />
+                )}
                 {repo.gated ? (
-                  <ShieldAlert className="size-3 shrink-0 text-warning" aria-label={t('common:gated')} />
+                  <ShieldAlert
+                    className="size-3 shrink-0 text-warning"
+                    aria-label={t('common:gated')}
+                  />
                 ) : null}
               </div>
               <div className="flex w-full items-center gap-2 text-[11.5px] text-ink-faint">

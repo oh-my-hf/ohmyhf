@@ -12,20 +12,20 @@ import {
 } from 'lucide-react'
 import type { DownloadStatus, DownloadTask } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
-import { formatBytes } from '@/lib/utils'
-import { Badge, type BadgeProps } from '@/components/ui/badge'
+import { cn, formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAppStore } from '@/stores/app'
 
-const STATUS_VARIANT: Record<DownloadStatus, NonNullable<BadgeProps['variant']>> = {
-  queued: 'neutral',
-  running: 'primary',
-  paused: 'neutral',
-  completed: 'success',
-  error: 'error',
-  canceled: 'neutral'
+const STATUS_DOT: Record<DownloadStatus, string> = {
+  queued: 'bg-ink-faint',
+  running: 'bg-primary',
+  paused: 'bg-warning',
+  completed: 'bg-success',
+  error: 'bg-error',
+  canceled: 'bg-ink-faint'
 }
 
 type Action = 'downloads:pause' | 'downloads:resume' | 'downloads:cancel' | 'downloads:remove'
@@ -54,22 +54,32 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
     <div className="flex flex-col gap-2.5 rounded-lg border p-3.5">
       <div className="flex items-center gap-2">
         <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{task.repoId}</span>
-        <Badge variant={STATUS_VARIANT[task.status]}>{t(`downloads:status.${task.status}`)}</Badge>
+        <span className="flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-ink-muted">
+          <span
+            className={cn(
+              'size-1.5 rounded-full',
+              STATUS_DOT[task.status],
+              task.status === 'running' && 'animate-pulse'
+            )}
+            aria-hidden
+          />
+          {t(`downloads:status.${task.status}`)}
+        </span>
       </div>
       <Progress
         value={progress}
         indeterminate={task.status === 'running' && task.totalBytes === 0}
       />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-muted">
-        <span className="font-mono">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-muted">
+        <span className="nums font-mono">
           {formatBytes(task.receivedBytes)} / {formatBytes(task.totalBytes)}
         </span>
         {task.status === 'running' && task.speedBps > 0 && (
-          <span className="font-mono">
+          <span className="nums font-mono">
             {t('downloads:speed', { speed: formatBytes(task.speedBps) })}
           </span>
         )}
-        <span>{t('downloads:files', { done, total: task.files.length })}</span>
+        <span className="nums">{t('downloads:files', { done, total: task.files.length })}</span>
         <span className="text-ink-faint">
           {t('downloads:revision', { revision: task.revision })}
         </span>
@@ -172,18 +182,29 @@ export function DownloadsPage(): React.JSX.Element {
     queryFn: () => invoke('downloads:list', undefined)
   })
 
+  const total = tasks.data?.length ?? 0
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
-        <h1 className="text-[15px] font-semibold">{t('title')}</h1>
+        <header className="flex flex-col gap-0.5">
+          <h1 className="text-[15px] font-semibold">{t('title')}</h1>
+          {total > 0 && (
+            <p className="nums text-[12.5px] text-ink-muted">
+              {t('count', {
+                count: total,
+                defaultValue_one: '{{count}} task',
+                defaultValue_other: '{{count}} tasks'
+              })}
+            </p>
+          )}
+        </header>
         {tasks.data?.length === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-10 text-center">
-            <ArrowDownToLine className="size-7 text-ink-faint" aria-hidden />
-            <p className="text-[13.5px] font-medium">{t('empty.title')}</p>
-            <p className="max-w-96 text-[12.5px] text-ink-muted">{t('empty.body')}</p>
-          </div>
+          <EmptyState icon={ArrowDownToLine} title={t('empty.title')} body={t('empty.body')} />
         )}
-        {tasks.data?.map((task) => <TaskCard key={task.id} task={task} />)}
+        {tasks.data?.map((task) => (
+          <TaskCard key={task.id} task={task} />
+        ))}
       </div>
     </div>
   )

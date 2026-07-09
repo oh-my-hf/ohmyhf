@@ -17,11 +17,11 @@ export function DialogContent({
   const { t } = useTranslation('common')
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in" />
+      <DialogPrimitive.Overlay className="animate-fade fixed inset-0 z-40 bg-black/40" />
       <DialogPrimitive.Content
         className={cn(
           'fixed top-1/2 left-1/2 z-50 w-[26rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2',
-          'rounded-lg border bg-bg p-4 shadow-lg',
+          'animate-fade-rise rounded-lg border bg-bg p-4 shadow-overlay',
           className
         )}
         {...props}

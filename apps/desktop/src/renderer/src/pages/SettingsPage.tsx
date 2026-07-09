@@ -37,10 +37,22 @@ function Section({
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
+function Row({
+  label,
+  description,
+  children
+}: {
+  label: string
+  /** Optional secondary line under the label. */
+  description?: string
+  children: React.ReactNode
+}): React.JSX.Element {
   return (
     <div className="flex min-h-8 items-center justify-between gap-4">
-      <span className="text-[13px] text-ink-muted">{label}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[13px] text-ink-muted">{label}</span>
+        {description ? <span className="text-[11.5px] text-ink-faint">{description}</span> : null}
+      </div>
       {children}
     </div>
   )
@@ -262,7 +274,7 @@ export function SettingsPage(): React.JSX.Element {
               <span className="text-[13.5px] font-semibold">{t('common:appName')}</span>
               <Badge variant="warning">{t('settings:about.unofficialTitle')}</Badge>
               {appInfo && (
-                <span className="text-ink-faint">
+                <span className="nums text-ink-faint">
                   {t('settings:about.version', { version: appInfo.version })}
                 </span>
               )}

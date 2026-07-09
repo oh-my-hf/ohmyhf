@@ -36,7 +36,7 @@ function SidebarLink({ item, label }: { item: NavItem; label: string }): React.J
           to={item.to}
           className={({ isActive }) =>
             cn(
-              'group relative flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150',
+              'group relative flex h-8 items-center justify-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150 min-[860px]:justify-start',
               isActive
                 ? 'bg-primary/10 text-primary'
                 : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
@@ -46,7 +46,7 @@ function SidebarLink({ item, label }: { item: NavItem; label: string }): React.J
           <item.icon className="size-4 shrink-0" aria-hidden />
           <span className="hidden min-w-0 flex-1 truncate min-[860px]:block">{label}</span>
           {item.badge ? (
-            <span className="hidden rounded-full bg-primary px-1.5 text-[10.5px] font-semibold text-primary-ink min-[860px]:block">
+            <span className="nums hidden h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-ink min-[860px]:inline-flex">
               {item.badge > 99 ? '99+' : item.badge}
             </span>
           ) : null}
@@ -95,11 +95,13 @@ export function Sidebar(): React.JSX.Element {
     <aside className="flex w-12 shrink-0 flex-col border-r bg-panel min-[860px]:w-52">
       {/* Drag region under the macOS traffic lights. */}
       <div className={cn('app-drag flex items-end px-3', isMac ? 'h-11' : 'h-3')} />
-      <div className="app-no-drag flex items-center gap-2 px-3 pt-1 pb-3">
+      <div className="app-no-drag flex items-center justify-center gap-2.5 px-3 pt-2 pb-4 min-[860px]:justify-start">
         <img src={logo} alt="" className="size-6 shrink-0 select-none" draggable={false} />
         <div className="hidden min-w-0 min-[860px]:block">
-          <div className="truncate text-[13px] leading-4 font-semibold">{t('appName', { ns: 'common' })}</div>
-          <div className="text-[10.5px] leading-3 text-ink-faint uppercase tracking-wide">
+          <div className="truncate text-[13px] leading-4 font-semibold">
+            {t('appName', { ns: 'common' })}
+          </div>
+          <div className="text-[10px] leading-3 tracking-wider text-ink-faint uppercase">
             {t('unofficial', { ns: 'common' })}
           </div>
         </div>
@@ -107,7 +109,7 @@ export function Sidebar(): React.JSX.Element {
 
       <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2">
         <div className="flex flex-col gap-0.5">
-          <div className="hidden px-2 pb-1 text-[10.5px] font-semibold tracking-wide text-ink-faint uppercase min-[860px]:block">
+          <div className="hidden px-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-faint uppercase min-[860px]:block">
             {t('browse')}
           </div>
           {browse.map((item) => (
@@ -115,7 +117,7 @@ export function Sidebar(): React.JSX.Element {
           ))}
         </div>
         <div className="flex flex-col gap-0.5">
-          <div className="hidden px-2 pb-1 text-[10.5px] font-semibold tracking-wide text-ink-faint uppercase min-[860px]:block">
+          <div className="hidden px-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-faint uppercase min-[860px]:block">
             {t('library')}
           </div>
           {library.map((item) => (
@@ -131,18 +133,14 @@ export function Sidebar(): React.JSX.Element {
         />
         <NavLink
           to="/settings"
-          className="flex h-9 items-center gap-2.5 rounded-md px-2 text-[13px] text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
+          className="mt-0.5 flex h-9 items-center justify-center gap-2.5 rounded-md border bg-bg px-2 text-[13px] text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink min-[860px]:justify-start"
         >
           {auth.status === 'signedIn' && auth.user.avatarUrl ? (
-            <img
-              src={auth.user.avatarUrl}
-              alt=""
-              className="size-5 shrink-0 rounded-full border"
-            />
+            <img src={auth.user.avatarUrl} alt="" className="size-5 shrink-0 rounded-full border" />
           ) : (
             <UserCircle2 className="size-4 shrink-0" aria-hidden />
           )}
-          <span className="hidden min-w-0 flex-1 truncate min-[860px]:block">
+          <span className="hidden min-w-0 flex-1 truncate font-medium min-[860px]:block">
             {auth.status === 'signedIn' ? auth.user.name : t('auth:signedOut')}
           </span>
         </NavLink>

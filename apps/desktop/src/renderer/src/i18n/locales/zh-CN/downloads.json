@@ -6,6 +6,7 @@
     "remove": "从列表移除",
     "resume": "继续"
   },
+  "count_other": "{{count}} 个任务",
   "empty": {
     "body": "找到心仪的模型后点击“下载”——文件会存入标准 HF 缓存，transformers、llama.cpp 等工具可直接使用。",
     "title": "还没有下载任务"

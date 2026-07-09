@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { FolderOpen, UploadCloud } from 'lucide-react'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -23,7 +25,8 @@ import { useAppStore } from '@/stores/app'
  * in the UI via the handler's response message.
  */
 export function UploadPage(): React.JSX.Element {
-  const { t } = useTranslation(['upload', 'common'])
+  const { t } = useTranslation(['upload', 'common', 'integrations', 'auth'])
+  const navigate = useNavigate()
   const auth = useAppStore((s) => s.auth)
   const push = useToasts((s) => s.push)
   const [folder, setFolder] = useState<string | null>(null)
@@ -40,7 +43,8 @@ export function UploadPage(): React.JSX.Element {
       invoke('upload:createRepo', {
         request: { kind, name: name.trim(), private: isPrivate, folderPath: folder ?? '' }
       }),
-    onSuccess: (res) => push(res.message ?? '', res.ok ? 'success' : 'info')
+    onSuccess: (res) =>
+      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'info')
   })
 
   const canSubmit = auth.status === 'signedIn' && folder !== null && name.trim() !== ''
@@ -48,67 +52,79 @@ export function UploadPage(): React.JSX.Element {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-xl flex-col gap-4 p-5">
-        <div>
+        <header className="flex flex-col gap-0.5">
           <h1 className="text-[15px] font-semibold">{t('upload:title')}</h1>
-          <p className="mt-0.5 text-[12.5px] text-ink-muted">{t('upload:hint')}</p>
-        </div>
+          <p className="text-[12.5px] text-ink-muted">{t('upload:hint')}</p>
+        </header>
 
-        <div className="flex flex-col gap-3 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => pickFolder.mutate()}>
-              <FolderOpen className="size-3.5" aria-hidden />
-              {t('upload:chooseFolder')}
-            </Button>
-            <span className="min-w-0 truncate font-mono text-[12px] text-ink-muted">
-              {folder ?? t('upload:noFolder')}
-            </span>
-          </div>
-
-          <label className="flex flex-col gap-1 text-[12.5px] font-medium">
-            {t('upload:name')}
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('upload:namePlaceholder')}
+        {auth.status !== 'signedIn' ? (
+          <div className="rounded-lg border">
+            <EmptyState
+              icon={UploadCloud}
+              title={t('upload:signIn')}
+              action={
+                <Button variant="primary" size="sm" onClick={() => navigate('/settings')}>
+                  {t('auth:signIn')}
+                </Button>
+              }
             />
-          </label>
-
-          <div className="flex items-center justify-between gap-4">
-            <label className="flex items-center gap-2 text-[12.5px] font-medium">
-              {t('upload:kind')}
-              <Select value={kind} onValueChange={(v) => setKind(v as RepoKind)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="model">{t('common:kind.model')}</SelectItem>
-                  <SelectItem value="dataset">{t('common:kind.dataset')}</SelectItem>
-                  <SelectItem value="space">{t('common:kind.space')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-            <label className="flex items-center gap-2 text-[12.5px] font-medium">
-              {t('upload:private')}
-              <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
-            </label>
           </div>
+        ) : (
+          <div className="flex flex-col gap-3 rounded-lg border p-4">
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={() => pickFolder.mutate()}>
+                <FolderOpen className="size-3.5" aria-hidden />
+                {t('upload:chooseFolder')}
+              </Button>
+              <span className="min-w-0 truncate font-mono text-[12px] text-ink-muted">
+                {folder ?? t('upload:noFolder')}
+              </span>
+            </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[11.5px] text-ink-faint">
-              {auth.status === 'signedIn' ? t('upload:todo') : t('upload:signIn')}
-            </p>
-            <Button
-              variant="primary"
-              size="md"
-              disabled={!canSubmit}
-              loading={create.isPending}
-              onClick={() => create.mutate()}
-            >
-              <UploadCloud className="size-3.5" aria-hidden />
-              {create.isPending ? t('upload:creating') : t('upload:create')}
-            </Button>
+            <label className="flex flex-col gap-1 text-[12.5px] font-medium">
+              {t('upload:name')}
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t('upload:namePlaceholder')}
+              />
+            </label>
+
+            <div className="flex items-center justify-between gap-4">
+              <label className="flex items-center gap-2 text-[12.5px] font-medium">
+                {t('upload:kind')}
+                <Select value={kind} onValueChange={(v) => setKind(v as RepoKind)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="model">{t('common:kind.model')}</SelectItem>
+                    <SelectItem value="dataset">{t('common:kind.dataset')}</SelectItem>
+                    <SelectItem value="space">{t('common:kind.space')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className="flex items-center gap-2 text-[12.5px] font-medium">
+                {t('upload:private')}
+                <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11.5px] text-ink-faint">{t('upload:todo')}</p>
+              <Button
+                variant="primary"
+                size="md"
+                disabled={!canSubmit}
+                loading={create.isPending}
+                onClick={() => create.mutate()}
+              >
+                <UploadCloud className="size-3.5" aria-hidden />
+                {create.isPending ? t('upload:creating') : t('upload:create')}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

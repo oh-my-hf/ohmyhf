@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ArrowDownToLine, ChevronRight, File, Folder, Share } from 'lucide-react'
-import type { ExportTool, RepoKind } from '@oh-my-huggingface/shared'
+import type { ExportTool, FileTreeEntry, RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { formatBytes } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
+import { FilePreview } from '@/components/browse/FilePreview'
 
 const TOOL_LABELS: Record<ExportTool, string> = {
   ollama: 'Ollama',
@@ -29,8 +30,9 @@ export function FileTreeView({
   kind: RepoKind
   repoId: string
 }): React.JSX.Element {
-  const { t } = useTranslation(['detail', 'common'])
+  const { t } = useTranslation(['detail', 'common', 'integrations'])
   const [path, setPath] = useState('')
+  const [preview, setPreview] = useState<FileTreeEntry | null>(null)
   const push = useToasts((s) => s.push)
 
   const tree = useQuery({
@@ -52,10 +54,24 @@ export function FileTreeView({
   const exportRun = useMutation({
     mutationFn: (args: { tool: ExportTool; filePath: string }) =>
       invoke('export:run', { tool: args.tool, repoId, filePath: args.filePath }),
-    onSuccess: (res) => push(res.message ?? '', res.ok ? 'success' : 'info')
+    onSuccess: (res) =>
+      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'info')
   })
 
   const crumbs = path ? path.split('/') : []
+
+  if (preview) {
+    return (
+      <FilePreview
+        kind={kind}
+        repoId={repoId}
+        entry={preview}
+        onBack={() => setPreview(null)}
+        onDownload={() => download.mutate([preview.path])}
+        downloading={download.isPending}
+      />
+    )
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -118,8 +134,14 @@ export function FileTreeView({
                 </button>
               ) : (
                 <>
-                  <File className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                  <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPreview(entry)}
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  >
+                    <File className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{name}</span>
+                  </button>
                   {entry.lfs && (
                     <Badge variant="outline" className="text-[10px]">
                       {t('detail:files.lfs')}

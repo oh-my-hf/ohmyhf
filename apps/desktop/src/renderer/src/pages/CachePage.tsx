@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Boxes, ChevronRight, Database, FolderOpen, HardDrive, LayoutGrid, RefreshCw, Trash2 } from 'lucide-react'
+import {
+  Boxes,
+  ChevronRight,
+  Database,
+  FolderOpen,
+  HardDrive,
+  LayoutGrid,
+  RefreshCw,
+  Trash2
+} from 'lucide-react'
 import type { CachedRepo, RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatBytes, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
 import { resolveLocale, useAppStore } from '@/stores/app'
@@ -85,27 +90,31 @@ export function CachePage(): React.JSX.Element {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
-        <div className="flex items-center gap-3">
-          <h1 className="text-[15px] font-semibold">{t('cache:title')}</h1>
-          <span className="text-[12.5px] text-ink-muted">
-            {report.data && t('cache:totalOnDisk', { size: formatBytes(report.data.totalSize) })}
-            {report.data && ' · '}
-            {report.data && t('cache:reposCount', { count: report.data.repos.length })}
-          </span>
+        <header className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h1 className="text-[15px] font-semibold">{t('cache:title')}</h1>
+            {report.data && (
+              <p className="nums text-[12.5px] text-ink-muted">
+                {t('cache:totalOnDisk', { size: formatBytes(report.data.totalSize) })}
+                {' · '}
+                {t('cache:reposCount', { count: report.data.repos.length })}
+              </p>
+            )}
+            {report.data && (
+              <p className="truncate font-mono text-[11.5px] text-ink-faint">{report.data.root}</p>
+            )}
+          </div>
           <Button
             variant="secondary"
             size="sm"
-            className="ml-auto"
+            className="shrink-0"
             loading={report.isFetching}
             onClick={() => void report.refetch()}
           >
             <RefreshCw className="size-3.5" aria-hidden />
             {report.isFetching ? t('cache:scanning') : t('cache:scan')}
           </Button>
-        </div>
-        {report.data && (
-          <p className="font-mono text-[11.5px] text-ink-faint">{report.data.root}</p>
-        )}
+        </header>
 
         {report.isLoading && (
           <div className="flex flex-col gap-2">
@@ -116,11 +125,11 @@ export function CachePage(): React.JSX.Element {
         )}
 
         {report.data?.repos.length === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-10 text-center">
-            <HardDrive className="size-7 text-ink-faint" aria-hidden />
-            <p className="text-[13.5px] font-medium">{t('cache:empty.title')}</p>
-            <p className="max-w-96 text-[12.5px] text-ink-muted">{t('cache:empty.body')}</p>
-          </div>
+          <EmptyState
+            icon={HardDrive}
+            title={t('cache:empty.title')}
+            body={t('cache:empty.body')}
+          />
         )}
 
         {report.data?.repos.map((repo) => {
@@ -143,13 +152,15 @@ export function CachePage(): React.JSX.Element {
                     )}
                     aria-hidden
                   />
-                  <Icon className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-panel">
+                    <Icon className="size-3.5 text-ink-muted" aria-hidden />
+                  </span>
                   <span className="min-w-0 truncate text-[13px] font-medium">{repo.id}</span>
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="nums">
                     {t('cache:revisions', { count: repo.revisions.length })}
                   </Badge>
                 </button>
-                <span className="font-mono text-[12px] text-ink-muted">
+                <span className="nums min-w-16 text-right font-mono text-[12px] text-ink-muted">
                   {formatBytes(repo.sizeOnDisk)}
                 </span>
                 {stale && (
@@ -169,45 +180,48 @@ export function CachePage(): React.JSX.Element {
               </div>
               {isOpen && (
                 <div className="border-t px-3 py-1.5">
-                  {repo.revisions.map((rev) => (
-                    <div key={rev.commitHash} className="flex h-9 items-center gap-2.5">
-                      <span className="w-24 shrink-0 font-mono text-[12px] text-ink-muted">
-                        {rev.commitHash.slice(0, 10)}
-                      </span>
-                      {rev.refs.length > 0 ? (
-                        rev.refs.map((ref) => (
-                          <Badge key={ref} variant="primary">
-                            {ref}
-                          </Badge>
-                        ))
-                      ) : (
-                        <Badge variant="outline">{t('cache:noRefs')}</Badge>
-                      )}
-                      <span className="text-[11.5px] text-ink-faint">
-                        {t('cache:files', { count: rev.fileCount })}
-                      </span>
-                      <span className="text-[11.5px] text-ink-faint">
-                        {formatRelativeTime(rev.lastModified, locale)}
-                      </span>
-                      <span className="ml-auto font-mono text-[12px] text-ink-muted">
-                        {formatBytes(rev.sizeOnDisk)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t('cache:deleteRevision')}
-                        onClick={() =>
-                          setPending({
-                            repo,
-                            commitHashes: [rev.commitHash],
-                            size: rev.sizeOnDisk
-                          })
-                        }
-                      >
-                        <Trash2 className="size-3.5" aria-hidden />
-                      </Button>
-                    </div>
-                  ))}
+                  {/* 1px inset guide aligned under the chevron column — a tree rail, not an accent. */}
+                  <div className="ml-2 border-l pl-3.5">
+                    {repo.revisions.map((rev) => (
+                      <div key={rev.commitHash} className="flex h-9 items-center gap-2.5">
+                        <span className="nums w-24 shrink-0 font-mono text-[12px] text-ink-muted">
+                          {rev.commitHash.slice(0, 10)}
+                        </span>
+                        {rev.refs.length > 0 ? (
+                          rev.refs.map((ref) => (
+                            <Badge key={ref} variant="primary">
+                              {ref}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge variant="outline">{t('cache:noRefs')}</Badge>
+                        )}
+                        <span className="nums text-[11.5px] text-ink-faint">
+                          {t('cache:files', { count: rev.fileCount })}
+                        </span>
+                        <span className="nums text-[11.5px] text-ink-faint">
+                          {formatRelativeTime(rev.lastModified, locale)}
+                        </span>
+                        <span className="nums ml-auto font-mono text-[12px] text-ink-muted">
+                          {formatBytes(rev.sizeOnDisk)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t('cache:deleteRevision')}
+                          onClick={() =>
+                            setPending({
+                              repo,
+                              commitHashes: [rev.commitHash],
+                              size: rev.sizeOnDisk
+                            })
+                          }
+                        >
+                          <Trash2 className="size-3.5" aria-hidden />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

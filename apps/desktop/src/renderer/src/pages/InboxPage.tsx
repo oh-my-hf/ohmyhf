@@ -8,6 +8,7 @@ import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
@@ -52,8 +53,7 @@ export function InboxPage(): React.JSX.Element {
     }
   })
   const addFollow = useMutation({
-    mutationFn: (args: { type: FollowTargetType; target: string }) =>
-      invoke('follows:add', args),
+    mutationFn: (args: { type: FollowTargetType; target: string }) => invoke('follows:add', args),
     onSuccess: (list) => {
       queryClient.setQueryData(['follows'], list)
       setTarget('')
@@ -86,9 +86,13 @@ export function InboxPage(): React.JSX.Element {
   return (
     <div className="flex h-full min-w-0">
       <section className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-2 border-b px-4 py-2.5">
-          <h1 className="text-[13.5px] font-semibold">{t('inbox:title')}</h1>
-          {unread.length > 0 && <Badge variant="primary">{unread.length}</Badge>}
+        <div className="flex items-center gap-2 px-5 pt-5 pb-2">
+          <h1 className="text-[15px] font-semibold">{t('inbox:title')}</h1>
+          {unread.length > 0 && (
+            <Badge variant="primary" className="nums">
+              {unread.length}
+            </Badge>
+          )}
           <div className="ml-auto flex items-center gap-1.5">
             <Button
               variant="ghost"
@@ -115,13 +119,9 @@ export function InboxPage(): React.JSX.Element {
             )}
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2">
           {inbox.data?.length === 0 && (
-            <div className="flex flex-col items-center gap-2 p-10 text-center">
-              <Inbox className="size-7 text-ink-faint" aria-hidden />
-              <p className="text-[13.5px] font-medium">{t('inbox:empty.title')}</p>
-              <p className="max-w-96 text-[12.5px] text-ink-muted">{t('inbox:empty.body')}</p>
-            </div>
+            <EmptyState icon={Inbox} title={t('inbox:empty.title')} body={t('inbox:empty.body')} />
           )}
           {inbox.data?.map((item) => (
             <button
@@ -135,21 +135,23 @@ export function InboxPage(): React.JSX.Element {
             >
               <span
                 className={cn(
-                  'mt-1.5 size-1.5 shrink-0 rounded-full',
+                  'mt-[7px] size-1.5 shrink-0 rounded-full',
                   item.readAt ? 'bg-transparent' : 'bg-primary'
                 )}
                 aria-hidden
               />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <Badge variant="outline">{t(`inbox:kind.${item.kind}`)}</Badge>
+                  <Badge variant="outline" className="min-w-14 justify-center">
+                    {t(`inbox:kind.${item.kind}`)}
+                  </Badge>
                   <span className="min-w-0 truncate text-[13px] font-medium">{item.title}</span>
                 </span>
                 <span className="mt-0.5 line-clamp-2 block text-[12px] text-ink-muted">
                   {item.body}
                 </span>
               </span>
-              <span className="shrink-0 text-[11px] text-ink-faint">
+              <span className="nums shrink-0 text-[11px] text-ink-faint">
                 {formatRelativeTime(item.createdAt, locale)}
               </span>
             </button>

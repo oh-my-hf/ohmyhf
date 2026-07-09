@@ -1,0 +1,22 @@
+{
+  "export": {
+    "comfyuiMissing": "未检测到 ComfyUI 安装。请设置 COMFYUI_PATH 或将 ComfyUI 安装到主目录。",
+    "copied": "已导出到 {{path}}。",
+    "failed": "导出失败：{{error}}",
+    "invalidPath": "无效的文件路径：{{file}}",
+    "notImplemented": "该导出功能尚未实现。",
+    "notInCache": "{{file}} 尚未在本地缓存中，请先下载。",
+    "ollamaDone": "已创建 Ollama 模型 {{name}}。",
+    "ollamaFailed": "Ollama 导入失败：{{error}}",
+    "ollamaMissing": "未找到 Ollama。请从 ollama.com 安装后重试。"
+  },
+  "upload": {
+    "done": "已将 {{repo}} 上传到 Hub。",
+    "emptyFolder": "所选文件夹中没有可上传的文件。",
+    "failed": "上传失败：{{error}}",
+    "needWriteScope": "当前会话没有写入权限。请退出登录后重新登录以授予写入权限。",
+    "notImplemented": "上传管线尚未实现。",
+    "signInFirst": "上传前请先登录 Hugging Face 账号。",
+    "tooManyFiles": "文件夹内文件过多，当前上限为 {{max}} 个。"
+  }
+}

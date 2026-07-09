@@ -11,6 +11,10 @@
     "task": "Task",
     "updated": "Updated"
   },
+  "benchmarks": {
+    "none": "No benchmark scores found in these models' model-index metadata.",
+    "title": "Benchmarks"
+  },
   "benchmarksTodo": "Benchmark scores (from model-index metadata) are on the roadmap.",
   "empty": "Search and add models to compare.",
   "hint": "Compare 2–4 models side by side.",

@@ -11,6 +11,10 @@
     "task": "任务",
     "updated": "更新时间"
   },
+  "benchmarks": {
+    "none": "这些模型的 model-index 元数据中没有基准测试分数。",
+    "title": "基准测试"
+  },
   "benchmarksTodo": "基准评分（来自 model-index 元数据）已在开发计划中。",
   "empty": "搜索并添加要对比的模型。",
   "hint": "并排对比 2–4 个模型。",

@@ -9,6 +9,11 @@
   "inbox": "收件箱",
   "library": "本地",
   "models": "模型",
+  "palette": {
+    "close": "关闭",
+    "navigate": "导航",
+    "select": "选择"
+  },
   "papers": "论文",
   "search": "搜索…",
   "settings": "设置",

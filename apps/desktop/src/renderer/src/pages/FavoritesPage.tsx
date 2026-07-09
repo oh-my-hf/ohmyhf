@@ -7,6 +7,7 @@ import { invoke } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const KIND_PATH: Record<RepoKind, string> = {
@@ -37,11 +38,7 @@ export function FavoritesPage(): React.JSX.Element {
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
         <h1 className="text-[15px] font-semibold">{t('nav:favorites')}</h1>
         {favorites.data?.length === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-10 text-center">
-            <Star className="size-7 text-ink-faint" aria-hidden />
-            <p className="text-[13.5px] font-medium">{t('browse:empty.title')}</p>
-            <p className="max-w-96 text-[12.5px] text-ink-muted">{t('detail:select.body')}</p>
-          </div>
+          <EmptyState icon={Star} title={t('browse:empty.title')} body={t('detail:select.body')} />
         )}
         <div className="flex flex-col gap-1">
           {favorites.data?.map((fav) => (
@@ -61,7 +58,7 @@ export function FavoritesPage(): React.JSX.Element {
                     {fav.summary.pipelineTag}
                   </span>
                 )}
-                <span className="ml-auto flex items-center gap-2 text-[11.5px] text-ink-faint">
+                <span className="nums ml-auto flex items-center gap-2 text-[11.5px] text-ink-faint">
                   <span className="flex items-center gap-0.5">
                     <Star className="size-3" aria-hidden />
                     {formatCount(fav.summary.likes, locale)}

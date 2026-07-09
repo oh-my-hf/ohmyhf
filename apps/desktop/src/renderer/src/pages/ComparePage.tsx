@@ -12,10 +12,56 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 
 const MAX_MODELS = 4
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function formatMetricValue(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2)
+  }
+  if (typeof value === 'string' && value.trim() !== '') return value
+  if (typeof value === 'boolean') return String(value)
+  return undefined
+}
+
 /**
- * Phase D: side-by-side model comparison.
- * TODO(phase-d): pull benchmark scores from model-index card metadata into rows.
+ * Extracts "<dataset> · <metric>" → formatted value pairs from the untrusted,
+ * unknown-shaped `model-index` card metadata.
  */
+function benchmarksOf(cardData: Record<string, unknown> | undefined): Map<string, string> {
+  const out = new Map<string, string>()
+  const index = cardData?.['model-index']
+  if (!Array.isArray(index)) return out
+  for (const entry of index as unknown[]) {
+    if (!isRecord(entry) || !Array.isArray(entry.results)) continue
+    for (const result of entry.results as unknown[]) {
+      if (!isRecord(result)) continue
+      const dataset =
+        isRecord(result.dataset) && typeof result.dataset.name === 'string'
+          ? result.dataset.name
+          : undefined
+      if (!Array.isArray(result.metrics)) continue
+      for (const metric of result.metrics as unknown[]) {
+        if (!isRecord(metric)) continue
+        const metricLabel =
+          typeof metric.name === 'string' && metric.name !== ''
+            ? metric.name
+            : typeof metric.type === 'string' && metric.type !== ''
+              ? metric.type
+              : undefined
+        if (!metricLabel) continue
+        const value = formatMetricValue(metric.value)
+        if (value === undefined) continue
+        const label = dataset ? `${dataset} · ${metricLabel}` : metricLabel
+        if (!out.has(label)) out.set(label, value)
+      }
+    }
+  }
+  return out
+}
+
+/** Phase D: side-by-side model comparison. */
 export function ComparePage(): React.JSX.Element {
   const { t } = useTranslation(['compare', 'common'])
   const settings = useAppStore((s) => s.settings)
@@ -37,6 +83,15 @@ export function ComparePage(): React.JSX.Element {
     if (!/^[\w.-]+\/[\w.-]+$/.test(id)) return
     setIds([...ids, id])
     setDraft('')
+  }
+
+  // Union of benchmark rows across the compared models, in first-seen order.
+  const benchmarks = results.map((r) => benchmarksOf(r.data?.cardData))
+  const benchmarkLabels: string[] = []
+  for (const map of benchmarks) {
+    for (const label of map.keys()) {
+      if (!benchmarkLabels.includes(label)) benchmarkLabels.push(label)
+    }
   }
 
   const rows: Array<{ label: string; render: (i: number) => React.ReactNode }> = [
@@ -120,47 +175,84 @@ export function ComparePage(): React.JSX.Element {
             <p className="text-[12.5px] text-ink-muted">{t('compare:empty')}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full border-collapse text-[13px]">
-              <thead>
-                <tr>
-                  <th className="w-32 border-b bg-panel p-2.5" />
-                  {ids.map((id, i) => (
-                    <th key={id} className="min-w-44 border-b bg-panel p-2.5 text-left align-top">
-                      <div className="flex items-start gap-1">
-                        <span className="min-w-0 flex-1 font-medium break-all">
-                          {results[i]?.isLoading ? <Skeleton className="h-4 w-24" /> : id}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-5"
-                          aria-label={t('compare:remove')}
-                          onClick={() => setIds(ids.filter((x) => x !== id))}
-                        >
-                          <X className="size-3.5" aria-hidden />
-                        </Button>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.label} className="border-b last:border-b-0">
-                    <td className="bg-panel/50 p-2.5 font-medium text-ink-muted">{row.label}</td>
+          <>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full border-collapse text-[13px]">
+                <thead>
+                  <tr>
+                    <th className="w-32 border-b bg-panel p-2.5" />
                     {ids.map((id, i) => (
-                      <td key={id} className="p-2.5 align-top">
-                        {results[i]?.isLoading ? <Skeleton className="h-4 w-16" /> : row.render(i)}
-                      </td>
+                      <th key={id} className="min-w-44 border-b bg-panel p-2.5 text-left align-top">
+                        <div className="flex items-start gap-1">
+                          <span className="min-w-0 flex-1 font-medium break-all">
+                            {results[i]?.isLoading ? <Skeleton className="h-4 w-24" /> : id}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-5"
+                            aria-label={t('compare:remove')}
+                            onClick={() => setIds(ids.filter((x) => x !== id))}
+                          >
+                            <X className="size-3.5" aria-hidden />
+                          </Button>
+                        </div>
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.label} className="border-b last:border-b-0">
+                      <td className="bg-panel/50 p-2.5 font-medium text-ink-muted">{row.label}</td>
+                      {ids.map((id, i) => (
+                        <td key={id} className="p-2.5 align-top">
+                          {results[i]?.isLoading ? (
+                            <Skeleton className="h-4 w-16" />
+                          ) : (
+                            row.render(i)
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <section className="flex flex-col gap-2">
+              <h2 className="text-[13.5px] font-semibold">{t('compare:benchmarks.title')}</h2>
+              {benchmarkLabels.length === 0 ? (
+                <p className="text-[12px] text-ink-muted">{t('compare:benchmarks.none')}</p>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="w-full border-collapse text-[13px]">
+                    <tbody>
+                      {benchmarkLabels.map((label) => (
+                        <tr key={label} className="border-b last:border-b-0">
+                          <td className="w-64 bg-panel/50 p-2.5 font-medium text-ink-muted">
+                            <div className="max-w-60 truncate" title={label}>
+                              {label}
+                            </div>
+                          </td>
+                          {ids.map((id, i) => (
+                            <td key={id} className="min-w-44 p-2.5 align-top font-mono">
+                              {results[i]?.isLoading ? (
+                                <Skeleton className="h-4 w-12" />
+                              ) : (
+                                (benchmarks[i]?.get(label) ?? '—')
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
         )}
-        <p className="text-[11.5px] text-ink-faint">{t('compare:benchmarksTodo')}</p>
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
+import { MarkdownEditor } from '@/components/browse/MarkdownEditor'
 import { MarkdownView } from '@/components/browse/MarkdownView'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -85,12 +86,15 @@ function Thread({
       <div className="border-t p-3">
         {auth.status === 'signedIn' ? (
           <div className="flex flex-col gap-2">
-            <textarea
+            <MarkdownEditor
               value={reply}
-              onChange={(e) => setReply(e.target.value)}
+              onChange={setReply}
+              kind={kind}
+              repoId={repoId}
               placeholder={t('detail:discussions.replyPlaceholder')}
-              rows={3}
-              className="w-full resize-y rounded-md border bg-bg p-2.5 text-[13px] placeholder:text-ink-faint focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:outline-none"
+              onSubmit={() => {
+                if (reply.trim() !== '' && !send.isPending) send.mutate()
+              }}
             />
             <div className="flex justify-end">
               <Button
@@ -158,7 +162,10 @@ export function DiscussionsPanel({
           className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-panel"
         >
           {discussion.isPullRequest ? (
-            <GitPullRequest className="size-4 shrink-0 text-info" aria-label={t('detail:discussions.pullRequest')} />
+            <GitPullRequest
+              className="size-4 shrink-0 text-info"
+              aria-label={t('detail:discussions.pullRequest')}
+            />
           ) : (
             <MessageSquare className="size-4 shrink-0 text-ink-faint" aria-hidden />
           )}

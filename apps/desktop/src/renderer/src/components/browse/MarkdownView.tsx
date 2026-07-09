@@ -1,17 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import { openExternal } from '@/lib/ipc'
-import { useAppStore } from '@/stores/app'
-
-const RESOLVE_PREFIX: Record<RepoKind, string> = {
-  model: '',
-  dataset: 'datasets/',
-  space: 'spaces/'
-}
+import { RESOLVE_PREFIX } from '@/lib/file-kinds'
+import { CodeBlock } from '@/components/browse/CodeBlock'
 
 /**
  * Model cards are untrusted third-party content: raw HTML is allowed through
@@ -32,42 +27,6 @@ function stripFrontmatter(markdown: string): string {
   return end === -1 ? markdown : markdown.slice(end + 4)
 }
 
-function CodeBlock({ code, language }: { code: string; language?: string }): React.JSX.Element {
-  const [html, setHtml] = useState<string | null>(null)
-  const dark = document.documentElement.classList.contains('dark')
-
-  useEffect(() => {
-    let cancelled = false
-    if (!language) return
-    void import('shiki')
-      .then((shiki) =>
-        shiki.codeToHtml(code, {
-          lang: language,
-          theme: dark ? 'github-dark' : 'github-light'
-        })
-      )
-      .then((out) => {
-        if (!cancelled) setHtml(out)
-      })
-      .catch(() => {
-        /* unknown language: keep plain rendering */
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [code, language, dark])
-
-  if (html) {
-    // Shiki output is generated locally from already-sanitized text content.
-    return <div dangerouslySetInnerHTML={{ __html: html }} />
-  }
-  return (
-    <pre>
-      <code>{code}</code>
-    </pre>
-  )
-}
-
 export interface MarkdownViewProps {
   markdown: string
   kind: RepoKind
@@ -81,7 +40,6 @@ export function MarkdownView({
   repoId,
   revision = 'main'
 }: MarkdownViewProps): React.JSX.Element {
-  useAppStore((s) => s.settings.theme) // re-render highlights on theme switch
   const content = useMemo(() => stripFrontmatter(markdown), [markdown])
   const base = `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}`
 
@@ -111,7 +69,11 @@ export function MarkdownView({
             </a>
           ),
           img: ({ src, alt }) => (
-            <img src={typeof src === 'string' ? resolveRelative(src, true) : undefined} alt={alt ?? ''} loading="lazy" />
+            <img
+              src={typeof src === 'string' ? resolveRelative(src, true) : undefined}
+              alt={alt ?? ''}
+              loading="lazy"
+            />
           ),
           pre: ({ children }) => <>{children}</>,
           code: ({ className, children }) => {

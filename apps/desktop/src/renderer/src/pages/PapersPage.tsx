@@ -7,6 +7,7 @@ import { ExternalLink, FileText, ThumbsUp } from 'lucide-react'
 import { invoke, openExternal } from '@/lib/ipc'
 import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -49,7 +50,7 @@ export function PapersPage(): React.JSX.Element {
   return (
     <div className="flex h-full min-w-0">
       <section className="flex w-[24rem] shrink-0 flex-col border-r max-[1000px]:w-80">
-        <div className="border-b px-3 py-2.5 text-[13.5px] font-semibold">{t('papers:title')}</div>
+        <h1 className="px-4 pt-4 pb-2 text-[15px] font-semibold">{t('papers:title')}</h1>
         {isLoading ? (
           <div className="flex flex-col gap-1 p-2">
             {Array.from({ length: 10 }, (_, i) => (
@@ -92,7 +93,7 @@ export function PapersPage(): React.JSX.Element {
                     >
                       {paper.title}
                     </span>
-                    <span className="flex items-center gap-2 text-[11.5px] text-ink-faint">
+                    <span className="nums flex items-center gap-2 text-[11.5px] text-ink-faint">
                       <span className="flex items-center gap-0.5">
                         <ThumbsUp className="size-3" aria-hidden />
                         {formatCount(paper.upvotes, locale)}
@@ -110,16 +111,18 @@ export function PapersPage(): React.JSX.Element {
       <section className="min-w-0 flex-1 overflow-y-auto">
         {selected ? (
           <article className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
-            <h1 className="text-xl leading-snug font-semibold" style={{ textWrap: 'balance' }}>
-              {selected.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-ink-muted">
+            <h1 className="text-xl leading-snug font-semibold text-balance">{selected.title}</h1>
+            <div className="nums flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-ink-muted">
               <span className="flex items-center gap-1">
                 <ThumbsUp className="size-3.5" aria-hidden />
                 {formatCount(selected.upvotes, locale)}
               </span>
               {selected.publishedAt && (
-                <span>{t('papers:published', { time: formatRelativeTime(selected.publishedAt, locale) })}</span>
+                <span>
+                  {t('papers:published', {
+                    time: formatRelativeTime(selected.publishedAt, locale)
+                  })}
+                </span>
               )}
             </div>
             {selected.authors.length > 0 && (
@@ -135,9 +138,7 @@ export function PapersPage(): React.JSX.Element {
                 className="max-h-64 w-full rounded-lg border object-cover"
               />
             )}
-            <p className="text-[13.5px] leading-relaxed" style={{ textWrap: 'pretty' }}>
-              {selected.summary}
-            </p>
+            <p className="text-[13.5px] leading-[1.7] text-pretty">{selected.summary}</p>
             <div className="flex gap-2">
               <Button
                 variant="secondary"
@@ -158,9 +159,8 @@ export function PapersPage(): React.JSX.Element {
             </div>
           </article>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
-            <FileText className="size-8 text-ink-faint" aria-hidden />
-            <p className="text-[13px] text-ink-muted">{t('papers:empty')}</p>
+          <div className="flex h-full items-center justify-center p-8">
+            <EmptyState icon={FileText} title={t('papers:empty')} />
           </div>
         )}
       </section>

@@ -6,6 +6,8 @@
     "remove": "Remove from list",
     "resume": "Resume"
   },
+  "count_one": "{{count}} task",
+  "count_other": "{{count}} tasks",
   "empty": {
     "body": "Find a model you like and hit Download — files land in the standard HF cache, ready for transformers, llama.cpp, and friends.",
     "title": "No downloads yet"

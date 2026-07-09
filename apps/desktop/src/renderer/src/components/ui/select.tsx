@@ -38,7 +38,10 @@ export function SelectContent({
       <SelectPrimitive.Content
         position="popper"
         sideOffset={4}
-        className={cn('z-50 min-w-32 rounded-md border bg-bg p-1 shadow-md', className)}
+        className={cn(
+          'animate-pop z-50 min-w-32 rounded-md border bg-bg p-1 shadow-overlay',
+          className
+        )}
         {...props}
       >
         <SelectPrimitive.Viewport>{children}</SelectPrimitive.Viewport>

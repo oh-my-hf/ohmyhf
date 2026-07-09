@@ -9,6 +9,11 @@
   "inbox": "Inbox",
   "library": "Library",
   "models": "Models",
+  "palette": {
+    "close": "Close",
+    "navigate": "Navigate",
+    "select": "Select"
+  },
   "papers": "Papers",
   "search": "Search…",
   "settings": "Settings",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react'
-import { Outlet, useNavigate } from 'react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/toaster'
@@ -10,7 +10,11 @@ import { useAppStore } from '@/stores/app'
 
 export function AppShell(): React.JSX.Element {
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
+  // Keyed by top-level section only: switching sections replays the fade-rise,
+  // in-section navigation (e.g. /papers/:id) must not remount the page.
+  const section = location.pathname.split('/')[1] ?? ''
   const setAuth = useAppStore((s) => s.setAuth)
   const setPaletteOpen = useAppStore((s) => s.setPaletteOpen)
 
@@ -54,7 +58,9 @@ export function AppShell(): React.JSX.Element {
       <div className="flex h-full">
         <Sidebar />
         <main className="min-w-0 flex-1">
-          <Outlet />
+          <div key={section} className="animate-fade-rise h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
       <CommandPalette />

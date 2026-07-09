@@ -22,6 +22,8 @@
   --c-warning: oklch(0.72 0.15 75);
   --c-error: oklch(0.55 0.2 27);
   --c-info: oklch(0.6 0.12 240);
+  /* Overlay shadow ramp: dialogs, menus, palette, toasts — never in-page cards. */
+  --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.12);
 }
 
 .dark {
@@ -39,6 +41,7 @@
   --c-warning: oklch(0.78 0.15 80);
   --c-error: oklch(0.66 0.19 25);
   --c-info: oklch(0.68 0.12 240);
+  --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.42);
 }
 
 @theme inline {
@@ -58,6 +61,99 @@
   --color-info: var(--c-info);
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Tabular figures for stat-heavy UI: byte counts, badges, timestamps, columns. */
+@utility nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility shadow-overlay {
+  box-shadow: var(--shadow-overlay);
+}
+
+/*
+ * Motion vocabulary (150–250ms ease-out, state changes only; the global
+ * prefers-reduced-motion rule below neutralizes all of these).
+ * fade       — overlays/backdrops.
+ * fade-rise  — route content, dialog panels, palette: opacity + 4px rise.
+ * pop        — anchored overlays (menu/select/tooltip): fade + 4px slide
+ *              from the trigger side, keyed off Radix's data-side.
+ */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes pop-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes pop-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes pop-left {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+}
+@keyframes pop-right {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@utility animate-fade {
+  animation: fade 150ms ease-out both;
+}
+@utility animate-fade-rise {
+  animation: fade-rise 180ms ease-out both;
+}
+@utility animate-toast-in {
+  animation: toast-in 200ms ease-out both;
+}
+@utility animate-skeleton {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.animate-pop {
+  animation: fade 140ms ease-out both;
+}
+.animate-pop[data-side='bottom'] {
+  animation-name: pop-down;
+}
+.animate-pop[data-side='top'] {
+  animation-name: pop-up;
+}
+.animate-pop[data-side='left'] {
+  animation-name: pop-left;
+}
+.animate-pop[data-side='right'] {
+  animation-name: pop-right;
 }
 
 html,
