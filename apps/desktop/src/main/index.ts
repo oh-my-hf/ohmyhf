@@ -21,8 +21,15 @@ if (process.env.OMH_USER_DATA_DIR) {
 }
 
 function broadcast<C extends IpcEventChannel>(channel: C, payload: IpcEventPayload<C>): void {
+  // Callers include timers (download progress, inference delta flushes); a send that
+  // races window destruction must never become an uncaught exception in main.
   for (const win of BrowserWindow.getAllWindows()) {
-    win.webContents.send(channel, payload)
+    if (win.isDestroyed() || win.webContents.isDestroyed()) continue
+    try {
+      win.webContents.send(channel, payload)
+    } catch {
+      /* window closed mid-send */
+    }
   }
 }
 

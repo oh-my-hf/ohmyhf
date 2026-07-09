@@ -7,7 +7,7 @@ import { existsSync, promises as fs } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path'
 import { repoCachePaths } from '@oh-my-huggingface/hub-api'
-import type { ExportResult, ExportTarget, ExportTool } from '@oh-my-huggingface/shared'
+import type { ExportResult, ExportTarget, ExportTool, RepoKind } from '@oh-my-huggingface/shared'
 import type { ExportDeps } from './types'
 import { notifyDone } from './notify'
 
@@ -44,10 +44,11 @@ function fail(messageKey: string, params?: Record<string, string>): ExportResult
  */
 async function findSnapshotFile(
   cacheDir: string,
+  kind: RepoKind,
   repoId: string,
   filePath: string
 ): Promise<string | null> {
-  const { refsDir, snapshotsDir } = repoCachePaths(cacheDir, 'model', repoId)
+  const { refsDir, snapshotsDir } = repoCachePaths(cacheDir, kind, repoId)
 
   let commit: string | undefined
   try {
@@ -92,13 +93,18 @@ async function findOllamaBinary(): Promise<string | null> {
   const { promisify } = await import('node:util')
   const run = promisify(execFile)
   try {
-    const { stdout } = await run('which', ['ollama'])
-    const found = stdout.trim().split('\n')[0]?.trim()
+    const locator = process.platform === 'win32' ? 'where' : 'which'
+    const { stdout } = await run(locator, ['ollama'])
+    const found = stdout.trim().split(/\r?\n/)[0]?.trim()
     if (found && existsSync(found)) return found
   } catch {
     // not on PATH
   }
-  for (const candidate of ['/usr/local/bin/ollama', '/opt/homebrew/bin/ollama']) {
+  const candidates =
+    process.platform === 'win32'
+      ? [join(homedir(), 'AppData', 'Local', 'Programs', 'Ollama', 'ollama.exe')]
+      : ['/usr/local/bin/ollama', '/opt/homebrew/bin/ollama']
+  for (const candidate of candidates) {
     if (existsSync(candidate)) return candidate
   }
   return null
@@ -166,6 +172,10 @@ async function exportToLmStudio(
   snapshotFile: string
 ): Promise<ExportResult> {
   const [org = '', name = ''] = repoId.split('/')
+  // The shared schema rejects dot-only segments, but never join a path we didn't verify.
+  if (!name || /^\.+$/.test(org) || /^\.+$/.test(name)) {
+    return fail('export.invalidPath', { file: repoId })
+  }
   const dest = join(homedir(), '.lmstudio', 'models', org, name, basename(filePath))
   await fs.mkdir(dirname(dest), { recursive: true })
   await linkOrCopy(snapshotFile, dest)
@@ -192,6 +202,7 @@ async function exportToComfyui(filePath: string, snapshotFile: string): Promise<
 
 export async function runExport(
   tool: ExportTool,
+  kind: RepoKind,
   repoId: string,
   filePath: string,
   deps: ExportDeps
@@ -200,7 +211,7 @@ export async function runExport(
     return fail('export.invalidPath', { file: filePath })
   }
 
-  const snapshotFile = await findSnapshotFile(deps.cacheDir, repoId, filePath)
+  const snapshotFile = await findSnapshotFile(deps.cacheDir, kind, repoId, filePath)
   if (!snapshotFile) return fail('export.notInCache', { file: filePath })
 
   try {

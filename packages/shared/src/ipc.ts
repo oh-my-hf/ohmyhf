@@ -121,7 +121,7 @@ export interface IpcInvokeContract {
 
   'export:targets': { req: void; res: ExportTarget[] }
   'export:run': {
-    req: { tool: ExportTool; repoId: string; filePath: string }
+    req: { tool: ExportTool; kind: RepoKind; repoId: string; filePath: string }
     res: ExportResult
   }
 

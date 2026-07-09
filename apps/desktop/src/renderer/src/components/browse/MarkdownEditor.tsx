@@ -46,7 +46,8 @@ function applyFormat(value: string, start: number, end: number, format: Format):
     case 'quote':
     case 'list': {
       const marker = format === 'quote' ? '> ' : '- '
-      const lineStart = value.lastIndexOf('\n', start - 1) + 1
+      // start === 0 must clamp to 0: lastIndexOf('\n', -1) would still find a leading newline.
+      const lineStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1
       const block = value.slice(lineStart, end)
       const prefixed = block
         .split('\n')

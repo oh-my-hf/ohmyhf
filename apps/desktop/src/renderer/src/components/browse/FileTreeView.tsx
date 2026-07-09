@@ -53,7 +53,7 @@ export function FileTreeView({
   })
   const exportRun = useMutation({
     mutationFn: (args: { tool: ExportTool; filePath: string }) =>
-      invoke('export:run', { tool: args.tool, repoId, filePath: args.filePath }),
+      invoke('export:run', { tool: args.tool, kind, repoId, filePath: args.filePath }),
     onSuccess: (res) =>
       push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'info')
   })

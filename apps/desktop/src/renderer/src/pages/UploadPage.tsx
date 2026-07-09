@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { FolderOpen, UploadCloud } from 'lucide-react'
-import type { RepoKind } from '@oh-my-huggingface/shared'
+import type { RepoKind, UploadProgress } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { useIpcEvent } from '@/hooks/use-ipc-event'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -33,6 +35,14 @@ export function UploadPage(): React.JSX.Element {
   const [name, setName] = useState('')
   const [kind, setKind] = useState<RepoKind>('model')
   const [isPrivate, setIsPrivate] = useState(false)
+  const [progress, setProgress] = useState<UploadProgress | null>(null)
+
+  useIpcEvent(
+    'evt:upload',
+    useCallback((event: UploadProgress) => {
+      setProgress(event.phase === 'done' || event.phase === 'error' ? null : event)
+    }, [])
+  )
 
   const pickFolder = useMutation({
     mutationFn: () => invoke('system:pickFolder', undefined),
@@ -44,7 +54,8 @@ export function UploadPage(): React.JSX.Element {
         request: { kind, name: name.trim(), private: isPrivate, folderPath: folder ?? '' }
       }),
     onSuccess: (res) =>
-      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'info')
+      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'info'),
+    onSettled: () => setProgress(null)
   })
 
   const canSubmit = auth.status === 'signedIn' && folder !== null && name.trim() !== ''
@@ -110,8 +121,23 @@ export function UploadPage(): React.JSX.Element {
               </label>
             </div>
 
+            {create.isPending && progress && (
+              <div className="flex flex-col gap-1.5 rounded-md border bg-panel p-3">
+                <div className="flex items-center justify-between gap-3 text-[12px]">
+                  <span className="font-medium">{t(`upload:phase.${progress.phase}`)}</span>
+                  <span className="nums text-ink-faint">{Math.round(progress.progress * 100)}%</span>
+                </div>
+                <Progress value={progress.progress} />
+                {progress.path && (
+                  <span className="truncate font-mono text-[11px] text-ink-faint">
+                    {progress.path}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[11.5px] text-ink-faint">{t('upload:todo')}</p>
+              <p className="text-[11.5px] text-ink-faint">{t('upload:scopeHint')}</p>
               <Button
                 variant="primary"
                 size="md"

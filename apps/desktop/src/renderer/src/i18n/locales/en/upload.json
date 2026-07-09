@@ -7,8 +7,13 @@
   "name": "Repository name",
   "namePlaceholder": "my-cool-model",
   "noFolder": "No folder selected",
+  "phase": {
+    "hashing": "Hashing files…",
+    "preparing": "Preparing files…",
+    "uploading": "Uploading…"
+  },
   "private": "Private repository",
+  "scopeHint": "Uploads use the write permission granted at sign-in.",
   "signIn": "Sign in to upload.",
-  "title": "Upload to the Hub",
-  "todo": "The upload pipeline is under construction — the request is wired end-to-end, but files are not pushed yet."
+  "title": "Upload to the Hub"
 }

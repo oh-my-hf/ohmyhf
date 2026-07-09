@@ -8,12 +8,13 @@ import { SUPPORTED_LOCALES } from './types'
 
 const repoKind = z.enum(['model', 'dataset', 'space'])
 
-/** "owner/name" or single-segment names; no path traversal, no URLs. */
+/** "owner/name" or single-segment names; dot-only segments (".", "..") are rejected. */
 const repoId = z
   .string()
   .min(1)
   .max(256)
   .regex(/^[\w.-]+(\/[\w.-]+)?$/, 'invalid repo id')
+  .refine((v) => v.split('/').every((segment) => !/^\.+$/.test(segment)), 'invalid repo id')
 
 const revision = z
   .string()
@@ -147,6 +148,7 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'inbox:markRead': z.object({ ids: z.array(z.string()).min(1).max(1000) }),
   'export:run': z.object({
     tool: z.enum(['ollama', 'lmstudio', 'comfyui']),
+    kind: repoKind,
     repoId,
     filePath: relPath
   }),

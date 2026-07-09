@@ -165,8 +165,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- phase E ----------------------------------------------------------------------------
   handle('export:targets', () => detectExportTargets())
-  handle('export:run', ({ tool, repoId, filePath }) =>
-    runExport(tool, repoId, filePath, { cacheDir: ctx.cache.cacheDir() })
+  handle('export:run', ({ tool, kind, repoId, filePath }) =>
+    runExport(tool, kind, repoId, filePath, { cacheDir: ctx.cache.cacheDir() })
   )
   handle('upload:createRepo', ({ request }) => {
     const state = ctx.auth.getState()

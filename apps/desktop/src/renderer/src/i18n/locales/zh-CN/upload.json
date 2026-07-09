@@ -7,8 +7,13 @@
   "name": "仓库名称",
   "namePlaceholder": "my-cool-model",
   "noFolder": "未选择文件夹",
+  "phase": {
+    "hashing": "正在计算文件哈希…",
+    "preparing": "正在准备文件…",
+    "uploading": "正在上传…"
+  },
   "private": "私有仓库",
+  "scopeHint": "上传使用登录时授予的写入权限。",
   "signIn": "登录后即可上传。",
-  "title": "上传到 Hub",
-  "todo": "上传管线正在建设中——请求链路已完整接通，但文件尚未真正推送。"
+  "title": "上传到 Hub"
 }
