@@ -1,0 +1,27 @@
+{
+  "name": "@oh-my-huggingface/hub-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure-TypeScript Hugging Face Hub API client (zero Electron dependencies)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@huggingface/hub": "^2.13.2",
+    "@huggingface/inference": "^4.13.22",
+    "@oh-my-huggingface/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "vitest": "^4.1.10"
+  }
+}
