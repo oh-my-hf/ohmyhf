@@ -1,0 +1,43 @@
+appId: dev.oh-my-huggingface.desktop
+productName: Oh My HuggingFace
+copyright: Copyright © 2026 Oh My HuggingFace contributors
+
+directories:
+  buildResources: build
+  output: release
+
+files:
+  - out/**
+
+asarUnpack:
+  - '**/*.node'
+
+npmRebuild: true
+
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+  # Unsigned for now — see docs/signing.md for the notarization follow-up.
+  identity: null
+
+win:
+  target:
+    - nsis
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+  synopsis: Unofficial desktop client for the Hugging Face Hub
+  maintainer: Oh My HuggingFace contributors
+
+publish:
+  provider: github
+  owner: MoraxCheng
+  repo: oh-my-huggingface

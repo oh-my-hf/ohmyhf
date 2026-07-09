@@ -1,0 +1,63 @@
+{
+  "app": {
+    "name": "Oh My HuggingFace"
+  },
+  "menu": {
+    "file": "File",
+    "edit": "Edit",
+    "view": "View",
+    "go": "Go",
+    "window": "Window",
+    "help": "Help",
+    "about": "About Oh My HuggingFace",
+    "settings": "Settings…",
+    "quit": "Quit Oh My HuggingFace",
+    "hide": "Hide Oh My HuggingFace",
+    "hideOthers": "Hide Others",
+    "showAll": "Show All",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select All",
+    "reload": "Reload",
+    "forceReload": "Force Reload",
+    "toggleDevTools": "Toggle Developer Tools",
+    "resetZoom": "Actual Size",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "toggleFullscreen": "Toggle Full Screen",
+    "minimize": "Minimize",
+    "close": "Close Window",
+    "models": "Models",
+    "datasets": "Datasets",
+    "spaces": "Spaces",
+    "papers": "Papers",
+    "favorites": "Favorites",
+    "downloads": "Downloads",
+    "cache": "Local Cache",
+    "inbox": "Inbox",
+    "github": "GitHub Repository",
+    "reportIssue": "Report an Issue…",
+    "disclaimer": "About & Disclaimer"
+  },
+  "notifications": {
+    "downloadComplete": "Download complete",
+    "downloadCompleteBody": "{{repo}} finished downloading.",
+    "downloadFailed": "Download failed",
+    "downloadFailedBody": "{{repo}}: {{error}}",
+    "inboxUpdates": "{{count}} new update(s) from your follows",
+    "inboxSingle": "{{title}}"
+  },
+  "dialogs": {
+    "aboutDetail": "An unofficial desktop client for the Hugging Face Hub.\nVersion {{version}}\n\nUNOFFICIAL: this application is not affiliated with, endorsed by, or sponsored by Hugging Face, Inc. \"Hugging Face\" is a trademark of Hugging Face, Inc., used here only to refer to the service this application connects to.\n\nLicensed under Apache-2.0.",
+    "ok": "OK"
+  },
+  "oauth": {
+    "successTitle": "Signed in",
+    "successBody": "You are signed in. You can close this tab and return to Oh My HuggingFace.",
+    "failedTitle": "Sign-in failed",
+    "failedBody": "The sign-in attempt failed or was cancelled. You can close this tab and try again from the app."
+  }
+}
