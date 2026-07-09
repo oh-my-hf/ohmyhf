@@ -1,39 +1,39 @@
 {
-  "searchPlaceholder": {
-    "model": "搜索模型…",
-    "dataset": "搜索数据集…",
-    "space": "搜索 Spaces…"
+  "downloads": "下载",
+  "empty": {
+    "body": "换个搜索词，或清除当前筛选条件。",
+    "title": "没有结果"
   },
-  "sort": {
-    "label": "排序",
-    "trending": "热门趋势",
-    "downloads": "下载量",
-    "likes": "点赞数",
-    "updated": "最近更新",
-    "created": "最新创建"
-  },
+  "endOfResults": "已加载全部结果",
   "filter": {
-    "task": "任务",
+    "all": "全部",
+    "clear": "清除筛选",
+    "clientSide": "仅筛选已加载结果",
     "library": "框架",
     "license": "许可证",
     "params": "参数量",
-    "clear": "清除筛选",
-    "all": "全部",
-    "clientSide": "仅筛选已加载结果"
+    "task": "任务"
   },
+  "likes": "点赞",
   "params": {
-    "lt1b": "< 1B",
     "1to7b": "1B – 7B",
     "7to30b": "7B – 30B",
-    "gt30b": "> 30B"
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
   },
-  "empty": {
-    "title": "没有结果",
-    "body": "换个搜索词，或清除当前筛选条件。"
+  "paramsBadge": "{{value}} 参数",
+  "searchPlaceholder": {
+    "dataset": "搜索数据集…",
+    "model": "搜索模型…",
+    "space": "搜索 Spaces…"
   },
-  "endOfResults": "已加载全部结果",
-  "likes": "点赞",
-  "downloads": "下载",
-  "updated": "更新于 {{time}}",
-  "paramsBadge": "{{value}} 参数"
+  "sort": {
+    "created": "最新创建",
+    "downloads": "下载量",
+    "label": "排序",
+    "likes": "点赞数",
+    "trending": "热门趋势",
+    "updated": "最近更新"
+  },
+  "updated": "更新于 {{time}}"
 }

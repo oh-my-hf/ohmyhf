@@ -1,26 +1,26 @@
 {
-  "title": "Downloads",
-  "empty": {
-    "title": "No downloads yet",
-    "body": "Find a model you like and hit Download — files land in the standard HF cache, ready for transformers, llama.cpp, and friends."
-  },
-  "status": {
-    "queued": "Queued",
-    "running": "Downloading",
-    "paused": "Paused",
-    "completed": "Completed",
-    "error": "Failed",
-    "canceled": "Canceled"
-  },
   "actions": {
-    "pause": "Pause",
-    "resume": "Resume",
     "cancel": "Cancel",
+    "openFolder": "Show in folder",
+    "pause": "Pause",
     "remove": "Remove from list",
-    "openFolder": "Show in folder"
+    "resume": "Resume"
+  },
+  "empty": {
+    "body": "Find a model you like and hit Download — files land in the standard HF cache, ready for transformers, llama.cpp, and friends.",
+    "title": "No downloads yet"
   },
   "files": "{{done}}/{{total}} files",
+  "revision": "Revision {{revision}}",
   "speed": "{{speed}}/s",
-  "verified": "sha256 verified",
-  "revision": "Revision {{revision}}"
+  "status": {
+    "canceled": "Canceled",
+    "completed": "Completed",
+    "error": "Failed",
+    "paused": "Paused",
+    "queued": "Queued",
+    "running": "Downloading"
+  },
+  "title": "Downloads",
+  "verified": "sha256 verified"
 }

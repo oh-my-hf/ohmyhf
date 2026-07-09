@@ -1,22 +1,26 @@
 {
-  "title": "本地缓存",
-  "scan": "重新扫描",
-  "scanning": "扫描中…",
-  "totalOnDisk": "磁盘占用 {{size}}",
-  "reposCount": "{{count}} 个缓存仓库",
-  "location": "缓存位置",
-  "empty": {
-    "title": "缓存为空",
-    "body": "本应用（以及 transformers、CLI）的下载内容都会显示在这里。"
+  "confirmDelete": {
+    "body": "将释放 {{size}} 磁盘空间。与其他修订共享的文件会保留。此操作不可撤销。",
+    "title": "删除 {{count}} 个修订？",
+    "title_other": "删除 {{count}} 个修订？"
   },
-  "revisions": "{{count}} 个修订",
-  "files": "{{count}} 个文件",
-  "noRefs": "无引用",
   "deleteRevision": "删除此修订",
   "deleteStale": "清理无引用的修订",
-  "confirmDelete": {
-    "title": "删除 {{count}} 个修订？",
-    "body": "将释放 {{size}} 磁盘空间。与其他修订共享的文件会保留。此操作不可撤销。"
+  "deleted": "已删除，释放 {{size}}。",
+  "empty": {
+    "body": "本应用（以及 transformers、CLI）的下载内容都会显示在这里。",
+    "title": "缓存为空"
   },
-  "deleted": "已删除，释放 {{size}}。"
+  "files": "{{count}} 个文件",
+  "files_other": "{{count}} 个文件",
+  "location": "缓存位置",
+  "noRefs": "无引用",
+  "reposCount": "{{count}} 个缓存仓库",
+  "reposCount_other": "{{count}} 个缓存仓库",
+  "revisions": "{{count}} 个修订",
+  "revisions_other": "{{count}} 个修订",
+  "scan": "重新扫描",
+  "scanning": "扫描中…",
+  "title": "本地缓存",
+  "totalOnDisk": "磁盘占用 {{size}}"
 }

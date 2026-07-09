@@ -1,39 +1,39 @@
 {
   "appName": "Oh My HuggingFace",
-  "unofficial": "非官方",
-  "loading": "加载中…",
-  "retry": "重试",
+  "back": "返回",
   "cancel": "取消",
   "close": "关闭",
   "confirm": "确认",
-  "delete": "删除",
-  "remove": "移除",
-  "copy": "复制",
   "copied": "已复制",
-  "back": "返回",
+  "copy": "复制",
+  "delete": "删除",
   "error": {
     "generic": "出错了",
     "network": "无法连接 Hugging Face API"
   },
+  "gated": "需申请",
   "kind": {
-    "model": "模型",
     "dataset": "数据集",
-    "space": "Space",
-    "paper": "论文"
-  },
-  "theme": {
-    "label": "主题",
-    "light": "浅色",
-    "dark": "深色",
-    "system": "跟随系统"
+    "model": "模型",
+    "paper": "论文",
+    "space": "Space"
   },
   "language": {
     "en": "English",
-    "zh-CN": "简体中文",
-    "system": "系统语言"
+    "system": "系统语言",
+    "zh-CN": "简体中文"
   },
-  "gated": "需申请",
-  "private": "私有",
+  "loading": "加载中…",
   "openOnHub": "在 Hub 打开",
-  "showInFolder": "在文件夹中显示"
+  "private": "私有",
+  "remove": "移除",
+  "retry": "重试",
+  "showInFolder": "在文件夹中显示",
+  "theme": {
+    "dark": "深色",
+    "label": "主题",
+    "light": "浅色",
+    "system": "跟随系统"
+  },
+  "unofficial": "非官方"
 }

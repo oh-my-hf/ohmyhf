@@ -1,9 +1,9 @@
 {
-  "title": "每日论文",
-  "upvotes": "赞同",
+  "authors": "作者",
+  "empty": "暂无论文。",
+  "published": "发布于 {{time}}",
   "readOnArxiv": "在 arXiv 阅读",
   "readOnHub": "在 Hub 打开",
-  "empty": "暂无论文。",
-  "authors": "作者",
-  "published": "发布于 {{time}}"
+  "title": "每日论文",
+  "upvotes": "赞同"
 }

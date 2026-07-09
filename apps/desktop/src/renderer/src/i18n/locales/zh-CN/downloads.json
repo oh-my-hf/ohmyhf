@@ -1,26 +1,26 @@
 {
-  "title": "下载",
-  "empty": {
-    "title": "还没有下载任务",
-    "body": "找到心仪的模型后点击“下载”——文件会存入标准 HF 缓存，transformers、llama.cpp 等工具可直接使用。"
-  },
-  "status": {
-    "queued": "排队中",
-    "running": "下载中",
-    "paused": "已暂停",
-    "completed": "已完成",
-    "error": "失败",
-    "canceled": "已取消"
-  },
   "actions": {
-    "pause": "暂停",
-    "resume": "继续",
     "cancel": "取消",
+    "openFolder": "在文件夹中显示",
+    "pause": "暂停",
     "remove": "从列表移除",
-    "openFolder": "在文件夹中显示"
+    "resume": "继续"
+  },
+  "empty": {
+    "body": "找到心仪的模型后点击“下载”——文件会存入标准 HF 缓存，transformers、llama.cpp 等工具可直接使用。",
+    "title": "还没有下载任务"
   },
   "files": "{{done}}/{{total}} 个文件",
+  "revision": "修订 {{revision}}",
   "speed": "{{speed}}/秒",
-  "verified": "sha256 校验通过",
-  "revision": "修订 {{revision}}"
+  "status": {
+    "canceled": "已取消",
+    "completed": "已完成",
+    "error": "失败",
+    "paused": "已暂停",
+    "queued": "排队中",
+    "running": "下载中"
+  },
+  "title": "下载",
+  "verified": "sha256 校验通过"
 }

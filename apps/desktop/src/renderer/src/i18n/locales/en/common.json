@@ -1,39 +1,39 @@
 {
   "appName": "Oh My HuggingFace",
-  "unofficial": "Unofficial",
-  "loading": "Loading…",
-  "retry": "Retry",
+  "back": "Back",
   "cancel": "Cancel",
   "close": "Close",
   "confirm": "Confirm",
-  "delete": "Delete",
-  "remove": "Remove",
-  "copy": "Copy",
   "copied": "Copied",
-  "back": "Back",
+  "copy": "Copy",
+  "delete": "Delete",
   "error": {
     "generic": "Something went wrong",
     "network": "Could not reach the Hugging Face API"
   },
+  "gated": "Gated",
   "kind": {
-    "model": "Model",
     "dataset": "Dataset",
-    "space": "Space",
-    "paper": "Paper"
-  },
-  "theme": {
-    "label": "Theme",
-    "light": "Light",
-    "dark": "Dark",
-    "system": "System"
+    "model": "Model",
+    "paper": "Paper",
+    "space": "Space"
   },
   "language": {
     "en": "English",
-    "zh-CN": "简体中文",
-    "system": "System language"
+    "system": "System language",
+    "zh-CN": "简体中文"
   },
-  "gated": "Gated",
-  "private": "Private",
+  "loading": "Loading…",
   "openOnHub": "Open on the Hub",
-  "showInFolder": "Show in folder"
+  "private": "Private",
+  "remove": "Remove",
+  "retry": "Retry",
+  "showInFolder": "Show in folder",
+  "theme": {
+    "dark": "Dark",
+    "label": "Theme",
+    "light": "Light",
+    "system": "System"
+  },
+  "unofficial": "Unofficial"
 }

@@ -1,36 +1,37 @@
 {
-  "title": "设置",
-  "appearance": {
-    "title": "外观",
-    "language": "语言"
-  },
-  "downloads": {
-    "title": "下载",
-    "concurrency": "并行下载数",
-    "speedLimit": "限速",
-    "speedPerSecond": "{{value}}/秒",
-    "unlimited": "不限速",
-    "cacheDir": "HF 缓存目录",
-    "cacheDirDefault": "系统默认",
-    "choose": "选择…",
-    "reset": "重置"
-  },
-  "notifications": {
-    "title": "通知",
-    "enabled": "系统通知",
-    "pollInterval": "关注检查间隔",
-    "minutes": "{{count}} 分钟"
+  "about": {
+    "disclaimer": "本应用与 Hugging Face, Inc. 无任何隶属、背书或赞助关系。“Hugging Face” 是 Hugging Face, Inc. 的商标，此处仅用于指称本应用所连接的服务。",
+    "github": "GitHub 源代码",
+    "license": "基于 Apache-2.0 许可证发布",
+    "privacy": "隐私：一切数据都保存在你的设备上。无遥测、无分析统计。访问令牌经操作系统钥匙串加密后仅存储在本地。",
+    "title": "关于",
+    "unofficialTitle": "非官方声明",
+    "version": "版本 {{version}}"
   },
   "account": {
     "title": "账户"
   },
-  "about": {
-    "title": "关于",
-    "version": "版本 {{version}}",
-    "unofficialTitle": "非官方声明",
-    "disclaimer": "本应用与 Hugging Face, Inc. 无任何隶属、背书或赞助关系。“Hugging Face” 是 Hugging Face, Inc. 的商标，此处仅用于指称本应用所连接的服务。",
-    "privacy": "隐私：一切数据都保存在你的设备上。无遥测、无分析统计。访问令牌经操作系统钥匙串加密后仅存储在本地。",
-    "license": "基于 Apache-2.0 许可证发布",
-    "github": "GitHub 源代码"
-  }
+  "appearance": {
+    "language": "语言",
+    "title": "外观"
+  },
+  "downloads": {
+    "cacheDir": "HF 缓存目录",
+    "cacheDirDefault": "系统默认",
+    "choose": "选择…",
+    "concurrency": "并行下载数",
+    "reset": "重置",
+    "speedLimit": "限速",
+    "speedPerSecond": "{{value}}/秒",
+    "title": "下载",
+    "unlimited": "不限速"
+  },
+  "notifications": {
+    "enabled": "系统通知",
+    "minutes": "{{count}} 分钟",
+    "minutes_other": "{{count}} 分钟",
+    "pollInterval": "关注检查间隔",
+    "title": "通知"
+  },
+  "title": "设置"
 }

@@ -1,39 +1,39 @@
 {
-  "searchPlaceholder": {
-    "model": "Search models…",
-    "dataset": "Search datasets…",
-    "space": "Search Spaces…"
+  "downloads": "Downloads",
+  "empty": {
+    "body": "Try a different search, or clear the active filters.",
+    "title": "No results"
   },
-  "sort": {
-    "label": "Sort",
-    "trending": "Trending",
-    "downloads": "Downloads",
-    "likes": "Likes",
-    "updated": "Recently updated",
-    "created": "Recently created"
-  },
+  "endOfResults": "End of results",
   "filter": {
-    "task": "Task",
+    "all": "All",
+    "clear": "Clear filters",
+    "clientSide": "filters loaded results only",
     "library": "Library",
     "license": "License",
     "params": "Parameters",
-    "clear": "Clear filters",
-    "all": "All",
-    "clientSide": "filters loaded results only"
+    "task": "Task"
   },
+  "likes": "Likes",
   "params": {
-    "lt1b": "< 1B",
     "1to7b": "1B – 7B",
     "7to30b": "7B – 30B",
-    "gt30b": "> 30B"
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
   },
-  "empty": {
-    "title": "No results",
-    "body": "Try a different search, or clear the active filters."
+  "paramsBadge": "{{value}} params",
+  "searchPlaceholder": {
+    "dataset": "Search datasets…",
+    "model": "Search models…",
+    "space": "Search Spaces…"
   },
-  "endOfResults": "End of results",
-  "likes": "Likes",
-  "downloads": "Downloads",
-  "updated": "Updated {{time}}",
-  "paramsBadge": "{{value}} params"
+  "sort": {
+    "created": "Recently created",
+    "downloads": "Downloads",
+    "label": "Sort",
+    "likes": "Likes",
+    "trending": "Trending",
+    "updated": "Recently updated"
+  },
+  "updated": "Updated {{time}}"
 }

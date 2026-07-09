@@ -1,72 +1,72 @@
 {
-  "select": {
-    "title": "Nothing selected",
-    "body": "Pick an item from the list — or press ⌘K to search everything."
-  },
-  "tabs": {
-    "card": "Card",
-    "files": "Files",
-    "info": "Info",
-    "discussions": "Discussions",
-    "playground": "Playground"
-  },
   "actions": {
-    "favorite": "Add to favorites",
-    "unfavorite": "Remove from favorites",
     "download": "Download",
     "downloadAll": "Download all files",
+    "favorite": "Add to favorites",
     "follow": "Follow repository",
+    "unfavorite": "Remove from favorites",
     "unfollow": "Unfollow repository"
   },
   "card": {
     "empty": "This repository has no card."
   },
-  "files": {
-    "root": "root",
-    "download": "Download file",
-    "export": "Export…",
-    "exportTo": "Export to {{tool}}",
-    "noTargets": "No local tools detected",
-    "empty": "This directory is empty.",
-    "lfs": "LFS"
-  },
-  "info": {
-    "params": "Parameters",
-    "license": "License",
-    "task": "Task",
-    "library": "Library",
-    "sdk": "SDK",
-    "sha": "Revision",
-    "updated": "Updated",
-    "created": "Created",
-    "storage": "Storage used",
-    "downloadsAllTime": "All-time downloads",
-    "tags": "Tags"
-  },
   "discussions": {
-    "empty": "No discussions yet.",
     "comments": "{{count}} comments",
+    "empty": "No discussions yet.",
+    "pullRequest": "PR",
     "reply": "Reply",
     "replyPlaceholder": "Write a reply (Markdown supported)…",
     "send": "Send",
     "sending": "Sending…",
     "signInToReply": "Sign in to join the discussion.",
     "status": {
-      "open": "Open",
       "closed": "Closed",
+      "draft": "Draft",
       "merged": "Merged",
-      "draft": "Draft"
-    },
-    "pullRequest": "PR"
+      "open": "Open"
+    }
+  },
+  "downloadFailed": "Could not start the download: {{error}}",
+  "downloadStarted": "Added to downloads",
+  "files": {
+    "download": "Download file",
+    "empty": "This directory is empty.",
+    "export": "Export…",
+    "exportTo": "Export to {{tool}}",
+    "lfs": "LFS",
+    "noTargets": "No local tools detected",
+    "root": "root"
+  },
+  "info": {
+    "created": "Created",
+    "downloadsAllTime": "All-time downloads",
+    "library": "Library",
+    "license": "License",
+    "params": "Parameters",
+    "sdk": "SDK",
+    "sha": "Revision",
+    "storage": "Storage used",
+    "tags": "Tags",
+    "task": "Task",
+    "updated": "Updated"
   },
   "playground": {
+    "empty": "The response will appear here.",
     "placeholder": "Send a prompt to this model via the Inference API…",
     "run": "Run",
     "running": "Running…",
     "signIn": "Sign in to use the inference playground.",
-    "empty": "The response will appear here.",
     "unavailable": "Inference is unavailable for this model: {{error}}"
   },
-  "downloadStarted": "Added to downloads",
-  "downloadFailed": "Could not start the download: {{error}}"
+  "select": {
+    "body": "Pick an item from the list — or press ⌘K to search everything.",
+    "title": "Nothing selected"
+  },
+  "tabs": {
+    "card": "Card",
+    "discussions": "Discussions",
+    "files": "Files",
+    "info": "Info",
+    "playground": "Playground"
+  }
 }

@@ -1,72 +1,72 @@
 {
-  "select": {
-    "title": "未选择任何条目",
-    "body": "从左侧列表选择一项，或按 ⌘K 全局搜索。"
-  },
-  "tabs": {
-    "card": "卡片",
-    "files": "文件",
-    "info": "信息",
-    "discussions": "讨论",
-    "playground": "试用"
-  },
   "actions": {
-    "favorite": "加入收藏",
-    "unfavorite": "取消收藏",
     "download": "下载",
     "downloadAll": "下载全部文件",
+    "favorite": "加入收藏",
     "follow": "关注此仓库",
+    "unfavorite": "取消收藏",
     "unfollow": "取消关注"
   },
   "card": {
     "empty": "该仓库暂无卡片说明。"
   },
-  "files": {
-    "root": "根目录",
-    "download": "下载文件",
-    "export": "导出…",
-    "exportTo": "导出到 {{tool}}",
-    "noTargets": "未检测到本地工具",
-    "empty": "该目录为空。",
-    "lfs": "LFS"
-  },
-  "info": {
-    "params": "参数量",
-    "license": "许可证",
-    "task": "任务",
-    "library": "框架",
-    "sdk": "SDK",
-    "sha": "修订版本",
-    "updated": "更新时间",
-    "created": "创建时间",
-    "storage": "占用存储",
-    "downloadsAllTime": "累计下载",
-    "tags": "标签"
-  },
   "discussions": {
-    "empty": "暂无讨论。",
     "comments": "{{count}} 条评论",
+    "empty": "暂无讨论。",
+    "pullRequest": "PR",
     "reply": "回复",
     "replyPlaceholder": "写下回复（支持 Markdown）…",
     "send": "发送",
     "sending": "发送中…",
     "signInToReply": "登录后即可参与讨论。",
     "status": {
-      "open": "开放",
       "closed": "已关闭",
+      "draft": "草稿",
       "merged": "已合并",
-      "draft": "草稿"
-    },
-    "pullRequest": "PR"
+      "open": "开放"
+    }
+  },
+  "downloadFailed": "无法开始下载：{{error}}",
+  "downloadStarted": "已加入下载队列",
+  "files": {
+    "download": "下载文件",
+    "empty": "该目录为空。",
+    "export": "导出…",
+    "exportTo": "导出到 {{tool}}",
+    "lfs": "LFS",
+    "noTargets": "未检测到本地工具",
+    "root": "根目录"
+  },
+  "info": {
+    "created": "创建时间",
+    "downloadsAllTime": "累计下载",
+    "library": "框架",
+    "license": "许可证",
+    "params": "参数量",
+    "sdk": "SDK",
+    "sha": "修订版本",
+    "storage": "占用存储",
+    "tags": "标签",
+    "task": "任务",
+    "updated": "更新时间"
   },
   "playground": {
+    "empty": "响应将显示在这里。",
     "placeholder": "通过 Inference API 向该模型发送提示词…",
     "run": "运行",
     "running": "运行中…",
     "signIn": "登录后即可使用推理试用。",
-    "empty": "响应将显示在这里。",
     "unavailable": "该模型暂不支持推理：{{error}}"
   },
-  "downloadStarted": "已加入下载队列",
-  "downloadFailed": "无法开始下载：{{error}}"
+  "select": {
+    "body": "从左侧列表选择一项，或按 ⌘K 全局搜索。",
+    "title": "未选择任何条目"
+  },
+  "tabs": {
+    "card": "卡片",
+    "discussions": "讨论",
+    "files": "文件",
+    "info": "信息",
+    "playground": "试用"
+  }
 }
