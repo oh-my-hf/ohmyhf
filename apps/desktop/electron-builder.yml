@@ -13,6 +13,7 @@ asarUnpack:
   - '**/*.node'
 
 npmRebuild: true
+electronVersion: 43.1.0
 
 mac:
   category: public.app-category.developer-tools
@@ -36,6 +37,10 @@ linux:
   category: Development
   synopsis: Unofficial desktop client for the Hugging Face Hub
   maintainer: Oh My HuggingFace contributors
+  executableName: oh-my-huggingface
+  desktop:
+    entry:
+      StartupWMClass: oh-my-huggingface
 
 publish:
   provider: github

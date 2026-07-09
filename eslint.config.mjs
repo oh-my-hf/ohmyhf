@@ -29,9 +29,17 @@ export default tseslint.config(
     }
   },
   {
+    // Plain-JS tooling files run under Node.
     files: ['**/*.mjs', '**/*.js'],
     languageOptions: {
-      globals: { console: 'readonly', process: 'readonly' }
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        module: 'writable',
+        require: 'readonly',
+        __dirname: 'readonly'
+      }
     }
   },
   {
