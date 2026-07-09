@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  electron: true
+  better-sqlite3: true
+  esbuild: true
+  '@tailwindcss/oxide': true
+  '@parcel/watcher': true
+  electron-winstaller: false
+
+# Flat node_modules: electron-builder and native-module rebuilds need a hoisted layout.
+nodeLinker: hoisted

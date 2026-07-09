@@ -1,0 +1,32 @@
+{
+  "name": "oh-my-huggingface",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unofficial cross-platform desktop client for the Hugging Face Hub",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter oh-my-huggingface-desktop dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r test",
+    "i18n:extract": "pnpm --filter oh-my-huggingface-desktop i18n:extract",
+    "postinstall": "node scripts/rebuild-native.mjs"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "eslint-plugin-i18next": "^6.1.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.9.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.63.0"
+  }
+}
