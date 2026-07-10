@@ -22,9 +22,18 @@
   "discussions": {
     "comments": "{{count}} 条评论",
     "empty": "暂无讨论。",
+    "filter": {
+      "all": "全部",
+      "closed": "已关闭",
+      "open": "开放"
+    },
     "pullRequest": "PR",
     "reply": "回复",
     "replyPlaceholder": "写下回复（支持 Markdown）…",
+    "segment": {
+      "discussions": "讨论",
+      "pullRequests": "拉取请求"
+    },
     "send": "发送",
     "sending": "发送中…",
     "signInToReply": "登录后即可参与讨论。",
@@ -81,6 +90,16 @@
     "signIn": "登录后即可使用推理试用。",
     "stop": "停止",
     "unavailable": "该模型暂不支持推理：{{error}}"
+  },
+  "pr": {
+    "binary": "二进制",
+    "diffTruncated": "差异内容已截断，仅显示部分变更。",
+    "empty": "暂无拉取请求。",
+    "noDiff": "暂无变更内容。",
+    "refsLabel": "合并方向",
+    "renamed": "已重命名",
+    "tabDiscussion": "讨论",
+    "tabFiles": "文件变更"
   },
   "preview": {
     "colDtype": "数据类型",

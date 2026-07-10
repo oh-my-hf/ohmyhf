@@ -7,6 +7,7 @@ import { CachePage } from '@/pages/CachePage'
 import { ComparePage } from '@/pages/ComparePage'
 import { DownloadsPage } from '@/pages/DownloadsPage'
 import { FavoritesPage } from '@/pages/FavoritesPage'
+import { HomePage } from '@/pages/HomePage'
 import { InboxPage } from '@/pages/InboxPage'
 import { PapersPage } from '@/pages/PapersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -18,7 +19,7 @@ export function App(): React.JSX.Element {
       <HashRouter>
         <Routes>
           <Route element={<AppShell />}>
-            <Route index element={<Navigate to="/models" replace />} />
+            <Route index element={<HomePage />} />
             <Route path="models/*" element={<BrowsePage kind="model" />} />
             <Route path="datasets/*" element={<BrowsePage kind="dataset" />} />
             <Route path="spaces/*" element={<BrowsePage kind="space" />} />
@@ -30,7 +31,7 @@ export function App(): React.JSX.Element {
             <Route path="compare" element={<ComparePage />} />
             <Route path="upload" element={<UploadPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="*" element={<Navigate to="/models" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </HashRouter>

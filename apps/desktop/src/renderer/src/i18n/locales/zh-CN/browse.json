@@ -1,4 +1,19 @@
 {
+  "datasetFilter": {
+    "format": "格式",
+    "modalities": "模态",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "规模（行数）",
+      "lt1k": "< 1K"
+    }
+  },
   "downloads": "下载",
   "empty": {
     "body": "换个搜索词，或清除当前筛选条件。",
@@ -11,11 +26,21 @@
   "filter": {
     "all": "全部",
     "clear": "清除筛选",
+    "clearAll": "清除全部",
     "clientSide": "仅筛选已加载结果",
+    "done": "完成",
+    "inferenceProviders": "推理服务商",
+    "languages": "语言",
+    "libraries": "框架",
     "library": "框架",
     "license": "许可证",
+    "licenses": "许可证",
+    "other": "其他",
     "params": "参数量",
-    "task": "任务"
+    "sdk": "SDK",
+    "task": "任务",
+    "tasks": "任务",
+    "title": "筛选"
   },
   "likes": "点赞",
   "params": {

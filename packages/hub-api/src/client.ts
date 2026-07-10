@@ -2,12 +2,15 @@ import type {
   DatasetRows,
   DatasetSplit,
   DiscussionDetail,
+  DiscussionStatusFilter,
   DiscussionSummary,
+  DiscussionType,
   FileTextResult,
   FileTreeEntry,
   HubNotification,
   Page,
   PaperSummary,
+  PostSummary,
   RepoDetail,
   RepoKind,
   RepoSummary,
@@ -23,6 +26,7 @@ import {
   mapDiscussionSummary,
   mapFileTree,
   mapPaper,
+  mapPost,
   mapRepoDetail,
   mapRepoSummary,
   mapWhoAmI
@@ -77,7 +81,17 @@ const LIST_EXPAND: Record<RepoKind, string[]> = {
     'gated',
     'trendingScore'
   ],
-  space: ['likes', 'lastModified', 'createdAt', 'tags', 'private', 'sdk', 'trendingScore']
+  space: [
+    'likes',
+    'lastModified',
+    'createdAt',
+    'tags',
+    'private',
+    'sdk',
+    'trendingScore',
+    'cardData',
+    'runtime'
+  ]
 }
 
 export interface HubClientOptions {
@@ -157,6 +171,9 @@ function formatCell(value: unknown): string {
 }
 
 const SAFETENSORS_MAX_HEADER_BYTES = 8 * 1024 * 1024
+
+/** PR diffs beyond this length are truncated before reaching the renderer. */
+const DIFF_MAX_CHARS = 2 * 1024 * 1024
 
 /**
  * Thin, cached client over the Hub REST API. All requests carry a descriptive
@@ -379,6 +396,9 @@ export class HubClient {
     if (query.library) url.searchParams.set('library', query.library)
     for (const tag of query.tags ?? []) url.searchParams.append('filter', tag)
     if (query.license) url.searchParams.append('filter', `license:${query.license}`)
+    if (query.inferenceProvider && query.kind === 'model') {
+      url.searchParams.set('inference_provider', query.inferenceProvider)
+    }
     url.searchParams.set('sort', SORT_PARAM[query.sort])
     url.searchParams.set('direction', '-1')
     url.searchParams.set('limit', String(query.limit ?? 30))
@@ -442,10 +462,54 @@ export class HubClient {
     return { items: (body as never[]).map(mapPaper), nextCursor: nextUrl }
   }
 
-  async listDiscussions(kind: RepoKind, repoId: string): Promise<Page<DiscussionSummary>> {
-    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions`
-    const { body } = await this.getJson<{ discussions?: unknown[] }>(url)
+  async listDiscussions(
+    kind: RepoKind,
+    repoId: string,
+    opts: { type?: DiscussionType; status?: DiscussionStatusFilter } = {}
+  ): Promise<Page<DiscussionSummary>> {
+    const url = new URL(`${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions`)
+    if (opts.type) url.searchParams.set('type', opts.type)
+    if (opts.status) url.searchParams.set('status', opts.status)
+    const { body } = await this.getJson<{ discussions?: unknown[] }>(url.toString())
     return { items: (body.discussions ?? []).map((d) => mapDiscussionSummary(d as never)) }
+  }
+
+  /**
+   * Raw unified diff of a pull request, capped at DIFF_MAX_CHARS. Returns ''
+   * when the discussion exposes no diffUrl (plain discussions, drafts).
+   */
+  async getDiscussionDiff(kind: RepoKind, repoId: string, num: number): Promise<string> {
+    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}`
+    const { body } = await this.getJson<{ diffUrl?: string }>(url, { ttl: 5_000 })
+    if (!body.diffUrl) return ''
+    const diffUrl = new URL(body.diffUrl, this.endpoint).toString()
+    const diff = await this.getText(diffUrl)
+    if (diff.length <= DIFF_MAX_CHARS) return diff
+    return `${diff.slice(0, DIFF_MAX_CHARS)}\n... (diff truncated)`
+  }
+
+  /**
+   * Community posts feed. The endpoint sends no Link header, so pagination
+   * advances a skip cursor by the number of items actually received (the
+   * server may return fewer than the requested limit).
+   */
+  async getPosts(cursor?: string): Promise<Page<PostSummary>> {
+    const url = cursor ?? `${this.endpoint}/api/posts?limit=30`
+    const { body, nextUrl } = await this.getJson<{
+      socialPosts?: unknown[]
+      numTotalItems?: number
+    }>(url)
+    const items = (body.socialPosts ?? []).map((raw) => mapPost(raw as never, this.endpoint))
+    let nextCursor = nextUrl
+    if (!nextCursor && items.length > 0) {
+      const next = new URL(url)
+      const skip = Number(next.searchParams.get('skip') ?? '0') + items.length
+      if (body.numTotalItems === undefined || skip < body.numTotalItems) {
+        next.searchParams.set('skip', String(skip))
+        nextCursor = next.toString()
+      }
+    }
+    return { items, nextCursor }
   }
 
   async getDiscussion(kind: RepoKind, repoId: string, num: number): Promise<DiscussionDetail> {

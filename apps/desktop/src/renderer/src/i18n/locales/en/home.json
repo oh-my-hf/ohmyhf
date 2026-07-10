@@ -1,0 +1,19 @@
+{
+  "feed": {
+    "empty": "Nothing here yet",
+    "emptyBody": "Activity from the Hub will show up here.",
+    "emptyFollowing": "You're not following anyone yet",
+    "emptyFollowingBody": "Follow users and organizations from the Inbox to see their latest models and datasets here.",
+    "manageFollows": "Manage follows",
+    "updated": "<author>{{author}}</author> updated <repo>{{repo}}</repo>"
+  },
+  "kind": {
+    "post": "Post"
+  },
+  "title": "Home",
+  "trending": {
+    "all": "All",
+    "empty": "Nothing trending right now",
+    "title": "Trending"
+  }
+}

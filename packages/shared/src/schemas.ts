@@ -36,6 +36,7 @@ const searchQuery = z.object({
   library: z.string().max(128).optional(),
   license: z.string().max(128).optional(),
   sort: z.enum(['trending', 'downloads', 'likes', 'updated', 'created']),
+  inferenceProvider: z.string().max(64).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   cursor: z.string().max(4096).optional()
 })
@@ -92,7 +93,14 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     revision: revision.optional(),
     path: relPath.optional()
   }),
-  'hub:discussions': z.object({ kind: repoKind, repoId }),
+  'hub:discussions': z.object({
+    kind: repoKind,
+    repoId,
+    type: z.enum(['discussion', 'pull_request']).optional(),
+    status: z.enum(['open', 'closed']).optional()
+  }),
+  'hub:discussionDiff': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
+  'hub:posts': z.object({ cursor: z.string().max(4096).optional() }).optional(),
   'hub:discussionDetail': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
   'hub:discussionComment': z.object({
     kind: repoKind,

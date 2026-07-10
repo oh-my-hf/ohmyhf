@@ -28,6 +28,7 @@
   "private": "私有",
   "remove": "移除",
   "retry": "重试",
+  "running": "运行中",
   "showInFolder": "在文件夹中显示",
   "theme": {
     "dark": "深色",

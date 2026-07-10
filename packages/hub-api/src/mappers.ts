@@ -4,6 +4,7 @@ import type {
   DiscussionSummary,
   FileTreeEntry,
   PaperSummary,
+  PostSummary,
   RepoDetail,
   RepoKind,
   RepoSummary,
@@ -28,6 +29,7 @@ interface RawRepo {
   trendingScore?: number
   safetensors?: { total?: number }
   cardData?: Record<string, unknown>
+  runtime?: { stage?: string }
   siblings?: Array<{ rfilename: string; size?: number }>
   sha?: string
   usedStorage?: number
@@ -45,9 +47,16 @@ function licenseFromTags(tags: string[] | undefined): string | undefined {
   return tag?.slice('license:'.length)
 }
 
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
 export function mapRepoSummary(raw: RawRepo, kind: RepoKind): RepoSummary {
   const id = raw.id ?? raw.modelId ?? ''
   const { author, name } = splitRepoId(id)
+  // Gallery card fields are Space-specific: models/datasets keep them undefined
+  // even though their payloads may also carry a cardData object.
+  const card = kind === 'space' ? raw.cardData : undefined
   return {
     id,
     kind,
@@ -65,7 +74,12 @@ export function mapRepoSummary(raw: RawRepo, kind: RepoKind): RepoSummary {
     license: licenseFromTags(raw.tags),
     paramCount: raw.safetensors?.total,
     sdk: raw.sdk,
-    trendingScore: raw.trendingScore
+    trendingScore: raw.trendingScore,
+    emoji: optionalString(card?.emoji),
+    colorFrom: optionalString(card?.colorFrom),
+    colorTo: optionalString(card?.colorTo),
+    shortDescription: optionalString(card?.short_description),
+    runtimeStage: kind === 'space' ? raw.runtime?.stage : undefined
   }
 }
 
@@ -138,6 +152,8 @@ interface RawDiscussion {
   author?: { name?: string }
   createdAt?: string
   numComments?: number
+  changes?: { base?: string }
+  diffUrl?: string
   events?: Array<{
     id?: string
     type?: string
@@ -163,6 +179,8 @@ export function mapDiscussionSummary(raw: RawDiscussion): DiscussionSummary {
 export function mapDiscussionDetail(raw: RawDiscussion): DiscussionDetail {
   return {
     ...mapDiscussionSummary(raw),
+    baseRef: raw.changes?.base,
+    diffUrl: raw.diffUrl,
     events: (raw.events ?? []).map((e, i) => ({
       id: e.id ?? String(i),
       type: e.type ?? 'comment',
@@ -170,6 +188,42 @@ export function mapDiscussionDetail(raw: RawDiscussion): DiscussionDetail {
       createdAt: e.createdAt,
       content: e.data?.latest?.raw
     }))
+  }
+}
+
+interface RawPost {
+  slug?: string
+  author?: { name?: string; fullname?: string; avatarUrl?: string }
+  rawContent?: string
+  publishedAt?: string
+  numComments?: number
+  reactions?: Array<{ reaction?: string; count?: number; users?: string[] }>
+  /** Relative path like "/posts/<author>/<slug>". */
+  url?: string
+}
+
+export function mapPost(raw: RawPost, endpoint: string): PostSummary {
+  const absolutize = (u: string | undefined): string | undefined =>
+    u ? new URL(u, endpoint).toString() : undefined
+  const author = raw.author?.name ?? ''
+  const slug = raw.slug ?? ''
+  // Reaction items carry both a count and a users array; trust count first and
+  // degrade to users.length, then to "one reaction per item".
+  const numReactions = (raw.reactions ?? []).reduce((acc, r) => {
+    if (typeof r?.count === 'number') return acc + r.count
+    if (Array.isArray(r?.users)) return acc + r.users.length
+    return acc + 1
+  }, 0)
+  return {
+    slug,
+    author,
+    authorFullname: raw.author?.fullname,
+    authorAvatarUrl: absolutize(raw.author?.avatarUrl),
+    content: raw.rawContent ?? '',
+    publishedAt: raw.publishedAt,
+    numComments: raw.numComments,
+    numReactions,
+    url: absolutize(raw.url) ?? `${endpoint}/posts/${author}/${slug}`
   }
 }
 

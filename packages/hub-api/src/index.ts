@@ -7,6 +7,7 @@ export {
   mapRepoDetail,
   mapFileTree,
   mapPaper,
+  mapPost,
   mapDiscussionSummary,
   mapDiscussionDetail,
   mapWhoAmI

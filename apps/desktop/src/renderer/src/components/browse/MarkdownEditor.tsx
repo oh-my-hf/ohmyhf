@@ -224,7 +224,7 @@ export function MarkdownEditor({
             <div
               role="listbox"
               aria-label={t('editor.mentionHint')}
-              className="animate-fade-rise absolute inset-x-2 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-md border bg-bg p-1 shadow-overlay"
+              className="animate-fade-rise absolute inset-x-2 bottom-full z-30 mb-1 max-h-56 overflow-y-auto rounded-md border bg-bg p-1 shadow-overlay"
             >
               {mentionQuery.length === 0 && (
                 <p className="flex items-center gap-1.5 px-2 py-1.5 text-[12px] text-ink-faint">
@@ -233,9 +233,7 @@ export function MarkdownEditor({
                 </p>
               )}
               {mentionQuery.length >= 1 && !userSearch.isLoading && mentionResults.length === 0 && (
-                <p className="px-2 py-1.5 text-[12px] text-ink-faint">
-                  {t('editor.mentionEmpty')}
-                </p>
+                <p className="px-2 py-1.5 text-[12px] text-ink-faint">{t('editor.mentionEmpty')}</p>
               )}
               {mentionResults.map((user, index) => (
                 <button
@@ -255,7 +253,11 @@ export function MarkdownEditor({
                   )}
                 >
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="" className="size-5 shrink-0 rounded-full border" />
+                    <img
+                      src={user.avatarUrl}
+                      alt=""
+                      className="size-5 shrink-0 rounded-full border"
+                    />
                   ) : (
                     <AtSign className="size-4 shrink-0 text-ink-faint" aria-hidden />
                   )}

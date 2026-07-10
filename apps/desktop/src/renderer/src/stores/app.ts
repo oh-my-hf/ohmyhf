@@ -1,11 +1,5 @@
 import { create } from 'zustand'
-import type {
-  AppInfo,
-  AppSettings,
-  AuthState,
-  RepoKind,
-  RepoSort
-} from '@oh-my-huggingface/shared'
+import type { AppInfo, AppSettings, AuthState, RepoKind, RepoSort } from '@oh-my-huggingface/shared'
 import { DEFAULT_SETTINGS } from '@oh-my-huggingface/shared'
 import type { ParamBucket } from '@/lib/utils'
 import { invoke } from '@/lib/ipc'
@@ -19,6 +13,12 @@ export interface BrowseFilters {
   license?: string
   /** Client-side parameter-count bucket (models only). */
   paramBucket?: ParamBucket
+  /** Raw Hub `filter=` tags collected by the filter panel (multi-select). */
+  tags?: string[]
+  /** Models only: serverless inference provider id. */
+  inferenceProvider?: string
+  /** Bare ISO code — the Hub indexes languages as plain tags, so this joins `tags`. */
+  language?: string
 }
 
 const defaultFilters = (kind: RepoKind): BrowseFilters => ({
@@ -32,6 +32,8 @@ interface AppState {
   auth: AuthState
   paletteOpen: boolean
   filters: Record<RepoKind, BrowseFilters>
+  /** Whether the browse filter sidebar overlays the list pane. */
+  filterPanelOpen: boolean
 
   setSettings: (settings: AppSettings) => void
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
@@ -39,6 +41,7 @@ interface AppState {
   setPaletteOpen: (open: boolean) => void
   setFilters: (kind: RepoKind, patch: Partial<BrowseFilters>) => void
   resetFilters: (kind: RepoKind) => void
+  setFilterPanelOpen: (open: boolean) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -51,6 +54,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     dataset: defaultFilters('dataset'),
     space: defaultFilters('space')
   },
+  filterPanelOpen: false,
 
   setSettings: (settings) => {
     setTheme(settings.theme)
@@ -67,7 +71,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       filters: { ...state.filters, [kind]: { ...state.filters[kind], ...patch } }
     })),
   resetFilters: (kind) =>
-    set((state) => ({ filters: { ...state.filters, [kind]: defaultFilters(kind) } }))
+    set((state) => ({ filters: { ...state.filters, [kind]: defaultFilters(kind) } })),
+  setFilterPanelOpen: (filterPanelOpen) => set({ filterPanelOpen })
 }))
 
 /** UI locale resolved from settings + system locale; used by i18n and formatters. */

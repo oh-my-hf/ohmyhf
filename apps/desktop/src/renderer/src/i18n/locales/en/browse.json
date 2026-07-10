@@ -1,4 +1,19 @@
 {
+  "datasetFilter": {
+    "format": "Format",
+    "modalities": "Modalities",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "Size (rows)",
+      "lt1k": "< 1K"
+    }
+  },
   "downloads": "Downloads",
   "empty": {
     "body": "Try a different search, or clear the active filters.",
@@ -11,11 +26,21 @@
   "filter": {
     "all": "All",
     "clear": "Clear filters",
+    "clearAll": "Clear all",
     "clientSide": "filters loaded results only",
+    "done": "Done",
+    "inferenceProviders": "Inference Providers",
+    "languages": "Languages",
+    "libraries": "Libraries",
     "library": "Library",
     "license": "License",
+    "licenses": "Licenses",
+    "other": "Other",
     "params": "Parameters",
-    "task": "Task"
+    "sdk": "SDK",
+    "task": "Task",
+    "tasks": "Tasks",
+    "title": "Filters"
   },
   "likes": "Likes",
   "params": {

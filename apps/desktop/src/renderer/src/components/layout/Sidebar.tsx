@@ -8,6 +8,7 @@ import {
   Database,
   FileText,
   HardDrive,
+  Home,
   Inbox,
   LayoutGrid,
   Settings,
@@ -26,6 +27,8 @@ interface NavItem {
   labelKey: string
   icon: React.ComponentType<{ className?: string }>
   badge?: number
+  /** Match the route exactly; needed for "/" which prefixes every path. */
+  end?: boolean
 }
 
 function SidebarLink({ item, label }: { item: NavItem; label: string }): React.JSX.Element {
@@ -34,6 +37,7 @@ function SidebarLink({ item, label }: { item: NavItem; label: string }): React.J
       <TooltipTrigger asChild>
         <NavLink
           to={item.to}
+          end={item.end}
           className={({ isActive }) =>
             cn(
               'group relative flex h-8 items-center justify-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150 min-[860px]:justify-start',
@@ -75,6 +79,7 @@ export function Sidebar(): React.JSX.Element {
   const unread = inbox.data?.filter((i) => !i.readAt).length ?? 0
 
   const browse: NavItem[] = [
+    { to: '/', labelKey: 'home', icon: Home, end: true },
     { to: '/models', labelKey: 'models', icon: Boxes },
     { to: '/datasets', labelKey: 'datasets', icon: Database },
     { to: '/spaces', labelKey: 'spaces', icon: LayoutGrid },

@@ -1,0 +1,194 @@
+import { useMemo } from 'react'
+import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import { Newspaper, UserPlus } from 'lucide-react'
+import type { PaperSummary, PostSummary, RepoSummary } from '@oh-my-huggingface/shared'
+import { invoke } from '@/lib/ipc'
+import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Skeleton } from '@/components/ui/skeleton'
+import { PaperRow, PostCard, RepoEventRow } from '@/components/home/FeedItems'
+import { TrendingRail } from '@/components/home/TrendingRail'
+import { resolveLocale, useAppStore } from '@/stores/app'
+
+const STALE_TIME = 5 * 60_000
+const MAX_FOLLOWS = 6
+const PAPERS_SHOWN = 3
+
+type FeedItem =
+  | { type: 'post'; key: string; ts: number; post: PostSummary }
+  | { type: 'repo'; key: string; ts: number; repo: RepoSummary }
+  | { type: 'paper'; key: string; ts: number; paper: PaperSummary }
+
+function toTimestamp(iso: string | undefined): number {
+  if (!iso) return 0
+  const ts = new Date(iso).getTime()
+  return Number.isNaN(ts) ? 0 : ts
+}
+
+export function HomePage(): React.JSX.Element {
+  const { t } = useTranslation(['home', 'common'])
+  const navigate = useNavigate()
+  const settings = useAppStore((s) => s.settings)
+  const appInfo = useAppStore((s) => s.appInfo)
+  const locale = resolveLocale(settings, appInfo)
+
+  // Each source is an independent query: one failing (e.g. posts while the
+  // endpoint is not implemented yet) must not blank the rest of the feed.
+  const posts = useQuery({
+    queryKey: ['home', 'posts'],
+    queryFn: () => invoke('hub:posts', {}),
+    staleTime: STALE_TIME
+  })
+
+  const papers = useQuery({
+    queryKey: ['home', 'papers'],
+    queryFn: () => invoke('hub:papers', {}),
+    staleTime: STALE_TIME
+  })
+
+  // Shares the ['follows'] cache entry with the Inbox page.
+  const follows = useQuery({
+    queryKey: ['follows'],
+    queryFn: () => invoke('follows:list', undefined),
+    staleTime: STALE_TIME
+  })
+
+  const followTargets = useMemo(
+    () =>
+      (follows.data ?? [])
+        .filter((f) => f.type === 'user' || f.type === 'org')
+        .slice(0, MAX_FOLLOWS),
+    [follows.data]
+  )
+
+  const activity = useQuery({
+    queryKey: ['home', 'activity', followTargets.map((f) => f.target)],
+    enabled: followTargets.length > 0,
+    staleTime: STALE_TIME,
+    queryFn: async (): Promise<RepoSummary[]> => {
+      // allSettled: one broken author query must not sink the whole group.
+      const results = await Promise.allSettled(
+        followTargets.flatMap((f) => [
+          invoke('hub:search', {
+            query: { kind: 'model', author: f.target, sort: 'updated', limit: 3 }
+          }),
+          invoke('hub:search', {
+            query: { kind: 'dataset', author: f.target, sort: 'updated', limit: 2 }
+          })
+        ])
+      )
+      const seen = new Set<string>()
+      const repos: RepoSummary[] = []
+      for (const result of results) {
+        if (result.status !== 'fulfilled') continue
+        for (const repo of result.value.items) {
+          const key = `${repo.kind}:${repo.id}`
+          if (!seen.has(key)) {
+            seen.add(key)
+            repos.push(repo)
+          }
+        }
+      }
+      return repos
+    }
+  })
+
+  const feed = useMemo<FeedItem[]>(() => {
+    const items: FeedItem[] = []
+    for (const post of posts.data?.items ?? []) {
+      items.push({
+        type: 'post',
+        key: `post:${post.slug}`,
+        ts: toTimestamp(post.publishedAt),
+        post
+      })
+    }
+    for (const repo of activity.data ?? []) {
+      items.push({
+        type: 'repo',
+        key: `repo:${repo.kind}:${repo.id}`,
+        ts: toTimestamp(repo.updatedAt),
+        repo
+      })
+    }
+    for (const paper of (papers.data?.items ?? []).slice(0, PAPERS_SHOWN)) {
+      items.push({
+        type: 'paper',
+        key: `paper:${paper.id}`,
+        ts: toTimestamp(paper.publishedAt),
+        paper
+      })
+    }
+    return items.sort((a, b) => b.ts - a.ts)
+  }, [posts.data, activity.data, papers.data])
+
+  // Disabled queries stay pending forever, hence the followTargets guard.
+  const sourcesPending =
+    posts.isPending ||
+    papers.isPending ||
+    follows.isPending ||
+    (followTargets.length > 0 && activity.isPending)
+  const showSkeleton = feed.length === 0 && sourcesPending
+  const showEmptyFollowing = follows.isSuccess && followTargets.length === 0
+
+  return (
+    <div className="animate-fade-rise flex h-full min-w-0">
+      <section className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-6 py-5">
+          <h1 className="text-[15px] font-semibold">{t('home:title')}</h1>
+
+          {showEmptyFollowing ? (
+            <div className="rounded-lg border bg-panel">
+              <EmptyState
+                icon={UserPlus}
+                title={t('home:feed.emptyFollowing')}
+                body={t('home:feed.emptyFollowingBody')}
+                action={
+                  <Button size="sm" onClick={() => navigate('/inbox')}>
+                    {t('home:feed.manageFollows')}
+                  </Button>
+                }
+                className="py-8"
+              />
+            </div>
+          ) : null}
+
+          {showSkeleton ? (
+            Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex flex-col gap-3 rounded-lg border bg-panel p-4">
+                <div className="flex items-center gap-2.5">
+                  <Skeleton className="size-8 rounded-full" />
+                  <div className="flex flex-col gap-1.5">
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-2.5 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-2/3" />
+              </div>
+            ))
+          ) : feed.length === 0 && !showEmptyFollowing ? (
+            <EmptyState
+              icon={Newspaper}
+              title={t('home:feed.empty')}
+              body={t('home:feed.emptyBody')}
+            />
+          ) : (
+            feed.map((item) =>
+              item.type === 'post' ? (
+                <PostCard key={item.key} post={item.post} locale={locale} />
+              ) : item.type === 'repo' ? (
+                <RepoEventRow key={item.key} repo={item.repo} locale={locale} />
+              ) : (
+                <PaperRow key={item.key} paper={item.paper} locale={locale} />
+              )
+            )
+          )}
+        </div>
+      </section>
+      <TrendingRail />
+    </div>
+  )
+}

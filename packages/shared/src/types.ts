@@ -28,6 +28,12 @@ export interface RepoSummary {
   /** Spaces only: sdk, e.g. "gradio". */
   sdk?: string
   trendingScore?: number
+  /** Spaces only: card emoji + gradient + runtime stage for gallery rendering. */
+  emoji?: string
+  colorFrom?: string
+  colorTo?: string
+  shortDescription?: string
+  runtimeStage?: string
 }
 
 export interface RepoDetail extends RepoSummary {
@@ -71,6 +77,8 @@ export interface SearchQuery {
   library?: string
   license?: string
   sort: RepoSort
+  /** Filter to models served by a specific inference provider (models only). */
+  inferenceProvider?: string
   limit?: number
   /** Opaque pagination cursor (full URL of the next page). */
   cursor?: string
@@ -236,6 +244,26 @@ export interface DiscussionEvent {
 
 export interface DiscussionDetail extends DiscussionSummary {
   events: DiscussionEvent[]
+  /** Pull requests only. */
+  baseRef?: string
+  diffUrl?: string
+}
+
+export type DiscussionType = 'discussion' | 'pull_request'
+export type DiscussionStatusFilter = 'open' | 'closed'
+
+export interface PostSummary {
+  slug: string
+  author: string
+  authorFullname?: string
+  authorAvatarUrl?: string
+  /** Raw markdown-ish text of the post. */
+  content: string
+  publishedAt?: string
+  numComments?: number
+  numReactions?: number
+  /** Absolute huggingface.co URL. */
+  url: string
 }
 
 export type ThemeSetting = 'system' | 'light' | 'dark'

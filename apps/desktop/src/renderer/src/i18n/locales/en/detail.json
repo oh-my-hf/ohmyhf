@@ -22,9 +22,18 @@
   "discussions": {
     "comments": "{{count}} comments",
     "empty": "No discussions yet.",
+    "filter": {
+      "all": "All",
+      "closed": "Closed",
+      "open": "Open"
+    },
     "pullRequest": "PR",
     "reply": "Reply",
     "replyPlaceholder": "Write a reply (Markdown supported)…",
+    "segment": {
+      "discussions": "Discussions",
+      "pullRequests": "Pull Requests"
+    },
     "send": "Send",
     "sending": "Sending…",
     "signInToReply": "Sign in to join the discussion.",
@@ -81,6 +90,16 @@
     "signIn": "Sign in to use the inference playground.",
     "stop": "Stop",
     "unavailable": "Inference is unavailable for this model: {{error}}"
+  },
+  "pr": {
+    "binary": "Binary",
+    "diffTruncated": "This diff was truncated — only part of the changes are shown.",
+    "empty": "No pull requests yet.",
+    "noDiff": "No changes to show.",
+    "refsLabel": "Merge direction",
+    "renamed": "Renamed",
+    "tabDiscussion": "Discussion",
+    "tabFiles": "Files changed"
   },
   "preview": {
     "colDtype": "Dtype",

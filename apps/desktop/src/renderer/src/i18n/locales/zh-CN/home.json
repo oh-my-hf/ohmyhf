@@ -1,0 +1,19 @@
+{
+  "feed": {
+    "empty": "暂时没有内容",
+    "emptyBody": "Hugging Face Hub 上的动态会显示在这里。",
+    "emptyFollowing": "你还没有关注任何人",
+    "emptyFollowingBody": "在收件箱中关注用户和组织，他们最新的模型和数据集就会出现在这里。",
+    "manageFollows": "管理关注",
+    "updated": "<author>{{author}}</author> 更新了 <repo>{{repo}}</repo>"
+  },
+  "kind": {
+    "post": "帖子"
+  },
+  "title": "首页",
+  "trending": {
+    "all": "全部",
+    "empty": "暂无热门内容",
+    "title": "热门"
+  }
+}

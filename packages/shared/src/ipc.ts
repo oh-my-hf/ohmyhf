@@ -11,7 +11,9 @@ import type {
   DatasetRows,
   DatasetSplit,
   DiscussionDetail,
+  DiscussionStatusFilter,
   DiscussionSummary,
+  DiscussionType,
   DownloadRequest,
   DownloadTask,
   ExportResult,
@@ -30,6 +32,7 @@ import type {
   InferenceStreamEvent,
   Page,
   PaperSummary,
+  PostSummary,
   RepoDetail,
   RepoKind,
   RepoSummary,
@@ -60,9 +63,20 @@ export interface IpcInvokeContract {
     res: FileTreeEntry[]
   }
   'hub:discussions': {
-    req: { kind: RepoKind; repoId: string }
+    req: {
+      kind: RepoKind
+      repoId: string
+      type?: DiscussionType
+      status?: DiscussionStatusFilter
+    }
     res: Page<DiscussionSummary>
   }
+  /** Raw unified diff of a pull request ('' when unavailable). */
+  'hub:discussionDiff': {
+    req: { kind: RepoKind; repoId: string; num: number }
+    res: string
+  }
+  'hub:posts': { req: { cursor?: string }; res: Page<PostSummary> }
   'hub:discussionDetail': {
     req: { kind: RepoKind; repoId: string; num: number }
     res: DiscussionDetail
@@ -168,6 +182,8 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:readme',
   'hub:fileTree',
   'hub:discussions',
+  'hub:discussionDiff',
+  'hub:posts',
   'hub:discussionDetail',
   'hub:discussionComment',
   'hub:notifications',

@@ -28,6 +28,7 @@
   "private": "Private",
   "remove": "Remove",
   "retry": "Retry",
+  "running": "Running",
   "showInFolder": "Show in folder",
   "theme": {
     "dark": "Dark",

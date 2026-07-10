@@ -42,6 +42,32 @@ describe('HubClient.buildSearchUrl', () => {
     expect(url.pathname).toBe('/api/spaces')
     expect(url.searchParams.get('sort')).toBe('trendingScore')
   })
+
+  it('includes inference_provider for models only', () => {
+    const modelUrl = new URL(
+      client.buildSearchUrl({ kind: 'model', sort: 'trending', inferenceProvider: 'novita' })
+    )
+    expect(modelUrl.searchParams.get('inference_provider')).toBe('novita')
+    const datasetUrl = new URL(
+      client.buildSearchUrl({ kind: 'dataset', sort: 'trending', inferenceProvider: 'novita' })
+    )
+    expect(datasetUrl.searchParams.get('inference_provider')).toBeNull()
+    const spaceUrl = new URL(
+      client.buildSearchUrl({ kind: 'space', sort: 'trending', inferenceProvider: 'novita' })
+    )
+    expect(spaceUrl.searchParams.get('inference_provider')).toBeNull()
+  })
+
+  it('expands cardData and runtime for spaces only', () => {
+    const spaceUrl = new URL(client.buildSearchUrl({ kind: 'space', sort: 'trending' }))
+    const spaceExpand = spaceUrl.searchParams.getAll('expand[]')
+    expect(spaceExpand).toContain('cardData')
+    expect(spaceExpand).toContain('runtime')
+    const modelUrl = new URL(client.buildSearchUrl({ kind: 'model', sort: 'trending' }))
+    const modelExpand = modelUrl.searchParams.getAll('expand[]')
+    expect(modelExpand).not.toContain('cardData')
+    expect(modelExpand).not.toContain('runtime')
+  })
 })
 
 describe('HubClient.searchRepos', () => {

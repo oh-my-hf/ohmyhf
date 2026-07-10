@@ -108,7 +108,13 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:fileTree', ({ kind, repoId, revision, path }) =>
     ctx.hub.getFileTree(kind, repoId, revision, path)
   )
-  handle('hub:discussions', ({ kind, repoId }) => ctx.hub.listDiscussions(kind, repoId))
+  handle('hub:discussions', ({ kind, repoId, type, status }) =>
+    ctx.hub.listDiscussions(kind, repoId, { type, status })
+  )
+  handle('hub:discussionDiff', ({ kind, repoId, num }) =>
+    ctx.hub.getDiscussionDiff(kind, repoId, num)
+  )
+  handle('hub:posts', (req) => ctx.hub.getPosts(req?.cursor))
   handle('hub:discussionDetail', ({ kind, repoId, num }) =>
     ctx.hub.getDiscussion(kind, repoId, num)
   )
