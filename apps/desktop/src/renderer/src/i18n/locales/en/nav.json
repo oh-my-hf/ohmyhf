@@ -1,6 +1,7 @@
 {
   "browse": "Browse",
   "cache": "Cache",
+  "collections": "Collections",
   "commandPalette": "Command palette",
   "compare": "Compare",
   "datasets": "Datasets",
@@ -10,6 +11,7 @@
   "inbox": "Inbox",
   "library": "Library",
   "models": "Models",
+  "myRepos": "My repos",
   "palette": {
     "close": "Close",
     "navigate": "Navigate",

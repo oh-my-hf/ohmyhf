@@ -4,11 +4,14 @@ import { queryClient } from '@/lib/query'
 import { AppShell } from '@/components/layout/AppShell'
 import { BrowsePage } from '@/pages/BrowsePage'
 import { CachePage } from '@/pages/CachePage'
+import { CollectionPage } from '@/pages/CollectionPage'
+import { CollectionsPage } from '@/pages/CollectionsPage'
 import { ComparePage } from '@/pages/ComparePage'
 import { DownloadsPage } from '@/pages/DownloadsPage'
 import { FavoritesPage } from '@/pages/FavoritesPage'
 import { HomePage } from '@/pages/HomePage'
 import { InboxPage } from '@/pages/InboxPage'
+import { MyReposPage } from '@/pages/MyReposPage'
 import { PapersPage } from '@/pages/PapersPage'
 import { PostPage } from '@/pages/PostPage'
 import { UploadPage } from '@/pages/UploadPage'
@@ -28,6 +31,10 @@ export function App(): React.JSX.Element {
             <Route path="posts/:author/:slug" element={<PostPage />} />
             <Route path="users/:username" element={<UserPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
+            <Route path="my-repos" element={<MyReposPage />} />
+            <Route path="collections" element={<CollectionsPage />} />
+            {/* Collection slugs contain a slash (owner/name-id), hence the splat. */}
+            <Route path="collections/*" element={<CollectionPage />} />
             <Route path="downloads" element={<DownloadsPage />} />
             <Route path="cache" element={<CachePage />} />
             <Route path="inbox" element={<InboxPage />} />

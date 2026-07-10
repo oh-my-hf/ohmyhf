@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, GitCommitHorizontal, GitPullRequest, MessageSquare } from 'lucide-react'
+import {
+  ArrowLeft,
+  GitCommitHorizontal,
+  GitMerge,
+  GitPullRequest,
+  MessageSquare,
+  Pencil
+} from 'lucide-react'
 import type {
+  AuthState,
   DiscussionEvent,
   DiscussionSummary,
   DiscussionType,
@@ -14,12 +22,16 @@ import { diffTotals, isDiffTruncated, parseUnifiedDiff } from '@/lib/diff'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { useToasts } from '@/components/ui/toaster'
 import { DiffStat, DiffView } from '@/components/browse/DiffView'
 import { MarkdownEditor } from '@/components/browse/MarkdownEditor'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { WRITE_DISCUSSIONS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -54,6 +66,13 @@ const STATUS_EVENT_COLOR: Record<string, string> = {
 
 function hasBody(event: DiscussionEvent): boolean {
   return event.content !== undefined && event.content.trim() !== ''
+}
+
+/** Maintainer = the repo namespace is the signed-in user or one of their orgs. */
+function isRepoMaintainer(auth: AuthState, repoId: string): boolean {
+  if (auth.status !== 'signedIn') return false
+  const namespace = repoId.split('/')[0]
+  return namespace === auth.user.name || auth.user.orgs.some((org) => org.name === namespace)
 }
 
 /**
@@ -152,7 +171,7 @@ function Thread({
   num: number
   onBack: () => void
 }): React.JSX.Element {
-  const { t } = useTranslation(['detail', 'common'])
+  const { t } = useTranslation(['detail', 'common', 'auth'])
   const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
@@ -192,6 +211,166 @@ function Thread({
     },
     onError: (err) => push(err.message, 'error')
   })
+
+  // Maintainer actions (owner of the repo namespace only).
+  const isMaintainer = isRepoMaintainer(auth, repoId)
+  const maintainerGated = isMaintainer && scopeMissing(auth, WRITE_DISCUSSIONS_SCOPE)
+  // null = not editing; otherwise the in-progress title draft.
+  const [titleDraft, setTitleDraft] = useState<string | null>(null)
+  const [mergeOpen, setMergeOpen] = useState(false)
+  const [mergeComment, setMergeComment] = useState('')
+
+  const refreshThread = (): void => {
+    void queryClient.invalidateQueries({ queryKey: ['discussion', kind, repoId, num] })
+    void queryClient.invalidateQueries({ queryKey: ['discussions', kind, repoId] })
+  }
+
+  const setStatus = useMutation({
+    mutationFn: (status: 'open' | 'closed') =>
+      invoke('hub:discussionStatusSet', {
+        kind,
+        repoId,
+        num,
+        status,
+        // A non-empty reply draft rides along as the status-change comment.
+        comment: reply.trim() === '' ? undefined : reply.trim()
+      }),
+    onSuccess: () => {
+      setReply('')
+      push(t('detail:maintainer.statusUpdated'), 'success')
+      refreshThread()
+    },
+    onError: (err) => push(err.message, 'error')
+  })
+
+  const saveTitle = useMutation({
+    mutationFn: (title: string) => invoke('hub:discussionTitleSet', { kind, repoId, num, title }),
+    onSuccess: () => {
+      setTitleDraft(null)
+      push(t('detail:maintainer.titleUpdated'), 'success')
+      refreshThread()
+    },
+    onError: (err) => push(err.message, 'error')
+  })
+
+  const merge = useMutation({
+    mutationFn: () =>
+      invoke('hub:prMerge', {
+        kind,
+        repoId,
+        num,
+        comment: mergeComment.trim() === '' ? undefined : mergeComment.trim()
+      }),
+    onSuccess: () => {
+      setMergeOpen(false)
+      setMergeComment('')
+      push(t('detail:maintainer.merged'), 'success')
+      refreshThread()
+    },
+    onError: (err) => push(err.message, 'error')
+  })
+
+  const status = thread.data?.status
+  // The hub:discussionTitleSet schema requires 3-200 characters.
+  const titleValid = titleDraft !== null && titleDraft.trim().length >= 3
+
+  const maintainerBar = thread.data !== undefined && isMaintainer && (
+    <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b px-3 py-1.5">
+      {maintainerGated ? (
+        <p className="text-[12px] text-ink-faint">{t('auth:missingWriteScope')}</p>
+      ) : titleDraft !== null ? (
+        <>
+          <Input
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            maxLength={200}
+            aria-label={t('detail:maintainer.editTitle')}
+            className="h-7 min-w-0 flex-1 text-[12.5px]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && titleValid && !saveTitle.isPending) {
+                saveTitle.mutate(titleDraft.trim())
+              }
+              if (e.key === 'Escape') setTitleDraft(null)
+            }}
+          />
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!titleValid}
+            loading={saveTitle.isPending}
+            onClick={() => saveTitle.mutate(titleDraft.trim())}
+          >
+            {t('detail:maintainer.titleSave')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setTitleDraft(null)}>
+            {t('common:cancel')}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setTitleDraft(thread.data?.title ?? '')}>
+            <Pencil className="size-3.5" aria-hidden />
+            {t('detail:maintainer.editTitle')}
+          </Button>
+          {(status === 'open' || status === 'closed') && (
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={setStatus.isPending}
+              onClick={() => setStatus.mutate(status === 'open' ? 'closed' : 'open')}
+            >
+              {status === 'open'
+                ? reply.trim() === ''
+                  ? t('detail:maintainer.close')
+                  : t('detail:maintainer.closeWithComment')
+                : reply.trim() === ''
+                  ? t('detail:maintainer.reopen')
+                  : t('detail:maintainer.reopenWithComment')}
+            </Button>
+          )}
+          {isPr && status === 'open' && (
+            <Button variant="primary" size="sm" onClick={() => setMergeOpen(true)}>
+              <GitMerge className="size-3.5" aria-hidden />
+              {t('detail:maintainer.merge')}
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  )
+
+  const mergeDialog = (
+    <Dialog open={mergeOpen} onOpenChange={(open) => !open && setMergeOpen(false)}>
+      <DialogContent>
+        <DialogTitle className="text-[14px] font-semibold">
+          {t('detail:maintainer.mergeConfirmTitle', { num })}
+        </DialogTitle>
+        <DialogDescription className="mt-2 text-[13px] text-ink-muted">
+          {t('detail:maintainer.mergeConfirmBody')}
+        </DialogDescription>
+        <Textarea
+          value={mergeComment}
+          onChange={(e) => setMergeComment(e.target.value)}
+          placeholder={t('detail:maintainer.mergeCommentPlaceholder')}
+          rows={3}
+          className="mt-3"
+        />
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setMergeOpen(false)}>
+            {t('common:cancel')}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            loading={merge.isPending}
+            onClick={() => merge.mutate()}
+          >
+            {t('detail:maintainer.merge')}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 
   const conversation = (
     <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -251,6 +430,8 @@ function Thread({
           </Badge>
         )}
       </div>
+      {maintainerBar}
+      {mergeDialog}
       {isPr && (
         <div
           aria-label={t('detail:pr.refsLabel')}

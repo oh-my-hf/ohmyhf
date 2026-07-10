@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "Accept",
+    "empty": "No requests here.",
+    "grant": "Grant access",
+    "granted": "Access granted",
+    "grantPlaceholder": "username",
+    "handled": "Request updated",
+    "notGated": "Enable gated access to review access requests.",
+    "reasonPlaceholder": "Rejection reason (optional)",
+    "reject": "Reject",
+    "tab": {
+      "accepted": "Accepted",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "title": "Access requests"
+  },
+  "actions": {
+    "duplicate": "Duplicate",
+    "label": "Repository actions",
+    "rename": "Rename / move"
+  },
+  "delete": {
+    "body": "This permanently deletes {{repoId}} and all of its files. This cannot be undone.",
+    "confirmLabel": "Type {{repoId}} to confirm",
+    "success": "Repository deleted",
+    "title": "Delete repository"
+  },
+  "duplicate": {
+    "body": "Create a copy of {{repoId}} under a new id.",
+    "label": "Destination repo id",
+    "private": "Make the copy private",
+    "submit": "Duplicate",
+    "success": "Repository duplicated",
+    "title": "Duplicate repository"
+  },
+  "error": {
+    "title": "Could not load your repositories"
+  },
+  "gatedHint": {
+    "body": "Your access token does not include the manage-repos scope, so repository administration is disabled.",
+    "title": "Missing permission"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "Repositories you own will show up here.",
+      "title": "No repositories yet"
+    },
+    "filter": {
+      "all": "All"
+    },
+    "title": "My repositories"
+  },
+  "refs": {
+    "branchCreated": "Branch created",
+    "branchDeleted": "Branch deleted",
+    "branchesHint": "Create a branch, or delete one by name.",
+    "branchPlaceholder": "branch-name",
+    "createBranch": "Create branch",
+    "createTag": "Create tag",
+    "deleteBranch": "Delete branch",
+    "deleteTag": "Delete tag",
+    "startingPointPlaceholder": "starting point (optional)",
+    "tagCreated": "Tag created",
+    "tagDeleted": "Tag deleted",
+    "tagMessagePlaceholder": "message (optional)",
+    "tagPlaceholder": "tag-name",
+    "tagsHint": "Create a tag on main, or delete one by name.",
+    "title": "Branches & tags"
+  },
+  "rename": {
+    "body": "Move {{repoId}} to a new name or namespace. All files, likes and downloads move with it.",
+    "label": "New repo id",
+    "submit": "Rename",
+    "success": "Repository moved",
+    "title": "Rename or move"
+  },
+  "repoIdPlaceholder": "owner/name",
+  "settings": {
+    "gated": "Gated access",
+    "gatedAuto": "Automatic approval",
+    "gatedHint": "Require users to request access before downloading.",
+    "gatedManual": "Manual review",
+    "gatedOff": "Off",
+    "private": "Private",
+    "privateHint": "Only you and collaborators can see this repo.",
+    "title": "Settings",
+    "updated": "Settings updated"
+  },
+  "signedOut": {
+    "body": "Your models, datasets and Spaces appear here once you are signed in.",
+    "title": "Sign in to manage your repositories"
+  },
+  "space": {
+    "descriptionPlaceholder": "description (optional)",
+    "keyPlaceholder": "KEY",
+    "logs": {
+      "build": "Build",
+      "empty": "No log output.",
+      "refresh": "Refresh logs",
+      "run": "Run",
+      "title": "Logs"
+    },
+    "restart": {
+      "done": "Restart requested",
+      "factory": "Factory rebuild",
+      "factoryHint": "Factory rebuild clears the build cache and rebuilds the Space from scratch.",
+      "restart": "Restart Space",
+      "title": "Restart"
+    },
+    "secrets": {
+      "add": "Add secret",
+      "deleted": "Secret deleted",
+      "empty": "No secrets set.",
+      "saved": "Secret saved",
+      "title": "Secrets",
+      "writeOnly": "Secret values are write-only and are never shown again after saving."
+    },
+    "valuePlaceholder": "value",
+    "variables": {
+      "deleted": "Variable deleted",
+      "edit": "Edit variable",
+      "empty": "No variables set.",
+      "save": "Save variable",
+      "saved": "Variable saved",
+      "title": "Variables"
+    }
+  },
+  "visibility": {
+    "makePrivate": "Make private",
+    "makePublic": "Make public",
+    "protected": "Protected",
+    "updated": "Visibility updated"
+  }
+}

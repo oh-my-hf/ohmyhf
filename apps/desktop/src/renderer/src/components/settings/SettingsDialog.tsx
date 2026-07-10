@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
   Bell,
@@ -11,13 +11,15 @@ import {
   Minus,
   Monitor,
   Plus,
-  UserCircle2
+  RefreshCw,
+  UserCircle2,
+  X
 } from 'lucide-react'
 import type { Locale } from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { changeLanguage } from '@/i18n'
-import { cn, formatBytes } from '@/lib/utils'
+import { cn, formatBytes, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -28,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
 import type { SettingsSection } from '@/stores/app'
@@ -38,6 +41,29 @@ const SPEED_OPTIONS = [1, 5, 10, 20, 50] // MB/s
 const UI_SCALE_MIN = 80
 const UI_SCALE_MAX = 140
 const UI_SCALE_STEP = 10
+
+/**
+ * Mirrors DEFAULT_SCOPES in packages/hub-api/src/oauth.ts. The hub-api barrel
+ * re-exports node-only helpers (cache-layout imports node:os/node:path), so
+ * the renderer cannot import the package; keep this list in sync manually.
+ */
+const HUB_DEFAULT_SCOPES = [
+  'openid',
+  'profile',
+  'read-repos',
+  'write-repos',
+  'write-discussions',
+  'inference-api',
+  'read-collections',
+  'write-collections',
+  'manage-repos',
+  'read-billing'
+]
+
+/** IPC flattens HubApiError into a message string; sniff auth failures from it. */
+function isAuthErrorMessage(message: string): boolean {
+  return /\b401\b|\b403\b|unauthorized|forbidden/i.test(message)
+}
 
 interface NavEntry {
   id: SettingsSection
@@ -118,67 +144,214 @@ function AccountSection(): React.JSX.Element {
     onSuccess: setAuth,
     onError: () => push(t('auth:error'), 'error')
   })
+  // Aborts a stuck "waiting for browser…"; the resulting state arrives via the
+  // evt:auth broadcast and the signIn mutation resolving, so we don't setAuth here.
+  const cancelSignIn = useMutation({
+    mutationFn: () => invoke('auth:cancelSignIn', undefined)
+  })
   const signOut = useMutation({
     mutationFn: () => invoke('auth:signOut', undefined),
     onSuccess: setAuth
   })
+  const signingIn = auth.status === 'signingIn' || signIn.isPending
 
   return (
     <SectionShell title={t('settings:account.title')}>
       {auth.status === 'signedIn' ? (
-        <div className="flex items-center gap-3">
-          {auth.user.avatarUrl && (
-            <img src={auth.user.avatarUrl} alt="" className="size-9 rounded-full border" />
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="truncate text-[13.5px] font-medium">
-                {auth.user.fullname ?? auth.user.name}
-              </span>
-              {auth.user.isPro && <Badge variant="primary">{t('auth:pro')}</Badge>}
-            </div>
-            <div className="truncate text-[12px] text-ink-muted">@{auth.user.name}</div>
-            {auth.user.orgs.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                {auth.user.orgs.map((org) => (
-                  <Badge key={org.name} variant="outline">
-                    {org.name}
-                  </Badge>
-                ))}
-              </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            {auth.user.avatarUrl && (
+              <img src={auth.user.avatarUrl} alt="" className="size-9 rounded-full border" />
             )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-[13.5px] font-medium">
+                  {auth.user.fullname ?? auth.user.name}
+                </span>
+                {auth.user.isPro && <Badge variant="primary">{t('auth:pro')}</Badge>}
+              </div>
+              <div className="truncate text-[12px] text-ink-muted">@{auth.user.name}</div>
+              {auth.user.orgs.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {auth.user.orgs.map((org) => (
+                    <Badge key={org.name} variant="outline">
+                      {org.name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                closeSettings()
+                navigate(`/users/${auth.user.name}`)
+              }}
+            >
+              {t('profile:viewProfile')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => signOut.mutate()}>
+              <LogOut className="size-3.5" aria-hidden />
+              {t('auth:signOut')}
+            </Button>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              closeSettings()
-              navigate(`/users/${auth.user.name}`)
-            }}
-          >
-            {t('profile:viewProfile')}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => signOut.mutate()}>
-            <LogOut className="size-3.5" aria-hidden />
-            {t('auth:signOut')}
-          </Button>
+          <HubAccountBlock
+            scopes={auth.scopes}
+            reauthorizing={signIn.isPending}
+            onReauthorize={() => signIn.mutate()}
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <div>
-            <Button
-              variant="primary"
-              loading={auth.status === 'signingIn' || signIn.isPending}
-              onClick={() => signIn.mutate()}
-            >
+          <div className="flex items-center gap-2">
+            <Button variant="primary" loading={signingIn} onClick={() => signIn.mutate()}>
               <LogIn className="size-3.5" aria-hidden />
-              {auth.status === 'signingIn' ? t('auth:signingIn') : t('auth:signIn')}
+              {signingIn ? t('auth:signingIn') : t('auth:signIn')}
             </Button>
+            {signingIn && (
+              <Button
+                variant="secondary"
+                loading={cancelSignIn.isPending}
+                onClick={() => cancelSignIn.mutate()}
+              >
+                <X className="size-3.5" aria-hidden />
+                {t('auth:cancelSignIn')}
+              </Button>
+            )}
           </div>
-          <p className="text-[12px] text-ink-faint">{t('auth:hint')}</p>
+          <p className="text-[12px] text-ink-faint">
+            {signingIn ? t('auth:signingInHint') : t('auth:hint')}
+          </p>
         </div>
       )}
     </SectionShell>
+  )
+}
+
+function HubAccountBlock({
+  scopes,
+  reauthorizing,
+  onReauthorize
+}: {
+  /** OAuth scopes granted to the stored token; undefined for pre-scopes sessions. */
+  scopes?: string[]
+  reauthorizing: boolean
+  onReauthorize: () => void
+}): React.JSX.Element {
+  const { t } = useTranslation(['settings'])
+  const missingScopes =
+    scopes === undefined ? [] : HUB_DEFAULT_SCOPES.filter((scope) => !scopes.includes(scope))
+  // Unknown scopes (old session) → allow the attempt; only a definitive miss gates.
+  const billingGranted = scopes === undefined || scopes.includes('read-billing')
+
+  return (
+    <div className="flex flex-col gap-3 border-t pt-4">
+      <h3 className="text-[13px] font-semibold">{t('settings:account.hub.title')}</h3>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[12px] text-ink-muted">{t('settings:account.hub.scopes')}</span>
+        {scopes === undefined ? (
+          <p className="text-[12px] text-ink-faint">{t('settings:account.hub.scopesUnknown')}</p>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {scopes.map((scope) => (
+              <Badge key={scope} variant="outline" className="font-mono text-[11px]">
+                {scope}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {missingScopes.length > 0 && (
+          <p className="max-w-[65ch] text-[12px] text-warning">
+            {t('settings:account.hub.missingScopes', { scopes: missingScopes.join(', ') })}
+          </p>
+        )}
+      </div>
+      <div>
+        <Button variant="secondary" size="sm" loading={reauthorizing} onClick={onReauthorize}>
+          <RefreshCw className="size-3.5" aria-hidden />
+          {t('settings:account.hub.reauthorize')}
+        </Button>
+      </div>
+      {billingGranted ? (
+        <BillingUsageCard />
+      ) : (
+        <p className="max-w-[65ch] text-[12px] text-ink-faint">
+          {t('settings:account.billing.gated')}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function BillingUsageCard(): React.JSX.Element {
+  const { t } = useTranslation(['settings', 'common'])
+  const settings = useAppStore((s) => s.settings)
+  const appInfo = useAppStore((s) => s.appInfo)
+  const locale = resolveLocale(settings, appInfo)
+
+  const usage = useQuery({
+    queryKey: ['hub-billing-usage'],
+    queryFn: () => invoke('hub:billingUsage', undefined),
+    // A 401/403 is a capability gap, not a transient failure — do not retry it.
+    retry: (failureCount, error) => failureCount < 2 && !isAuthErrorMessage(error.message)
+  })
+
+  // The Hub bills in USD; rows carry integer cents.
+  const formatAmount = (cents: number): string =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100)
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-[12.5px] font-medium">{t('settings:account.billing.title')}</h4>
+        {usage.data?.periodStart !== undefined && usage.data.periodEnd !== undefined && (
+          <span className="nums text-[11.5px] text-ink-faint">
+            {t('settings:account.billing.period', {
+              start: formatDate(usage.data.periodStart, locale),
+              end: formatDate(usage.data.periodEnd, locale)
+            })}
+          </span>
+        )}
+      </div>
+      {usage.isPending && <Skeleton className="h-14" />}
+      {usage.isError &&
+        (isAuthErrorMessage(usage.error.message) ? (
+          <p className="text-[12px] text-ink-faint">{t('settings:account.billing.unauthorized')}</p>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-[12px] text-ink-muted">{usage.error.message}</p>
+            <Button variant="ghost" size="sm" onClick={() => void usage.refetch()}>
+              {t('common:retry')}
+            </Button>
+          </div>
+        ))}
+      {usage.data !== undefined && usage.data.rows.length === 0 && (
+        <p className="text-[12px] text-ink-faint">{t('settings:account.billing.empty')}</p>
+      )}
+      {usage.data !== undefined && usage.data.rows.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {usage.data.rows.map((row, index) => (
+            <div
+              key={`${row.label}-${index}`}
+              className="flex items-center justify-between gap-4 text-[12.5px]"
+            >
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-ink">{row.label}</span>
+                {row.detail !== undefined && row.detail !== '' && (
+                  <span className="truncate text-[11.5px] text-ink-faint">{row.detail}</span>
+                )}
+              </div>
+              {row.amountCents !== undefined && (
+                <span className="nums shrink-0 text-ink-muted">
+                  {formatAmount(row.amountCents)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

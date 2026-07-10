@@ -1,4 +1,8 @@
 import type {
+  AccessRequest,
+  BillingUsage,
+  CollectionDetail,
+  CollectionSummary,
   DatasetRows,
   DatasetSplit,
   FollowedAccount,
@@ -8,7 +12,8 @@ import type {
   DiscussionType,
   FileTextResult,
   FileTreeEntry,
-  HubNotification,
+  MyRepoEntry,
+  NotificationsPage,
   Page,
   PaperSummary,
   PostSummary,
@@ -18,19 +23,30 @@ import type {
   SafetensorsHeader,
   SafetensorsTensor,
   SearchQuery,
+  SpaceSecret,
+  SpaceVariable,
   UserOverview,
   UserProfile,
   UserSearchResult
 } from '@oh-my-huggingface/shared'
 import { HubApiError, isNotFound } from './errors'
 import {
+  mapAccessRequest,
+  mapBillingUsage,
+  mapCollectionDetail,
+  mapCollectionSummary,
   mapDiscussionDetail,
   mapDiscussionSummary,
   mapFileTree,
+  mapMyRepos,
+  mapNotificationsPage,
   mapPaper,
+  mapPaperDetail,
   mapPost,
   mapRepoDetail,
   mapRepoSummary,
+  mapSpaceSecrets,
+  mapSpaceVariables,
   mapUserOverview,
   mapWhoAmI
 } from './mappers'
@@ -178,6 +194,30 @@ const SAFETENSORS_MAX_HEADER_BYTES = 8 * 1024 * 1024
 /** PR diffs beyond this length are truncated before reaching the renderer. */
 const DIFF_MAX_CHARS = 2 * 1024 * 1024
 
+/** Bounds for the Space log SSE snapshot: stop after this many bytes or this long. */
+const SPACE_LOGS_MAX_BYTES = 64 * 1024
+const SPACE_LOGS_WINDOW_MS = 2500
+
+/** Gated-access management only exists for models and datasets. */
+type GatedRepoKind = Extract<RepoKind, 'model' | 'dataset'>
+
+/** Watch targets are addressed by their 24-hex internal id. */
+interface WatchTarget {
+  id: string
+  type: 'user' | 'org'
+}
+
+/** Concatenates the `data:` payload lines of a raw SSE stream into plain text. */
+function sseDataText(raw: string): string {
+  const lines: string[] = []
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue
+    const payload = line.slice('data:'.length)
+    lines.push(payload.startsWith(' ') ? payload.slice(1) : payload)
+  }
+  return lines.join('\n')
+}
+
 /**
  * Thin, cached client over the Hub REST API. All requests carry a descriptive
  * User-Agent and are centrally cached so UI-driven refetches never hammer the API.
@@ -301,6 +341,40 @@ export class HubClient {
       res.status,
       url
     )
+  }
+
+  /**
+   * Authenticated JSON mutation. Retries only 429s (a 503 may already have
+   * applied side effects) and invalidates the GET cache after every success,
+   * so the next read reflects the change.
+   */
+  private async sendJson(
+    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    url: string,
+    body?: unknown
+  ): Promise<Response> {
+    const res = await this.fetchWithPolicy(
+      url,
+      {
+        method,
+        headers: {
+          ...this.headers(url),
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' })
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) })
+      },
+      { retryStatuses: [429] }
+    )
+    if (!res.ok) {
+      const detail = res.status === 429 ? ' (rate limited)' : ''
+      throw new HubApiError(
+        `${method} ${url} failed: ${res.status} ${res.statusText}${detail}`,
+        res.status,
+        url
+      )
+    }
+    this.invalidateCache()
+    return res
   }
 
   private async getJson<T>(
@@ -465,6 +539,13 @@ export class HubClient {
     return { items: (body as never[]).map(mapPaper), nextCursor: nextUrl }
   }
 
+  /** Single paper lookup (deep links to papers outside the daily feed). */
+  async getPaper(paperId: string): Promise<PaperSummary> {
+    const url = `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}`
+    const { body } = await this.getJson<unknown>(url, { ttl: 60_000 })
+    return mapPaperDetail(body as never)
+  }
+
   async listDiscussions(
     kind: RepoKind,
     repoId: string,
@@ -527,25 +608,11 @@ export class HubClient {
     num: number,
     comment: string
   ): Promise<void> {
-    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/comment`
-    // Retry only on 429 (request was rejected); a 503 POST may have side effects.
-    const res = await this.fetchWithPolicy(
-      url,
-      {
-        method: 'POST',
-        headers: { ...this.headers(url), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment })
-      },
-      { retryStatuses: [429] }
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/comment`,
+      { comment }
     )
-    if (!res.ok) {
-      const detail = res.status === 429 ? ' (rate limited)' : ''
-      throw new HubApiError(
-        `POST ${url} failed: ${res.status} ${res.statusText}${detail}`,
-        res.status,
-        url
-      )
-    }
   }
 
   async whoAmI(): Promise<UserProfile> {
@@ -553,38 +620,24 @@ export class HubClient {
     return mapWhoAmI(body as never)
   }
 
-  /**
-   * The notifications endpoint is not part of the documented public API; treat any
-   * failure as "no notifications" so the inbox degrades gracefully.
-   */
-  async getNotifications(): Promise<Page<HubNotification>> {
-    try {
-      const { body } = await this.getJson<{ notifications?: unknown[] }>(
-        `${this.endpoint}/api/notifications`,
-        { ttl: 10_000 }
-      )
-      const items = (body.notifications ?? []).map((raw, i) => {
-        const n = raw as {
-          id?: string
-          title?: string
-          url?: string
-          read?: boolean
-          createdAt?: string
-          repo?: { name?: string }
-        }
-        return {
-          id: n.id ?? String(i),
-          title: n.title ?? '',
-          url: n.url,
-          read: n.read ?? false,
-          createdAt: n.createdAt,
-          repoId: n.repo?.name
-        }
-      })
-      return { items }
-    } catch {
-      return { items: [] }
-    }
+  /** Paged notification inbox (20/page on the Hub; `p` is zero-based). */
+  async getNotifications(page = 0): Promise<NotificationsPage> {
+    const url = new URL(`${this.endpoint}/api/notifications`)
+    if (page > 0) url.searchParams.set('p', String(page))
+    const { body } = await this.getJson<unknown>(url.toString(), { ttl: 10_000 })
+    return mapNotificationsPage(body as never, this.endpoint)
+  }
+
+  /** Marks discussions read/unread; an empty id list applies to all notifications. */
+  async markNotificationsRead(discussionIds: string[], read: boolean): Promise<void> {
+    const all = discussionIds.length === 0
+    const url = `${this.endpoint}/api/notifications/mark-as-read${all ? '?applyToAll=true' : ''}`
+    await this.sendJson('POST', url, all ? { read } : { discussionIds, read })
+  }
+
+  /** Deletes all notifications (the API only accepts explicit ids or applyToAll). */
+  async clearNotifications(): Promise<void> {
+    await this.sendJson('DELETE', `${this.endpoint}/api/notifications?applyToAll=true`)
   }
 
   /** List repos for an author, used by the follow poller. */
@@ -806,5 +859,406 @@ export class HubClient {
     } catch {
       return false
     }
+  }
+
+  /** Collections owned by a user or org. */
+  async listCollections(owner: string): Promise<CollectionSummary[]> {
+    const url = new URL(`${this.endpoint}/api/collections`)
+    url.searchParams.set('owner', owner)
+    url.searchParams.set('limit', '100')
+    const { body } = await this.getJson<unknown[]>(url.toString())
+    return body.map((raw) => mapCollectionSummary(raw as never))
+  }
+
+  /** Full collection with items. The slug is "owner/title-slug-<24hex>". */
+  async getCollection(slug: string): Promise<CollectionDetail> {
+    const { body } = await this.getJson<unknown>(`${this.endpoint}/api/collections/${slug}`)
+    return mapCollectionDetail(body as never)
+  }
+
+  async createCollection(input: {
+    namespace: string
+    title: string
+    description?: string
+    private: boolean
+  }): Promise<CollectionDetail> {
+    const res = await this.sendJson('POST', `${this.endpoint}/api/collections`, {
+      title: input.title,
+      namespace: input.namespace,
+      description: input.description,
+      private: input.private
+    })
+    return mapCollectionDetail((await res.json()) as never)
+  }
+
+  async updateCollection(
+    slug: string,
+    patch: {
+      title?: string
+      description?: string
+      private?: boolean
+      position?: number
+      theme?: string
+    }
+  ): Promise<void> {
+    await this.sendJson('PATCH', `${this.endpoint}/api/collections/${slug}`, patch)
+  }
+
+  async deleteCollection(slug: string): Promise<void> {
+    await this.sendJson('DELETE', `${this.endpoint}/api/collections/${slug}`)
+  }
+
+  async addCollectionItem(
+    slug: string,
+    item: { type: 'model' | 'dataset' | 'space' | 'paper'; id: string },
+    note?: string
+  ): Promise<void> {
+    await this.sendJson('POST', `${this.endpoint}/api/collections/${slug}/items`, { item, note })
+  }
+
+  async updateCollectionItem(
+    slug: string,
+    itemId: string,
+    patch: { note?: string; position?: number }
+  ): Promise<void> {
+    await this.sendJson(
+      'PATCH',
+      `${this.endpoint}/api/collections/${slug}/items/${encodeURIComponent(itemId)}`,
+      patch
+    )
+  }
+
+  async removeCollectionItem(slug: string, itemId: string): Promise<void> {
+    await this.sendJson(
+      'DELETE',
+      `${this.endpoint}/api/collections/${slug}/items/${encodeURIComponent(itemId)}`
+    )
+  }
+
+  /** Watch/unwatch users and orgs by their 24-hex internal id. */
+  async updateWatch(changes: { add?: WatchTarget[]; delete?: WatchTarget[] }): Promise<void> {
+    await this.sendJson('PATCH', `${this.endpoint}/api/settings/watch`, {
+      add: changes.add ?? [],
+      delete: changes.delete ?? []
+    })
+  }
+
+  /** Repos the signed-in user administers, with storage usage. */
+  async listMyRepos(): Promise<MyRepoEntry[]> {
+    const { body } = await this.getJson<unknown[]>(`${this.endpoint}/api/settings/repositories`, {
+      ttl: 10_000
+    })
+    return mapMyRepos(body as never[])
+  }
+
+  async updateRepoSettings(
+    kind: RepoKind,
+    repoId: string,
+    patch: { private?: boolean; gated?: false | 'auto' | 'manual'; discussionsDisabled?: boolean }
+  ): Promise<void> {
+    await this.sendJson('PUT', `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/settings`, patch)
+  }
+
+  async moveRepo(kind: RepoKind, fromRepo: string, toRepo: string): Promise<void> {
+    await this.sendJson('POST', `${this.endpoint}/api/repos/move`, {
+      fromRepo,
+      toRepo,
+      type: kind
+    })
+  }
+
+  /**
+   * Not in the public OpenAPI spec; runtime-verified (the same call
+   * huggingface_hub's delete_repo makes: name is the repo name, organization
+   * the namespace).
+   */
+  async deleteRepo(kind: RepoKind, repoId: string): Promise<void> {
+    const slash = repoId.indexOf('/')
+    const body: Record<string, unknown> = {
+      type: kind,
+      name: slash === -1 ? repoId : repoId.slice(slash + 1)
+    }
+    if (slash !== -1) body.organization = repoId.slice(0, slash)
+    await this.sendJson('DELETE', `${this.endpoint}/api/repos/delete`, body)
+  }
+
+  /** The Hub only defines /duplicate for Spaces (huggingface_hub's duplicate_space). */
+  async duplicateSpace(
+    repoId: string,
+    toRepo: string,
+    options: { private?: boolean } = {}
+  ): Promise<{ url?: string }> {
+    const res = await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/spaces/${repoId}/duplicate`,
+      { repository: toRepo, private: options.private }
+    )
+    const body = (await res.json()) as { url?: string }
+    return { url: body.url }
+  }
+
+  async createBranch(
+    kind: RepoKind,
+    repoId: string,
+    branch: string,
+    startingPoint?: string
+  ): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/branch/${encodeURIComponent(branch)}`,
+      startingPoint === undefined ? {} : { startingPoint }
+    )
+  }
+
+  async deleteBranch(kind: RepoKind, repoId: string, branch: string): Promise<void> {
+    await this.sendJson(
+      'DELETE',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/branch/${encodeURIComponent(branch)}`
+    )
+  }
+
+  /** The revision to tag is the path segment; the tag name travels in the body. */
+  async createTag(
+    kind: RepoKind,
+    repoId: string,
+    tag: string,
+    revision = 'main',
+    message?: string
+  ): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/tag/${encodeURIComponent(revision)}`,
+      { tag, message }
+    )
+  }
+
+  async deleteTag(kind: RepoKind, repoId: string, tag: string): Promise<void> {
+    await this.sendJson(
+      'DELETE',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/tag/${encodeURIComponent(tag)}`
+    )
+  }
+
+  /** Access requests on a gated repo, filtered by status. */
+  async listAccessRequests(
+    kind: GatedRepoKind,
+    repoId: string,
+    status: 'pending' | 'accepted' | 'rejected'
+  ): Promise<AccessRequest[]> {
+    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/user-access-request/${status}`
+    const { body } = await this.getJson<unknown[]>(url, { ttl: 5_000 })
+    return body.map((raw) => mapAccessRequest(raw as never, this.endpoint))
+  }
+
+  async handleAccessRequest(
+    kind: GatedRepoKind,
+    repoId: string,
+    user: string,
+    status: 'accepted' | 'rejected' | 'pending',
+    rejectionReason?: string
+  ): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/user-access-request/handle`,
+      { user, status, rejectionReason }
+    )
+  }
+
+  async grantAccess(kind: GatedRepoKind, repoId: string, user: string): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/user-access-request/grant`,
+      { user }
+    )
+  }
+
+  async listSpaceSecrets(repoId: string): Promise<SpaceSecret[]> {
+    const { body } = await this.getJson<unknown>(`${this.endpoint}/api/spaces/${repoId}/secrets`)
+    return mapSpaceSecrets(body as never)
+  }
+
+  async setSpaceSecret(
+    repoId: string,
+    key: string,
+    value: string,
+    description?: string
+  ): Promise<void> {
+    await this.sendJson('POST', `${this.endpoint}/api/spaces/${repoId}/secrets`, {
+      key,
+      value,
+      description
+    })
+  }
+
+  async deleteSpaceSecret(repoId: string, key: string): Promise<void> {
+    await this.sendJson('DELETE', `${this.endpoint}/api/spaces/${repoId}/secrets`, { key })
+  }
+
+  async listSpaceVariables(repoId: string): Promise<SpaceVariable[]> {
+    const { body } = await this.getJson<unknown>(`${this.endpoint}/api/spaces/${repoId}/variables`)
+    return mapSpaceVariables(body as never)
+  }
+
+  async setSpaceVariable(
+    repoId: string,
+    key: string,
+    value: string,
+    description?: string
+  ): Promise<void> {
+    await this.sendJson('POST', `${this.endpoint}/api/spaces/${repoId}/variables`, {
+      key,
+      value,
+      description
+    })
+  }
+
+  async deleteSpaceVariable(repoId: string, key: string): Promise<void> {
+    await this.sendJson('DELETE', `${this.endpoint}/api/spaces/${repoId}/variables`, { key })
+  }
+
+  /**
+   * Bounded snapshot of the Space's SSE log stream: reads at most
+   * SPACE_LOGS_MAX_BYTES or for SPACE_LOGS_WINDOW_MS, whichever comes first,
+   * then returns the concatenated `data:` payload lines. Never hangs: every
+   * read races the deadline, and a timeout before headers yields empty text.
+   */
+  async getSpaceLogsSnapshot(repoId: string, logType: 'build' | 'run'): Promise<{ text: string }> {
+    const url = `${this.endpoint}/api/spaces/${repoId}/logs/${logType}`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), SPACE_LOGS_WINDOW_MS)
+    const deadline = new Promise<{ done: true; value: undefined }>((resolve) => {
+      controller.signal.addEventListener('abort', () => resolve({ done: true, value: undefined }))
+    })
+    try {
+      const res = await this.fetchWithPolicy(url, {
+        headers: { ...this.headers(url), Accept: 'text/event-stream' },
+        signal: controller.signal
+      })
+      if (!res.ok) this.throwHttpError(res, url)
+      const reader = res.body?.getReader()
+      if (!reader) return { text: '' }
+      const decoder = new TextDecoder()
+      let raw = ''
+      let received = 0
+      try {
+        while (received < SPACE_LOGS_MAX_BYTES) {
+          const chunk = await Promise.race([reader.read(), deadline])
+          if (chunk.done || !chunk.value) break
+          received += chunk.value.byteLength
+          raw += decoder.decode(chunk.value, { stream: true })
+        }
+      } finally {
+        void reader.cancel().catch(() => undefined)
+      }
+      raw += decoder.decode()
+      return { text: sseDataText(raw) }
+    } catch (err) {
+      // Timed out before the headers arrived: an empty snapshot beats an error.
+      if (controller.signal.aborted) return { text: '' }
+      throw err
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  /** Not in the public OpenAPI spec; runtime-verified (used by huggingface_hub's restart_space). */
+  async restartSpace(repoId: string, factory = false): Promise<void> {
+    const suffix = factory ? '?factory=true' : ''
+    await this.sendJson('POST', `${this.endpoint}/api/spaces/${repoId}/restart${suffix}`)
+  }
+
+  /** Not in the public OpenAPI spec; runtime-verified (used by huggingface_hub's like/unlike). */
+  async setLike(kind: RepoKind, repoId: string, liked: boolean): Promise<void> {
+    await this.sendJson(
+      liked ? 'POST' : 'DELETE',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/like`
+    )
+  }
+
+  /** Repos a user has liked. Entries are minimal ({name, type}); buckets/kernels are dropped. */
+  async getUserLikes(username: string): Promise<RepoSummary[]> {
+    const url = `${this.endpoint}/api/users/${encodeURIComponent(username)}/likes?limit=100`
+    const { body } = await this.getJson<Array<{ repo?: { name?: string; type?: string } }>>(url)
+    const items: RepoSummary[] = []
+    for (const entry of body) {
+      const repo = entry.repo
+      const kind = repo?.type
+      if (!repo?.name || (kind !== 'model' && kind !== 'dataset' && kind !== 'space')) continue
+      items.push(mapRepoSummary({ ...repo, id: repo.name } as never, kind))
+    }
+    return items
+  }
+
+  async commentOnPost(
+    author: string,
+    slug: string,
+    comment: string,
+    replyToCommentId?: string
+  ): Promise<void> {
+    const base = `${this.endpoint}/api/posts/${encodeURIComponent(author)}/${encodeURIComponent(slug)}`
+    const url = replyToCommentId
+      ? `${base}/comment/${encodeURIComponent(replyToCommentId)}/reply`
+      : `${base}/comment`
+    await this.sendJson('POST', url, { comment })
+  }
+
+  async commentOnPaper(
+    paperId: string,
+    comment: string,
+    replyToCommentId?: string
+  ): Promise<void> {
+    const base = `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}`
+    const url = replyToCommentId
+      ? `${base}/comment/${encodeURIComponent(replyToCommentId)}/reply`
+      : `${base}/comment`
+    await this.sendJson('POST', url, { comment })
+  }
+
+  async mergePullRequest(
+    kind: RepoKind,
+    repoId: string,
+    num: number,
+    comment?: string
+  ): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/merge`,
+      { comment }
+    )
+  }
+
+  async setDiscussionStatus(
+    kind: RepoKind,
+    repoId: string,
+    num: number,
+    status: 'open' | 'closed',
+    comment?: string
+  ): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/status`,
+      { status, comment }
+    )
+  }
+
+  async setDiscussionTitle(
+    kind: RepoKind,
+    repoId: string,
+    num: number,
+    title: string
+  ): Promise<void> {
+    await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/title`,
+      { title }
+    )
+  }
+
+  /** Current billing period usage for the signed-in user, flattened for display. */
+  async getBillingUsage(): Promise<BillingUsage> {
+    const { body } = await this.getJson<unknown>(`${this.endpoint}/api/settings/billing/usage`, {
+      ttl: 60_000
+    })
+    return mapBillingUsage(body as never)
   }
 }

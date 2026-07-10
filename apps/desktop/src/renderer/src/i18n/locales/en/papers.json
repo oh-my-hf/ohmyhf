@@ -1,5 +1,10 @@
 {
   "authors": "Authors",
+  "comment": {
+    "heading": "Comment on this paper",
+    "placeholder": "Write a comment (Markdown supported)…",
+    "posted": "Comment posted"
+  },
   "empty": "No papers loaded yet.",
   "published": "Published {{time}}",
   "readOnArxiv": "Read on arXiv",

@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, FileWarning, Heart, MessageSquare } from 'lucide-react'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useToasts } from '@/components/ui/toaster'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { CommentComposer } from '@/components/community/CommentComposer'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
@@ -19,9 +21,12 @@ export function PostPage(): React.JSX.Element {
   const params = useParams()
   const author = params.author ?? ''
   const slug = params.slug ?? ''
+  const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const queryClient = useQueryClient()
+  const push = useToasts((s) => s.push)
 
   const post = useQuery({
     queryKey: ['post', author, slug],
@@ -113,9 +118,30 @@ export function PostPage(): React.JSX.Element {
                   <ExternalLink className="size-3.5" aria-hidden />
                   {t('common:openOnHub')}
                 </Button>
+                {/* The post payload carries no comment bodies, so reading stays on the Hub. */}
                 <p className="text-[12px] text-ink-faint">{t('profile:post.commentsOnHub')}</p>
               </div>
             </footer>
+
+            <section className="flex flex-col gap-2">
+              {auth.status === 'signedIn' ? (
+                <CommentComposer
+                  key={`${author}/${slug}`}
+                  kind="model"
+                  repoId={`${author}/${slug}`}
+                  placeholder={t('profile:post.commentPlaceholder')}
+                  submit={(comment) => invoke('hub:postComment', { author, slug, comment })}
+                  onSubmitted={() => {
+                    push(t('profile:post.commentPosted'), 'success')
+                    void queryClient.invalidateQueries({ queryKey: ['post', author, slug] })
+                  }}
+                />
+              ) : (
+                <p className="text-center text-[12.5px] text-ink-muted">
+                  {t('profile:post.signInToComment')}
+                </p>
+              )}
+            </section>
           </>
         )}
       </article>

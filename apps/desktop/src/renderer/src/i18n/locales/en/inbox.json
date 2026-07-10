@@ -1,9 +1,9 @@
 {
-  "checkNow": "Check now",
   "checked": "{{count}} new item(s)",
   "checked_one": "{{count}} new item",
   "checked_other": "{{count}} new items",
   "checking": "Checking…",
+  "checkNow": "Check now",
   "clear": "Clear inbox",
   "empty": {
     "body": "Follow users, orgs, repositories, or the Daily Papers digest and updates will land here.",
@@ -12,10 +12,10 @@
   "follows": {
     "add": "Follow",
     "empty": "Not following anything yet.",
-    "importFromHub": "Import from Hugging Face",
     "imported": "Imported {{count}} account(s) you follow on the Hub",
     "imported_one": "Imported {{count}} account you follow on the Hub",
     "imported_other": "Imported {{count}} accounts you follow on the Hub",
+    "importFromHub": "Import from Hugging Face",
     "papers": "Daily Papers digest",
     "placeholder": "username, org, or model:org/name",
     "title": "Following",
@@ -26,11 +26,47 @@
       "user": "User"
     }
   },
+  "hub": {
+    "clearAll": "Clear all",
+    "confirmClear": {
+      "body": "This permanently removes every notification from your Hugging Face inbox.",
+      "confirm": "Clear all",
+      "title": "Clear all Hub notifications?"
+    },
+    "empty": {
+      "body": "Notifications from discussions, pull requests, and posts on the Hub will show up here.",
+      "title": "No Hub notifications"
+    },
+    "kind": {
+      "org": "Organization",
+      "other": "Other",
+      "paper": "Paper",
+      "post": "Post",
+      "repo": "Repository"
+    },
+    "pageNext": "Next page",
+    "pageOf": "Page {{page}} of {{pages}}",
+    "pagePrev": "Previous page",
+    "signIn": {
+      "action": "Open account settings",
+      "body": "Connect your Hugging Face account to sync the notification inbox from the Hub.",
+      "title": "Sign in to see Hub notifications"
+    },
+    "unauthorized": {
+      "action": "Open account settings",
+      "body": "The Hub did not authorize this token to read notifications. Sign out and back in to grant the app access.",
+      "title": "Hub notifications unavailable"
+    }
+  },
   "kind": {
     "new-repo": "New",
     "paper": "Paper",
     "repo-update": "Updated"
   },
   "markAllRead": "Mark all read",
+  "tabs": {
+    "hub": "Hub notifications",
+    "local": "Following feed"
+  },
   "title": "Inbox"
 }

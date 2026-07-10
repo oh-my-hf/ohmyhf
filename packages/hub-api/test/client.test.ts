@@ -180,6 +180,43 @@ describe('HubClient.getDailyPapers', () => {
   })
 })
 
+describe('HubClient.getPaper', () => {
+  it('fetches a single paper and maps the unwrapped payload', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        id: '2401.00001',
+        title: 'Attention Is Still All You Need',
+        summary: 'A paper.',
+        upvotes: 42,
+        publishedAt: '2026-01-01T00:00:00.000Z',
+        authors: [{ name: 'A. Researcher' }]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0 })
+    const paper = await client.getPaper('2401.00001')
+    expect(fetchImpl.mock.calls[0]![0]).toBe('https://huggingface.co/api/papers/2401.00001')
+    expect(paper).toEqual({
+      id: '2401.00001',
+      title: 'Attention Is Still All You Need',
+      summary: 'A paper.',
+      publishedAt: '2026-01-01T00:00:00.000Z',
+      upvotes: 42,
+      authors: ['A. Researcher'],
+      thumbnail: undefined,
+      numComments: undefined
+    })
+  })
+
+  it('throws HubApiError with the status for unknown papers', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response('not found', { status: 404 }))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0 })
+    await expect(client.getPaper('9999.99999')).rejects.toMatchObject({
+      name: 'HubApiError',
+      status: 404
+    })
+  })
+})
+
 it('HubApiError is an Error', () => {
   expect(new HubApiError('x')).toBeInstanceOf(Error)
 })

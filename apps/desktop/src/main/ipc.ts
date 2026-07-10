@@ -103,6 +103,7 @@ export function registerIpcHandlers(ctx: AppContext): void {
   // --- hub --------------------------------------------------------------------
   handle('hub:search', ({ query }) => ctx.hub.searchRepos(query))
   handle('hub:papers', (req) => ctx.hub.getDailyPapers(req?.cursor))
+  handle('hub:paper', ({ paperId }) => ctx.hub.getPaper(paperId))
   handle('hub:repoDetail', ({ kind, repoId }) => ctx.hub.getRepoDetail(kind, repoId))
   handle('hub:readme', ({ kind, repoId, revision }) => ctx.hub.getReadme(kind, repoId, revision))
   handle('hub:fileTree', ({ kind, repoId, revision, path }) =>
@@ -124,7 +125,11 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:discussionComment', ({ kind, repoId, num, comment }) =>
     ctx.hub.commentOnDiscussion(kind, repoId, num, comment)
   )
-  handle('hub:notifications', () => ctx.hub.getNotifications())
+  handle('hub:notifications', (req) => ctx.hub.getNotifications(req?.page))
+  handle('hub:notificationsMarkRead', ({ discussionIds, read }) =>
+    ctx.hub.markNotificationsRead(discussionIds, read)
+  )
+  handle('hub:notificationsClear', () => ctx.hub.clearNotifications())
   handle('hub:fileText', ({ kind, repoId, path, revision, maxBytes }) =>
     ctx.hub.getFileText(kind, repoId, path, revision, maxBytes)
   )
@@ -138,9 +143,91 @@ export function registerIpcHandlers(ctx: AppContext): void {
     ctx.hub.getDatasetRows(repoId, config, split, offset, length)
   )
 
+  // --- hub: collections ---------------------------------------------------------
+  handle('hub:collections', ({ owner }) => ctx.hub.listCollections(owner))
+  handle('hub:collection', ({ slug }) => ctx.hub.getCollection(slug))
+  handle('hub:collectionCreate', (input) => ctx.hub.createCollection(input))
+  handle('hub:collectionUpdate', ({ slug, patch }) => ctx.hub.updateCollection(slug, patch))
+  handle('hub:collectionDelete', ({ slug }) => ctx.hub.deleteCollection(slug))
+  handle('hub:collectionAddItem', ({ slug, item, note }) =>
+    ctx.hub.addCollectionItem(slug, item, note)
+  )
+  handle('hub:collectionUpdateItem', ({ slug, itemId, note, position }) =>
+    ctx.hub.updateCollectionItem(slug, itemId, { note, position })
+  )
+  handle('hub:collectionRemoveItem', ({ slug, itemId }) =>
+    ctx.hub.removeCollectionItem(slug, itemId)
+  )
+
+  // --- hub: repo administration ---------------------------------------------------
+  handle('hub:watchUpdate', (changes) => ctx.hub.updateWatch(changes))
+  handle('hub:myRepos', () => ctx.hub.listMyRepos())
+  handle('hub:repoSettingsUpdate', ({ kind, repoId, patch }) =>
+    ctx.hub.updateRepoSettings(kind, repoId, patch)
+  )
+  handle('hub:repoMove', ({ kind, fromRepo, toRepo }) => ctx.hub.moveRepo(kind, fromRepo, toRepo))
+  handle('hub:repoDelete', ({ kind, repoId }) => ctx.hub.deleteRepo(kind, repoId))
+  handle('hub:repoDuplicate', ({ repoId, toRepo, private: isPrivate }) =>
+    ctx.hub.duplicateSpace(repoId, toRepo, { private: isPrivate })
+  )
+  handle('hub:branchCreate', ({ kind, repoId, branch, startingPoint }) =>
+    ctx.hub.createBranch(kind, repoId, branch, startingPoint)
+  )
+  handle('hub:branchDelete', ({ kind, repoId, branch }) =>
+    ctx.hub.deleteBranch(kind, repoId, branch)
+  )
+  handle('hub:tagCreate', ({ kind, repoId, tag, revision, message }) =>
+    ctx.hub.createTag(kind, repoId, tag, revision, message)
+  )
+  handle('hub:tagDelete', ({ kind, repoId, tag }) => ctx.hub.deleteTag(kind, repoId, tag))
+  handle('hub:accessRequests', ({ kind, repoId, status }) =>
+    ctx.hub.listAccessRequests(kind, repoId, status)
+  )
+  handle('hub:accessRequestHandle', ({ kind, repoId, user, status, rejectionReason }) =>
+    ctx.hub.handleAccessRequest(kind, repoId, user, status, rejectionReason)
+  )
+  handle('hub:accessRequestGrant', ({ kind, repoId, user }) =>
+    ctx.hub.grantAccess(kind, repoId, user)
+  )
+
+  // --- hub: space administration ----------------------------------------------------
+  handle('hub:spaceSecrets', ({ repoId }) => ctx.hub.listSpaceSecrets(repoId))
+  handle('hub:spaceSecretSet', ({ repoId, key, value, description }) =>
+    ctx.hub.setSpaceSecret(repoId, key, value, description)
+  )
+  handle('hub:spaceSecretDelete', ({ repoId, key }) => ctx.hub.deleteSpaceSecret(repoId, key))
+  handle('hub:spaceVariables', ({ repoId }) => ctx.hub.listSpaceVariables(repoId))
+  handle('hub:spaceVariableSet', ({ repoId, key, value, description }) =>
+    ctx.hub.setSpaceVariable(repoId, key, value, description)
+  )
+  handle('hub:spaceVariableDelete', ({ repoId, key }) => ctx.hub.deleteSpaceVariable(repoId, key))
+  handle('hub:spaceLogs', ({ repoId, logType }) => ctx.hub.getSpaceLogsSnapshot(repoId, logType))
+  handle('hub:spaceRestart', ({ repoId, factory }) => ctx.hub.restartSpace(repoId, factory))
+
+  // --- hub: community & billing --------------------------------------------------------
+  handle('hub:likeSet', ({ kind, repoId, liked }) => ctx.hub.setLike(kind, repoId, liked))
+  handle('hub:userLikes', ({ username }) => ctx.hub.getUserLikes(username))
+  handle('hub:postComment', ({ author, slug, comment, replyToCommentId }) =>
+    ctx.hub.commentOnPost(author, slug, comment, replyToCommentId)
+  )
+  handle('hub:paperComment', ({ paperId, comment, replyToCommentId }) =>
+    ctx.hub.commentOnPaper(paperId, comment, replyToCommentId)
+  )
+  handle('hub:prMerge', ({ kind, repoId, num, comment }) =>
+    ctx.hub.mergePullRequest(kind, repoId, num, comment)
+  )
+  handle('hub:discussionStatusSet', ({ kind, repoId, num, status, comment }) =>
+    ctx.hub.setDiscussionStatus(kind, repoId, num, status, comment)
+  )
+  handle('hub:discussionTitleSet', ({ kind, repoId, num, title }) =>
+    ctx.hub.setDiscussionTitle(kind, repoId, num, title)
+  )
+  handle('hub:billingUsage', () => ctx.hub.getBillingUsage())
+
   // --- auth ---------------------------------------------------------------------
   handle('auth:getState', () => ctx.auth.getState())
   handle('auth:signIn', () => ctx.auth.signIn())
+  handle('auth:cancelSignIn', () => ctx.auth.cancelSignIn())
   handle('auth:signOut', () => ctx.auth.signOut())
 
   // --- local library --------------------------------------------------------------

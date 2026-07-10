@@ -53,7 +53,7 @@ function ErrorBlock({
     <div className="flex flex-col items-center gap-3 p-8 text-center">
       <p className="max-w-96 text-[13px] text-ink-muted">{message}</p>
       <Button size="sm" onClick={onRetry}>
-        {t('retry')}
+        {t('common:retry')}
       </Button>
     </div>
   )

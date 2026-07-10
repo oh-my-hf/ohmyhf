@@ -82,6 +82,26 @@
     "task": "任务",
     "updated": "更新时间"
   },
+  "like": {
+    "error": "点赞更新失败：{{error}}",
+    "like": "点赞",
+    "unlike": "取消点赞"
+  },
+  "maintainer": {
+    "close": "关闭",
+    "closeWithComment": "评论并关闭",
+    "editTitle": "编辑标题",
+    "merge": "合并",
+    "mergeCommentPlaceholder": "添加可选评论…",
+    "mergeConfirmBody": "这会将拉取请求合并到仓库中，此操作无法撤销。",
+    "mergeConfirmTitle": "合并拉取请求 #{{num}}？",
+    "merged": "拉取请求已合并",
+    "reopen": "重新打开",
+    "reopenWithComment": "评论并重新打开",
+    "statusUpdated": "讨论状态已更新",
+    "titleSave": "保存",
+    "titleUpdated": "标题已更新"
+  },
   "playground": {
     "empty": "响应将显示在这里。",
     "placeholder": "通过 Inference API 向该模型发送提示词…",
@@ -131,6 +151,7 @@
     "discussions": "讨论",
     "files": "文件",
     "info": "信息",
+    "manage": "管理",
     "playground": "试用",
     "preview": "预览",
     "run": "运行"

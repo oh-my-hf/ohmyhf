@@ -7,9 +7,19 @@ export {
   mapRepoDetail,
   mapFileTree,
   mapPaper,
+  mapPaperDetail,
   mapPost,
   mapDiscussionSummary,
   mapDiscussionDetail,
   mapUserOverview,
-  mapWhoAmI
+  mapWhoAmI,
+  mapCollectionSummary,
+  mapCollectionDetail,
+  mapNotification,
+  mapNotificationsPage,
+  mapMyRepos,
+  mapAccessRequest,
+  mapSpaceSecrets,
+  mapSpaceVariables,
+  mapBillingUsage
 } from './mappers'

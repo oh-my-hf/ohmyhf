@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
+  Bookmark,
   Boxes,
   Columns3,
   Database,
   FileText,
+  FolderGit2,
   HardDrive,
   Home,
   Inbox,
@@ -89,6 +91,8 @@ export function Sidebar(): React.JSX.Element {
   ]
   const library: NavItem[] = [
     { to: '/favorites', labelKey: 'favorites', icon: Star },
+    { to: '/my-repos', labelKey: 'myRepos', icon: FolderGit2 },
+    { to: '/collections', labelKey: 'collections', icon: Bookmark },
     { to: '/downloads', labelKey: 'downloads', icon: ArrowDownToLine, badge: activeDownloads },
     { to: '/cache', labelKey: 'cache', icon: HardDrive },
     { to: '/inbox', labelKey: 'inbox', icon: Inbox, badge: unread },

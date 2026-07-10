@@ -5,9 +5,9 @@
     "title_one": "Delete {{count}} revision?",
     "title_other": "Delete {{count}} revisions?"
   },
+  "deleted": "Deleted. {{size}} freed.",
   "deleteRevision": "Delete revision",
   "deleteStale": "Clean revisions without refs",
-  "deleted": "Deleted. {{size}} freed.",
   "empty": {
     "body": "Downloads from this app (and from transformers or the CLI) will show up here.",
     "title": "Cache is empty"

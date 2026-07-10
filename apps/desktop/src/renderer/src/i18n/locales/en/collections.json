@@ -1,0 +1,68 @@
+{
+  "create": "New collection",
+  "created": "Collection created",
+  "createDialog": {
+    "description": "Description (optional)",
+    "namespace": "Owner",
+    "private": "Private",
+    "submit": "Create",
+    "title": "Create collection",
+    "titleLabel": "Title",
+    "titlePlaceholder": "My awesome collection"
+  },
+  "detail": {
+    "deleted": "Collection deleted",
+    "deleteDialog": {
+      "body": "This permanently deletes the collection (its items stay on the Hub). Type the collection slug to confirm.",
+      "confirmPlaceholder": "Type the slug to confirm",
+      "title": "Delete collection?"
+    },
+    "edit": "Edit",
+    "editDialog": {
+      "save": "Save",
+      "title": "Edit collection"
+    },
+    "empty": {
+      "body": "Add models, datasets, Spaces or papers from their pages.",
+      "title": "This collection is empty"
+    },
+    "error": {
+      "title": "Could not load this collection"
+    },
+    "itemRemoved": "Item removed",
+    "note": {
+      "dialogTitle": "Item note",
+      "edit": "Edit note",
+      "placeholder": "Add a note about this item…",
+      "save": "Save",
+      "saved": "Note saved"
+    },
+    "removeItem": "Remove from collection",
+    "signedOutBody": "This collection may be private. Sign in to view it.",
+    "updated": "Collection updated"
+  },
+  "empty": {
+    "body": "Create a collection to organize models, datasets, Spaces and papers.",
+    "title": "No collections yet"
+  },
+  "error": {
+    "title": "Could not load collections"
+  },
+  "itemCount_one": "{{count}} item",
+  "itemCount_other": "{{count}} items",
+  "kind": {
+    "collection": "Collection"
+  },
+  "menu": {
+    "added": "Added to {{title}}",
+    "createNew": "New collection…",
+    "empty": "No collections yet",
+    "trigger": "Add to collection"
+  },
+  "scopeHint": "Your token is missing the write-collections scope; sign in again to edit collections.",
+  "signedOut": {
+    "body": "Collections group models, datasets, Spaces and papers on your Hugging Face profile.",
+    "title": "Sign in to see your collections"
+  },
+  "title": "Collections"
+}

@@ -82,6 +82,26 @@
     "task": "Task",
     "updated": "Updated"
   },
+  "like": {
+    "error": "Couldn't update the like: {{error}}",
+    "like": "Like",
+    "unlike": "Unlike"
+  },
+  "maintainer": {
+    "close": "Close",
+    "closeWithComment": "Comment and close",
+    "editTitle": "Edit title",
+    "merge": "Merge",
+    "mergeCommentPlaceholder": "Add an optional comment…",
+    "mergeConfirmBody": "This merges the pull request into the repository. This action cannot be undone.",
+    "mergeConfirmTitle": "Merge pull request #{{num}}?",
+    "merged": "Pull request merged",
+    "reopen": "Reopen",
+    "reopenWithComment": "Comment and reopen",
+    "statusUpdated": "Discussion status updated",
+    "titleSave": "Save",
+    "titleUpdated": "Title updated"
+  },
   "playground": {
     "empty": "The response will appear here.",
     "placeholder": "Send a prompt to this model via the Inference API…",
@@ -131,6 +151,7 @@
     "discussions": "Discussions",
     "files": "Files",
     "info": "Info",
+    "manage": "Manage",
     "playground": "Playground",
     "preview": "Preview",
     "run": "Run"

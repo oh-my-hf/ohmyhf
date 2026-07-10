@@ -1,5 +1,10 @@
 {
   "authors": "作者",
+  "comment": {
+    "heading": "评论这篇论文",
+    "placeholder": "写下评论（支持 Markdown）…",
+    "posted": "评论已发布"
+  },
   "empty": "暂无论文。",
   "published": "发布于 {{time}}",
   "readOnArxiv": "在 arXiv 阅读",

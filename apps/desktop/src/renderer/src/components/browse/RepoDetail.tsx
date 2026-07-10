@@ -12,6 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToasts } from '@/components/ui/toaster'
+import { RepoManagePanel } from '@/components/admin/RepoManagePanel'
+import { SpaceOpsPanel } from '@/components/admin/SpaceOpsPanel'
 import { DatasetPreview } from '@/components/browse/DatasetPreview'
 import { DiscussionsPanel } from '@/components/browse/DiscussionsPanel'
 import { FileTreeView } from '@/components/browse/FileTreeView'
@@ -19,6 +21,8 @@ import { InfoPanel } from '@/components/browse/InfoPanel'
 import { MarkdownView } from '@/components/browse/MarkdownView'
 import { PlaygroundPanel } from '@/components/browse/PlaygroundPanel'
 import { SpaceRunner } from '@/components/browse/SpaceRunner'
+import { AddToCollectionMenu } from '@/components/collections/AddToCollectionMenu'
+import { LikeButton } from '@/components/community/LikeButton'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -38,6 +42,7 @@ export function RepoDetail({
   const { t } = useTranslation(['detail', 'common'])
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
+  const auth = useAppStore((s) => s.auth)
   const locale = resolveLocale(settings, appInfo)
   const queryClient = useQueryClient()
   const push = useToasts((s) => s.push)
@@ -112,6 +117,13 @@ export function RepoDetail({
   const slash = repoId.indexOf('/')
   const owner = slash > 0 ? repoId.slice(0, slash) : null
 
+  // The Manage tab appears only for repos the signed-in user can administer
+  // (their own namespace or one of their orgs).
+  const isOwner =
+    auth.status === 'signedIn' &&
+    owner !== null &&
+    (owner === auth.user.name || auth.user.orgs.some((o) => o.name === owner))
+
   return (
     <div className="flex h-full min-w-0 flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
@@ -129,10 +141,13 @@ export function RepoDetail({
             )}
           </h1>
           <div className="mt-0.5 flex items-center gap-2 text-[12px] text-ink-faint">
-            <span className="flex items-center gap-1">
-              <Heart className="size-3" aria-hidden />
-              {detailData ? formatCount(detailData.likes, locale) : '–'}
-            </span>
+            {/* Signed in, the interactive LikeButton in the actions row shows the count. */}
+            {auth.status !== 'signedIn' && (
+              <span className="flex items-center gap-1">
+                <Heart className="size-3" aria-hidden />
+                {detailData ? formatCount(detailData.likes, locale) : '–'}
+              </span>
+            )}
             {kind !== 'space' && (
               <span className="flex items-center gap-1">
                 <ArrowDownToLine className="size-3" aria-hidden />
@@ -144,6 +159,8 @@ export function RepoDetail({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <LikeButton kind={kind} repoId={repoId} likes={detailData?.likes ?? 0} />
+          <AddToCollectionMenu kind={kind} repoId={repoId} />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -203,6 +220,7 @@ export function RepoDetail({
           {showPlayground && (
             <TabsTrigger value="playground">{t('detail:tabs.playground')}</TabsTrigger>
           )}
+          {isOwner && <TabsTrigger value="manage">{t('detail:tabs.manage')}</TabsTrigger>}
         </TabsList>
         <TabsContent value="card" className="min-h-0 flex-1 overflow-y-auto p-4">
           {readme.isPending && (
@@ -242,6 +260,14 @@ export function RepoDetail({
         {showPlayground && (
           <TabsContent value="playground" className="min-h-0 flex-1">
             <PlaygroundPanel repoId={repoId} />
+          </TabsContent>
+        )}
+        {isOwner && (
+          <TabsContent value="manage" className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+              <RepoManagePanel kind={kind} repoId={repoId} />
+              {kind === 'space' && <SpaceOpsPanel repoId={repoId} />}
+            </div>
           </TabsContent>
         )}
       </Tabs>

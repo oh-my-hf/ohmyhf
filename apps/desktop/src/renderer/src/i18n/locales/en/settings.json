@@ -9,6 +9,20 @@
     "version": "Version {{version}}"
   },
   "account": {
+    "billing": {
+      "empty": "No usage recorded for the current period.",
+      "gated": "Billing usage requires the read-billing permission. Re-authorize to grant it.",
+      "period": "{{start}} – {{end}}",
+      "title": "Billing usage",
+      "unauthorized": "The Hub did not authorize this token to read billing usage."
+    },
+    "hub": {
+      "missingScopes": "Missing permissions: {{scopes}}. Re-authorize to grant them.",
+      "reauthorize": "Re-authorize",
+      "scopes": "Granted permissions",
+      "scopesUnknown": "The permissions granted to this session are unknown. Re-authorize to refresh them.",
+      "title": "Hub account"
+    },
     "title": "Account"
   },
   "appearance": {

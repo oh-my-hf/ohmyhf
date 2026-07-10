@@ -4,10 +4,14 @@
  * preload exposes `invoke`/`on` typed against it, and the renderer consumes it.
  */
 import type {
+  AccessRequest,
   AppInfo,
   AppSettings,
   AuthState,
+  BillingUsage,
   CacheReport,
+  CollectionDetail,
+  CollectionSummary,
   DatasetRows,
   DatasetSplit,
   DiscussionDetail,
@@ -26,11 +30,12 @@ import type {
   Follow,
   FollowTargetType,
   HistoryItem,
-  HubNotification,
   InboxItem,
   InferenceRequest,
   InferenceResult,
   InferenceStreamEvent,
+  MyRepoEntry,
+  NotificationsPage,
   Page,
   PaperSummary,
   PostSummary,
@@ -39,6 +44,8 @@ import type {
   RepoSummary,
   SafetensorsHeader,
   SearchQuery,
+  SpaceSecret,
+  SpaceVariable,
   UploadProgress,
   UploadRequest,
   UploadResult,
@@ -58,6 +65,8 @@ export interface IpcInvokeContract {
 
   'hub:search': { req: { query: SearchQuery }; res: Page<RepoSummary> }
   'hub:papers': { req: { cursor?: string }; res: Page<PaperSummary> }
+  /** Single paper lookup for deep links outside the daily feed. */
+  'hub:paper': { req: { paperId: string }; res: PaperSummary }
   'hub:repoDetail': { req: { kind: RepoKind; repoId: string }; res: RepoDetail }
   'hub:readme': { req: { kind: RepoKind; repoId: string; revision?: string }; res: string }
   'hub:fileTree': {
@@ -91,7 +100,18 @@ export interface IpcInvokeContract {
     req: { kind: RepoKind; repoId: string; num: number; comment: string }
     res: void
   }
-  'hub:notifications': { req: void; res: Page<HubNotification> }
+  'hub:notifications': { req: { page?: number }; res: NotificationsPage }
+  /** Empty discussionIds = mark everything as read/unread. */
+  'hub:notificationsMarkRead': { req: { discussionIds: string[]; read: boolean }; res: void }
+  'hub:notificationsClear': { req: void; res: void }
+  /** Watch/unwatch users and orgs by their 24-hex internal id. */
+  'hub:watchUpdate': {
+    req: {
+      add?: { id: string; type: 'user' | 'org' }[]
+      delete?: { id: string; type: 'user' | 'org' }[]
+    }
+    res: void
+  }
   'hub:fileText': {
     req: { kind: RepoKind; repoId: string; path: string; revision?: string; maxBytes?: number }
     res: FileTextResult
@@ -109,8 +129,136 @@ export interface IpcInvokeContract {
     res: DatasetRows
   }
 
+  'hub:collections': { req: { owner: string }; res: CollectionSummary[] }
+  'hub:collection': { req: { slug: string }; res: CollectionDetail }
+  'hub:collectionCreate': {
+    req: { namespace: string; title: string; description?: string; private: boolean }
+    res: CollectionDetail
+  }
+  'hub:collectionUpdate': {
+    req: {
+      slug: string
+      patch: {
+        title?: string
+        description?: string
+        private?: boolean
+        position?: number
+        theme?: string
+      }
+    }
+    res: void
+  }
+  /** Destructive: confirmSlug must equal slug (enforced by the zod schema). */
+  'hub:collectionDelete': { req: { slug: string; confirmSlug: string }; res: void }
+  'hub:collectionAddItem': {
+    req: {
+      slug: string
+      item: { type: 'model' | 'dataset' | 'space' | 'paper'; id: string }
+      note?: string
+    }
+    res: void
+  }
+  'hub:collectionUpdateItem': {
+    req: { slug: string; itemId: string; note?: string; position?: number }
+    res: void
+  }
+  'hub:collectionRemoveItem': { req: { slug: string; itemId: string }; res: void }
+
+  'hub:myRepos': { req: void; res: MyRepoEntry[] }
+  'hub:repoSettingsUpdate': {
+    req: {
+      kind: RepoKind
+      repoId: string
+      patch: { private?: boolean; gated?: false | 'auto' | 'manual'; discussionsDisabled?: boolean }
+    }
+    res: void
+  }
+  'hub:repoMove': { req: { kind: RepoKind; fromRepo: string; toRepo: string }; res: void }
+  /** Destructive: confirmName must equal repoId (enforced by the zod schema). */
+  'hub:repoDelete': { req: { kind: RepoKind; repoId: string; confirmName: string }; res: void }
+  /** Spaces only: the Hub /duplicate endpoint exists solely for repoType=spaces. */
+  'hub:repoDuplicate': {
+    req: { repoId: string; toRepo: string; private?: boolean }
+    res: { url?: string }
+  }
+  'hub:branchCreate': {
+    req: { kind: RepoKind; repoId: string; branch: string; startingPoint?: string }
+    res: void
+  }
+  'hub:branchDelete': { req: { kind: RepoKind; repoId: string; branch: string }; res: void }
+  'hub:tagCreate': {
+    req: { kind: RepoKind; repoId: string; tag: string; revision?: string; message?: string }
+    res: void
+  }
+  'hub:tagDelete': { req: { kind: RepoKind; repoId: string; tag: string }; res: void }
+
+  /** Gated-repo access requests (models and datasets only). */
+  'hub:accessRequests': {
+    req: {
+      kind: 'model' | 'dataset'
+      repoId: string
+      status: 'pending' | 'accepted' | 'rejected'
+    }
+    res: AccessRequest[]
+  }
+  'hub:accessRequestHandle': {
+    req: {
+      kind: 'model' | 'dataset'
+      repoId: string
+      user: string
+      status: 'accepted' | 'rejected' | 'pending'
+      rejectionReason?: string
+    }
+    res: void
+  }
+  'hub:accessRequestGrant': {
+    req: { kind: 'model' | 'dataset'; repoId: string; user: string }
+    res: void
+  }
+
+  'hub:spaceSecrets': { req: { repoId: string }; res: SpaceSecret[] }
+  'hub:spaceSecretSet': {
+    req: { repoId: string; key: string; value: string; description?: string }
+    res: void
+  }
+  'hub:spaceSecretDelete': { req: { repoId: string; key: string }; res: void }
+  'hub:spaceVariables': { req: { repoId: string }; res: SpaceVariable[] }
+  'hub:spaceVariableSet': {
+    req: { repoId: string; key: string; value: string; description?: string }
+    res: void
+  }
+  'hub:spaceVariableDelete': { req: { repoId: string; key: string }; res: void }
+  /** Bounded snapshot of the Space's SSE log stream (never hangs). */
+  'hub:spaceLogs': { req: { repoId: string; logType: 'build' | 'run' }; res: { text: string } }
+  'hub:spaceRestart': { req: { repoId: string; factory?: boolean }; res: void }
+
+  'hub:likeSet': { req: { kind: RepoKind; repoId: string; liked: boolean }; res: void }
+  'hub:userLikes': { req: { username: string }; res: RepoSummary[] }
+  'hub:postComment': {
+    req: { author: string; slug: string; comment: string; replyToCommentId?: string }
+    res: void
+  }
+  'hub:paperComment': {
+    req: { paperId: string; comment: string; replyToCommentId?: string }
+    res: void
+  }
+  'hub:prMerge': {
+    req: { kind: RepoKind; repoId: string; num: number; comment?: string }
+    res: void
+  }
+  'hub:discussionStatusSet': {
+    req: { kind: RepoKind; repoId: string; num: number; status: 'open' | 'closed'; comment?: string }
+    res: void
+  }
+  'hub:discussionTitleSet': {
+    req: { kind: RepoKind; repoId: string; num: number; title: string }
+    res: void
+  }
+  'hub:billingUsage': { req: void; res: BillingUsage }
+
   'auth:getState': { req: void; res: AuthState }
   'auth:signIn': { req: void; res: AuthState }
+  'auth:cancelSignIn': { req: void; res: AuthState }
   'auth:signOut': { req: void; res: AuthState }
 
   'favorites:list': { req: void; res: FavoriteItem[] }
@@ -184,6 +332,7 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'settings:set',
   'hub:search',
   'hub:papers',
+  'hub:paper',
   'hub:repoDetail',
   'hub:readme',
   'hub:fileTree',
@@ -196,14 +345,54 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:discussionDetail',
   'hub:discussionComment',
   'hub:notifications',
+  'hub:notificationsMarkRead',
+  'hub:notificationsClear',
+  'hub:watchUpdate',
   'hub:fileText',
   'hub:safetensorsHeader',
   'hub:datasetSplits',
   'hub:datasetRows',
   'hub:searchUsers',
   'hub:inferenceAvailable',
+  'hub:collections',
+  'hub:collection',
+  'hub:collectionCreate',
+  'hub:collectionUpdate',
+  'hub:collectionDelete',
+  'hub:collectionAddItem',
+  'hub:collectionUpdateItem',
+  'hub:collectionRemoveItem',
+  'hub:myRepos',
+  'hub:repoSettingsUpdate',
+  'hub:repoMove',
+  'hub:repoDelete',
+  'hub:repoDuplicate',
+  'hub:branchCreate',
+  'hub:branchDelete',
+  'hub:tagCreate',
+  'hub:tagDelete',
+  'hub:accessRequests',
+  'hub:accessRequestHandle',
+  'hub:accessRequestGrant',
+  'hub:spaceSecrets',
+  'hub:spaceSecretSet',
+  'hub:spaceSecretDelete',
+  'hub:spaceVariables',
+  'hub:spaceVariableSet',
+  'hub:spaceVariableDelete',
+  'hub:spaceLogs',
+  'hub:spaceRestart',
+  'hub:likeSet',
+  'hub:userLikes',
+  'hub:postComment',
+  'hub:paperComment',
+  'hub:prMerge',
+  'hub:discussionStatusSet',
+  'hub:discussionTitleSet',
+  'hub:billingUsage',
   'auth:getState',
   'auth:signIn',
+  'auth:cancelSignIn',
   'auth:signOut',
   'favorites:list',
   'favorites:add',

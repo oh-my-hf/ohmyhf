@@ -41,8 +41,12 @@ export interface AuthorizeUrlOptions {
 
 /**
  * write-repos enables the upload workflow, write-discussions enables replies,
- * inference-api enables the playground. Users who signed in before these scopes
- * were added must sign out and back in to pick them up.
+ * inference-api enables the playground, read/write-collections enable the
+ * collections manager, manage-repos enables repo administration (rename,
+ * visibility, deletion, gated-access review), read-billing enables the usage
+ * summary. Users who signed in before a scope was added must sign out and back
+ * in to pick it up — the UI gates those features on the granted scopes instead
+ * of failing. The OAuth app registration must allow every scope listed here.
  */
 export const DEFAULT_SCOPES = [
   'openid',
@@ -50,7 +54,11 @@ export const DEFAULT_SCOPES = [
   'read-repos',
   'write-repos',
   'write-discussions',
-  'inference-api'
+  'inference-api',
+  'read-collections',
+  'write-collections',
+  'manage-repos',
+  'read-billing'
 ]
 
 export function buildAuthorizeUrl(opts: AuthorizeUrlOptions): string {

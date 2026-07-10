@@ -1,16 +1,38 @@
 /** Maps raw Hub REST payloads into the shared domain types. */
 import type {
+  AccessRequest,
+  BillingUsage,
+  CollectionDetail,
+  CollectionItem,
+  CollectionSummary,
   DiscussionDetail,
   DiscussionSummary,
   FileTreeEntry,
+  HubNotification,
+  MyRepoEntry,
+  NotificationsPage,
   PaperSummary,
   PostSummary,
   RepoDetail,
   RepoKind,
   RepoSummary,
+  SpaceSecret,
+  SpaceVariable,
   UserOverview,
   UserProfile
 } from '@oh-my-huggingface/shared'
+
+/** Plural URL segment per repo kind (kept local: client.ts imports this module). */
+const REPO_URL_SEGMENT: Record<RepoKind, string> = {
+  model: 'models',
+  dataset: 'datasets',
+  space: 'spaces'
+}
+
+/** Narrows a raw repo `type` to the kinds the app supports (drops bucket/kernel). */
+function asRepoKind(type: string | undefined): RepoKind | undefined {
+  return type === 'model' || type === 'dataset' || type === 'space' ? type : undefined
+}
 
 interface RawRepo {
   id?: string
@@ -151,6 +173,11 @@ export function mapPaper(raw: RawDailyPaper): PaperSummary {
   }
 }
 
+/** Direct /api/papers/{id} responses are the bare paper object (no {paper} wrapper). */
+export function mapPaperDetail(raw: NonNullable<RawDailyPaper['paper']>): PaperSummary {
+  return mapPaper({ paper: raw })
+}
+
 interface RawDiscussion {
   num?: number
   title?: string
@@ -238,6 +265,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
 }
 
 interface RawUserOverview {
+  _id?: string
   name?: string
   isFollowing?: boolean
   user?: string
@@ -266,6 +294,7 @@ export function mapUserOverview(
   const absolutize = (u: string | undefined): string | undefined =>
     u ? new URL(u, endpoint).toString() : undefined
   return {
+    internalId: raw._id,
     name: raw.user ?? raw.name ?? '',
     fullname: raw.fullname,
     avatarUrl: absolutize(raw.avatarUrl),
@@ -311,4 +340,310 @@ export function mapWhoAmI(raw: RawWhoAmI): UserProfile {
       avatarUrl: o.avatarUrl
     }))
   }
+}
+
+/** Owner arrives as an expanded object; older payloads may carry a bare handle. */
+interface RawCollectionOwner {
+  name?: string
+  user?: string
+}
+
+interface RawCollectionItem {
+  _id?: string
+  type?: string
+  id?: string
+  title?: string
+  /** Routable slug carried by type:'collection' items (id is the internal 24-hex id). */
+  slug?: string
+  /** Notes are pre-rendered; the raw text is what the app edits and displays. */
+  note?: { text?: string; html?: string }
+  position?: number
+  downloads?: number
+  likes?: number
+  upvotes?: number
+  emoji?: string
+}
+
+interface RawCollection {
+  slug?: string
+  title?: string
+  description?: string
+  owner?: RawCollectionOwner | string
+  private?: boolean
+  theme?: string
+  upvotes?: number
+  lastUpdated?: string
+  numberItems?: number
+  items?: RawCollectionItem[]
+}
+
+export function mapCollectionSummary(raw: RawCollection): CollectionSummary {
+  const owner = typeof raw.owner === 'string' ? raw.owner : (raw.owner?.name ?? raw.owner?.user)
+  return {
+    slug: raw.slug ?? '',
+    title: raw.title ?? '',
+    description: raw.description,
+    owner: owner ?? '',
+    private: raw.private ?? false,
+    theme: raw.theme,
+    // List payloads embed a (possibly truncated) items array instead of a count.
+    itemCount: raw.numberItems ?? raw.items?.length,
+    upvotes: raw.upvotes,
+    updatedAt: raw.lastUpdated
+  }
+}
+
+const COLLECTION_ITEM_TYPES: ReadonlySet<string> = new Set([
+  'model',
+  'dataset',
+  'space',
+  'paper',
+  'collection'
+])
+
+/** Returns undefined for item types the app does not display (e.g. buckets). */
+function mapCollectionItem(raw: RawCollectionItem): CollectionItem | undefined {
+  if (!raw.type || !COLLECTION_ITEM_TYPES.has(raw.type)) return undefined
+  return {
+    itemId: raw._id ?? '',
+    type: raw.type as CollectionItem['type'],
+    id: raw.id ?? '',
+    title: raw.title ?? raw.id,
+    slug: raw.slug,
+    note: raw.note?.text,
+    position: raw.position,
+    downloads: raw.downloads,
+    // Papers and nested collections report upvotes instead of likes.
+    likes: raw.likes ?? raw.upvotes,
+    emoji: raw.emoji
+  }
+}
+
+export function mapCollectionDetail(raw: RawCollection): CollectionDetail {
+  return {
+    ...mapCollectionSummary(raw),
+    items: (raw.items ?? [])
+      .map(mapCollectionItem)
+      .filter((item): item is CollectionItem => item !== undefined)
+  }
+}
+
+interface RawNotificationParticipant {
+  user?: string
+  avatar?: string
+}
+
+/** Discriminated by `type`; unknown variants degrade to kind 'other'. */
+interface RawNotification {
+  type?: string
+  read?: boolean
+  updatedAt?: string
+  repo?: { name?: string; type?: string }
+  discussion?: {
+    num?: number
+    title?: string
+    status?: string
+    id?: string
+    isPullRequest?: boolean
+    participating?: RawNotificationParticipant[]
+  }
+  paper?: { _id?: string; title?: string }
+  paperDiscussion?: { id?: string; participating?: RawNotificationParticipant[] }
+  post?: {
+    id?: string
+    slug?: string
+    authorName?: string
+    title?: string
+    participating?: RawNotificationParticipant[]
+  }
+  blog?: { id?: string; title?: string; participating?: RawNotificationParticipant[] }
+}
+
+export function mapNotification(raw: RawNotification, endpoint: string): HubNotification {
+  const absolutize = (u: string | undefined): string | undefined =>
+    u ? new URL(u, endpoint).toString() : undefined
+  const participants = (
+    list: RawNotificationParticipant[] | undefined
+  ): HubNotification['participants'] =>
+    (list ?? [])
+      .filter((p) => p.user)
+      .map((p) => ({ user: p.user ?? '', avatar: absolutize(p.avatar) }))
+  const base = { read: raw.read ?? false, updatedAt: raw.updatedAt }
+  if (raw.type === 'repo' && raw.repo) {
+    const repoKind = asRepoKind(raw.repo.type)
+    const num = raw.discussion?.num
+    const status = raw.discussion?.status
+    return {
+      ...base,
+      kind: 'repo',
+      title: raw.discussion?.title ?? raw.repo.name ?? '',
+      discussionId: raw.discussion?.id,
+      repoId: raw.repo.name,
+      repoKind,
+      discussionNum: num,
+      discussionStatus:
+        status === 'draft' || status === 'open' || status === 'closed' || status === 'merged'
+          ? status
+          : undefined,
+      isPullRequest: raw.discussion?.isPullRequest,
+      participants: participants(raw.discussion?.participating),
+      route:
+        repoKind && raw.repo.name && num !== undefined
+          ? `/${REPO_URL_SEGMENT[repoKind]}/${raw.repo.name}/discussions/${num}`
+          : undefined
+    }
+  }
+  if (raw.type === 'paper' && raw.paper) {
+    return {
+      ...base,
+      kind: 'paper',
+      title: raw.paper.title ?? '',
+      discussionId: raw.paperDiscussion?.id,
+      participants: participants(raw.paperDiscussion?.participating),
+      route: raw.paper._id ? `/papers/${raw.paper._id}` : undefined
+    }
+  }
+  if (raw.type === 'post' && raw.post) {
+    return {
+      ...base,
+      kind: 'post',
+      title: raw.post.title ?? '',
+      discussionId: raw.post.id,
+      participants: participants(raw.post.participating),
+      route:
+        raw.post.authorName && raw.post.slug
+          ? `/posts/${raw.post.authorName}/${raw.post.slug}`
+          : undefined
+    }
+  }
+  // Unknown variants (community_blog, org invites, …) still render as inbox rows.
+  return {
+    ...base,
+    kind: 'other',
+    title: raw.blog?.title ?? '',
+    discussionId: raw.blog?.id,
+    participants: participants(raw.blog?.participating)
+  }
+}
+
+interface RawNotificationsPage {
+  notifications?: RawNotification[]
+  count?: { view?: number; unread?: number; all?: number }
+}
+
+export function mapNotificationsPage(raw: RawNotificationsPage, endpoint: string): NotificationsPage {
+  const items = (raw.notifications ?? []).map((n) => mapNotification(n, endpoint))
+  // `view` counts the entries matching the current filters; `all` is the fallback.
+  return { count: raw.count?.view ?? raw.count?.all ?? items.length, items }
+}
+
+interface RawMyRepo {
+  id?: string
+  type?: string
+  updatedAt?: string
+  visibility?: string
+  storage?: number
+  storagePercent?: number
+}
+
+/** Keeps model/dataset/space entries only; buckets and kernels are dropped. */
+export function mapMyRepos(raw: RawMyRepo[]): MyRepoEntry[] {
+  const entries: MyRepoEntry[] = []
+  for (const r of raw) {
+    const kind = asRepoKind(r.type)
+    if (!kind || !r.id) continue
+    entries.push({
+      id: r.id,
+      kind,
+      visibility: r.visibility === 'private' || r.visibility === 'protected' ? r.visibility : 'public',
+      updatedAt: r.updatedAt ?? '',
+      storage: r.storage ?? 0,
+      storagePercent: r.storagePercent ?? 0
+    })
+  }
+  return entries
+}
+
+interface RawAccessRequest {
+  /** The requesting user's handle arrives under `user.user`. */
+  user?: { user?: string; fullname?: string; avatarUrl?: string }
+  timestamp?: string
+  fields?: Record<string, string>
+}
+
+export function mapAccessRequest(raw: RawAccessRequest, endpoint: string): AccessRequest {
+  return {
+    user: {
+      name: raw.user?.user ?? '',
+      fullname: raw.user?.fullname,
+      avatarUrl: raw.user?.avatarUrl ? new URL(raw.user.avatarUrl, endpoint).toString() : undefined
+    },
+    timestamp: raw.timestamp,
+    fields: raw.fields
+  }
+}
+
+interface RawSpaceEnvEntry {
+  key?: string
+  value?: string
+  description?: string
+  updatedAt?: string
+}
+
+/** The secrets endpoint returns an object map keyed by secret key. */
+export function mapSpaceSecrets(raw: Record<string, RawSpaceEnvEntry>): SpaceSecret[] {
+  return Object.entries(raw ?? {}).map(([key, entry]) => ({
+    key: entry?.key ?? key,
+    description: entry?.description,
+    updatedAt: entry?.updatedAt
+  }))
+}
+
+/** The variables endpoint returns an object map keyed by variable key. */
+export function mapSpaceVariables(raw: Record<string, RawSpaceEnvEntry>): SpaceVariable[] {
+  return Object.entries(raw ?? {}).map(([key, entry]) => ({
+    key: entry?.key ?? key,
+    value: entry?.value,
+    description: entry?.description,
+    updatedAt: entry?.updatedAt
+  }))
+}
+
+interface RawBillingUsageItem {
+  label?: string | null
+  product?: string
+  productPrettyName?: string
+  quantity?: number
+  unitLabel?: string
+  totalCostMicroUSD?: number
+}
+
+interface RawBillingUsage {
+  period?: { periodStart?: string; periodEnd?: string }
+  usage?: Record<string, RawBillingUsageItem[] | undefined>
+}
+
+/** Tolerant of shape drift: flattens the per-product usage map into display rows. */
+export function mapBillingUsage(raw: RawBillingUsage): BillingUsage {
+  const rows: BillingUsage['rows'] = []
+  for (const [group, items] of Object.entries(raw.usage ?? {})) {
+    if (!Array.isArray(items)) continue
+    for (const item of items) {
+      const detailParts: string[] = []
+      if (item.label && item.productPrettyName) detailParts.push(item.productPrettyName)
+      if (typeof item.quantity === 'number' && item.unitLabel) {
+        detailParts.push(`${item.quantity} ${item.unitLabel}`)
+      }
+      rows.push({
+        label: item.label ?? item.productPrettyName ?? item.product ?? group,
+        detail: detailParts.length > 0 ? detailParts.join(' · ') : undefined,
+        // The API reports micro-USD; the UI displays cents (1 cent = 10,000 µUSD).
+        amountCents:
+          typeof item.totalCostMicroUSD === 'number'
+            ? Math.round(item.totalCostMicroUSD / 10_000)
+            : undefined
+      })
+    }
+  }
+  return { periodStart: raw.period?.periodStart, periodEnd: raw.period?.periodEnd, rows }
 }

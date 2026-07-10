@@ -1,8 +1,8 @@
 {
-  "checkNow": "立即检查",
   "checked": "{{count}} 条新动态",
   "checked_other": "{{count}} 条新动态",
   "checking": "检查中…",
+  "checkNow": "立即检查",
   "clear": "清空收件箱",
   "empty": {
     "body": "关注用户、组织、仓库或每日论文摘要，动态会汇聚到这里。",
@@ -11,9 +11,9 @@
   "follows": {
     "add": "关注",
     "empty": "还没有关注任何内容。",
-    "importFromHub": "从 Hugging Face 导入",
     "imported": "已导入 {{count}} 个你在 Hub 上关注的账号",
     "imported_other": "已导入 {{count}} 个你在 Hub 上关注的账号",
+    "importFromHub": "从 Hugging Face 导入",
     "papers": "每日论文摘要",
     "placeholder": "用户名、组织名，或 model:org/name",
     "title": "正在关注",
@@ -24,11 +24,47 @@
       "user": "用户"
     }
   },
+  "hub": {
+    "clearAll": "全部清除",
+    "confirmClear": {
+      "body": "这将永久删除你 Hugging Face 收件箱中的所有通知。",
+      "confirm": "全部清除",
+      "title": "清除所有 Hub 通知？"
+    },
+    "empty": {
+      "body": "Hub 上讨论、拉取请求和帖子的通知会显示在这里。",
+      "title": "暂无 Hub 通知"
+    },
+    "kind": {
+      "org": "组织",
+      "other": "其他",
+      "paper": "论文",
+      "post": "帖子",
+      "repo": "仓库"
+    },
+    "pageNext": "下一页",
+    "pageOf": "第 {{page}} / {{pages}} 页",
+    "pagePrev": "上一页",
+    "signIn": {
+      "action": "打开账号设置",
+      "body": "连接你的 Hugging Face 账号以同步 Hub 通知收件箱。",
+      "title": "登录以查看 Hub 通知"
+    },
+    "unauthorized": {
+      "action": "打开账号设置",
+      "body": "Hub 未授权此令牌读取通知。请退出登录后重新登录以授予应用权限。",
+      "title": "无法获取 Hub 通知"
+    }
+  },
   "kind": {
     "new-repo": "新建",
     "paper": "论文",
     "repo-update": "更新"
   },
   "markAllRead": "全部标为已读",
+  "tabs": {
+    "hub": "Hub 通知",
+    "local": "关注动态"
+  },
   "title": "收件箱"
 }

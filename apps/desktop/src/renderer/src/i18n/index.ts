@@ -17,6 +17,8 @@ import enUpload from './locales/en/upload.json'
 import enIntegrations from './locales/en/integrations.json'
 import enHome from './locales/en/home.json'
 import enProfile from './locales/en/profile.json'
+import enAdmin from './locales/en/admin.json'
+import enCollections from './locales/en/collections.json'
 import zhCommon from './locales/zh-CN/common.json'
 import zhNav from './locales/zh-CN/nav.json'
 import zhBrowse from './locales/zh-CN/browse.json'
@@ -32,6 +34,8 @@ import zhUpload from './locales/zh-CN/upload.json'
 import zhIntegrations from './locales/zh-CN/integrations.json'
 import zhHome from './locales/zh-CN/home.json'
 import zhProfile from './locales/zh-CN/profile.json'
+import zhAdmin from './locales/zh-CN/admin.json'
+import zhCollections from './locales/zh-CN/collections.json'
 
 export const NAMESPACES = [
   'common',
@@ -48,7 +52,9 @@ export const NAMESPACES = [
   'upload',
   'integrations',
   'home',
-  'profile'
+  'profile',
+  'admin',
+  'collections'
 ] as const
 
 const resources = {
@@ -67,7 +73,9 @@ const resources = {
     upload: enUpload,
     integrations: enIntegrations,
     home: enHome,
-    profile: enProfile
+    profile: enProfile,
+    admin: enAdmin,
+    collections: enCollections
   },
   'zh-CN': {
     common: zhCommon,
@@ -84,7 +92,9 @@ const resources = {
     upload: zhUpload,
     integrations: zhIntegrations,
     home: zhHome,
-    profile: zhProfile
+    profile: zhProfile,
+    admin: zhAdmin,
+    collections: zhCollections
   }
 }
 

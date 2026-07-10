@@ -10,10 +10,13 @@
   "follow": "关注",
   "followingOnHub": "已在 Hub 关注",
   "post": {
+    "commentPlaceholder": "写下评论（支持 Markdown）…",
+    "commentPosted": "评论已发布",
     "commentsOnHub": "回复和评论需前往 Hub 进行。",
     "error": {
       "title": "无法加载该帖子"
-    }
+    },
+    "signInToComment": "登录后可评论。"
   },
   "stats": {
     "datasets": "数据集",
@@ -23,5 +26,6 @@
     "spaces": "Spaces"
   },
   "unfollow": "取消关注",
-  "viewProfile": "查看主页"
+  "viewProfile": "查看主页",
+  "watchSyncFailed": "已保存到本地，但同步关注状态到 Hub 失败：{{error}}"
 }

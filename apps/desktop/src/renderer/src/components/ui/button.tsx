@@ -48,7 +48,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           loading && 'disabled:opacity-70',
           className
         )}
-        disabled={disabled ?? loading ?? undefined}
+        // Loading always disables, even when callers pass an explicit disabled={false}.
+        disabled={(disabled || loading) ?? undefined}
         aria-busy={loading || undefined}
         {...props}
       >

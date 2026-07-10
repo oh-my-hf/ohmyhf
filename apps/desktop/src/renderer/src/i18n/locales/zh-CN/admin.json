@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "通过",
+    "empty": "暂无申请。",
+    "grant": "授予访问权限",
+    "granted": "已授予访问权限",
+    "grantPlaceholder": "用户名",
+    "handled": "申请已更新",
+    "notGated": "启用访问门控后即可审核访问申请。",
+    "reasonPlaceholder": "拒绝原因（可选）",
+    "reject": "拒绝",
+    "tab": {
+      "accepted": "已通过",
+      "pending": "待处理",
+      "rejected": "已拒绝"
+    },
+    "title": "访问申请"
+  },
+  "actions": {
+    "duplicate": "复制",
+    "label": "仓库操作",
+    "rename": "重命名 / 移动"
+  },
+  "delete": {
+    "body": "此操作将永久删除 {{repoId}} 及其所有文件，且无法撤销。",
+    "confirmLabel": "输入 {{repoId}} 以确认",
+    "success": "仓库已删除",
+    "title": "删除仓库"
+  },
+  "duplicate": {
+    "body": "以新的 ID 创建 {{repoId}} 的副本。",
+    "label": "目标仓库 ID",
+    "private": "将副本设为私有",
+    "submit": "复制",
+    "success": "仓库已复制",
+    "title": "复制仓库"
+  },
+  "error": {
+    "title": "无法加载你的仓库"
+  },
+  "gatedHint": {
+    "body": "你的访问令牌不包含 manage-repos 权限，仓库管理功能已禁用。",
+    "title": "缺少权限"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "你拥有的仓库会显示在这里。",
+      "title": "还没有仓库"
+    },
+    "filter": {
+      "all": "全部"
+    },
+    "title": "我的仓库"
+  },
+  "refs": {
+    "branchCreated": "分支已创建",
+    "branchDeleted": "分支已删除",
+    "branchesHint": "创建分支，或按名称删除分支。",
+    "branchPlaceholder": "branch-name",
+    "createBranch": "创建分支",
+    "createTag": "创建标签",
+    "deleteBranch": "删除分支",
+    "deleteTag": "删除标签",
+    "startingPointPlaceholder": "起始点（可选）",
+    "tagCreated": "标签已创建",
+    "tagDeleted": "标签已删除",
+    "tagMessagePlaceholder": "说明（可选）",
+    "tagPlaceholder": "tag-name",
+    "tagsHint": "在 main 上创建标签，或按名称删除标签。",
+    "title": "分支与标签"
+  },
+  "rename": {
+    "body": "将 {{repoId}} 移动到新的名称或命名空间。所有文件、点赞和下载量将一并迁移。",
+    "label": "新仓库 ID",
+    "submit": "重命名",
+    "success": "仓库已移动",
+    "title": "重命名或移动"
+  },
+  "repoIdPlaceholder": "owner/name",
+  "settings": {
+    "gated": "访问门控",
+    "gatedAuto": "自动批准",
+    "gatedHint": "要求用户在下载前申请访问权限。",
+    "gatedManual": "手动审核",
+    "gatedOff": "关闭",
+    "private": "私有",
+    "privateHint": "只有你和协作者可以看到此仓库。",
+    "title": "设置",
+    "updated": "设置已更新"
+  },
+  "signedOut": {
+    "body": "登录后，你的模型、数据集和 Space 会显示在这里。",
+    "title": "登录后管理你的仓库"
+  },
+  "space": {
+    "descriptionPlaceholder": "描述（可选）",
+    "keyPlaceholder": "KEY",
+    "logs": {
+      "build": "构建",
+      "empty": "暂无日志输出。",
+      "refresh": "刷新日志",
+      "run": "运行",
+      "title": "日志"
+    },
+    "restart": {
+      "done": "已请求重启",
+      "factory": "恢复出厂并重建",
+      "factoryHint": "恢复出厂重建会清除构建缓存并从头重建 Space。",
+      "restart": "重启 Space",
+      "title": "重启"
+    },
+    "secrets": {
+      "add": "添加密钥",
+      "deleted": "密钥已删除",
+      "empty": "尚未设置密钥。",
+      "saved": "密钥已保存",
+      "title": "密钥",
+      "writeOnly": "密钥值仅可写入，保存后不会再显示。"
+    },
+    "valuePlaceholder": "值",
+    "variables": {
+      "deleted": "变量已删除",
+      "edit": "编辑变量",
+      "empty": "尚未设置变量。",
+      "save": "保存变量",
+      "saved": "变量已保存",
+      "title": "变量"
+    }
+  },
+  "visibility": {
+    "makePrivate": "设为私有",
+    "makePublic": "设为公开",
+    "protected": "受保护",
+    "updated": "可见性已更新"
+  }
+}

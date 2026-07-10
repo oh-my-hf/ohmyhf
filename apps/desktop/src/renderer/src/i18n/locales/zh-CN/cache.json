@@ -4,9 +4,9 @@
     "title": "删除 {{count}} 个修订？",
     "title_other": "删除 {{count}} 个修订？"
   },
+  "deleted": "已删除，释放 {{size}}。",
   "deleteRevision": "删除此修订",
   "deleteStale": "清理无引用的修订",
-  "deleted": "已删除，释放 {{size}}。",
   "empty": {
     "body": "本应用（以及 transformers、CLI）的下载内容都会显示在这里。",
     "title": "缓存为空"

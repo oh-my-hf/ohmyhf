@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ExternalLink, FileText, ThumbsUp } from 'lucide-react'
 import { invoke, openExternal } from '@/lib/ipc'
@@ -9,6 +9,8 @@ import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useToasts } from '@/components/ui/toaster'
+import { CommentComposer } from '@/components/community/CommentComposer'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const ROW_HEIGHT = 64
@@ -18,9 +20,11 @@ export function PapersPage(): React.JSX.Element {
   const navigate = useNavigate()
   const params = useParams()
   const selectedId = params['*'] || undefined
+  const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const push = useToasts((s) => s.push)
   const parentRef = useRef<HTMLDivElement>(null)
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -31,7 +35,16 @@ export function PapersPage(): React.JSX.Element {
   })
 
   const papers = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
-  const selected = papers.find((p) => p.id === selectedId)
+  const inFeed = papers.some((p) => p.id === selectedId)
+
+  // Deep links (collections, notifications) can point at papers outside the
+  // daily feed; fetch those directly. A 404 falls through to the empty state.
+  const fallback = useQuery({
+    queryKey: ['paper', selectedId],
+    queryFn: () => invoke('hub:paper', { paperId: selectedId ?? '' }),
+    enabled: selectedId !== undefined && !isLoading && !inFeed
+  })
+  const selected = papers.find((p) => p.id === selectedId) ?? fallback.data
 
   const virtualizer = useVirtualizer({
     count: papers.length + (hasNextPage ? 1 : 0),
@@ -157,7 +170,28 @@ export function PapersPage(): React.JSX.Element {
                 {t('papers:readOnHub')}
               </Button>
             </div>
+            {auth.status === 'signedIn' && (
+              <div className="flex flex-col gap-2 border-t pt-4">
+                <h2 className="text-[13px] font-semibold">{t('papers:comment.heading')}</h2>
+                <CommentComposer
+                  key={selected.id}
+                  kind="model"
+                  repoId={selected.id}
+                  placeholder={t('papers:comment.placeholder')}
+                  submit={(comment) =>
+                    invoke('hub:paperComment', { paperId: selected.id, comment })
+                  }
+                  onSubmitted={() => push(t('papers:comment.posted'), 'success')}
+                />
+              </div>
+            )}
           </article>
+        ) : fallback.isLoading ? (
+          <div className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
+            <Skeleton className="h-8" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-40" />
+          </div>
         ) : (
           <div className="flex h-full items-center justify-center p-8">
             <EmptyState icon={FileText} title={t('papers:empty')} />

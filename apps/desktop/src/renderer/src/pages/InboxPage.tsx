@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
+import { HubNotificationsPanel } from '@/components/inbox/HubNotificationsPanel'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const FOLLOW_ICON: Record<FollowTargetType, React.ComponentType<{ className?: string }>> = {
@@ -21,7 +22,64 @@ const FOLLOW_ICON: Record<FollowTargetType, React.ComponentType<{ className?: st
   papers: FileText
 }
 
+type InboxTab = 'hub' | 'local'
+
+function TabButton({
+  active,
+  onClick,
+  label
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'flex items-center gap-1.5 rounded px-2.5 py-1 text-[12.5px] font-medium transition-colors duration-150',
+        active ? 'bg-bg text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
+      )}
+    >
+      {label}
+    </button>
+  )
+}
+
 export function InboxPage(): React.JSX.Element {
+  const { t } = useTranslation(['inbox'])
+  const auth = useAppStore((s) => s.auth)
+  // The Hub inbox is the primary surface once an account is connected; the
+  // local follows feed stays fully available in the second tab.
+  const [tab, setTab] = useState<InboxTab>(auth.status === 'signedIn' ? 'hub' : 'local')
+
+  return (
+    <div className="flex h-full min-w-0 flex-col">
+      <div className="flex shrink-0 items-center gap-3 px-5 pt-5 pb-3">
+        <h1 className="text-[15px] font-semibold">{t('inbox:title')}</h1>
+        <div className="flex items-center gap-0.5 rounded-md border bg-panel p-0.5">
+          <TabButton
+            active={tab === 'hub'}
+            onClick={() => setTab('hub')}
+            label={t('inbox:tabs.hub')}
+          />
+          <TabButton
+            active={tab === 'local'}
+            onClick={() => setTab('local')}
+            label={t('inbox:tabs.local')}
+          />
+        </div>
+      </div>
+      <div className="min-h-0 flex-1">
+        {tab === 'hub' ? <HubNotificationsPanel /> : <LocalFollowsFeed />}
+      </div>
+    </div>
+  )
+}
+
+function LocalFollowsFeed(): React.JSX.Element {
   const { t } = useTranslation(['inbox', 'common'])
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -114,10 +172,9 @@ export function InboxPage(): React.JSX.Element {
   }
 
   return (
-    <div className="flex h-full min-w-0">
+    <div className="flex h-full min-h-0 min-w-0">
       <section className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-2 px-5 pt-5 pb-2">
-          <h1 className="text-[15px] font-semibold">{t('inbox:title')}</h1>
+        <div className="flex items-center gap-2 px-5 pb-2">
           {unread.length > 0 && (
             <Badge variant="primary" className="nums">
               {unread.length}

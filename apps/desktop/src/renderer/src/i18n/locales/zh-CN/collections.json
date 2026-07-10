@@ -1,0 +1,68 @@
+{
+  "create": "新建合集",
+  "created": "合集已创建",
+  "createDialog": {
+    "description": "描述（可选）",
+    "namespace": "所有者",
+    "private": "私有",
+    "submit": "创建",
+    "title": "创建合集",
+    "titleLabel": "标题",
+    "titlePlaceholder": "我的精选合集"
+  },
+  "detail": {
+    "deleted": "合集已删除",
+    "deleteDialog": {
+      "body": "这将永久删除该合集（其中的条目仍保留在 Hub 上）。输入合集 slug 以确认。",
+      "confirmPlaceholder": "输入 slug 以确认",
+      "title": "删除合集？"
+    },
+    "edit": "编辑",
+    "editDialog": {
+      "save": "保存",
+      "title": "编辑合集"
+    },
+    "empty": {
+      "body": "可以在模型、数据集、Space 或论文页面把它们添加进来。",
+      "title": "该合集还没有条目"
+    },
+    "error": {
+      "title": "无法加载该合集"
+    },
+    "itemRemoved": "条目已移除",
+    "note": {
+      "dialogTitle": "条目备注",
+      "edit": "编辑备注",
+      "placeholder": "为该条目添加备注…",
+      "save": "保存",
+      "saved": "备注已保存"
+    },
+    "removeItem": "从合集中移除",
+    "signedOutBody": "该合集可能是私有的，登录后即可查看。",
+    "updated": "合集已更新"
+  },
+  "empty": {
+    "body": "创建一个合集来整理模型、数据集、Space 和论文。",
+    "title": "还没有合集"
+  },
+  "error": {
+    "title": "无法加载合集"
+  },
+  "itemCount": "{{count}} 个条目",
+  "itemCount_other": "{{count}} 个条目",
+  "kind": {
+    "collection": "合集"
+  },
+  "menu": {
+    "added": "已添加到 {{title}}",
+    "createNew": "新建合集…",
+    "empty": "还没有合集",
+    "trigger": "添加到合集"
+  },
+  "scopeHint": "当前令牌缺少 write-collections 权限，请重新登录后再编辑合集。",
+  "signedOut": {
+    "body": "合集可以把模型、数据集、Space 和论文整理到你的 Hugging Face 个人主页。",
+    "title": "登录后查看你的合集"
+  },
+  "title": "合集"
+}

@@ -111,15 +111,29 @@ export interface UserProfile {
 export type AuthState =
   | { status: 'signedOut' }
   | { status: 'signingIn' }
-  | { status: 'signedIn'; user: UserProfile }
+  /** scopes = OAuth scopes granted to the stored token; UI gates features on them. */
+  | { status: 'signedIn'; user: UserProfile; scopes?: string[] }
 
 export interface HubNotification {
-  id: string
-  title: string
-  url?: string
+  /** discussion id used by mark-as-read, when the notification is discussion-backed */
+  discussionId?: string
+  kind: 'repo' | 'paper' | 'post' | 'org' | 'other'
   read: boolean
-  createdAt?: string
+  updatedAt?: string
+  title: string
+  /** in-app route, e.g. /models/{id}/discussions/{num} or /posts/{author}/{slug} */
+  route?: string
   repoId?: string
+  repoKind?: RepoKind
+  discussionNum?: number
+  discussionStatus?: 'draft' | 'open' | 'closed' | 'merged'
+  isPullRequest?: boolean
+  participants?: { user: string; avatar?: string }[]
+}
+
+export interface NotificationsPage {
+  count: number
+  items: HubNotification[]
 }
 
 export type DownloadStatus =
@@ -276,6 +290,8 @@ export interface PostSummary {
 }
 
 export interface UserOverview {
+  /** 24-hex `_id` from the overview response — required for watch updates. */
+  internalId?: string
   name: string
   fullname?: string
   avatarUrl?: string
@@ -430,4 +446,82 @@ export interface DatasetRows {
   /** Cell values pre-stringified and truncated for display. */
   rows: string[][]
   total?: number
+}
+
+export interface CollectionSummary {
+  /** "owner/title-slug-<24hex>" — the API path segment. */
+  slug: string
+  title: string
+  description?: string
+  owner: string
+  private: boolean
+  theme?: string
+  itemCount?: number
+  upvotes?: number
+  updatedAt?: string
+}
+
+export interface CollectionItem {
+  /** `_id` used for item PATCH/DELETE. */
+  itemId: string
+  type: 'model' | 'dataset' | 'space' | 'paper' | 'collection'
+  /** Repo id / paper id. */
+  id: string
+  /** Paper title or repo id. */
+  title?: string
+  /** Routable slug for type:'collection' items — the id field is the internal 24-hex id. */
+  slug?: string
+  note?: string
+  position?: number
+  /** Light display metadata when present in the API response: */
+  downloads?: number
+  likes?: number
+  emoji?: string
+}
+
+export interface CollectionDetail extends CollectionSummary {
+  items: CollectionItem[]
+}
+
+export interface MyRepoEntry {
+  id: string
+  /** Filter API `type` to model|dataset|space; drop bucket/kernel. */
+  kind: RepoKind
+  visibility: 'public' | 'private' | 'protected'
+  updatedAt: string
+  storage: number
+  storagePercent: number
+}
+
+export interface AccessRequestUser {
+  name: string
+  fullname?: string
+  avatarUrl?: string
+}
+
+export interface AccessRequest {
+  user: AccessRequestUser
+  timestamp?: string
+  /** Extra gate-form fields if present. */
+  fields?: Record<string, string>
+}
+
+export interface SpaceSecret {
+  key: string
+  description?: string
+  updatedAt?: string
+}
+
+export interface SpaceVariable {
+  key: string
+  value?: string
+  description?: string
+  updatedAt?: string
+}
+
+export interface BillingUsage {
+  periodStart?: string
+  periodEnd?: string
+  /** Tolerant of shape drift: generic labeled rows for display. */
+  rows: { label: string; detail?: string; amountCents?: number }[]
 }

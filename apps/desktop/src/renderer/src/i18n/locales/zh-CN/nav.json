@@ -1,6 +1,7 @@
 {
   "browse": "浏览",
   "cache": "缓存",
+  "collections": "合集",
   "commandPalette": "命令面板",
   "compare": "对比",
   "datasets": "数据集",
@@ -10,6 +11,7 @@
   "inbox": "收件箱",
   "library": "本地",
   "models": "模型",
+  "myRepos": "我的仓库",
   "palette": {
     "close": "关闭",
     "navigate": "导航",
