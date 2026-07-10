@@ -114,6 +114,8 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     revision: revision.optional()
   }),
   'hub:datasetSplits': z.object({ repoId }),
+  'hub:searchUsers': z.object({ query: z.string().min(1).max(64) }),
+  'hub:inferenceAvailable': z.object({ repoId }),
   'hub:datasetRows': z.object({
     repoId,
     config: z.string().min(1).max(256),

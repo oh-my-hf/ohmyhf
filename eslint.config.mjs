@@ -5,7 +5,15 @@ import i18next from 'eslint-plugin-i18next'
 
 export default tseslint.config(
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/release/**', '**/coverage/**']
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/out/**',
+      '**/release/**',
+      '**/coverage/**',
+      // Finder-style duplicate artifacts the environment occasionally creates.
+      '**/* 2.*'
+    ]
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

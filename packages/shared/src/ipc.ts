@@ -37,7 +37,8 @@ import type {
   SearchQuery,
   UploadProgress,
   UploadRequest,
-  UploadResult
+  UploadResult,
+  UserSearchResult
 } from './types'
 
 /** Request/response map for `ipcRenderer.invoke`-style calls. */
@@ -80,6 +81,9 @@ export interface IpcInvokeContract {
     res: SafetensorsHeader
   }
   'hub:datasetSplits': { req: { repoId: string }; res: DatasetSplit[] }
+  'hub:searchUsers': { req: { query: string }; res: UserSearchResult[] }
+  /** Whether at least one inference provider serves this model. */
+  'hub:inferenceAvailable': { req: { repoId: string }; res: boolean }
   'hub:datasetRows': {
     req: { repoId: string; config: string; split: string; offset?: number; length?: number }
     res: DatasetRows
@@ -171,6 +175,8 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:safetensorsHeader',
   'hub:datasetSplits',
   'hub:datasetRows',
+  'hub:searchUsers',
+  'hub:inferenceAvailable',
   'auth:getState',
   'auth:signIn',
   'auth:signOut',

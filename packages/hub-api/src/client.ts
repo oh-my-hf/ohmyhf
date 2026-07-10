@@ -14,7 +14,8 @@ import type {
   SafetensorsHeader,
   SafetensorsTensor,
   SearchQuery,
-  UserProfile
+  UserProfile,
+  UserSearchResult
 } from '@oh-my-huggingface/shared'
 import { HubApiError, isNotFound } from './errors'
 import {
@@ -627,5 +628,53 @@ export class HubClient {
       return columns.map((col) => formatCell(record[col]))
     })
     return { columns, rows, total: body.num_rows_total }
+  }
+
+  /** User/org lookup for @mention autocompletion. Failures degrade to an empty list. */
+  async searchUsers(query: string): Promise<UserSearchResult[]> {
+    const url = new URL(`${this.endpoint}/api/quicksearch`)
+    url.searchParams.set('q', query)
+    url.searchParams.set('type', 'user')
+    try {
+      const { body } = await this.getJson<{
+        users?: Array<{ user?: string; fullname?: string; avatarUrl?: string }>
+      }>(url.toString(), { ttl: 60_000 })
+      return (body.users ?? [])
+        .filter((u) => u.user)
+        .slice(0, 8)
+        .map((u) => ({
+          name: u.user ?? '',
+          fullname: u.fullname,
+          avatarUrl: u.avatarUrl ? new URL(u.avatarUrl, this.endpoint).toString() : undefined
+        }))
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * True when at least one inference provider serves the model (or the classic
+   * Inference API reports it warm). Errors degrade to false so UI simply hides
+   * the playground.
+   */
+  async isInferenceAvailable(repoId: string): Promise<boolean> {
+    const url = new URL(`${this.endpoint}/api/models/${repoId}`)
+    url.searchParams.append('expand[]', 'inference')
+    url.searchParams.append('expand[]', 'inferenceProviderMapping')
+    try {
+      const { body } = await this.getJson<{
+        inference?: string
+        inferenceProviderMapping?: Record<string, unknown> | unknown[]
+      }>(url.toString(), { ttl: 10 * 60_000 })
+      const mapping = body.inferenceProviderMapping
+      const providers = Array.isArray(mapping)
+        ? mapping.length
+        : mapping
+          ? Object.keys(mapping).length
+          : 0
+      return providers > 0 || body.inference === 'warm'
+    } catch {
+      return false
+    }
   }
 }

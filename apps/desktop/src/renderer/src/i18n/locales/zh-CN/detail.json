@@ -44,6 +44,8 @@
     "code": "行内代码",
     "italic": "斜体",
     "link": "链接",
+    "mentionEmpty": "未找到用户",
+    "mentionHint": "输入以提及用户或组织",
     "preview": "预览",
     "previewEmpty": "暂无可预览的内容，请先输入。",
     "quote": "引用",

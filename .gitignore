@@ -12,3 +12,6 @@ coverage/
 playwright-report/
 test-results/
 .impeccable/
+
+# macOS Finder-style duplicate artifacts (created spuriously by the environment)
+* 2.*

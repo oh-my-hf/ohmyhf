@@ -66,6 +66,13 @@ export function RepoDetail({
     queryKey: ['favorites'],
     queryFn: () => invoke('favorites:list', undefined)
   })
+  // The playground tab only exists when some inference provider actually serves the model.
+  const inferenceAvailable = useQuery({
+    queryKey: ['inference-available', debouncedRepoId],
+    queryFn: () => invoke('hub:inferenceAvailable', { repoId: debouncedRepoId }),
+    enabled: kind === 'model' && queriesEnabled,
+    staleTime: 10 * 60_000
+  })
 
   // Never show (or act on) data that belongs to a lagging debounced id.
   const detailData = debouncedRepoId === repoId ? detail.data : undefined
@@ -97,6 +104,7 @@ export function RepoDetail({
 
   const hubUrl = `https://huggingface.co/${HUB_PREFIX[kind]}${repoId}`
   const isModel = kind === 'model'
+  const showPlayground = isModel && inferenceAvailable.data === true
 
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -176,7 +184,9 @@ export function RepoDetail({
           <TabsTrigger value="files">{t('detail:tabs.files')}</TabsTrigger>
           <TabsTrigger value="info">{t('detail:tabs.info')}</TabsTrigger>
           <TabsTrigger value="discussions">{t('detail:tabs.discussions')}</TabsTrigger>
-          {isModel && <TabsTrigger value="playground">{t('detail:tabs.playground')}</TabsTrigger>}
+          {showPlayground && (
+            <TabsTrigger value="playground">{t('detail:tabs.playground')}</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="card" className="min-h-0 flex-1 overflow-y-auto p-4">
           {readme.isPending && (
@@ -208,7 +218,7 @@ export function RepoDetail({
         <TabsContent value="discussions" className="min-h-0 flex-1">
           <DiscussionsPanel kind={kind} repoId={repoId} />
         </TabsContent>
-        {isModel && (
+        {showPlayground && (
           <TabsContent value="playground" className="min-h-0 flex-1">
             <PlaygroundPanel repoId={repoId} />
           </TabsContent>

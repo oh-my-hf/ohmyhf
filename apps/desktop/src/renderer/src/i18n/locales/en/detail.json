@@ -44,6 +44,8 @@
     "code": "Inline code",
     "italic": "Italic",
     "link": "Link",
+    "mentionEmpty": "No users found",
+    "mentionHint": "Type to mention a user or org",
     "preview": "Preview",
     "previewEmpty": "Nothing to preview yet — write something first.",
     "quote": "Quote",

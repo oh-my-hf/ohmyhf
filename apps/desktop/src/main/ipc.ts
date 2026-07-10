@@ -123,6 +123,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
     ctx.hub.getSafetensorsHeader(kind, repoId, path, revision)
   )
   handle('hub:datasetSplits', ({ repoId }) => ctx.hub.getDatasetSplits(repoId))
+  handle('hub:searchUsers', ({ query }) => ctx.hub.searchUsers(query))
+  handle('hub:inferenceAvailable', ({ repoId }) => ctx.hub.isInferenceAvailable(repoId))
   handle('hub:datasetRows', ({ repoId, config, split, offset, length }) =>
     ctx.hub.getDatasetRows(repoId, config, split, offset, length)
   )

@@ -12,5 +12,6 @@
     "src/preload/**/*.ts",
     "../../packages/shared/src/**/*.ts",
     "../../packages/hub-api/src/**/*.ts"
-  ]
+  ],
+  "exclude": ["**/* 2.*"]
 }

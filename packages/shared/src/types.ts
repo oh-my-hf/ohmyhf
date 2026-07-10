@@ -352,6 +352,12 @@ export interface DatasetSplit {
   split: string
 }
 
+export interface UserSearchResult {
+  name: string
+  fullname?: string
+  avatarUrl?: string
+}
+
 export interface DatasetRows {
   columns: string[]
   /** Cell values pre-stringified and truncated for display. */
