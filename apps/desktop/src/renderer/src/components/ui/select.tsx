@@ -39,7 +39,9 @@ export function SelectContent({
         position="popper"
         sideOffset={4}
         className={cn(
-          'animate-pop z-50 min-w-32 rounded-lg border bg-elevated p-1 shadow-overlay',
+          // Cap to the space the popper actually has and scroll — long lists
+          // (e.g. the 300+ dataset-config picker) used to run off the screen.
+          'animate-pop z-50 max-h-[var(--radix-select-content-available-height)] min-w-32 overflow-y-auto rounded-lg border bg-elevated p-1 shadow-overlay',
           className
         )}
         {...props}

@@ -280,6 +280,35 @@ export class AuthManager {
         await this.restoreStateIfNeeded(epoch)
         return true
       }
+      // The refresh token is dead, but the ACCESS token usually still works: a
+      // lost refresh response (network drop mid-rotation) or a sibling instance
+      // rotating the shared token invalidates the refresh token server-side while
+      // our access token keeps authenticating. signOut() here also deletes the
+      // shared credentials every instance reads, so a transient glitch used to
+      // drop the login mid-use. Keep the session while the access token lives;
+      // retry later (a sibling may re-auth), and sign out only once whoAmI itself
+      // is rejected — probed each attempt, so an expired access token still ends
+      // the session cleanly (no zombie signed-in state).
+      if (current?.accessToken) {
+        try {
+          const user = await this.client.whoAmI()
+          if (epoch !== this.epoch) return false
+          if (this.state.status !== 'signedIn') {
+            this.setState({ status: 'signedIn', user, scopes: this.token?.scopes })
+          }
+          console.warn('[auth] refresh rejected but access token still valid; keeping session', err)
+          this.scheduleRetry()
+          return true
+        } catch (probeErr) {
+          if (epoch !== this.epoch) return false
+          if (!isUnauthorized(probeErr)) {
+            // Couldn't even reach the Hub to probe — treat as transient.
+            this.scheduleRetry()
+            return false
+          }
+          // Access token is dead too: fall through to a genuine sign-out.
+        }
+      }
       console.warn('[auth] refresh token rejected; signing out', err)
       await this.signOut()
       return false

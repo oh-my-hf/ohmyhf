@@ -173,14 +173,23 @@ export function Sidebar(): React.JSX.Element {
           type="button"
           onClick={() => openSettings('account')}
           className={cn(
-            'mt-0.5 flex h-9 items-center gap-2.5 rounded-lg border bg-linear-to-b from-btn-from to-btn-to px-2 text-[13px] text-ink-muted transition-colors duration-150 hover:shadow-btn-inset hover:text-ink',
-            collapsed ? 'justify-center' : 'justify-start'
+            'mt-0.5 flex h-9 items-center gap-2.5 rounded-lg text-[13px] text-ink-muted transition-colors duration-150 hover:text-ink',
+            collapsed
+              ? 'justify-center hover:bg-panel-2'
+              : 'justify-start border bg-linear-to-b from-btn-from to-btn-to px-2 hover:shadow-btn-inset'
           )}
         >
           {auth.status === 'signedIn' && auth.user.avatarUrl ? (
-            <img src={auth.user.avatarUrl} alt="" className="size-5 shrink-0 rounded-full border" />
+            <img
+              src={auth.user.avatarUrl}
+              alt=""
+              className={cn(
+                'shrink-0 rounded-full border object-cover',
+                collapsed ? 'size-6' : 'size-5'
+              )}
+            />
           ) : (
-            <UserCircle2 className="size-4 shrink-0" aria-hidden />
+            <UserCircle2 className={cn('shrink-0', collapsed ? 'size-5' : 'size-4')} aria-hidden />
           )}
           {!collapsed && (
             <span className="min-w-0 flex-1 truncate text-left font-medium">
