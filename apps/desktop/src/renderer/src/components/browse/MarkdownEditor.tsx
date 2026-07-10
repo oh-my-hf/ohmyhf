@@ -15,16 +15,9 @@ import type { RepoKind, UserSearchResult } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { useDebounced } from '@/hooks/use-debounced'
-import {
-  applyFormat,
-  continueLine,
-  mentionAtCaret,
-  type ActiveMention,
-  type Format
-} from '@/lib/editor'
+import { applyFormat, continueLine, mentionAtCaret, type Format } from '@/lib/editor'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
 import { MarkdownView } from '@/components/browse/MarkdownView'
 
 export interface MarkdownEditorProps {
@@ -37,6 +30,130 @@ export interface MarkdownEditorProps {
   repoId: string
 }
 
+/** Avatar/name for a mentioned user, remembered so chips can re-render with the avatar. */
+interface MentionInfo {
+  avatarUrl?: string
+  fullname?: string
+}
+
+/*
+ * The editor is a `white-space: pre-wrap` contenteditable whose content is a flat
+ * run of text nodes and atomic `@mention` chip spans (contenteditable="false").
+ * Newlines live as "\n" inside text nodes (Enter is handled manually), so the DOM
+ * ⇄ markdown bridge is trivial and the string helpers in lib/editor.ts still apply.
+ */
+
+/** "@username" length a chip stands for in the serialized string. */
+function chipLen(el: HTMLElement): number {
+  return (el.dataset.mention ?? '').length + 1
+}
+
+/** Serialize the editor DOM (or a fragment wrapper) back to markdown text. */
+function serialize(root: HTMLElement): string {
+  let out = ''
+  root.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      out += node.textContent ?? ''
+    } else if (node instanceof HTMLElement) {
+      if (node.dataset.mention) out += `@${node.dataset.mention}`
+      else if (node.tagName === 'BR') out += '\n'
+      else out += node.textContent ?? ''
+    }
+  })
+  return out
+}
+
+/** String offset of the caret within the editor (chips count as their "@username"). */
+function caretOffset(root: HTMLElement): number | null {
+  const sel = window.getSelection()
+  if (!sel || sel.rangeCount === 0) return null
+  const range = sel.getRangeAt(0)
+  if (range.startContainer !== root && !root.contains(range.startContainer)) return null
+  const pre = document.createRange()
+  pre.selectNodeContents(root)
+  pre.setEnd(range.startContainer, range.startOffset)
+  const wrapper = document.createElement('div')
+  wrapper.appendChild(pre.cloneContents())
+  return serialize(wrapper).length
+}
+
+/** Place the caret at a string offset (mirrors caretOffset). */
+function setCaret(root: HTMLElement, offset: number): void {
+  const sel = window.getSelection()
+  if (!sel) return
+  let remaining = offset
+  const range = document.createRange()
+  for (const node of Array.from(root.childNodes)) {
+    const len =
+      node.nodeType === Node.TEXT_NODE
+        ? (node.textContent?.length ?? 0)
+        : node instanceof HTMLElement
+          ? node.dataset.mention
+            ? chipLen(node)
+            : node.tagName === 'BR'
+              ? 1
+              : (node.textContent?.length ?? 0)
+          : 0
+    if (remaining <= len) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        range.setStart(node, remaining)
+      } else if (remaining >= len) {
+        range.setStartAfter(node)
+      } else {
+        range.setStartBefore(node)
+      }
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+      return
+    }
+    remaining -= len
+  }
+  range.selectNodeContents(root)
+  range.collapse(false)
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
+/** Build a chip node for @username (with avatar when known). */
+function makeChip(username: string, info: MentionInfo | undefined): HTMLElement {
+  const chip = document.createElement('span')
+  chip.dataset.mention = username
+  chip.contentEditable = 'false'
+  chip.className =
+    'mx-px inline-flex items-center gap-1 rounded-full border border-select/30 bg-select/10 px-1.5 align-middle text-[12.5px] font-medium text-select'
+  if (info?.avatarUrl) {
+    const img = document.createElement('img')
+    img.src = info.avatarUrl
+    img.alt = ''
+    img.className = 'size-4 rounded-full'
+    chip.appendChild(img)
+  }
+  chip.appendChild(document.createTextNode(`@${username}`))
+  return chip
+}
+
+/** Matches a mention token at a valid boundary (line start or after whitespace/brackets). */
+const MENTION_TOKEN = /(^|[\s([{>])@([\w.-]{1,30})/g
+
+/** Rebuild the editor DOM from markdown, chip-ifying mention tokens. */
+function renderInto(root: HTMLElement, markdown: string, meta: Map<string, MentionInfo>): void {
+  root.textContent = ''
+  let last = 0
+  MENTION_TOKEN.lastIndex = 0
+  let m: RegExpExecArray | null
+  while ((m = MENTION_TOKEN.exec(markdown)) !== null) {
+    const boundary = m[1] ?? ''
+    const username = m[2] ?? ''
+    const at = m.index + boundary.length
+    if (at > last) root.appendChild(document.createTextNode(markdown.slice(last, at)))
+    root.appendChild(makeChip(username, meta.get(username)))
+    last = at + 1 + username.length
+    MENTION_TOKEN.lastIndex = last
+  }
+  if (last < markdown.length) root.appendChild(document.createTextNode(markdown.slice(last)))
+}
+
 export function MarkdownEditor({
   value,
   onChange,
@@ -47,9 +164,14 @@ export function MarkdownEditor({
 }: MarkdownEditorProps): React.JSX.Element {
   const { t } = useTranslation('detail')
   const [tab, setTab] = useState<'write' | 'preview'>('write')
-  const [mention, setMention] = useState<ActiveMention | null>(null)
+  const [mention, setMention] = useState<{ start: number; query: string } | null>(null)
   const [mentionIndex, setMentionIndex] = useState(0)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
+  // Known avatars/names, so re-renders keep chips rich; survives across edits.
+  const mentionMeta = useRef<Map<string, MentionInfo>>(new Map())
+  // The last markdown we emitted — lets us tell our own echo from an external
+  // reset (draft cleared after send) without fighting the caret.
+  const lastEmitted = useRef<string | null>(null)
 
   const mentionQuery = useDebounced(mention?.query ?? '', 200)
   const userSearch = useQuery({
@@ -60,48 +182,78 @@ export function MarkdownEditor({
   })
   const mentionResults: UserSearchResult[] =
     mention && mentionQuery.length >= 1 ? (userSearch.data ?? []) : []
+  const activeIndex = Math.min(mentionIndex, Math.max(0, mentionResults.length - 1))
 
-  /** Re-derive the active @mention from the current caret position. */
-  const syncMention = (el: HTMLTextAreaElement): void => {
-    const next =
-      el.selectionStart === el.selectionEnd ? mentionAtCaret(el.value, el.selectionStart) : null
+  // Push the current DOM to the parent as markdown.
+  const emit = (): string => {
+    const root = editorRef.current
+    if (!root) return value
+    const next = serialize(root)
+    lastEmitted.current = next
+    onChange(next)
+    return next
+  }
+
+  const syncMention = (): void => {
+    const root = editorRef.current
+    if (!root) return
+    const offset = caretOffset(root)
+    const next = offset === null ? null : mentionAtCaret(serialize(root), offset)
     if (next?.query !== mention?.query) setMentionIndex(0)
     setMention(next)
   }
 
-  // Results can shrink between keystrokes; never let the highlight point past the end.
-  const activeIndex = Math.min(mentionIndex, Math.max(0, mentionResults.length - 1))
+  // External value changes (initial content, draft cleared after send, restore on
+  // error) re-render the DOM; our own echoes are skipped so typing never jumps.
+  useEffect(() => {
+    const root = editorRef.current
+    if (!root) return
+    if (value === lastEmitted.current) return
+    if (value === serialize(root)) return
+    renderInto(root, value, mentionMeta.current)
+  }, [value])
 
-  const applyEdit = (next: string, selectStart: number, selectEnd = selectStart): void => {
-    onChange(next)
-    const el = textareaRef.current
-    requestAnimationFrame(() => {
-      if (!el) return
-      el.focus()
-      el.setSelectionRange(selectStart, selectEnd)
-    })
+  const onInput = (): void => {
+    emit()
+    syncMention()
   }
 
+  /** Replace an in-progress "@query" with a chip and a trailing space. */
   const insertMention = (user: UserSearchResult): void => {
-    if (!mention) return
+    const root = editorRef.current
+    if (!root || !mention) return
+    mentionMeta.current.set(user.name, { avatarUrl: user.avatarUrl, fullname: user.fullname })
+    const md = serialize(root)
     const caret = mention.start + 1 + mention.query.length
-    const inserted = `@${user.name} `
-    const next = value.slice(0, mention.start) + inserted + value.slice(caret)
+    const next = `${md.slice(0, mention.start)}@${user.name} ${md.slice(caret)}`
+    renderInto(root, next, mentionMeta.current)
+    setCaret(root, mention.start + user.name.length + 2)
     setMention(null)
-    applyEdit(next, mention.start + inserted.length)
+    lastEmitted.current = next
+    onChange(next)
   }
 
-  /** GitHub-style Enter behavior: continue `>`/`-`/`*`/`1.` markers, exit on empty items. */
-  const continueListOnEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
-    const el = e.currentTarget
-    if (el.selectionStart !== el.selectionEnd) return false
-    const result = continueLine(value, el.selectionStart)
-    if (!result) return false
-    applyEdit(result.next, result.selectStart)
-    return true
+  /** Apply a string-level edit (toolbar/list) then restore the caret. */
+  const applyEdit = (next: string, selStart: number): void => {
+    const root = editorRef.current
+    if (!root) return
+    renderInto(root, next, mentionMeta.current)
+    root.focus()
+    setCaret(root, selStart)
+    lastEmitted.current = next
+    onChange(next)
   }
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+  const format = (fmt: Format): void => {
+    const root = editorRef.current
+    if (!root) return
+    const md = serialize(root)
+    const caret = caretOffset(root) ?? md.length
+    const { next, selectStart } = applyFormat(md, caret, caret, fmt)
+    applyEdit(next, selectStart)
+  }
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
     if (e.nativeEvent.isComposing) return
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
@@ -127,33 +279,22 @@ export function MarkdownEditor({
         return
       }
     }
-    if (e.key === 'Enter' && !e.shiftKey && continueListOnEnter(e)) {
-      e.preventDefault()
+    if (e.key === 'Enter' && !e.shiftKey) {
+      const root = editorRef.current
+      const caret = root ? caretOffset(root) : null
+      // GitHub-style list continuation; otherwise insert a literal newline
+      // (default contenteditable Enter would splinter into <div>/<br> blocks).
+      if (root && caret !== null) {
+        const result = continueLine(serialize(root), caret)
+        e.preventDefault()
+        if (result) {
+          applyEdit(result.next, result.selectStart)
+        } else {
+          const md = serialize(root)
+          applyEdit(`${md.slice(0, caret)}\n${md.slice(caret)}`, caret + 1)
+        }
+      }
     }
-  }
-
-  // Auto-grow with the draft, capped so long replies scroll instead of eating the thread.
-  useEffect(() => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 320)}px`
-  }, [value, tab])
-
-  const format = (fmt: Format): void => {
-    const el = textareaRef.current
-    if (!el) return
-    const { next, selectStart, selectEnd } = applyFormat(
-      value,
-      el.selectionStart,
-      el.selectionEnd,
-      fmt
-    )
-    onChange(next)
-    requestAnimationFrame(() => {
-      el.focus()
-      el.setSelectionRange(selectStart, selectEnd)
-    })
   }
 
   const tools: Array<{ id: Format; icon: LucideIcon; label: string }> = [
@@ -196,22 +337,21 @@ export function MarkdownEditor({
           </div>
         </div>
         <TabsContent value="write" className="relative">
-          <Textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => {
-              onChange(e.target.value)
-              syncMention(e.target)
-            }}
-            onSelect={(e) => syncMention(e.currentTarget)}
-            onBlur={() => setMention(null)}
-            onKeyDown={onKeyDown}
-            placeholder={placeholder}
-            rows={3}
-            role="combobox"
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            role="textbox"
+            aria-multiline="true"
             aria-expanded={mention !== null}
             aria-autocomplete="list"
-            className="min-h-20 resize-none overflow-y-auto rounded-t-none border-0 bg-transparent px-3 py-2.5 pb-6 focus-visible:border-transparent focus-visible:ring-0"
+            data-placeholder={placeholder}
+            onInput={onInput}
+            onKeyUp={syncMention}
+            onClick={syncMention}
+            onBlur={() => setMention(null)}
+            onKeyDown={onKeyDown}
+            className="max-h-80 min-h-20 overflow-y-auto px-3 py-2.5 pb-6 text-[13px] whitespace-pre-wrap outline-none empty:before:text-ink-faint empty:before:content-[attr(data-placeholder)]"
           />
           <span
             className="pointer-events-none absolute right-2.5 bottom-1.5 font-mono text-[10.5px] text-ink-faint"
@@ -241,7 +381,7 @@ export function MarkdownEditor({
                   type="button"
                   role="option"
                   aria-selected={index === activeIndex}
-                  // preventDefault keeps the textarea focused so the caret survives insertion.
+                  // preventDefault keeps the editor focused so the caret survives insertion.
                   onMouseDown={(e) => {
                     e.preventDefault()
                     insertMention(user)
