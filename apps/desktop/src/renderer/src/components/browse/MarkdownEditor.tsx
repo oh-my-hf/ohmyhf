@@ -136,6 +136,17 @@ function makeChip(username: string, info: MentionInfo | undefined): HTMLElement 
 /** Matches a mention token at a valid boundary (line start or after whitespace/brackets). */
 const MENTION_TOKEN = /(^|[\s([{>])@([\w.-]{1,30})/g
 
+/**
+ * Turn @mentions into profile links so the Preview shows what the posted comment
+ * will actually look like (the Hub linkifies mentions in rendered markdown).
+ */
+function linkifyMentions(markdown: string): string {
+  return markdown.replace(
+    MENTION_TOKEN,
+    (_, boundary: string, name: string) => `${boundary}[@${name}](https://huggingface.co/${name})`
+  )
+}
+
 /** Rebuild the editor DOM from markdown, chip-ifying mention tokens. */
 function renderInto(root: HTMLElement, markdown: string, meta: Map<string, MentionInfo>): void {
   root.textContent = ''
@@ -169,9 +180,6 @@ export function MarkdownEditor({
   const editorRef = useRef<HTMLDivElement>(null)
   // Known avatars/names, so re-renders keep chips rich; survives across edits.
   const mentionMeta = useRef<Map<string, MentionInfo>>(new Map())
-  // The last markdown we emitted — lets us tell our own echo from an external
-  // reset (draft cleared after send) without fighting the caret.
-  const lastEmitted = useRef<string | null>(null)
 
   const mentionQuery = useDebounced(mention?.query ?? '', 200)
   const userSearch = useQuery({
@@ -189,7 +197,6 @@ export function MarkdownEditor({
     const root = editorRef.current
     if (!root) return value
     const next = serialize(root)
-    lastEmitted.current = next
     onChange(next)
     return next
   }
@@ -203,12 +210,13 @@ export function MarkdownEditor({
     setMention(next)
   }
 
-  // External value changes (initial content, draft cleared after send, restore on
-  // error) re-render the DOM; our own echoes are skipped so typing never jumps.
+  // Keep the DOM in sync with `value` whenever they diverge: on mount, when the
+  // Write pane remounts after a Preview round-trip, and on external resets (draft
+  // cleared after send, restored on error). While typing, `value` already equals
+  // the serialized DOM, so this is a no-op and the caret never jumps.
   useEffect(() => {
     const root = editorRef.current
     if (!root) return
-    if (value === lastEmitted.current) return
     if (value === serialize(root)) return
     renderInto(root, value, mentionMeta.current)
   }, [value])
@@ -229,7 +237,6 @@ export function MarkdownEditor({
     renderInto(root, next, mentionMeta.current)
     setCaret(root, mention.start + user.name.length + 2)
     setMention(null)
-    lastEmitted.current = next
     onChange(next)
   }
 
@@ -240,7 +247,6 @@ export function MarkdownEditor({
     renderInto(root, next, mentionMeta.current)
     root.focus()
     setCaret(root, selStart)
-    lastEmitted.current = next
     onChange(next)
   }
 
@@ -416,7 +422,7 @@ export function MarkdownEditor({
           {value.trim() === '' ? (
             <p className="text-[12.5px] text-ink-faint">{t('editor.previewEmpty')}</p>
           ) : (
-            <MarkdownView markdown={value} kind={kind} repoId={repoId} />
+            <MarkdownView markdown={linkifyMentions(value)} kind={kind} repoId={repoId} />
           )}
         </TabsContent>
       </Tabs>
