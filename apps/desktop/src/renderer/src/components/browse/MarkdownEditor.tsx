@@ -166,7 +166,7 @@ export function MarkdownEditor({
   ]
 
   return (
-    <div className="rounded-lg border bg-bg transition-colors duration-150 focus-within:border-primary">
+    <div className="rounded-lg border bg-bg transition-colors duration-150 focus-within:border-focus/50">
       <Tabs value={tab} onValueChange={(v) => setTab(v as 'write' | 'preview')}>
         <div className="flex items-center justify-between gap-2 border-b pr-1.5">
           <TabsList className="border-b-0">
@@ -249,7 +249,7 @@ export function MarkdownEditor({
                   onMouseEnter={() => setMentionIndex(index)}
                   className={cn(
                     'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px]',
-                    index === activeIndex && 'bg-primary/10 text-primary'
+                    index === activeIndex && 'bg-select/10 text-select'
                   )}
                 >
                   {user.avatarUrl ? (

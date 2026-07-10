@@ -29,8 +29,9 @@ function stripFrontmatter(markdown: string): string {
 
 export interface MarkdownViewProps {
   markdown: string
-  kind: RepoKind
-  repoId: string
+  /** Repo context for resolving relative links; omit for non-repo content (posts). */
+  kind?: RepoKind
+  repoId?: string
   revision?: string
 }
 
@@ -41,13 +42,15 @@ export function MarkdownView({
   revision = 'main'
 }: MarkdownViewProps): React.JSX.Element {
   const content = useMemo(() => stripFrontmatter(markdown), [markdown])
-  const base = `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}`
+  const base = kind && repoId ? `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}` : undefined
 
   const resolveRelative = (url: string, forImage: boolean): string => {
     if (/^(https?:|data:)/.test(url)) return url
     if (url.startsWith('#')) return url
     const clean = url.replace(/^\.?\//, '')
-    return `${base}/${forImage ? 'resolve' : 'blob'}/${revision}/${clean}`
+    return base
+      ? `${base}/${forImage ? 'resolve' : 'blob'}/${revision}/${clean}`
+      : `https://huggingface.co/${clean}`
   }
 
   return (

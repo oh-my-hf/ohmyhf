@@ -1,4 +1,5 @@
 {
+  "account": "账户",
   "browse": "浏览",
   "cache": "缓存",
   "collections": "合集",
@@ -7,6 +8,7 @@
   "datasets": "数据集",
   "downloads": "下载",
   "favorites": "收藏",
+  "globalSearch": "搜索模型、数据集、Spaces、用户…",
   "home": "首页",
   "inbox": "收件箱",
   "library": "本地",
@@ -19,7 +21,12 @@
   },
   "papers": "论文",
   "search": "搜索…",
+  "searchIn": "在{{kind}}中搜索“{{query}}”",
+  "searching": "搜索中…",
   "settings": "设置",
+  "shortcuts": "键盘快捷键",
   "spaces": "Spaces",
-  "upload": "上传"
+  "toggleSidebar": "收起/展开侧边栏",
+  "upload": "上传",
+  "users": "用户"
 }

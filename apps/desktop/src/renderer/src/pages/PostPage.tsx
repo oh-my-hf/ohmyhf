@@ -86,7 +86,7 @@ export function PostPage(): React.JSX.Element {
                 <div className="flex min-w-0 items-baseline gap-1.5">
                   <UserLink
                     username={data.author}
-                    className="truncate text-[13.5px] font-medium text-ink"
+                    className="truncate text-[13.5px] font-medium text-ink-strong"
                   />
                   {data.authorFullname !== undefined && data.authorFullname !== '' && (
                     <span className="truncate text-[12.5px] text-ink-muted">

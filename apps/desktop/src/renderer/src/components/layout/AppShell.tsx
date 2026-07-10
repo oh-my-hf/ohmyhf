@@ -4,9 +4,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/toaster'
 import { CommandPalette } from '@/components/CommandPalette'
+import { ShortcutsHelpDialog } from '@/components/ShortcutsHelpDialog'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { TopBar } from '@/components/layout/TopBar'
 import { SettingsDialog } from '@/components/settings/SettingsDialog'
 import { useIpcEvent } from '@/hooks/use-ipc-event'
+import { isEditableTarget } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
 
 export function AppShell(): React.JSX.Element {
@@ -19,6 +22,8 @@ export function AppShell(): React.JSX.Element {
   const setAuth = useAppStore((s) => s.setAuth)
   const setPaletteOpen = useAppStore((s) => s.setPaletteOpen)
   const openSettings = useAppStore((s) => s.openSettings)
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar)
+  const setShortcutsOpen = useAppStore((s) => s.setShortcutsOpen)
 
   useIpcEvent(
     'evt:navigate',
@@ -53,31 +58,70 @@ export function AppShell(): React.JSX.Element {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPaletteOpen(true)
+        return
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+      if (mod && e.key === ',') {
         e.preventDefault()
         openSettings()
+        return
+      }
+      if (mod && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        toggleSidebar()
+        return
+      }
+      // History and typography-adjacent keys never fire while typing.
+      if ((mod && e.key === '[') || (e.altKey && !mod && e.key === 'ArrowLeft')) {
+        if (isEditableTarget(e)) return
+        e.preventDefault()
+        void navigate(-1)
+        return
+      }
+      if ((mod && e.key === ']') || (e.altKey && !mod && e.key === 'ArrowRight')) {
+        if (isEditableTarget(e)) return
+        e.preventDefault()
+        void navigate(1)
+        return
+      }
+      if (e.key === '?' && !mod && !e.altKey && !isEditableTarget(e)) {
+        e.preventDefault()
+        setShortcutsOpen(true)
+        return
+      }
+      if (e.key === '/' && !mod && !e.altKey && !isEditableTarget(e)) {
+        // Focus the active list search (FiltersBar tags its input).
+        const input = document.querySelector<HTMLInputElement>('[data-list-search]')
+        if (input) {
+          e.preventDefault()
+          input.focus()
+          input.select()
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [setPaletteOpen, openSettings])
+  }, [setPaletteOpen, openSettings, toggleSidebar, setShortcutsOpen, navigate])
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="flex h-full">
-        <Sidebar />
-        <main className="min-w-0 flex-1">
-          <div key={section} className="animate-fade-rise h-full">
-            <Outlet />
-          </div>
-        </main>
+      <div className="flex h-full flex-col">
+        <TopBar />
+        <div className="flex min-h-0 flex-1">
+          <Sidebar />
+          <main className="min-w-0 flex-1">
+            <div key={section} className="animate-fade-rise h-full">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
       <CommandPalette />
       <SettingsDialog />
+      <ShortcutsHelpDialog />
       <Toaster />
     </TooltipProvider>
   )

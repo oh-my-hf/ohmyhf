@@ -1,4 +1,5 @@
 {
+  "account": "Account",
   "browse": "Browse",
   "cache": "Cache",
   "collections": "Collections",
@@ -7,6 +8,7 @@
   "datasets": "Datasets",
   "downloads": "Downloads",
   "favorites": "Favorites",
+  "globalSearch": "Search models, datasets, spaces, users…",
   "home": "Home",
   "inbox": "Inbox",
   "library": "Library",
@@ -19,7 +21,12 @@
   },
   "papers": "Papers",
   "search": "Search…",
+  "searchIn": "Search {{kind}} for “{{query}}”",
+  "searching": "Searching…",
   "settings": "Settings",
+  "shortcuts": "Keyboard shortcuts",
   "spaces": "Spaces",
-  "upload": "Upload"
+  "toggleSidebar": "Toggle sidebar",
+  "upload": "Upload",
+  "users": "Users"
 }

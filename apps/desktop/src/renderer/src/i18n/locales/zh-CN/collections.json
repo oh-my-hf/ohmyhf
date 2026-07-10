@@ -50,6 +50,7 @@
   },
   "itemCount": "{{count}} 个条目",
   "itemCount_other": "{{count}} 个条目",
+  "itemRemoved": "已从合集中移除",
   "kind": {
     "collection": "合集"
   },

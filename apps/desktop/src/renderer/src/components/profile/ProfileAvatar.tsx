@@ -31,7 +31,7 @@ export function ProfileAvatar({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-full bg-panel-2 font-semibold text-ink-muted uppercase ring-1 ring-border',
+        'bg-aurora flex shrink-0 items-center justify-center rounded-full font-semibold text-ink-strong uppercase ring-1 ring-border-card',
         className
       )}
       aria-hidden

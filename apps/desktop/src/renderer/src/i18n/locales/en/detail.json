@@ -60,6 +60,11 @@
     "quote": "Quote",
     "write": "Write"
   },
+  "favoriteRemoved": "Removed from favorites",
+  "favoritesEmpty": {
+    "body": "Star repositories while browsing to pin them here.",
+    "title": "No favorites yet"
+  },
   "files": {
     "download": "Download file",
     "empty": "This directory is empty.",

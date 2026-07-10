@@ -7,12 +7,14 @@ export const TabsContent = TabsPrimitive.Content
 export function TabsList({ className, ...props }: TabsPrimitive.TabsListProps): React.JSX.Element {
   return (
     <TabsPrimitive.List
-      className={cn('flex items-center gap-0.5 border-b px-1', className)}
+      className={cn('flex items-center gap-1 border-b px-1', className)}
       {...props}
     />
   )
 }
 
+// HF `.tab-alternate`: a 2px bottom border that fades in gray on hover and
+// commits to ink + semibold when active.
 export function TabsTrigger({
   className,
   ...props
@@ -20,9 +22,9 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'relative -mb-px rounded-t px-3 py-2 text-[13px] font-medium text-ink-muted transition-colors duration-150',
-        'hover:text-ink data-[state=active]:text-ink',
-        'data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-full data-[state=active]:after:bg-primary',
+        '-mb-px border-b-2 border-transparent px-3.5 py-2 text-[13px] font-medium text-ink-muted transition-colors duration-150',
+        'hover:border-border hover:text-ink',
+        'data-[state=active]:border-ink data-[state=active]:font-semibold data-[state=active]:text-ink-strong',
         className
       )}
       {...props}

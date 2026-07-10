@@ -63,7 +63,9 @@ export function PapersPage(): React.JSX.Element {
   return (
     <div className="flex h-full min-w-0">
       <section className="flex w-[24rem] shrink-0 flex-col border-r max-[1000px]:w-80">
-        <h1 className="px-4 pt-4 pb-2 text-[15px] font-semibold">{t('papers:title')}</h1>
+        <h1 className="text-smd px-4 pt-4 pb-2 font-semibold text-ink-strong">
+          {t('papers:title')}
+        </h1>
         {isLoading ? (
           <div className="flex flex-col gap-1 p-2">
             {Array.from({ length: 10 }, (_, i) => (
@@ -91,17 +93,17 @@ export function PapersPage(): React.JSX.Element {
                   <button
                     key={paper.id}
                     type="button"
-                    onClick={() => navigate(`/papers/${paper.id}`, { replace: true })}
+                    onClick={() => navigate(`/papers/${paper.id}`)}
                     className={cn(
                       'absolute inset-x-1 flex flex-col justify-center gap-1 rounded-md px-2.5 text-left transition-colors duration-100',
-                      isSelected ? 'bg-primary/10' : 'hover:bg-panel'
+                      isSelected ? 'bg-select/10' : 'hover:bg-panel'
                     )}
                     style={{ top: row.start + 2, height: ROW_HEIGHT - 4 }}
                   >
                     <span
                       className={cn(
                         'line-clamp-2 text-[13px] leading-tight font-medium',
-                        isSelected && 'text-primary'
+                        isSelected && 'text-select'
                       )}
                     >
                       {paper.title}
@@ -110,6 +112,9 @@ export function PapersPage(): React.JSX.Element {
                       <span className="flex items-center gap-0.5">
                         <ThumbsUp className="size-3" aria-hidden />
                         {formatCount(paper.upvotes, locale)}
+                      </span>
+                      <span className="text-decor" aria-hidden>
+                        ·
                       </span>
                       <span>{formatRelativeTime(paper.publishedAt, locale)}</span>
                     </span>
@@ -124,18 +129,25 @@ export function PapersPage(): React.JSX.Element {
       <section className="min-w-0 flex-1 overflow-y-auto">
         {selected ? (
           <article className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
-            <h1 className="text-xl leading-snug font-semibold text-balance">{selected.title}</h1>
-            <div className="nums flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-ink-muted">
+            <h1 className="text-xl leading-snug font-semibold text-balance text-ink-strong">
+              {selected.title}
+            </h1>
+            <div className="nums flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-faint">
               <span className="flex items-center gap-1">
                 <ThumbsUp className="size-3.5" aria-hidden />
                 {formatCount(selected.upvotes, locale)}
               </span>
               {selected.publishedAt && (
-                <span>
-                  {t('papers:published', {
-                    time: formatRelativeTime(selected.publishedAt, locale)
-                  })}
-                </span>
+                <>
+                  <span className="text-decor" aria-hidden>
+                    ·
+                  </span>
+                  <span>
+                    {t('papers:published', {
+                      time: formatRelativeTime(selected.publishedAt, locale)
+                    })}
+                  </span>
+                </>
               )}
             </div>
             {selected.authors.length > 0 && (

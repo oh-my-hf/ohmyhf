@@ -23,6 +23,20 @@
       "scopesUnknown": "The permissions granted to this session are unknown. Re-authorize to refresh them.",
       "title": "Hub account"
     },
+    "scopeLabels": {
+      "inference-api": "Inference API",
+      "jobs": "Manage jobs",
+      "manage-repos": "Manage repositories",
+      "openid": "Sign-in identity",
+      "profile": "Read profile",
+      "read-billing": "Read billing",
+      "read-collections": "Read collections",
+      "read-repos": "Read repositories",
+      "webhooks": "Manage webhooks",
+      "write-collections": "Write collections",
+      "write-discussions": "Post discussions",
+      "write-repos": "Write repositories"
+    },
     "title": "Account"
   },
   "appearance": {

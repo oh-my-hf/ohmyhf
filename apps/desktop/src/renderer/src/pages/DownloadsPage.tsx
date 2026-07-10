@@ -16,12 +16,14 @@ import { cn, formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useToasts } from '@/components/ui/toaster'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAppStore } from '@/stores/app'
 
 const STATUS_DOT: Record<DownloadStatus, string> = {
   queued: 'bg-ink-faint',
-  running: 'bg-primary',
+  running: 'bg-select',
   paused: 'bg-warning',
   completed: 'bg-success',
   error: 'bg-error',
@@ -34,10 +36,14 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
   const { t } = useTranslation(['downloads', 'common'])
   const queryClient = useQueryClient()
   const appInfo = useAppStore((s) => s.appInfo)
+  const push = useToasts((s) => s.push)
 
   const act = useMutation({
     mutationFn: (action: Action) => invoke(action, { id: task.id }),
-    onSuccess: (tasks) => queryClient.setQueryData(['downloads'], tasks)
+    onSuccess: (tasks, action) => {
+      queryClient.setQueryData(['downloads'], tasks)
+      if (action === 'downloads:remove') push(t('downloads:removed'), 'success')
+    }
   })
 
   const done = task.files.filter((f) => f.status === 'completed').length
@@ -51,9 +57,11 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
   }
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-lg border p-3.5">
+    <div className="flex flex-col gap-2.5 rounded-lg border border-border-card bg-card-gradient p-4">
       <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{task.repoId}</span>
+        <span className="min-w-0 flex-1 truncate font-mono text-[13.5px] font-medium text-ink-strong">
+          {task.repoId}
+        </span>
         <span className="flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-ink-muted">
           <span
             className={cn(
@@ -71,11 +79,11 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
         indeterminate={task.status === 'running' && task.totalBytes === 0}
       />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-muted">
-        <span className="nums font-mono">
+        <span className="nums font-mono text-ink-faint">
           {formatBytes(task.receivedBytes)} / {formatBytes(task.totalBytes)}
         </span>
         {task.status === 'running' && task.speedBps > 0 && (
-          <span className="nums font-mono">
+          <span className="nums font-mono text-ink-faint">
             {t('downloads:speed', { speed: formatBytes(task.speedBps) })}
           </span>
         )}
@@ -176,7 +184,7 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
 }
 
 export function DownloadsPage(): React.JSX.Element {
-  const { t } = useTranslation('downloads')
+  const { t } = useTranslation(['downloads', 'common'])
   const tasks = useQuery({
     queryKey: ['downloads'],
     queryFn: () => invoke('downloads:list', undefined)
@@ -184,11 +192,40 @@ export function DownloadsPage(): React.JSX.Element {
 
   const total = tasks.data?.length ?? 0
 
+  let content: React.JSX.Element | React.JSX.Element[]
+  if (tasks.data === undefined && !tasks.error) {
+    content = Array.from({ length: 4 }, (_, i) => (
+      <div
+        key={i}
+        className="flex flex-col gap-2.5 rounded-lg border border-border-card p-4"
+      >
+        <Skeleton className="h-3.5 w-1/2" />
+        <Skeleton className="h-1.5 w-full" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
+    ))
+  } else if (tasks.error) {
+    content = (
+      <div className="flex flex-col items-center gap-3 p-8 text-center">
+        <p className="max-w-72 text-[13px] text-ink-muted">{t('common:error.network')}</p>
+        <Button size="sm" onClick={() => void tasks.refetch()}>
+          {t('common:retry')}
+        </Button>
+      </div>
+    )
+  } else if (total === 0) {
+    content = (
+      <EmptyState icon={ArrowDownToLine} title={t('empty.title')} body={t('empty.body')} />
+    )
+  } else {
+    content = (tasks.data ?? []).map((task) => <TaskCard key={task.id} task={task} />)
+  }
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
         <header className="flex flex-col gap-0.5">
-          <h1 className="text-[15px] font-semibold">{t('title')}</h1>
+          <h1 className="text-[15px] font-semibold text-ink-strong">{t('title')}</h1>
           {total > 0 && (
             <p className="nums text-[12.5px] text-ink-muted">
               {t('count', {
@@ -199,12 +236,7 @@ export function DownloadsPage(): React.JSX.Element {
             </p>
           )}
         </header>
-        {tasks.data?.length === 0 && (
-          <EmptyState icon={ArrowDownToLine} title={t('empty.title')} body={t('empty.body')} />
-        )}
-        {tasks.data?.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+        {content}
       </div>
     </div>
   )

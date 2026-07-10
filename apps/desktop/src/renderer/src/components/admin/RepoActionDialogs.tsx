@@ -79,7 +79,7 @@ function RenameForm({
           {t('common:cancel')}
         </Button>
         <Button
-          variant="primary"
+          variant="cta"
           size="sm"
           disabled={!canSubmit}
           loading={move.isPending}
@@ -171,7 +171,7 @@ function DuplicateForm({
           {t('common:cancel')}
         </Button>
         <Button
-          variant="primary"
+          variant="cta"
           size="sm"
           disabled={!canSubmit}
           loading={duplicate.isPending}

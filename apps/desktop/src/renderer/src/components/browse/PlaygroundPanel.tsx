@@ -124,7 +124,7 @@ export function PlaygroundPanel({ repoId }: { repoId: string }): React.JSX.Eleme
             </Button>
           ) : (
             <Button
-              variant="primary"
+              variant="cta"
               size="sm"
               disabled={input.trim() === ''}
               loading={fallback.isPending}
@@ -138,20 +138,18 @@ export function PlaygroundPanel({ repoId }: { repoId: string }): React.JSX.Eleme
       </div>
       <div
         ref={outputRef}
-        className="min-h-0 flex-1 overflow-y-auto rounded-lg border bg-panel p-3"
+        className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border-card bg-panel p-3 font-mono text-[12.5px]"
       >
         {!busy && output === '' && error === null && (
-          <p className="text-[13px] text-ink-faint">{t('playground.empty')}</p>
+          <p className="text-ink-faint">{t('playground.empty')}</p>
         )}
-        {busy && output === '' && (
-          <p className="text-[13px] text-ink-faint">{t('playground.running')}</p>
-        )}
-        {output !== '' && <p className="text-[13px] whitespace-pre-wrap">{output}</p>}
+        {busy && output === '' && <p className="text-ink-faint">{t('playground.running')}</p>}
+        {output !== '' && <p className="whitespace-pre-wrap">{output}</p>}
         {error !== null &&
           (isAuthError(error) ? (
-            <p className="text-[13px] text-ink-muted">{t('playground.signIn')}</p>
+            <p className="text-ink-muted">{t('playground.signIn')}</p>
           ) : (
-            <p className="text-[13px] text-error">{t('playground.unavailable', { error })}</p>
+            <p className="text-error">{t('playground.unavailable', { error })}</p>
           ))}
       </div>
     </div>

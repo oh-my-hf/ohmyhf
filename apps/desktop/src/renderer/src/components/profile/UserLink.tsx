@@ -36,7 +36,7 @@ export function UserLink({
         }
       }}
       className={cn(
-        'cursor-pointer rounded-[3px] outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
+        'cursor-pointer rounded-[3px] transition-colors duration-150 outline-none hover:text-hover-title hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
         className
       )}
     >

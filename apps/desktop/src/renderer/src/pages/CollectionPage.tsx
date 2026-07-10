@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import type { CollectionItem } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
-import { formatCount, formatRelativeTime } from '@/lib/utils'
+import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { useToasts } from '@/components/ui/toaster'
+import { pushUndo, useToasts } from '@/components/ui/toaster'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
@@ -158,10 +158,29 @@ export function CollectionPage(): React.JSX.Element {
   })
 
   const removeItem = useMutation({
-    mutationFn: (itemId: string) => invoke('hub:collectionRemoveItem', { slug, itemId }),
-    onSuccess: () => {
-      push(t('collections:detail.itemRemoved'), 'success')
+    mutationFn: (item: CollectionItem) =>
+      invoke('hub:collectionRemoveItem', { slug, itemId: item.itemId }),
+    onSuccess: (_res, item) => {
       invalidate()
+      const { type } = item
+      // Nested collections cannot be re-added over hub:collectionAddItem; no undo offer.
+      if (type === 'collection') {
+        push(t('collections:detail.itemRemoved'), 'success')
+        return
+      }
+      pushUndo(t('collections:itemRemoved'), {
+        label: t('common:undo'),
+        onClick: () => {
+          // Re-adding mints a fresh itemId; the note is re-sent alongside.
+          void invoke('hub:collectionAddItem', {
+            slug,
+            item: { type, id: item.id },
+            note: item.note
+          })
+            .then(() => invalidate())
+            .catch((err: Error) => push(err.message, 'error'))
+        }
+      })
     },
     onError: (err) => push(err.message, 'error')
   })
@@ -211,7 +230,7 @@ export function CollectionPage(): React.JSX.Element {
               title={t('collections:detail.error.title')}
               body={t('collections:detail.signedOutBody')}
               action={
-                <Button variant="primary" size="sm" onClick={() => openSettings('account')}>
+                <Button variant="cta" size="sm" onClick={() => openSettings('account')}>
                   {t('auth:signIn')}
                 </Button>
               }
@@ -238,7 +257,9 @@ export function CollectionPage(): React.JSX.Element {
                   style={{ backgroundColor: themeColorOf(data.theme) }}
                   aria-hidden
                 />
-                <h1 className="min-w-0 truncate text-[16px] font-semibold">{data.title}</h1>
+                <h1 className="min-w-0 truncate text-smd font-semibold text-ink-strong">
+                  {data.title}
+                </h1>
                 {data.private && (
                   <Badge variant="warning" className="shrink-0">
                     <Lock className="size-3" aria-hidden />
@@ -267,16 +288,31 @@ export function CollectionPage(): React.JSX.Element {
                   )}
                 </div>
               </div>
-              <div className="nums flex items-center gap-2.5 text-[12px] text-ink-faint">
+              <div className="nums flex items-center gap-1.5 text-[12px] text-ink-faint">
                 <UserLink username={data.owner} className="text-[12px] text-ink-muted" />
+                <span className="text-decor" aria-hidden>
+                  ·
+                </span>
                 <span>{t('collections:itemCount', { count: data.items.length })}</span>
                 {(data.upvotes ?? 0) > 0 && (
-                  <span className="flex items-center gap-0.5">
-                    <ThumbsUp className="size-3" aria-hidden />
-                    {formatCount(data.upvotes ?? 0, locale)}
-                  </span>
+                  <>
+                    <span className="text-decor" aria-hidden>
+                      ·
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      <ThumbsUp className="size-3" aria-hidden />
+                      {formatCount(data.upvotes ?? 0, locale)}
+                    </span>
+                  </>
                 )}
-                {data.updatedAt && <span>{formatRelativeTime(data.updatedAt, locale)}</span>}
+                {data.updatedAt && (
+                  <>
+                    <span className="text-decor" aria-hidden>
+                      ·
+                    </span>
+                    <span>{formatRelativeTime(data.updatedAt, locale)}</span>
+                  </>
+                )}
               </div>
               {data.description !== undefined && data.description !== '' && (
                 <p className="text-[13px] leading-relaxed text-ink-muted">{data.description}</p>
@@ -301,12 +337,12 @@ export function CollectionPage(): React.JSX.Element {
                 return (
                   <div
                     key={item.itemId}
-                    className="group flex items-start gap-2.5 rounded-md border px-3 py-2.5 transition-colors hover:bg-panel"
+                    className="flex items-start gap-2.5 rounded-lg border border-border-card bg-card-gradient px-3 py-2.5 transition-colors duration-150 hover:border-border"
                   >
                     <button
                       type="button"
                       onClick={() => navigate(itemHref(item))}
-                      className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
+                      className="group flex min-w-0 flex-1 items-start gap-2.5 text-left"
                     >
                       <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-panel">
                         {item.emoji ? (
@@ -322,7 +358,14 @@ export function CollectionPage(): React.JSX.Element {
                           <Badge variant="outline" className="shrink-0">
                             {kindLabel}
                           </Badge>
-                          <span className="min-w-0 truncate text-[13px] font-medium">
+                          <span
+                            className={cn(
+                              'min-w-0 truncate text-ink-strong transition-colors duration-100 group-hover:text-hover-title',
+                              item.type === 'paper'
+                                ? 'text-[13px] font-medium'
+                                : 'font-mono text-[12.5px] tracking-tight'
+                            )}
+                          >
                             {item.title ?? item.id}
                           </span>
                         </span>
@@ -332,11 +375,16 @@ export function CollectionPage(): React.JSX.Element {
                           </span>
                         )}
                         {(item.downloads !== undefined || item.likes !== undefined) && (
-                          <span className="nums mt-0.5 flex items-center gap-2 text-[11.5px] text-ink-faint">
+                          <span className="nums mt-0.5 flex items-center gap-1.5 text-[11.5px] text-ink-faint">
                             {item.downloads !== undefined && (
                               <span className="flex items-center gap-0.5">
                                 <Download className="size-3" aria-hidden />
                                 {formatCount(item.downloads, locale)}
+                              </span>
+                            )}
+                            {item.downloads !== undefined && item.likes !== undefined && (
+                              <span className="text-decor" aria-hidden>
+                                ·
                               </span>
                             )}
                             {item.likes !== undefined && (
@@ -350,11 +398,11 @@ export function CollectionPage(): React.JSX.Element {
                       </span>
                     </button>
                     {canWrite && (
-                      <span className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                      <span className="flex shrink-0 items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-6"
+                          className="size-6 text-ink-faint"
                           aria-label={t('collections:detail.note.edit')}
                           onClick={() => openNote(item)}
                         >
@@ -363,10 +411,12 @@ export function CollectionPage(): React.JSX.Element {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-6"
+                          className="size-6 text-ink-faint"
                           aria-label={t('collections:detail.removeItem')}
-                          loading={removeItem.isPending && removeItem.variables === item.itemId}
-                          onClick={() => removeItem.mutate(item.itemId)}
+                          loading={
+                            removeItem.isPending && removeItem.variables?.itemId === item.itemId
+                          }
+                          onClick={() => removeItem.mutate(item)}
                         >
                           <X className="size-3.5" aria-hidden />
                         </Button>
@@ -413,7 +463,7 @@ export function CollectionPage(): React.JSX.Element {
               {t('common:cancel')}
             </Button>
             <Button
-              variant="primary"
+              variant="cta"
               size="sm"
               disabled={editTitle.trim() === ''}
               loading={update.isPending}
@@ -482,7 +532,7 @@ export function CollectionPage(): React.JSX.Element {
               {t('common:cancel')}
             </Button>
             <Button
-              variant="primary"
+              variant="cta"
               size="sm"
               loading={saveNote.isPending}
               onClick={() => noteItem && saveNote.mutate(noteItem)}

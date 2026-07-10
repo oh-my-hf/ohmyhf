@@ -40,8 +40,8 @@ export function SpaceCard({ repo, selected, onSelect, locale }: SpaceCardProps):
       onClick={() => onSelect(repo)}
       className={cn(
         'relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg p-2.5 text-left text-white outline-none',
-        'transition-shadow duration-150 focus-visible:ring-2 focus-visible:ring-primary',
-        selected && 'ring-2 ring-primary'
+        'transition-shadow duration-150 focus-visible:ring-2 focus-visible:ring-focus',
+        selected && 'ring-2 ring-select'
       )}
       style={{
         background: `linear-gradient(135deg, ${colorOf(repo.colorFrom)}, ${colorOf(repo.colorTo)})`

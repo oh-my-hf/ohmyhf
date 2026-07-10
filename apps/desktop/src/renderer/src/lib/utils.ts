@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
 
+/** Guard for global shortcuts: don't hijack typing in fields or editors. */
+export function isEditableTarget(e: KeyboardEvent): boolean {
+  const el = e.target as HTMLElement | null
+  if (!el) return false
+  if (el.isContentEditable) return true
+  return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT'
+}
+
 /** 1234567 → "1.2M"; locale-aware compact notation. */
 export function formatCount(value: number, locale: string): string {
   return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(

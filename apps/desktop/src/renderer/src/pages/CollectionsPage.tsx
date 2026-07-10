@@ -98,13 +98,13 @@ export function CollectionsPage(): React.JSX.Element {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
         <header className="flex items-center gap-3">
-          <h1 className="text-[15px] font-semibold">{t('collections:title')}</h1>
+          <h1 className="text-smd font-semibold text-ink-strong">{t('collections:title')}</h1>
           <div className="ml-auto flex items-center gap-2">
             {me !== undefined &&
               (writeGated ? (
                 <p className="text-[11.5px] text-ink-faint">{t('collections:scopeHint')}</p>
               ) : (
-                <Button variant="primary" size="sm" onClick={openCreate}>
+                <Button variant="cta" size="sm" onClick={openCreate}>
                   <Plus className="size-3.5" aria-hidden />
                   {t('collections:create')}
                 </Button>
@@ -119,7 +119,7 @@ export function CollectionsPage(): React.JSX.Element {
               title={t('collections:signedOut.title')}
               body={t('collections:signedOut.body')}
               action={
-                <Button variant="primary" size="sm" onClick={() => openSettings('account')}>
+                <Button variant="cta" size="sm" onClick={() => openSettings('account')}>
                   {t('auth:signIn')}
                 </Button>
               }
@@ -155,7 +155,7 @@ export function CollectionsPage(): React.JSX.Element {
             body={t('collections:empty.body')}
             action={
               !writeGated ? (
-                <Button variant="primary" size="sm" onClick={openCreate}>
+                <Button variant="secondary" size="sm" onClick={openCreate}>
                   <Plus className="size-3.5" aria-hidden />
                   {t('collections:create')}
                 </Button>
@@ -170,16 +170,18 @@ export function CollectionsPage(): React.JSX.Element {
               key={col.slug}
               type="button"
               onClick={() => navigate(`/collections/${col.slug}`)}
-              className="group relative flex flex-col gap-1.5 overflow-hidden rounded-lg border p-3.5 pl-4 text-left transition-colors hover:bg-panel"
+              className="flex flex-col gap-1.5 rounded-lg border border-border-card bg-card-gradient p-4 text-left transition-colors duration-150 hover:border-border"
             >
-              {/* Theme accent rail, matching the Hub's collection theme color. */}
-              <span
-                className="absolute inset-y-0 left-0 w-1"
-                style={{ backgroundColor: themeColorOf(col.theme) }}
-                aria-hidden
-              />
               <span className="flex w-full min-w-0 items-center gap-2">
-                <span className="min-w-0 truncate text-[13px] font-medium">{col.title}</span>
+                {/* Theme dot, matching the Hub's collection theme color. */}
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: themeColorOf(col.theme) }}
+                  aria-hidden
+                />
+                <span className="min-w-0 truncate text-smd font-semibold text-ink-strong">
+                  {col.title}
+                </span>
                 {col.private && (
                   <Badge variant="warning" className="shrink-0">
                     <Lock className="size-3" aria-hidden />
@@ -192,13 +194,18 @@ export function CollectionsPage(): React.JSX.Element {
                   {col.description}
                 </span>
               )}
-              <span className="nums mt-auto flex w-full items-center gap-2.5 pt-1 text-[11.5px] text-ink-faint">
+              <span className="nums mt-auto flex w-full items-center gap-1.5 pt-1 text-[11.5px] text-ink-faint">
                 <span>{t('collections:itemCount', { count: col.itemCount ?? 0 })}</span>
                 {(col.upvotes ?? 0) > 0 && (
-                  <span className="flex items-center gap-0.5">
-                    <ThumbsUp className="size-3" aria-hidden />
-                    {formatCount(col.upvotes ?? 0, locale)}
-                  </span>
+                  <>
+                    <span className="text-decor" aria-hidden>
+                      ·
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      <ThumbsUp className="size-3" aria-hidden />
+                      {formatCount(col.upvotes ?? 0, locale)}
+                    </span>
+                  </>
                 )}
                 {col.updatedAt && (
                   <span className="ml-auto">{formatRelativeTime(col.updatedAt, locale)}</span>
@@ -259,7 +266,7 @@ export function CollectionsPage(): React.JSX.Element {
               {t('common:cancel')}
             </Button>
             <Button
-              variant="primary"
+              variant="cta"
               size="sm"
               disabled={title.trim() === ''}
               loading={create.isPending}

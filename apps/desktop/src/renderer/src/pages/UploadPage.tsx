@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { FolderOpen, UploadCloud } from 'lucide-react'
@@ -28,8 +27,8 @@ import { useAppStore } from '@/stores/app'
  */
 export function UploadPage(): React.JSX.Element {
   const { t } = useTranslation(['upload', 'common', 'integrations', 'auth'])
-  const navigate = useNavigate()
   const auth = useAppStore((s) => s.auth)
+  const openSettings = useAppStore((s) => s.openSettings)
   const push = useToasts((s) => s.push)
   const [folder, setFolder] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -64,24 +63,24 @@ export function UploadPage(): React.JSX.Element {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-xl flex-col gap-4 p-5">
         <header className="flex flex-col gap-0.5">
-          <h1 className="text-[15px] font-semibold">{t('upload:title')}</h1>
+          <h1 className="text-[15px] font-semibold text-ink-strong">{t('upload:title')}</h1>
           <p className="text-[12.5px] text-ink-muted">{t('upload:hint')}</p>
         </header>
 
         {auth.status !== 'signedIn' ? (
-          <div className="rounded-lg border">
+          <div className="rounded-lg border border-border-card bg-card-gradient">
             <EmptyState
               icon={UploadCloud}
               title={t('upload:signIn')}
               action={
-                <Button variant="primary" size="sm" onClick={() => navigate('/settings')}>
+                <Button variant="cta" size="sm" onClick={() => openSettings('account')}>
                   {t('auth:signIn')}
                 </Button>
               }
             />
           </div>
         ) : (
-          <div className="flex flex-col gap-3 rounded-lg border p-4">
+          <div className="flex flex-col gap-3 rounded-lg border border-border-card bg-card-gradient p-5">
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => pickFolder.mutate()}>
                 <FolderOpen className="size-3.5" aria-hidden />
@@ -92,7 +91,7 @@ export function UploadPage(): React.JSX.Element {
               </span>
             </div>
 
-            <label className="flex flex-col gap-1 text-[12.5px] font-medium">
+            <label className="flex flex-col gap-1 text-[12.5px] font-medium text-ink">
               {t('upload:name')}
               <Input
                 value={name}
@@ -102,7 +101,7 @@ export function UploadPage(): React.JSX.Element {
             </label>
 
             <div className="flex items-center justify-between gap-4">
-              <label className="flex items-center gap-2 text-[12.5px] font-medium">
+              <label className="flex items-center gap-2 text-[12.5px] font-medium text-ink">
                 {t('upload:kind')}
                 <Select value={kind} onValueChange={(v) => setKind(v as RepoKind)}>
                   <SelectTrigger className="w-32">
@@ -115,7 +114,7 @@ export function UploadPage(): React.JSX.Element {
                   </SelectContent>
                 </Select>
               </label>
-              <label className="flex items-center gap-2 text-[12.5px] font-medium">
+              <label className="flex items-center gap-2 text-[12.5px] font-medium text-ink">
                 {t('upload:private')}
                 <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
               </label>
@@ -139,7 +138,7 @@ export function UploadPage(): React.JSX.Element {
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11.5px] text-ink-faint">{t('upload:scopeHint')}</p>
               <Button
-                variant="primary"
+                variant="cta"
                 size="md"
                 disabled={!canSubmit}
                 loading={create.isPending}

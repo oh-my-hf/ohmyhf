@@ -109,7 +109,7 @@ export function AddToCollectionMenu({
     <>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="md">
             <FolderPlus className="size-3.5" aria-hidden />
             {t('collections:menu.trigger')}
           </Button>
@@ -186,7 +186,7 @@ export function AddToCollectionMenu({
               {t('common:cancel')}
             </Button>
             <Button
-              variant="primary"
+              variant="cta"
               size="sm"
               disabled={title.trim() === ''}
               loading={createAndAdd.isPending}

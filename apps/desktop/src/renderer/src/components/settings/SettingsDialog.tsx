@@ -19,6 +19,7 @@ import type { Locale } from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { changeLanguage } from '@/i18n'
+import { HUB_DEFAULT_SCOPES, SCOPE_LABEL_KEYS } from '@/lib/scopes'
 import { cn, formatBytes, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -41,24 +42,6 @@ const SPEED_OPTIONS = [1, 5, 10, 20, 50] // MB/s
 const UI_SCALE_MIN = 80
 const UI_SCALE_MAX = 140
 const UI_SCALE_STEP = 10
-
-/**
- * Mirrors DEFAULT_SCOPES in packages/hub-api/src/oauth.ts. The hub-api barrel
- * re-exports node-only helpers (cache-layout imports node:os/node:path), so
- * the renderer cannot import the package; keep this list in sync manually.
- */
-const HUB_DEFAULT_SCOPES = [
-  'openid',
-  'profile',
-  'read-repos',
-  'write-repos',
-  'write-discussions',
-  'inference-api',
-  'read-collections',
-  'write-collections',
-  'manage-repos',
-  'read-billing'
-]
 
 /** IPC flattens HubApiError into a message string; sniff auth failures from it. */
 function isAuthErrorMessage(message: string): boolean {
@@ -104,7 +87,7 @@ function SectionShell({
 }): React.JSX.Element {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-[15px] font-semibold">{title}</h2>
+      <h2 className="text-smd font-semibold text-ink-strong">{title}</h2>
       {children}
     </section>
   )
@@ -165,10 +148,10 @@ function AccountSection(): React.JSX.Element {
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="truncate text-[13.5px] font-medium">
+                <span className="truncate text-[13.5px] font-medium text-ink-strong">
                   {auth.user.fullname ?? auth.user.name}
                 </span>
-                {auth.user.isPro && <Badge variant="primary">{t('auth:pro')}</Badge>}
+                {auth.user.isPro && <Badge variant="brand">{t('auth:pro')}</Badge>}
               </div>
               <div className="truncate text-[12px] text-ink-muted">@{auth.user.name}</div>
               {auth.user.orgs.length > 0 && (
@@ -205,7 +188,7 @@ function AccountSection(): React.JSX.Element {
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Button variant="primary" loading={signingIn} onClick={() => signIn.mutate()}>
+            <Button variant="cta" loading={signingIn} onClick={() => signIn.mutate()}>
               <LogIn className="size-3.5" aria-hidden />
               {signingIn ? t('auth:signingIn') : t('auth:signIn')}
             </Button>
@@ -247,18 +230,26 @@ function HubAccountBlock({
 
   return (
     <div className="flex flex-col gap-3 border-t pt-4">
-      <h3 className="text-[13px] font-semibold">{t('settings:account.hub.title')}</h3>
+      <h3 className="text-[13px] font-semibold text-ink-strong">
+        {t('settings:account.hub.title')}
+      </h3>
       <div className="flex flex-col gap-1.5">
         <span className="text-[12px] text-ink-muted">{t('settings:account.hub.scopes')}</span>
         {scopes === undefined ? (
           <p className="text-[12px] text-ink-faint">{t('settings:account.hub.scopesUnknown')}</p>
         ) : (
           <div className="flex flex-wrap gap-1">
-            {scopes.map((scope) => (
-              <Badge key={scope} variant="outline" className="font-mono text-[11px]">
-                {scope}
-              </Badge>
-            ))}
+            {scopes.map((scope) =>
+              SCOPE_LABEL_KEYS[scope] !== undefined ? (
+                <Badge key={scope} variant="neutral" title={scope}>
+                  {t(SCOPE_LABEL_KEYS[scope])}
+                </Badge>
+              ) : (
+                <Badge key={scope} variant="outline" className="font-mono text-[11px]">
+                  {scope}
+                </Badge>
+              )
+            )}
           </div>
         )}
         {missingScopes.length > 0 && (
@@ -302,9 +293,11 @@ function BillingUsageCard(): React.JSX.Element {
     new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100)
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border-card bg-card-gradient p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-[12.5px] font-medium">{t('settings:account.billing.title')}</h4>
+        <h4 className="text-[12.5px] font-medium text-ink-strong">
+          {t('settings:account.billing.title')}
+        </h4>
         {usage.data?.periodStart !== undefined && usage.data.periodEnd !== undefined && (
           <span className="nums text-[11.5px] text-ink-faint">
             {t('settings:account.billing.period', {
@@ -556,7 +549,9 @@ function AboutSection(): React.JSX.Element {
     <SectionShell title={t('settings:about.title')}>
       <div className="flex flex-col gap-2 text-[12.5px]">
         <div className="flex items-center gap-2">
-          <span className="text-[13.5px] font-semibold">{t('common:appName')}</span>
+          <span className="text-[13.5px] font-semibold text-ink-strong">
+            {t('common:appName')}
+          </span>
           <Badge variant="warning">{t('settings:about.unofficialTitle')}</Badge>
           {appInfo && (
             <span className="nums text-ink-faint">
@@ -570,7 +565,7 @@ function AboutSection(): React.JSX.Element {
           <span className="text-ink-faint">{t('settings:about.license')}</span>
           <button
             type="button"
-            className="flex items-center gap-1 text-primary hover:underline"
+            className="flex items-center gap-1 text-link hover:underline"
             onClick={() => openExternal(REPO_URL)}
           >
             <ExternalLink className="size-3.5" aria-hidden />
@@ -620,7 +615,7 @@ export function SettingsDialog(): React.JSX.Element {
                   className={cn(
                     'flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150',
                     section === item.id
-                      ? 'bg-primary/10 text-primary'
+                      ? 'bg-panel-2 text-ink-strong'
                       : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
                   )}
                 >

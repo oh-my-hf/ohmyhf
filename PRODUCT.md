@@ -27,16 +27,23 @@ official status.
 
 ## Brand Personality
 
-Precise, fast, trustworthy. A precision instrument for model hunters: clinical neutral surfaces,
-one crimson signal for what matters. The tool disappears into the task; density and keyboard-first
-flow over decoration.
+Feels like home for Hub natives. The app speaks huggingface.co's visual dialect — cool paper
+grays, gradient-washed cards, mono repo names, a yellow wink where a count needs attention —
+tuned for a dense, keyboard-first desktop instrument. Brand color is an accent, never a shout:
+primary actions are near-black pills, focus is blue, selection is indigo; yellow and orange
+appear only where a highlight earns it. Familiarity does the welcoming; density and speed do
+the persuading.
 
 ## Anti-references
 
-- Anything that looks like huggingface.co itself (yellow/orange palette, 🤗 iconography, rounded
-  playful branding) — legally and ethically off-limits.
+- Identity impersonation: no HF logo or wordmark, no 🤗 in our own chrome, nothing implying
+  official status. We adopt the Hub's *design language* (grays, gradients, tags, mono titles)
+  while keeping our own name, icon, and disclaimers.
+- Brand-color abuse: yellow/orange CTAs, yellow links, yellow selection states. On
+  huggingface.co the brand is an accent — it stays one here.
 - Electron-app slop: web page in a frame, spinner-centric loading, mouse-only interaction.
-- SaaS dashboard clichés: hero metrics, gradient accents, identical card grids.
+- SaaS dashboard clichés: hero metrics, saturated gradient accents, identical card grids with
+  heavy drop shadows (our depth comes from hairline borders and faint gradients).
 
 ## Design Principles
 

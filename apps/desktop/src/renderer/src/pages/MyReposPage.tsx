@@ -125,7 +125,7 @@ export function MyReposPage(): React.JSX.Element {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
         <div className="flex items-center gap-2">
-          <h1 className="text-[15px] font-semibold">{t('admin:myRepos.title')}</h1>
+          <h1 className="text-smd font-semibold text-ink-strong">{t('admin:myRepos.title')}</h1>
           <div className="ml-auto flex items-center gap-0.5">
             {FILTERS.map((f) => (
               <Button
@@ -133,7 +133,7 @@ export function MyReposPage(): React.JSX.Element {
                 variant="ghost"
                 size="sm"
                 aria-pressed={filter === f}
-                className={cn(filter === f && 'bg-panel text-ink')}
+                className={cn(filter === f && 'bg-panel-2 text-ink-strong')}
                 onClick={() => setFilter(f)}
               >
                 {f === 'all' ? t('admin:myRepos.filter.all') : t(`common:kind.${f}`)}
@@ -192,7 +192,7 @@ export function MyReposPage(): React.JSX.Element {
                   className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                 >
                   <Icon className="size-3.5 shrink-0 text-ink-faint" aria-hidden />
-                  <span className="min-w-0 truncate font-mono text-[13px] font-medium tracking-tight">
+                  <span className="min-w-0 truncate font-mono text-[13px] font-medium tracking-tight text-ink-strong transition-colors duration-150 group-hover:text-hover-title">
                     {repo.id}
                   </span>
                   {repo.visibility === 'private' && (
@@ -213,12 +213,7 @@ export function MyReposPage(): React.JSX.Element {
                 {canManage && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t('admin:actions.label')}
-                        className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
-                      >
+                      <Button variant="ghost" size="icon" aria-label={t('admin:actions.label')}>
                         <MoreHorizontal className="size-4" aria-hidden />
                       </Button>
                     </DropdownMenuTrigger>

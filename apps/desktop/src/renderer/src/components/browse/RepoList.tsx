@@ -6,9 +6,10 @@ import { ArrowDownToLine, Heart, Lock, ShieldAlert } from 'lucide-react'
 import type { RepoKind, RepoSummary, SearchQuery } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { hardwareBucketOf } from '@/lib/catalog'
+import { TAG_HUE_VAR, taskHue } from '@/lib/tag-colors'
 import { cn, formatCount, formatParams, paramBucketOf } from '@/lib/utils'
 import { useDebounced } from '@/hooks/use-debounced'
-import { Badge } from '@/components/ui/badge'
+import { Kbd } from '@/components/ui/kbd'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { FilterPanel } from '@/components/browse/FilterPanel'
@@ -19,10 +20,13 @@ const ROW_HEIGHT = 56
 /** Spaces render as a 2-up card gallery; each virtual row holds one card pair. */
 const SPACE_ROW_HEIGHT = 118
 
+/** How a row was selected — clicks push history, keyboard bursts replace. */
+export type SelectVia = 'pointer' | 'keyboard'
+
 interface RepoListProps {
   kind: RepoKind
   selectedId: string | undefined
-  onSelect: (repo: RepoSummary) => void
+  onSelect: (repo: RepoSummary, via: SelectVia) => void
 }
 
 export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.JSX.Element {
@@ -123,7 +127,7 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
       const nextIndex = Math.max(0, Math.min(items.length - 1, currentIndex + offset))
       const next = items[nextIndex]
       if (next) {
-        onSelect(next)
+        onSelect(next, 'keyboard')
         virtualizer.scrollToIndex(Math.floor(nextIndex / perRow), { align: 'auto' })
       }
     },
@@ -208,7 +212,7 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
                       key={repo.id}
                       repo={repo}
                       selected={repo.id === selectedId}
-                      onSelect={onSelect}
+                      onSelect={(r) => onSelect(r, 'pointer')}
                       locale={locale}
                     />
                   ))}
@@ -218,22 +222,29 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
             const repo = items[row.index]
             if (!repo) return null
             const selected = repo.id === selectedId
+            const chipLabel = repo.pipelineTag ?? repo.sdk
             return (
               <button
                 key={repo.id}
                 type="button"
                 role="option"
                 aria-selected={selected}
-                onClick={() => onSelect(repo)}
+                onClick={() => onSelect(repo, 'pointer')}
                 className={cn(
-                  'absolute inset-x-1 flex flex-col justify-center gap-0.5 rounded-md px-2.5 text-left transition-colors duration-100',
-                  selected ? 'bg-primary/10' : 'hover:bg-panel'
+                  'group absolute inset-x-1 flex flex-col justify-center gap-0.5 rounded-lg px-2.5 text-left transition-colors duration-100',
+                  selected ? 'bg-select/10' : 'hover:bg-panel'
                 )}
                 style={{ top: row.start + 2, height: ROW_HEIGHT - 4 }}
               >
                 <div className="flex w-full items-center gap-1.5">
-                  <span className={cn('min-w-0 truncate text-[13px]', selected && 'text-primary')}>
-                    {repo.author && <span className="text-ink-muted">{repo.author}/</span>}
+                  {/* Mono repo id with the HF hover recolor (indigo light / yellow dark). */}
+                  <span
+                    className={cn(
+                      'min-w-0 truncate font-mono text-[12.5px] tracking-tight text-ink-strong transition-colors duration-100 group-hover:text-hover-title',
+                      selected && 'text-select'
+                    )}
+                  >
+                    {repo.author && <span>{repo.author}/</span>}
                     <span className="font-medium">{repo.name}</span>
                   </span>
                   {repo.private && (
@@ -249,18 +260,35 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
                     />
                   ) : null}
                 </div>
-                <div className="flex w-full items-center gap-2 text-[11.5px] text-ink-faint">
-                  {(repo.pipelineTag ?? repo.sdk) && (
-                    <Badge variant="outline" className="px-1.5 text-[10.5px]">
-                      {repo.pipelineTag ?? repo.sdk}
-                    </Badge>
+                <div className="flex w-full items-center gap-1.5 text-[11.5px] text-ink-faint">
+                  {chipLabel && (
+                    <span className="flex min-w-0 items-center gap-1">
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ background: TAG_HUE_VAR[taskHue(chipLabel)] }}
+                        aria-hidden
+                      />
+                      <span className="truncate">{chipLabel}</span>
+                    </span>
                   )}
                   {repo.paramCount !== undefined && (
-                    <span className="font-mono">{formatParams(repo.paramCount)}</span>
+                    <>
+                      {chipLabel && (
+                        <span className="text-decor" aria-hidden>
+                          ·
+                        </span>
+                      )}
+                      <span className="nums font-mono text-[11px]">
+                        {formatParams(repo.paramCount)}
+                      </span>
+                    </>
                   )}
                   <span className="ml-auto flex items-center gap-0.5" title={t('browse:likes')}>
                     <Heart className="size-3" aria-hidden />
                     {formatCount(repo.likes, locale)}
+                  </span>
+                  <span className="text-decor" aria-hidden>
+                    ·
                   </span>
                   <span className="flex items-center gap-0.5" title={t('browse:downloads')}>
                     <ArrowDownToLine className="size-3" aria-hidden />
@@ -279,6 +307,15 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       {content}
+      {!isLoading && !error && items.length > 0 && (
+        <div className="flex shrink-0 items-center gap-1 border-t border-border-card px-3 py-1.5 text-[10.5px] text-ink-faint">
+          <Kbd>↑</Kbd>
+          <Kbd>↓</Kbd>
+          <Kbd>J</Kbd>
+          <Kbd>K</Kbd>
+          <span className="ml-0.5">{t('browse:listHint')}</span>
+        </div>
+      )}
       {filterPanelOpen && <FilterPanel kind={kind} />}
     </div>
   )

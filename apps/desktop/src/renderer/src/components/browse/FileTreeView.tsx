@@ -142,7 +142,7 @@ export function FileTreeView({
                 data-path={entry.path}
                 className={cn(
                   'group flex h-8 items-center gap-2 rounded-md px-2',
-                  isSelected ? 'bg-primary/10' : 'hover:bg-panel'
+                  isSelected ? 'bg-select/10' : 'hover:bg-panel'
                 )}
               >
                 {entry.type === 'directory' ? (
@@ -151,7 +151,7 @@ export function FileTreeView({
                     onClick={() => setPath(entry.path)}
                     className="flex min-w-0 flex-1 items-center gap-2 text-left"
                   >
-                    <Folder className="size-4 shrink-0 text-info" aria-hidden />
+                    <Folder className="size-4 shrink-0 text-ink-muted" aria-hidden />
                     <span className="min-w-0 truncate text-[13px] font-medium">{name}</span>
                   </button>
                 ) : (
@@ -164,14 +164,14 @@ export function FileTreeView({
                       <File
                         className={cn(
                           'size-4 shrink-0',
-                          isSelected ? 'text-primary' : 'text-ink-faint'
+                          isSelected ? 'text-select' : 'text-ink-faint'
                         )}
                         aria-hidden
                       />
                       <span
                         className={cn(
                           'min-w-0 flex-1 truncate font-mono text-[12.5px]',
-                          isSelected && 'text-primary'
+                          isSelected && 'text-select'
                         )}
                       >
                         {name}
@@ -191,7 +191,7 @@ export function FileTreeView({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                            className="size-6 text-ink-faint"
                             aria-label={t('detail:files.export')}
                           >
                             <Share className="size-3.5" aria-hidden />
@@ -221,7 +221,7 @@ export function FileTreeView({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                      className="size-6 text-ink-faint"
                       aria-label={t('detail:files.download')}
                       loading={download.isPending}
                       onClick={() => download.mutate([entry.path])}

@@ -150,7 +150,7 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
                 {rows.data.columns.map((col) => (
                   <th
                     key={col}
-                    className="sticky top-0 z-10 border-b bg-panel px-3 py-2 text-left text-[11px] font-medium whitespace-nowrap text-ink-muted"
+                    className="sticky top-0 z-10 border-b border-border-card bg-panel px-3 py-2 text-left text-[11px] font-medium whitespace-nowrap text-ink-muted"
                   >
                     {col}
                   </th>
@@ -159,7 +159,7 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
             </thead>
             <tbody>
               {rows.data.rows.map((row, i) => (
-                <tr key={i} className="border-b align-top last:border-b-0 hover:bg-panel/60">
+                <tr key={i} className="border-b border-border-card align-top last:border-b-0 hover:bg-panel/60">
                   {row.map((cell, j) => (
                     <td key={j} className="px-3 py-1.5">
                       <div className="max-w-80 truncate" title={cell}>

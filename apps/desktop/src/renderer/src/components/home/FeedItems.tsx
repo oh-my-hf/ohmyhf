@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import {
@@ -6,15 +7,18 @@ import {
   ExternalLink,
   FileText,
   Heart,
+  LayoutGrid,
   MessageSquare,
   ThumbsUp
 } from 'lucide-react'
 import type { PaperSummary, PostSummary, RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
 import { openExternal } from '@/lib/ipc'
-import { formatCount, formatRelativeTime } from '@/lib/utils'
+import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { MarkdownView } from '@/components/browse/MarkdownView'
+import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
 
 const KIND_PATH: Record<RepoKind, string> = {
@@ -26,12 +30,23 @@ const KIND_PATH: Record<RepoKind, string> = {
 const KIND_ICON: Record<RepoKind, React.ComponentType<{ className?: string }>> = {
   model: Boxes,
   dataset: Database,
-  space: Boxes
+  space: LayoutGrid
 }
 
-/** The hub sometimes returns avatar paths relative to the site root. */
-function absoluteAvatarUrl(url: string): string {
-  return url.startsWith('/') ? `https://huggingface.co${url}` : url
+/** True while the element's content overflows its max-height clamp. */
+function useIsClamped(): { ref: React.RefObject<HTMLDivElement | null>; clamped: boolean } {
+  const ref = useRef<HTMLDivElement>(null)
+  const [clamped, setClamped] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const observer = new ResizeObserver(() => {
+      setClamped(el.scrollHeight > el.clientHeight + 1)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return { ref, clamped }
 }
 
 export function PostCard({
@@ -43,6 +58,7 @@ export function PostCard({
 }): React.JSX.Element {
   const { t } = useTranslation(['home', 'common'])
   const navigate = useNavigate()
+  const { ref: clampRef, clamped } = useIsClamped()
   const open = (): void => {
     void navigate(`/posts/${post.author}/${post.slug}`)
   }
@@ -59,22 +75,15 @@ export function PostCard({
           open()
         }
       }}
-      className="flex cursor-pointer flex-col gap-3 rounded-lg border bg-panel p-4 transition-colors duration-150 outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+      className="flex cursor-pointer flex-col gap-3 rounded-lg border border-border-card bg-card-gradient p-4 transition-colors duration-150 outline-none hover:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
     >
       <header className="flex items-center gap-2.5">
         <UserLink username={post.author} ariaLabel={post.author} className="shrink-0 rounded-full">
-          {post.authorAvatarUrl ? (
-            <img
-              src={absoluteAvatarUrl(post.authorAvatarUrl)}
-              alt=""
-              className="size-8 shrink-0 rounded-full border"
-              draggable={false}
-            />
-          ) : (
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-panel-2 text-[12px] font-semibold text-ink-muted uppercase ring-1 ring-border">
-              {post.author.slice(0, 1)}
-            </span>
-          )}
+          <ProfileAvatar
+            name={post.author}
+            url={post.authorAvatarUrl}
+            className="size-8 text-[12px]"
+          />
         </UserLink>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-baseline gap-1.5">
@@ -89,10 +98,21 @@ export function PostCard({
         </div>
         <Badge>{t('home:kind.post')}</Badge>
       </header>
-      {/* Raw markdown-ish text; rendered clamped as plain text on purpose. */}
-      <p className="line-clamp-6 text-[13px] leading-relaxed break-words whitespace-pre-wrap">
-        {post.content}
-      </p>
+      <div
+        ref={clampRef}
+        className={cn(
+          'relative max-h-40 overflow-hidden',
+          // Fade the text itself (theme-proof), and only when actually clamped.
+          clamped &&
+            '[mask-image:linear-gradient(to_bottom,black_calc(100%-2.5rem),transparent)]'
+        )}
+        onClick={(e) => {
+          // Links inside markdown open externally; don't also navigate the card.
+          if ((e.target as HTMLElement).closest('a')) e.stopPropagation()
+        }}
+      >
+        <MarkdownView markdown={post.content} />
+      </div>
       <footer className="nums flex items-center gap-3 text-[11.5px] text-ink-faint">
         <span className="flex items-center gap-1">
           <MessageSquare className="size-3.5" aria-hidden />
@@ -139,7 +159,7 @@ export function RepoEventRow({
     <button
       type="button"
       onClick={() => navigate(`/${KIND_PATH[repo.kind]}/${repo.id}`)}
-      className="flex w-full items-center gap-3 rounded-lg border bg-panel px-4 py-3 text-left transition-colors duration-150 outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+      className="group flex w-full items-center gap-3 rounded-lg border border-border-card bg-card-gradient p-4 text-left transition-colors duration-150 outline-none hover:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
     >
       <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-bg ring-1 ring-border">
         <Icon className="size-3.5 text-ink-muted" aria-hidden />
@@ -152,7 +172,9 @@ export function RepoEventRow({
             values={{ author: repo.author, repo: repo.id }}
             components={{
               author: <UserLink username={repo.author} className="font-medium text-ink" />,
-              repo: <span className="font-medium text-ink" />
+              repo: (
+                <span className="font-mono text-ink-strong transition-colors duration-150 group-hover:text-hover-title" />
+              )
             }}
           />
         </div>
@@ -178,19 +200,26 @@ export function PaperRow({
     <button
       type="button"
       onClick={() => navigate(`/papers/${paper.id}`)}
-      className="flex w-full items-center gap-3 rounded-lg border bg-panel px-4 py-3 text-left transition-colors duration-150 outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+      className="group flex w-full items-center gap-3 rounded-lg border border-border-card bg-card-gradient p-4 text-left transition-colors duration-150 outline-none hover:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
     >
       <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-bg ring-1 ring-border">
         <FileText className="size-3.5 text-ink-muted" aria-hidden />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[13px] font-medium">{paper.title}</div>
-        <div className="nums flex items-center gap-2 text-[11.5px] text-ink-faint">
+        <div className="line-clamp-1 text-[13px] font-medium text-ink-strong">{paper.title}</div>
+        <div className="nums flex items-center gap-1.5 text-[11.5px] text-ink-faint">
           <span className="flex items-center gap-0.5">
             <ThumbsUp className="size-3" aria-hidden />
             {formatCount(paper.upvotes, locale)}
           </span>
-          <span>{formatRelativeTime(paper.publishedAt, locale)}</span>
+          {paper.publishedAt ? (
+            <>
+              <span className="text-decor" aria-hidden>
+                ·
+              </span>
+              <span>{formatRelativeTime(paper.publishedAt, locale)}</span>
+            </>
+          ) : null}
         </div>
       </div>
       <Badge>{t('common:kind.paper')}</Badge>

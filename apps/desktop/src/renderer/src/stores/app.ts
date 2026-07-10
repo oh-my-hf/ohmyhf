@@ -46,6 +46,10 @@ interface AppState {
   settingsOpen: boolean
   /** Active section inside the settings dialog. */
   settingsSection: SettingsSection
+  /** Manual sidebar collapse (persisted locally; viewport width also collapses). */
+  sidebarCollapsed: boolean
+  /** Whether the keyboard-shortcuts help overlay is open. */
+  shortcutsOpen: boolean
 
   setSettings: (settings: AppSettings) => void
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
@@ -56,7 +60,11 @@ interface AppState {
   setFilterPanelOpen: (open: boolean) => void
   openSettings: (section?: SettingsSection) => void
   closeSettings: () => void
+  toggleSidebar: () => void
+  setShortcutsOpen: (open: boolean) => void
 }
+
+const SIDEBAR_COLLAPSED_KEY = 'omh:sidebarCollapsed'
 
 export const useAppStore = create<AppState>((set, get) => ({
   settings: DEFAULT_SETTINGS,
@@ -71,6 +79,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   filterPanelOpen: false,
   settingsOpen: false,
   settingsSection: 'account',
+  sidebarCollapsed: localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1',
+  shortcutsOpen: false,
 
   setSettings: (settings) => {
     setTheme(settings.theme)
@@ -96,7 +106,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       settingsOpen: true,
       settingsSection: section ?? state.settingsSection
     })),
-  closeSettings: () => set({ settingsOpen: false })
+  closeSettings: () => set({ settingsOpen: false }),
+  toggleSidebar: () =>
+    set((state) => {
+      const sidebarCollapsed = !state.sidebarCollapsed
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? '1' : '0')
+      return { sidebarCollapsed }
+    }),
+  setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen })
 }))
 
 /** UI locale resolved from settings + system locale; used by i18n and formatters. */

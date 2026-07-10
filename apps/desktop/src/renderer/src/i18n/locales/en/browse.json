@@ -53,6 +53,7 @@
     "zerogpu": "ZeroGPU"
   },
   "likes": "Likes",
+  "listHint": "navigate",
   "params": {
     "1to7b": "1B – 7B",
     "7to30b": "7B – 30B",

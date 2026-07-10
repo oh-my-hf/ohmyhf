@@ -7,11 +7,14 @@
   "copied": "Copied",
   "copy": "Copy",
   "delete": "Delete",
+  "dismiss": "Dismiss",
   "error": {
     "generic": "Something went wrong",
     "network": "Could not reach the Hugging Face API"
   },
   "gated": "Gated",
+  "goBack": "Back",
+  "goForward": "Forward",
   "kind": {
     "dataset": "Dataset",
     "model": "Model",
@@ -36,5 +39,6 @@
     "light": "Light",
     "system": "System"
   },
+  "undo": "Undo",
   "unofficial": "Unofficial"
 }

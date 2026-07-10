@@ -20,8 +20,8 @@ export function EmptyState({
 }: EmptyStateProps): React.JSX.Element {
   return (
     <div className={cn('flex flex-col items-center gap-3 px-6 py-12 text-center', className)}>
-      <div className="flex size-10 items-center justify-center rounded-full bg-panel ring-1 ring-border">
-        <Icon className="size-[18px] text-ink-faint" aria-hidden />
+      <div className="flex size-10 items-center justify-center rounded-full bg-panel-2 ring-1 ring-border-card">
+        <Icon className="size-[18px] text-ink-muted" aria-hidden />
       </div>
       <div className="flex flex-col items-center gap-1">
         <p className="text-[13.5px] font-medium text-ink">{title}</p>

@@ -48,8 +48,8 @@ function SectionHeading({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <h3 className="flex items-center gap-2 text-[13px] font-semibold">
-      <Icon className="size-4 text-ink-faint" aria-hidden />
+    <h3 className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-ink-faint uppercase">
+      <Icon className="size-3.5 text-ink-faint" aria-hidden />
       {children}
     </h3>
   )
@@ -235,12 +235,12 @@ export function RepoManagePanel({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={() => setDialog('rename')}>
+          <Button variant="secondary" size="sm" onClick={() => setDialog('rename')}>
             {t('admin:actions.rename')}
           </Button>
           {/* The Hub only supports duplicating Spaces. */}
           {kind === 'space' && (
-            <Button variant="outline" size="sm" onClick={() => setDialog('duplicate')}>
+            <Button variant="secondary" size="sm" onClick={() => setDialog('duplicate')}>
               {t('admin:actions.duplicate')}
             </Button>
           )}
@@ -285,9 +285,8 @@ export function RepoManagePanel({
               {t('admin:refs.createBranch')}
             </Button>
             <Button
-              variant="ghost"
+              variant="danger"
               size="sm"
-              className="text-error"
               disabled={branch.trim() === ''}
               loading={deleteBranch.isPending}
               onClick={() => deleteBranch.mutate()}
@@ -325,9 +324,8 @@ export function RepoManagePanel({
               {t('admin:refs.createTag')}
             </Button>
             <Button
-              variant="ghost"
+              variant="danger"
               size="sm"
-              className="text-error"
               disabled={tag.trim() === ''}
               loading={deleteTag.isPending}
               onClick={() => deleteTag.mutate()}

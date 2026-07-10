@@ -21,7 +21,7 @@ export function DialogContent({
       <DialogPrimitive.Content
         className={cn(
           'fixed top-1/2 left-1/2 z-50 w-[26rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2',
-          'animate-fade-rise rounded-lg border bg-bg p-4 shadow-overlay',
+          'animate-fade-rise rounded-lg border bg-elevated p-4 shadow-overlay',
           className
         )}
         {...props}
@@ -29,7 +29,7 @@ export function DialogContent({
         {children}
         <DialogPrimitive.Close
           aria-label={t('close')}
-          className="absolute top-3 right-3 rounded p-1 text-ink-muted transition-colors hover:bg-panel hover:text-ink"
+          className="absolute top-3 right-3 rounded-md p-1 text-ink-muted transition-colors hover:bg-panel-2 hover:text-ink"
         >
           <X className="size-4" aria-hidden />
         </DialogPrimitive.Close>

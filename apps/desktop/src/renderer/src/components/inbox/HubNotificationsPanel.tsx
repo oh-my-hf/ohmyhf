@@ -40,7 +40,7 @@ const KIND_ICON: Record<HubNotification['kind'], React.ComponentType<{ className
 const STATUS_VARIANT = {
   open: 'success',
   closed: 'error',
-  merged: 'primary',
+  merged: 'select',
   draft: 'neutral'
 } as const
 
@@ -101,7 +101,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
         title={t('inbox:hub.signIn.title')}
         body={t('inbox:hub.signIn.body')}
         action={
-          <Button variant="primary" size="sm" onClick={() => openSettings('account')}>
+          <Button variant="cta" size="sm" onClick={() => openSettings('account')}>
             {t('inbox:hub.signIn.action')}
           </Button>
         }
@@ -146,9 +146,9 @@ export function HubNotificationsPanel(): React.JSX.Element {
       {items.length > 0 && (
         <div className="flex shrink-0 items-center gap-2 px-5 pb-2">
           {unreadOnPage > 0 && (
-            <Badge variant="primary" className="nums">
+            <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
               {unreadOnPage}
-            </Badge>
+            </span>
           )}
           <div className="ml-auto flex items-center gap-1.5">
             <Button
@@ -188,22 +188,26 @@ export function HubNotificationsPanel(): React.JSX.Element {
               key={item.discussionId ?? `${item.kind}-${index}`}
               type="button"
               onClick={() => openItem(item)}
-              className={cn(
-                'flex w-full items-start gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-panel',
-                !item.read && 'bg-primary/5'
-              )}
+              className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-panel"
             >
               <span
                 className={cn(
                   'mt-[7px] size-1.5 shrink-0 rounded-full',
-                  item.read ? 'bg-transparent' : 'bg-primary'
+                  item.read ? 'bg-transparent' : 'bg-brand'
                 )}
                 aria-hidden
               />
               <Icon className="mt-0.5 size-4 shrink-0 text-ink-faint" aria-hidden />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <span className="min-w-0 truncate text-[13px] font-medium">{item.title}</span>
+                  <span
+                    className={cn(
+                      'min-w-0 truncate text-[13px] font-medium',
+                      item.read ? 'text-ink' : 'text-ink-strong'
+                    )}
+                  >
+                    {item.title}
+                  </span>
                   {status !== undefined && (
                     <Badge variant={STATUS_VARIANT[status]}>
                       {t(`detail:discussions.status.${status}`)}
@@ -241,7 +245,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
         })}
       </div>
       {pageCount > 1 && (
-        <div className="flex shrink-0 items-center justify-between gap-2 border-t px-4 py-1.5">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border-card px-4 py-1.5">
           <span className="nums text-[12px] text-ink-muted">
             {t('inbox:hub.pageOf', { page: page + 1, pages: pageCount })}
           </span>

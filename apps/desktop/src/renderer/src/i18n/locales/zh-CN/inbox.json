@@ -16,6 +16,7 @@
     "importFromHub": "从 Hugging Face 导入",
     "papers": "每日论文摘要",
     "placeholder": "用户名、组织名，或 model:org/name",
+    "removed": "已取消关注 {{target}}",
     "title": "正在关注",
     "type": {
       "org": "组织",

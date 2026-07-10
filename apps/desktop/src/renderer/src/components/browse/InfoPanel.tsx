@@ -24,7 +24,10 @@ export function InfoPanel({ detail }: { detail: RepoDetail }): React.JSX.Element
   if (detail.usedStorage !== undefined && detail.usedStorage > 0)
     rows.push([t('info.storage'), formatBytes(detail.usedStorage)])
   if (detail.downloadsAllTime !== undefined && detail.downloadsAllTime > 0)
-    rows.push([t('info.downloadsAllTime'), formatCount(detail.downloadsAllTime, locale)])
+    rows.push([
+      t('info.downloadsAllTime'),
+      <span className="nums">{formatCount(detail.downloadsAllTime, locale)}</span>
+    ])
 
   return (
     <div className="flex flex-col gap-5 p-4">

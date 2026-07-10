@@ -19,7 +19,7 @@ export function Progress({ value, className, indeterminate }: ProgressProps): Re
     >
       <div
         className={cn(
-          'h-full rounded-full bg-primary transition-[width] duration-300 ease-out',
+          'h-full rounded-full bg-select transition-[width] duration-300 ease-out',
           indeterminate && 'animate-pulse'
         )}
         style={{ width: indeterminate ? '100%' : `${pct}%` }}

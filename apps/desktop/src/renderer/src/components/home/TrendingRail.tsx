@@ -44,7 +44,7 @@ function TrendingRow({ repo, locale }: { repo: RepoSummary; locale: string }): R
     <button
       type="button"
       onClick={() => navigate(`/${KIND_PATH[repo.kind]}/${repo.id}`)}
-      className="flex w-full flex-col gap-1 rounded-md px-2 py-1.5 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+      className="group flex w-full flex-col gap-1 rounded-md px-2 py-1.5 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
     >
       <span className="flex min-w-0 items-center gap-1.5">
         {repo.kind === 'space' && repo.emoji ? (
@@ -54,12 +54,10 @@ function TrendingRow({ repo, locale }: { repo: RepoSummary; locale: string }): R
         ) : (
           <Icon className="size-3.5 shrink-0 text-ink-faint" aria-hidden />
         )}
-        <span className="truncate font-mono text-[13px] tracking-tight text-ink">
+        <span className="truncate font-mono text-[13px] tracking-tight text-ink-strong transition-colors duration-150 group-hover:text-hover-title">
           {owner !== null ? (
             <>
-              <UserLink username={owner} className="hover:text-primary">
-                {owner}
-              </UserLink>
+              <UserLink username={owner}>{owner}</UserLink>
               {repo.id.slice(slash)}
             </>
           ) : (
@@ -67,16 +65,26 @@ function TrendingRow({ repo, locale }: { repo: RepoSummary; locale: string }): R
           )}
         </span>
       </span>
-      <span className="nums flex items-center gap-2.5 pl-[22px] text-[11px] text-ink-faint">
+      <span className="nums flex items-center gap-1.5 pl-[22px] text-[11px] text-ink-faint">
         <span className="flex items-center gap-0.5">
           <Heart className="size-3" aria-hidden />
           {formatCount(repo.likes, locale)}
+        </span>
+        <span className="text-decor" aria-hidden>
+          ·
         </span>
         <span className="flex items-center gap-0.5">
           <ArrowDownToLine className="size-3" aria-hidden />
           {formatCount(repo.downloads, locale)}
         </span>
-        {repo.updatedAt ? <span>{formatRelativeTime(repo.updatedAt, locale)}</span> : null}
+        {repo.updatedAt ? (
+          <>
+            <span className="text-decor" aria-hidden>
+              ·
+            </span>
+            <span>{formatRelativeTime(repo.updatedAt, locale)}</span>
+          </>
+        ) : null}
       </span>
     </button>
   )
@@ -122,7 +130,7 @@ export function TrendingRail(): React.JSX.Element {
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="size-4 text-ink-muted" aria-hidden />
-          <h2 className="text-[13px] font-semibold">{t('home:trending.title')}</h2>
+          <h2 className="text-smd font-semibold text-ink-strong">{t('home:trending.title')}</h2>
         </div>
         <div className="flex items-center gap-0.5">
           {segments.map((s) => (
@@ -132,9 +140,9 @@ export function TrendingRail(): React.JSX.Element {
               aria-pressed={segment === s.id}
               onClick={() => setSegment(s.id)}
               className={cn(
-                'h-6 rounded-md px-2 text-[11.5px] font-medium transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
+                'h-6 rounded-md px-2 text-[11.5px] font-medium transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
                 segment === s.id
-                  ? 'bg-primary/10 text-primary'
+                  ? 'bg-panel-2 text-ink-strong'
                   : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
               )}
             >

@@ -69,7 +69,7 @@ export function CommentComposer({
       />
       <div className="flex justify-end">
         <Button
-          variant="primary"
+          variant="cta"
           size="sm"
           disabled={draft.trim() === ''}
           loading={send.isPending}

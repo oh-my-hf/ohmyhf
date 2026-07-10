@@ -7,11 +7,14 @@
   "copied": "已复制",
   "copy": "复制",
   "delete": "删除",
+  "dismiss": "关闭",
   "error": {
     "generic": "出错了",
     "network": "无法连接 Hugging Face API"
   },
   "gated": "需申请",
+  "goBack": "后退",
+  "goForward": "前进",
   "kind": {
     "dataset": "数据集",
     "model": "模型",
@@ -36,5 +39,6 @@
     "light": "浅色",
     "system": "跟随系统"
   },
+  "undo": "撤销",
   "unofficial": "非官方"
 }

@@ -13,6 +13,7 @@
     "title": "No downloads yet"
   },
   "files": "{{done}}/{{total}} files",
+  "removed": "Download entry removed",
   "revision": "Revision {{revision}}",
   "speed": "{{speed}}/s",
   "status": {

@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import type { RepoKind, RepoSort } from '@oh-my-huggingface/shared'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { Kbd } from '@/components/ui/kbd'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { TAG_HUE_VAR, taskHue } from '@/lib/tag-colors'
 import { useAppStore, type BrowseFilters } from '@/stores/app'
 
 const SORTS: RepoSort[] = ['trending', 'downloads', 'likes', 'updated', 'created']
@@ -31,11 +33,16 @@ export function FiltersBar({ kind }: { kind: RepoKind }): React.JSX.Element {
   const panelOpen = useAppStore((s) => s.filterPanelOpen)
   const setFilterPanelOpen = useAppStore((s) => s.setFilterPanelOpen)
 
-  const chips: Array<{ id: string; label: string; onRemove: () => void }> = []
+  const chips: Array<{ id: string; label: string; dot?: string; onRemove: () => void }> = []
   for (const key of CHIP_KEYS) {
     const value = filters[key]
     if (value) {
-      chips.push({ id: key, label: value, onRemove: () => setFilters(kind, { [key]: undefined }) })
+      chips.push({
+        id: key,
+        label: value,
+        dot: key === 'pipelineTag' ? TAG_HUE_VAR[taskHue(value)] : undefined,
+        onRemove: () => setFilters(kind, { [key]: undefined })
+      })
     }
   }
   if (filters.paramBucket) {
@@ -81,12 +88,21 @@ export function FiltersBar({ kind }: { kind: RepoKind }): React.JSX.Element {
             aria-hidden
           />
           <Input
+            data-list-search=""
             value={filters.search}
             onChange={(e) => setFilters(kind, { search: e.target.value })}
             placeholder={t(`searchPlaceholder.${kind}`)}
-            className="pl-8"
+            className={cn('pl-8', !filters.search && 'pr-7 max-[1000px]:pr-2.5')}
             aria-label={t(`searchPlaceholder.${kind}`)}
           />
+          {!filters.search && (
+            <Kbd
+              className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 max-[1000px]:hidden"
+              aria-hidden
+            >
+              /
+            </Kbd>
+          )}
         </div>
         <Select
           value={filters.sort}
@@ -113,7 +129,7 @@ export function FiltersBar({ kind }: { kind: RepoKind }): React.JSX.Element {
         >
           <SlidersHorizontal className="size-3.5" aria-hidden />
           {activeCount > 0 && (
-            <span className="nums absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-1 text-[9px] leading-none font-semibold text-primary-ink">
+            <span className="nums absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-brand px-1 text-[9px] leading-none font-semibold text-brand-ink">
               {activeCount}
             </span>
           )}
@@ -122,17 +138,27 @@ export function FiltersBar({ kind }: { kind: RepoKind }): React.JSX.Element {
       {chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
           {chips.map((chip) => (
-            <Badge key={chip.id} variant="primary" className="max-w-full gap-1 pr-1">
+            <span
+              key={chip.id}
+              className="flex h-6 max-w-full min-w-0 items-center gap-1 rounded-lg border bg-linear-to-b from-btn-from to-btn-to pl-2 pr-1 text-[11.5px] text-ink"
+            >
+              {chip.dot && (
+                <span
+                  className="size-1.5 shrink-0 rounded-full"
+                  style={{ background: chip.dot }}
+                  aria-hidden
+                />
+              )}
               <span className="min-w-0 truncate">{chip.label}</span>
               <button
                 type="button"
                 aria-label={t('filter.clear')}
-                className="rounded-full p-0.5 hover:bg-primary/20"
+                className="rounded-full p-0.5 text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
                 onClick={chip.onRemove}
               >
                 <X className="size-3" aria-hidden />
               </button>
-            </Badge>
+            </span>
           ))}
         </div>
       )}

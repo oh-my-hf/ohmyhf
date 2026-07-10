@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -68,7 +68,7 @@ function UserRepoRow({ repo, locale }: { repo: RepoSummary; locale: string }): R
     <button
       type="button"
       onClick={() => navigate(`/${KIND_PATH[repo.kind]}/${repo.id}`)}
-      className="flex w-full flex-col gap-1 rounded-md px-2.5 py-2 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+      className="group flex w-full flex-col gap-1 rounded-md px-2.5 py-2 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
     >
       <span className="flex min-w-0 items-center gap-1.5">
         {repo.kind === 'space' && repo.emoji ? (
@@ -78,7 +78,9 @@ function UserRepoRow({ repo, locale }: { repo: RepoSummary; locale: string }): R
         ) : (
           <Icon className="size-3.5 shrink-0 text-ink-faint" aria-hidden />
         )}
-        <span className="truncate font-mono text-[13px] tracking-tight text-ink">{repo.id}</span>
+        <span className="truncate font-mono text-[13px] tracking-tight text-ink-strong transition-colors duration-150 group-hover:text-hover-title">
+          {repo.id}
+        </span>
       </span>
       <span className="nums flex items-center gap-2.5 pl-[22px] text-[11px] text-ink-faint">
         <span className="flex items-center gap-0.5">
@@ -219,7 +221,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
     <div className="h-full overflow-y-auto">
       <div className="animate-fade-rise mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-5">
         {overview.isPending && (
-          <div className="flex items-start gap-4 rounded-lg border bg-panel p-4">
+          <div className="flex items-start gap-4 rounded-lg border border-border-card bg-card-gradient p-5">
             <Skeleton className="size-16 rounded-full" />
             <div className="flex flex-1 flex-col gap-2 pt-1">
               <Skeleton className="h-4 w-44" />
@@ -244,7 +246,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
 
         {data && (
           <>
-            <header className="flex items-start gap-4 rounded-lg border bg-panel p-4">
+            <header className="flex items-start gap-4 rounded-lg border border-border-card bg-card-gradient p-5">
               <ProfileAvatar
                 name={data.name}
                 url={data.avatarUrl}
@@ -252,29 +254,40 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <h1 className="min-w-0 truncate text-[16px] font-semibold">
+                  <h1 className="min-w-0 truncate text-lg font-semibold text-ink-strong">
                     {data.fullname !== undefined && data.fullname !== ''
                       ? data.fullname
                       : data.name}
                   </h1>
-                  <span className="truncate font-mono text-[12.5px] text-ink-muted">
+                  <span className="truncate font-mono text-[12.5px] text-ink-faint">
                     @{data.name}
                   </span>
-                  {data.isPro === true && <Badge variant="primary">{t('auth:pro')}</Badge>}
+                  {data.isPro === true && (
+                    <span className="rounded-full bg-brand px-1.5 text-[10px] font-semibold text-brand-ink">
+                      {t('auth:pro')}
+                    </span>
+                  )}
                 </div>
                 {data.bio !== undefined && data.bio !== '' && (
                   <p className="max-w-prose text-[13px] leading-relaxed text-ink-muted">
                     {data.bio}
                   </p>
                 )}
-                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-muted">
-                  {stats.map((stat) => (
-                    <span key={stat.key} className="flex items-baseline gap-1">
-                      <span className="nums font-medium text-ink">
-                        {formatCount(stat.value, locale)}
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-faint">
+                  {stats.map((stat, i) => (
+                    <Fragment key={stat.key}>
+                      {i > 0 && (
+                        <span className="text-decor" aria-hidden>
+                          ·
+                        </span>
+                      )}
+                      <span className="flex items-baseline gap-1">
+                        <span className="nums font-medium text-ink">
+                          {formatCount(stat.value, locale)}
+                        </span>
+                        <span>{t(`profile:stats.${stat.key}`)}</span>
                       </span>
-                      <span>{t(`profile:stats.${stat.key}`)}</span>
-                    </span>
+                    </Fragment>
                   ))}
                 </div>
                 {data.orgs.length > 0 && (
@@ -286,7 +299,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                             type="button"
                             aria-label={org.fullname ?? org.name}
                             onClick={() => navigate(`/users/${org.name}`)}
-                            className="rounded-full outline-none transition-opacity duration-150 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                            className="rounded-full outline-none transition-opacity duration-150 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
                           >
                             <ProfileAvatar
                               name={org.name}
@@ -316,7 +329,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                   <TooltipContent>{t('common:openOnHub')}</TooltipContent>
                 </Tooltip>
                 <Button
-                  variant={followEntry ? 'secondary' : 'primary'}
+                  variant={followEntry ? 'secondary' : 'cta'}
                   size="md"
                   disabled={follows.isPending}
                   loading={addFollow.isPending || removeFollow.isPending}

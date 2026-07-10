@@ -60,6 +60,11 @@
     "quote": "引用",
     "write": "编写"
   },
+  "favoriteRemoved": "已从收藏中移除",
+  "favoritesEmpty": {
+    "body": "浏览时点亮星标，仓库就会固定在这里。",
+    "title": "还没有收藏"
+  },
   "files": {
     "download": "下载文件",
     "empty": "该目录为空。",

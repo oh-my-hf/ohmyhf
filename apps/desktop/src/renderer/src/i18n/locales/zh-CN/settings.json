@@ -23,6 +23,20 @@
       "scopesUnknown": "当前会话已授予的权限未知，请重新授权以刷新。",
       "title": "Hub 账号"
     },
+    "scopeLabels": {
+      "inference-api": "推理 API",
+      "jobs": "管理任务",
+      "manage-repos": "管理仓库",
+      "openid": "登录身份",
+      "profile": "读取个人资料",
+      "read-billing": "读取账单",
+      "read-collections": "读取合集",
+      "read-repos": "读取仓库",
+      "webhooks": "管理 Webhook",
+      "write-collections": "写入合集",
+      "write-discussions": "发表讨论",
+      "write-repos": "写入仓库"
+    },
     "title": "账户"
   },
   "appearance": {

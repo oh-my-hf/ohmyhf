@@ -37,8 +37,8 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STATUS_VARIANT = {
   open: 'success',
-  closed: 'error',
-  merged: 'primary',
+  closed: 'neutral',
+  merged: 'select',
   draft: 'neutral'
 } as const
 
@@ -46,7 +46,7 @@ const STATUS_VARIANT = {
 const PR_ICON_COLOR: Record<DiscussionSummary['status'], string> = {
   open: 'text-success',
   closed: 'text-error',
-  merged: 'text-primary',
+  merged: 'text-select',
   draft: 'text-ink-faint'
 }
 
@@ -61,7 +61,7 @@ const KNOWN_STATUSES: readonly string[] = ['open', 'closed', 'merged', 'draft']
 const STATUS_EVENT_COLOR: Record<string, string> = {
   open: 'text-success',
   closed: 'text-error',
-  merged: 'text-primary'
+  merged: 'text-select'
 }
 
 function hasBody(event: DiscussionEvent): boolean {
@@ -144,12 +144,12 @@ function ThreadEvent({
   // only when they carry markdown content.
   if (event.type !== 'comment' && !hasBody(event)) return null
   return (
-    <div className="rounded-lg border p-3">
+    <div className="rounded-lg border border-border-card bg-card-gradient p-3">
       <div className="mb-2 flex items-center gap-2 text-[12px] text-ink-muted">
         {event.author !== undefined && event.author !== '' && (
-          <UserLink username={event.author} className="font-medium text-ink" />
+          <UserLink username={event.author} className="font-medium text-ink-strong" />
         )}
-        <span>{formatRelativeTime(event.createdAt, locale)}</span>
+        <span className="text-ink-faint">{formatRelativeTime(event.createdAt, locale)}</span>
       </div>
       {hasBody(event) ? (
         <MarkdownView markdown={event.content ?? ''} kind={kind} repoId={repoId} />
@@ -294,7 +294,7 @@ function Thread({
             }}
           />
           <Button
-            variant="primary"
+            variant="secondary"
             size="sm"
             disabled={!titleValid}
             loading={saveTitle.isPending}
@@ -329,7 +329,7 @@ function Thread({
             </Button>
           )}
           {isPr && status === 'open' && (
-            <Button variant="primary" size="sm" onClick={() => setMergeOpen(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setMergeOpen(true)}>
               <GitMerge className="size-3.5" aria-hidden />
               {t('detail:maintainer.merge')}
             </Button>
@@ -360,7 +360,7 @@ function Thread({
             {t('common:cancel')}
           </Button>
           <Button
-            variant="primary"
+            variant="cta"
             size="sm"
             loading={merge.isPending}
             onClick={() => merge.mutate()}
@@ -399,7 +399,7 @@ function Thread({
           />
           <div className="flex justify-end">
             <Button
-              variant="primary"
+              variant="cta"
               size="sm"
               disabled={reply.trim() === ''}
               loading={send.isPending}
@@ -423,7 +423,9 @@ function Thread({
         <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('common:back')}>
           <ArrowLeft className="size-4" aria-hidden />
         </Button>
-        <span className="min-w-0 truncate text-[13.5px] font-medium">{thread.data?.title}</span>
+        <span className="min-w-0 truncate text-[13.5px] font-medium text-ink-strong">
+          {thread.data?.title}
+        </span>
         {thread.data && (
           <Badge variant={STATUS_VARIANT[thread.data.status]}>
             {t(`detail:discussions.status.${thread.data.status}`)}
@@ -525,7 +527,7 @@ function SegmentButton({
       aria-pressed={active}
       className={cn(
         'flex items-center gap-1.5 rounded px-2.5 py-1 text-[12.5px] font-medium transition-colors duration-150',
-        active ? 'bg-bg text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
+        active ? 'bg-bg text-ink-strong ring-1 ring-border' : 'text-ink-muted hover:text-ink'
       )}
     >
       {label}
@@ -593,7 +595,7 @@ export function DiscussionsPanel({
               className={cn(
                 'rounded-full border px-2 py-0.5 text-[11.5px] transition-colors duration-150',
                 status === filter
-                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  ? 'border-select/40 bg-select/10 text-select'
                   : 'text-ink-muted hover:bg-panel hover:text-ink'
               )}
             >

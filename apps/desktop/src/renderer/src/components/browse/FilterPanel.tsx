@@ -19,6 +19,7 @@ import {
   SPACE_SDKS,
   TASKS
 } from '@/lib/catalog'
+import { TAG_HUE_VAR, taskHue } from '@/lib/tag-colors'
 import { useAppStore, type BrowseFilters } from '@/stores/app'
 
 /** Single-value BrowseFilters fields the panel toggles (multi-select lives in `tags`). */
@@ -27,10 +28,12 @@ type SingleKey =
 
 function Chip({
   selected,
+  dot,
   onClick,
   children
 }: {
   selected: boolean
+  dot?: string
   onClick: () => void
   children: React.ReactNode
 }): React.JSX.Element {
@@ -40,12 +43,15 @@ function Chip({
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        'rounded-full border px-2.5 py-1 text-[11.5px] leading-4 transition-colors duration-150',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] leading-4 transition-colors duration-150',
         selected
-          ? 'border-primary/25 bg-primary/10 font-medium text-primary'
+          ? 'border-select/25 bg-select/10 font-medium text-select'
           : 'text-ink-muted hover:bg-panel'
       )}
     >
+      {dot && (
+        <span className="size-1.5 shrink-0 rounded-full" style={{ background: dot }} aria-hidden />
+      )}
       {children}
     </button>
   )
@@ -62,7 +68,7 @@ function Section({
 }): React.JSX.Element {
   return (
     <section>
-      <h3 className="mb-1.5 text-[10px] font-semibold tracking-wider text-ink-faint uppercase">
+      <h3 className="mb-1.5 text-[11px] font-semibold tracking-wider text-ink-faint uppercase">
         {title}
         {hint && <span className="ml-1.5 font-normal normal-case tracking-normal">{hint}</span>}
       </h3>
@@ -153,6 +159,7 @@ export function FilterPanel({ kind }: { kind: RepoKind }): React.JSX.Element {
                 <Chip
                   key={task}
                   selected={filters.pipelineTag === task}
+                  dot={TAG_HUE_VAR[taskHue(task)]}
                   onClick={() => toggleField('pipelineTag', task)}
                 >
                   {task}
@@ -244,6 +251,7 @@ export function FilterPanel({ kind }: { kind: RepoKind }): React.JSX.Element {
                 <Chip
                   key={task}
                   selected={tags.includes(`task_categories:${task}`)}
+                  dot={TAG_HUE_VAR[taskHue(task)]}
                   onClick={() => toggleTag(`task_categories:${task}`)}
                 >
                   {task}
@@ -301,7 +309,7 @@ export function FilterPanel({ kind }: { kind: RepoKind }): React.JSX.Element {
         <Button variant="ghost" size="sm" onClick={clearAll}>
           {t('browse:filter.clearAll')}
         </Button>
-        <Button variant="primary" size="sm" onClick={() => setFilterPanelOpen(false)}>
+        <Button variant="secondary" size="sm" onClick={() => setFilterPanelOpen(false)}>
           {t('browse:filter.done')}
         </Button>
       </div>

@@ -19,6 +19,7 @@ import enHome from './locales/en/home.json'
 import enProfile from './locales/en/profile.json'
 import enAdmin from './locales/en/admin.json'
 import enCollections from './locales/en/collections.json'
+import enShortcuts from './locales/en/shortcuts.json'
 import zhCommon from './locales/zh-CN/common.json'
 import zhNav from './locales/zh-CN/nav.json'
 import zhBrowse from './locales/zh-CN/browse.json'
@@ -36,6 +37,7 @@ import zhHome from './locales/zh-CN/home.json'
 import zhProfile from './locales/zh-CN/profile.json'
 import zhAdmin from './locales/zh-CN/admin.json'
 import zhCollections from './locales/zh-CN/collections.json'
+import zhShortcuts from './locales/zh-CN/shortcuts.json'
 
 export const NAMESPACES = [
   'common',
@@ -54,7 +56,8 @@ export const NAMESPACES = [
   'home',
   'profile',
   'admin',
-  'collections'
+  'collections',
+  'shortcuts'
 ] as const
 
 const resources = {
@@ -75,7 +78,8 @@ const resources = {
     home: enHome,
     profile: enProfile,
     admin: enAdmin,
-    collections: enCollections
+    collections: enCollections,
+    shortcuts: enShortcuts
   },
   'zh-CN': {
     common: zhCommon,
@@ -94,7 +98,8 @@ const resources = {
     home: zhHome,
     profile: zhProfile,
     admin: zhAdmin,
-    collections: zhCollections
+    collections: zhCollections,
+    shortcuts: zhShortcuts
   }
 }
 

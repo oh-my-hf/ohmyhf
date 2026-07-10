@@ -18,10 +18,10 @@ import {
   UploadCloud,
   UserCircle2
 } from 'lucide-react'
-import logo from '@/assets/logo.png'
 import { invoke } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
+import { useMediaQuery } from '@/hooks/use-media-query'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface NavItem {
@@ -33,7 +33,15 @@ interface NavItem {
   end?: boolean
 }
 
-function SidebarLink({ item, label }: { item: NavItem; label: string }): React.JSX.Element {
+function SidebarLink({
+  item,
+  label,
+  collapsed
+}: {
+  item: NavItem
+  label: string
+  collapsed: boolean
+}): React.JSX.Element {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -42,23 +50,28 @@ function SidebarLink({ item, label }: { item: NavItem; label: string }): React.J
           end={item.end}
           className={({ isActive }) =>
             cn(
-              'group relative flex h-8 items-center justify-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150 min-[860px]:justify-start',
+              'group relative flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] font-medium transition-colors duration-150',
+              collapsed ? 'justify-center' : 'justify-start',
               isActive
-                ? 'bg-primary/10 text-primary'
+                ? 'bg-panel-2 text-ink-strong'
                 : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
             )
           }
         >
           <item.icon className="size-4 shrink-0" aria-hidden />
-          <span className="hidden min-w-0 flex-1 truncate min-[860px]:block">{label}</span>
+          {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
           {item.badge ? (
-            <span className="nums hidden h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-ink min-[860px]:inline-flex">
-              {item.badge > 99 ? '99+' : item.badge}
-            </span>
+            collapsed ? (
+              <span className="absolute top-1 right-1 size-1.5 rounded-full bg-brand" aria-hidden />
+            ) : (
+              <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
+                {item.badge > 99 ? '99+' : item.badge}
+              </span>
+            )
           ) : null}
         </NavLink>
       </TooltipTrigger>
-      <TooltipContent side="right" className="min-[860px]:hidden">
+      <TooltipContent side="right" className={collapsed ? undefined : 'hidden'}>
         {label}
       </TooltipContent>
     </Tooltip>
@@ -68,9 +81,11 @@ function SidebarLink({ item, label }: { item: NavItem; label: string }): React.J
 export function Sidebar(): React.JSX.Element {
   const { t } = useTranslation(['nav', 'auth', 'common'])
   const auth = useAppStore((s) => s.auth)
-  const appInfo = useAppStore((s) => s.appInfo)
   const settingsOpen = useAppStore((s) => s.settingsOpen)
   const openSettings = useAppStore((s) => s.openSettings)
+  const manualCollapsed = useAppStore((s) => s.sidebarCollapsed)
+  const narrow = useMediaQuery('(max-width: 859.98px)')
+  const collapsed = manualCollapsed || narrow
 
   const downloads = useQuery({
     queryKey: ['downloads'],
@@ -100,79 +115,78 @@ export function Sidebar(): React.JSX.Element {
     { to: '/upload', labelKey: 'upload', icon: UploadCloud }
   ]
 
-  const isMac = appInfo?.platform === 'darwin'
-
   return (
-    <aside className="flex w-12 shrink-0 flex-col border-r bg-panel min-[860px]:w-52">
-      {/* Drag region under the macOS traffic lights. */}
-      <div className={cn('app-drag flex items-end px-3', isMac ? 'h-11' : 'h-3')} />
-      <div className="app-no-drag flex items-center justify-center gap-2.5 px-3 pt-2 pb-4 min-[860px]:justify-start">
-        <img src={logo} alt="" className="size-6 shrink-0 select-none" draggable={false} />
-        <div className="hidden min-w-0 min-[860px]:block">
-          <div className="truncate text-[13px] leading-4 font-semibold">
-            {t('appName', { ns: 'common' })}
-          </div>
-          <div className="text-[10px] leading-3 tracking-wider text-ink-faint uppercase">
-            {t('unofficial', { ns: 'common' })}
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2">
+    <aside
+      className={cn(
+        'flex shrink-0 flex-col border-r border-border-card bg-panel',
+        collapsed ? 'w-12' : 'w-52'
+      )}
+    >
+      <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2 pt-3">
         <div className="flex flex-col gap-0.5">
-          <div className="hidden px-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-faint uppercase min-[860px]:block">
-            {t('browse')}
-          </div>
+          {!collapsed && (
+            <div className="px-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-faint uppercase">
+              {t('browse')}
+            </div>
+          )}
           {browse.map((item) => (
-            <SidebarLink key={item.to} item={item} label={t(item.labelKey)} />
+            <SidebarLink key={item.to} item={item} label={t(item.labelKey)} collapsed={collapsed} />
           ))}
         </div>
         <div className="flex flex-col gap-0.5">
-          <div className="hidden px-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-faint uppercase min-[860px]:block">
-            {t('library')}
-          </div>
+          {!collapsed && (
+            <div className="px-2 pb-1 text-[10px] font-semibold tracking-wider text-ink-faint uppercase">
+              {t('library')}
+            </div>
+          )}
           {library.map((item) => (
-            <SidebarLink key={item.to} item={item} label={t(item.labelKey)} />
+            <SidebarLink key={item.to} item={item} label={t(item.labelKey)} collapsed={collapsed} />
           ))}
         </div>
       </nav>
 
-      <div className="flex flex-col gap-0.5 border-t p-2">
+      <div className="flex flex-col gap-0.5 border-t border-border-card p-2">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               type="button"
               onClick={() => openSettings()}
               className={cn(
-                'group relative flex h-8 items-center justify-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150 min-[860px]:justify-start',
+                'group relative flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] font-medium transition-colors duration-150',
+                collapsed ? 'justify-center' : 'justify-start',
                 settingsOpen
-                  ? 'bg-primary/10 text-primary'
+                  ? 'bg-panel-2 text-ink-strong'
                   : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
               )}
             >
               <Settings className="size-4 shrink-0" aria-hidden />
-              <span className="hidden min-w-0 flex-1 truncate text-left min-[860px]:block">
-                {t('settings')}
-              </span>
+              {!collapsed && (
+                <span className="min-w-0 flex-1 truncate text-left">{t('settings')}</span>
+              )}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="min-[860px]:hidden">
+          <TooltipContent side="right" className={collapsed ? undefined : 'hidden'}>
             {t('settings')}
           </TooltipContent>
         </Tooltip>
         <button
           type="button"
           onClick={() => openSettings('account')}
-          className="mt-0.5 flex h-9 items-center justify-center gap-2.5 rounded-md border bg-bg px-2 text-[13px] text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink min-[860px]:justify-start"
+          className={cn(
+            'mt-0.5 flex h-9 items-center gap-2.5 rounded-lg border bg-linear-to-b from-btn-from to-btn-to px-2 text-[13px] text-ink-muted transition-colors duration-150 hover:shadow-btn-inset hover:text-ink',
+            collapsed ? 'justify-center' : 'justify-start'
+          )}
         >
           {auth.status === 'signedIn' && auth.user.avatarUrl ? (
             <img src={auth.user.avatarUrl} alt="" className="size-5 shrink-0 rounded-full border" />
           ) : (
             <UserCircle2 className="size-4 shrink-0" aria-hidden />
           )}
-          <span className="hidden min-w-0 flex-1 truncate text-left font-medium min-[860px]:block">
-            {auth.status === 'signedIn' ? auth.user.name : t('auth:signedOut')}
-          </span>
+          {!collapsed && (
+            <span className="min-w-0 flex-1 truncate text-left font-medium">
+              {auth.status === 'signedIn' ? auth.user.name : t('auth:signedOut')}
+            </span>
+          )}
         </button>
       </div>
     </aside>

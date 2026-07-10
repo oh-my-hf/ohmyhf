@@ -144,7 +144,7 @@ export function ComparePage(): React.JSX.Element {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 p-5">
         <div>
-          <h1 className="text-[15px] font-semibold">{t('compare:title')}</h1>
+          <h1 className="text-smd font-semibold text-ink-strong">{t('compare:title')}</h1>
           <p className="mt-0.5 text-[12.5px] text-ink-muted">{t('compare:hint')}</p>
         </div>
         <div className="flex max-w-md gap-1.5">
@@ -179,12 +179,15 @@ export function ComparePage(): React.JSX.Element {
             <div className="overflow-x-auto rounded-lg border">
               <table className="w-full border-collapse text-[13px]">
                 <thead>
-                  <tr>
-                    <th className="w-32 border-b bg-panel p-2.5" />
+                  <tr className="text-ink-muted">
+                    <th className="w-32 border-b border-border-card bg-panel p-2.5" />
                     {ids.map((id, i) => (
-                      <th key={id} className="min-w-44 border-b bg-panel p-2.5 text-left align-top">
+                      <th
+                        key={id}
+                        className="min-w-44 border-b border-border-card bg-panel p-2.5 text-left align-top"
+                      >
                         <div className="flex items-start gap-1">
-                          <span className="min-w-0 flex-1 font-medium break-all">
+                          <span className="min-w-0 flex-1 font-mono font-medium break-all text-ink-strong">
                             {results[i]?.isLoading ? <Skeleton className="h-4 w-24" /> : id}
                           </span>
                           <Button
@@ -203,7 +206,7 @@ export function ComparePage(): React.JSX.Element {
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.label} className="border-b last:border-b-0">
+                    <tr key={row.label} className="border-b border-border-card last:border-b-0">
                       <td className="bg-panel/50 p-2.5 font-medium text-ink-muted">{row.label}</td>
                       {ids.map((id, i) => (
                         <td key={id} className="p-2.5 align-top">
@@ -221,7 +224,9 @@ export function ComparePage(): React.JSX.Element {
             </div>
 
             <section className="flex flex-col gap-2">
-              <h2 className="text-[13.5px] font-semibold">{t('compare:benchmarks.title')}</h2>
+              <h2 className="text-[13.5px] font-semibold text-ink-strong">
+                {t('compare:benchmarks.title')}
+              </h2>
               {benchmarkLabels.length === 0 ? (
                 <p className="text-[12px] text-ink-muted">{t('compare:benchmarks.none')}</p>
               ) : (
@@ -229,14 +234,14 @@ export function ComparePage(): React.JSX.Element {
                   <table className="w-full border-collapse text-[13px]">
                     <tbody>
                       {benchmarkLabels.map((label) => (
-                        <tr key={label} className="border-b last:border-b-0">
+                        <tr key={label} className="border-b border-border-card last:border-b-0">
                           <td className="w-64 bg-panel/50 p-2.5 font-medium text-ink-muted">
                             <div className="max-w-60 truncate" title={label}>
                               {label}
                             </div>
                           </td>
                           {ids.map((id, i) => (
-                            <td key={id} className="min-w-44 p-2.5 align-top font-mono">
+                            <td key={id} className="nums min-w-44 p-2.5 align-top font-mono">
                               {results[i]?.isLoading ? (
                                 <Skeleton className="h-4 w-12" />
                               ) : (

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { useToasts } from '@/components/ui/toaster'
+import { pushUndo, useToasts } from '@/components/ui/toaster'
 import { HubNotificationsPanel } from '@/components/inbox/HubNotificationsPanel'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -39,8 +39,8 @@ function TabButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'flex items-center gap-1.5 rounded px-2.5 py-1 text-[12.5px] font-medium transition-colors duration-150',
-        active ? 'bg-bg text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
+        'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors duration-150',
+        active ? 'border-border bg-bg text-ink-strong' : 'border-transparent text-ink-muted hover:text-ink'
       )}
     >
       {label}
@@ -58,8 +58,8 @@ export function InboxPage(): React.JSX.Element {
   return (
     <div className="flex h-full min-w-0 flex-col">
       <div className="flex shrink-0 items-center gap-3 px-5 pt-5 pb-3">
-        <h1 className="text-[15px] font-semibold">{t('inbox:title')}</h1>
-        <div className="flex items-center gap-0.5 rounded-md border bg-panel p-0.5">
+        <h1 className="text-smd font-semibold text-ink-strong">{t('inbox:title')}</h1>
+        <div className="flex items-center gap-0.5 rounded-lg border bg-panel p-0.5">
           <TabButton
             active={tab === 'hub'}
             onClick={() => setTab('hub')}
@@ -118,8 +118,21 @@ function LocalFollowsFeed(): React.JSX.Element {
     }
   })
   const removeFollow = useMutation({
-    mutationFn: (id: string) => invoke('follows:remove', { id }),
-    onSuccess: (list) => queryClient.setQueryData(['follows'], list)
+    mutationFn: (follow: { id: string; type: FollowTargetType; target: string }) =>
+      invoke('follows:remove', { id: follow.id }),
+    onSuccess: (list, follow) => {
+      queryClient.setQueryData(['follows'], list)
+      // The papers toggle is its own undo affordance; only rows get the toast.
+      if (follow.type === 'papers') return
+      pushUndo(t('inbox:follows.removed', { target: follow.target }), {
+        label: t('common:undo'),
+        onClick: () => {
+          void invoke('follows:add', { type: follow.type, target: follow.target })
+            .then((restored) => queryClient.setQueryData(['follows'], restored))
+            .catch((err: Error) => push(err.message, 'error'))
+        }
+      })
+    }
   })
 
   // Pull the REAL Hugging Face following list of the signed-in account into the
@@ -176,9 +189,9 @@ function LocalFollowsFeed(): React.JSX.Element {
       <section className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2 px-5 pb-2">
           {unread.length > 0 && (
-            <Badge variant="primary" className="nums">
+            <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
               {unread.length}
-            </Badge>
+            </span>
           )}
           <div className="ml-auto flex items-center gap-1.5">
             <Button
@@ -215,15 +228,12 @@ function LocalFollowsFeed(): React.JSX.Element {
               key={item.id}
               type="button"
               onClick={() => openItem(item)}
-              className={cn(
-                'flex w-full items-start gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-panel',
-                !item.readAt && 'bg-primary/5'
-              )}
+              className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-panel"
             >
               <span
                 className={cn(
                   'mt-[7px] size-1.5 shrink-0 rounded-full',
-                  item.readAt ? 'bg-transparent' : 'bg-primary'
+                  item.readAt ? 'bg-transparent' : 'bg-brand'
                 )}
                 aria-hidden
               />
@@ -232,7 +242,14 @@ function LocalFollowsFeed(): React.JSX.Element {
                   <Badge variant="outline" className="min-w-14 justify-center">
                     {t(`inbox:kind.${item.kind}`)}
                   </Badge>
-                  <span className="min-w-0 truncate text-[13px] font-medium">{item.title}</span>
+                  <span
+                    className={cn(
+                      'min-w-0 truncate text-[13px] font-medium',
+                      item.readAt ? 'text-ink' : 'text-ink-strong'
+                    )}
+                  >
+                    {item.title}
+                  </span>
                 </span>
                 <span className="mt-0.5 line-clamp-2 block text-[12px] text-ink-muted">
                   {item.body}
@@ -246,8 +263,8 @@ function LocalFollowsFeed(): React.JSX.Element {
         </div>
       </section>
 
-      <aside className="flex w-72 shrink-0 flex-col gap-3 border-l p-4">
-        <h2 className="flex items-center gap-2 text-[13px] font-semibold">
+      <aside className="flex w-72 shrink-0 flex-col gap-3 border-l border-border-card p-4">
+        <h2 className="flex items-center gap-2 text-[13px] font-semibold text-ink-strong">
           <Bell className="size-4 text-ink-faint" aria-hidden />
           {t('inbox:follows.title')}
         </h2>
@@ -285,7 +302,7 @@ function LocalFollowsFeed(): React.JSX.Element {
             checked={Boolean(papersFollow)}
             onCheckedChange={(checked) => {
               if (checked) addFollow.mutate({ type: 'papers', target: 'daily' })
-              else if (papersFollow) removeFollow.mutate(papersFollow.id)
+              else if (papersFollow) removeFollow.mutate(papersFollow)
             }}
           />
         </label>
@@ -300,18 +317,18 @@ function LocalFollowsFeed(): React.JSX.Element {
               return (
                 <div
                   key={follow.id}
-                  className="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-panel"
+                  className="flex h-6 shrink-0 items-center gap-1.5 rounded-lg border bg-linear-to-b from-btn-from to-btn-to pr-0.5 pl-2"
                 >
-                  <Icon className="size-3.5 shrink-0 text-ink-faint" aria-hidden />
-                  <span className="min-w-0 flex-1 truncate text-[12.5px]">{follow.target}</span>
+                  <Icon className="size-3 shrink-0 text-ink-faint" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate text-[12px]">{follow.target}</span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    className="size-5 text-ink-faint"
                     aria-label={t('common:remove')}
-                    onClick={() => removeFollow.mutate(follow.id)}
+                    onClick={() => removeFollow.mutate(follow)}
                   >
-                    <X className="size-3.5" aria-hidden />
+                    <X className="size-3" aria-hidden />
                   </Button>
                 </div>
               )

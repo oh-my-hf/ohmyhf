@@ -1,0 +1,20 @@
+{
+  "back": "Go back",
+  "focusSearch": "Focus the list search",
+  "forward": "Go forward",
+  "groups": {
+    "global": "Global",
+    "list": "Lists",
+    "navigation": "Navigation",
+    "palette": "Command palette"
+  },
+  "help": "Show this overlay",
+  "listNav": "Move list selection",
+  "palette": "Command palette / global search",
+  "paletteClose": "Close",
+  "paletteNavigate": "Navigate results",
+  "paletteSelect": "Select",
+  "settings": "Open settings",
+  "title": "Keyboard shortcuts",
+  "toggleSidebar": "Collapse or expand the sidebar"
+}

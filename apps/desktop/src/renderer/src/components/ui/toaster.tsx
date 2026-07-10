@@ -1,32 +1,60 @@
+import { useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { create } from 'zustand'
-import { CheckCircle2, CircleAlert, Info } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Info, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type ToastVariant = 'info' | 'success' | 'error'
+
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
+export interface ToastOptions {
+  /** ms; `null` keeps the toast until dismissed. Defaults: error 8s, others 4s. */
+  duration?: number | null
+  action?: ToastAction
+  /** Reuse an id to replace an existing toast (dedupe) and restart its timer. */
+  id?: number
+}
 
 interface Toast {
   id: number
   message: string
   variant: ToastVariant
+  duration: number | null
+  action?: ToastAction
+  /** Bumped on replace so the card remounts and its timer restarts. */
+  nonce: number
 }
 
 interface ToastState {
   toasts: Toast[]
-  push: (message: string, variant?: ToastVariant) => void
+  push: (message: string, variant?: ToastVariant, options?: ToastOptions) => number
   dismiss: (id: number) => void
 }
 
+const MAX_STACK = 4
 let nextId = 1
 
 export const useToasts = create<ToastState>((set) => ({
   toasts: [],
-  push: (message, variant = 'info') => {
-    const id = nextId++
-    set((s) => ({ toasts: [...s.toasts, { id, message, variant }] }))
-    setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 4000)
+  push: (message, variant = 'info', options = {}) => {
+    const id = options.id ?? nextId++
+    const duration =
+      options.duration !== undefined ? options.duration : variant === 'error' ? 8000 : 4000
+    const toast: Toast = { id, message, variant, duration, action: options.action, nonce: nextId++ }
+    set((s) => ({ toasts: [...s.toasts.filter((t) => t.id !== id), toast].slice(-MAX_STACK) }))
+    return id
   },
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
 }))
+
+/** Undo toast: 6s window, action reverses the operation just performed. */
+export function pushUndo(message: string, action: ToastAction): number {
+  return useToasts.getState().push(message, 'info', { duration: 6000, action })
+}
 
 const ICONS = {
   info: Info,
@@ -34,36 +62,88 @@ const ICONS = {
   error: CircleAlert
 } as const
 
+function ToastCard({ toast }: { toast: Toast }): React.JSX.Element {
+  const { t } = useTranslation('common')
+  const dismiss = useToasts((s) => s.dismiss)
+  const Icon = ICONS[toast.variant]
+  // Timer pauses while hovered/focused so errors and undo offers can be read.
+  const remaining = useRef<number | null>(toast.duration)
+  const startedAt = useRef(0)
+  const timer = useRef<number | undefined>(undefined)
+
+  const resume = useCallback((): void => {
+    if (remaining.current === null || timer.current !== undefined) return
+    startedAt.current = Date.now()
+    timer.current = window.setTimeout(() => dismiss(toast.id), remaining.current)
+  }, [dismiss, toast.id])
+
+  const pause = useCallback((): void => {
+    if (remaining.current === null || timer.current === undefined) return
+    window.clearTimeout(timer.current)
+    timer.current = undefined
+    remaining.current = Math.max(1000, remaining.current - (Date.now() - startedAt.current))
+  }, [])
+
+  useEffect(() => {
+    resume()
+    return () => {
+      if (timer.current !== undefined) window.clearTimeout(timer.current)
+    }
+  }, [resume])
+
+  return (
+    <div
+      role="status"
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onFocusCapture={pause}
+      onBlurCapture={resume}
+      className="animate-toast-in pointer-events-auto flex items-start gap-2 rounded-lg border bg-elevated p-3 text-[13px] text-ink shadow-overlay"
+    >
+      <Icon
+        className={cn(
+          'mt-px size-4 shrink-0',
+          toast.variant === 'success' && 'text-success',
+          toast.variant === 'error' && 'text-error',
+          toast.variant === 'info' && 'text-info'
+        )}
+        aria-hidden
+      />
+      <span className="min-w-0 flex-1 break-words">{toast.message}</span>
+      {toast.action ? (
+        <button
+          type="button"
+          onClick={() => {
+            toast.action?.onClick()
+            dismiss(toast.id)
+          }}
+          className="-my-0.5 shrink-0 rounded-md px-2 py-0.5 text-[12px] font-semibold text-link transition-colors duration-150 hover:bg-panel-2"
+        >
+          {toast.action.label}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        aria-label={t('dismiss')}
+        onClick={() => dismiss(toast.id)}
+        className="-m-1 shrink-0 rounded-md p-1 text-ink-faint transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
+      >
+        <X className="size-3.5" aria-hidden />
+      </button>
+    </div>
+  )
+}
+
 export function Toaster(): React.JSX.Element {
   const toasts = useToasts((s) => s.toasts)
-  const dismiss = useToasts((s) => s.dismiss)
   return (
-    <div className="pointer-events-none fixed right-4 bottom-4 z-50 flex w-80 flex-col gap-2">
-      {toasts.map((toast) => {
-        const Icon = ICONS[toast.variant]
-        return (
-          <button
-            key={toast.id}
-            type="button"
-            onClick={() => dismiss(toast.id)}
-            className={cn(
-              'pointer-events-auto flex items-start gap-2 rounded-lg border bg-bg p-3 text-left text-[13px] text-ink shadow-overlay',
-              'animate-toast-in transition-opacity duration-200'
-            )}
-          >
-            <Icon
-              className={cn(
-                'mt-px size-4 shrink-0',
-                toast.variant === 'success' && 'text-success',
-                toast.variant === 'error' && 'text-error',
-                toast.variant === 'info' && 'text-info'
-              )}
-              aria-hidden
-            />
-            <span className="min-w-0 break-words">{toast.message}</span>
-          </button>
-        )
-      })}
+    <div
+      aria-live="polite"
+      className="pointer-events-none fixed right-4 bottom-4 z-50 flex w-80 flex-col gap-2"
+    >
+      {toasts.map((toast) => (
+        <ToastCard key={`${toast.id}:${toast.nonce}`} toast={toast} />
+      ))}
     </div>
   )
 }

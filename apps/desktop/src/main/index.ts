@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { BrowserWindow, app, shell } from 'electron'
+import { BrowserWindow, app, nativeTheme, shell } from 'electron'
 import type { IpcEventChannel, IpcEventPayload } from '@oh-my-huggingface/shared'
 import { AuthManager } from './auth'
 import { CacheManager } from './cache'
@@ -49,13 +49,15 @@ function navigate(route: string): void {
   broadcast('evt:navigate', route)
 }
 
-function createWindow(): BrowserWindow {
+function createWindow(backgroundColor: string): BrowserWindow {
   const win = new BrowserWindow({
     width: 1360,
     height: 860,
     minWidth: 760,
     minHeight: 520,
     show: false,
+    // Matches the renderer's --c-bg per theme so first paint never flashes white.
+    backgroundColor,
     autoHideMenuBar: false,
     ...(process.platform === 'darwin'
       ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 14 } }
@@ -151,7 +153,12 @@ if (!gotLock) {
       broadcast
     })
     rebuildMenu()
-    createWindow()
+    const windowBackground = (): string => {
+      const theme = settings.get().theme
+      const dark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors)
+      return dark ? '#030712' : '#ffffff'
+    }
+    createWindow(windowBackground())
     follows.start()
 
     if (!isDev) {
@@ -165,7 +172,7 @@ if (!gotLock) {
     void auth.init()
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      if (BrowserWindow.getAllWindows().length === 0) createWindow(windowBackground())
     })
 
     app.on('before-quit', () => {

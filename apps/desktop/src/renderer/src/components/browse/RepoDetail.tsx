@@ -5,13 +5,15 @@ import { ArrowDownToLine, ExternalLink, Heart, Star } from 'lucide-react'
 import type { RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { cn, formatCount } from '@/lib/utils'
-import { useDebounced } from '@/hooks/use-debounced'
+import { useSettledValue } from '@/hooks/use-settled-value'
+import { taskHue, taskIcon } from '@/lib/tag-colors'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tag } from '@/components/ui/tag'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useToasts } from '@/components/ui/toaster'
+import { pushUndo, useToasts } from '@/components/ui/toaster'
 import { RepoManagePanel } from '@/components/admin/RepoManagePanel'
 import { SpaceOpsPanel } from '@/components/admin/SpaceOpsPanel'
 import { DatasetPreview } from '@/components/browse/DatasetPreview'
@@ -48,25 +50,19 @@ export function RepoDetail({
   const push = useToasts((s) => s.push)
 
   // Burst control for j/k navigation: the header renders from the immediate
-  // repoId, but network requests wait until the selection has rested ~250ms.
-  // The parent keys this component by repoId (fresh mount per row), which
-  // resets useDebounced — the `settled` timer covers that path.
-  const debouncedRepoId = useDebounced(repoId, 250)
-  const [settled, setSettled] = useState(false)
-  useEffect(() => {
-    const timer = setTimeout(() => setSettled(true), 250)
-    return () => clearTimeout(timer)
-  }, [])
-  const queriesEnabled = settled && debouncedRepoId === repoId
+  // repoId; a deliberate click fetches instantly while rapid bursts collapse
+  // into a single fetch once the selection rests.
+  const settledRepoId = useSettledValue(repoId, 200)
+  const queriesEnabled = settledRepoId === repoId
 
   const detail = useQuery({
-    queryKey: ['repo', kind, debouncedRepoId],
-    queryFn: () => invoke('hub:repoDetail', { kind, repoId: debouncedRepoId }),
+    queryKey: ['repo', kind, settledRepoId],
+    queryFn: () => invoke('hub:repoDetail', { kind, repoId: settledRepoId }),
     enabled: queriesEnabled
   })
   const readme = useQuery({
-    queryKey: ['readme', kind, debouncedRepoId],
-    queryFn: () => invoke('hub:readme', { kind, repoId: debouncedRepoId }),
+    queryKey: ['readme', kind, settledRepoId],
+    queryFn: () => invoke('hub:readme', { kind, repoId: settledRepoId }),
     enabled: queriesEnabled
   })
   const favorites = useQuery({
@@ -75,14 +71,17 @@ export function RepoDetail({
   })
   // The playground tab only exists when some inference provider actually serves the model.
   const inferenceAvailable = useQuery({
-    queryKey: ['inference-available', debouncedRepoId],
-    queryFn: () => invoke('hub:inferenceAvailable', { repoId: debouncedRepoId }),
+    queryKey: ['inference-available', settledRepoId],
+    queryFn: () => invoke('hub:inferenceAvailable', { repoId: settledRepoId }),
     enabled: kind === 'model' && queriesEnabled,
     staleTime: 10 * 60_000
   })
 
-  // Never show (or act on) data that belongs to a lagging debounced id.
-  const detailData = debouncedRepoId === repoId ? detail.data : undefined
+  // Never show (or act on) data that belongs to a lagging settled id.
+  const detailData = settledRepoId === repoId ? detail.data : undefined
+  const detailError = settledRepoId === repoId && detail.isError
+  const readmeData = settledRepoId === repoId ? readme.data : undefined
+  const readmeError = settledRepoId === repoId && readme.isError
 
   // Record browse history once the summary is known.
   useEffect(() => {
@@ -96,11 +95,28 @@ export function RepoDetail({
 
   const toggleFavorite = useMutation({
     mutationFn: async () => {
-      if (isFavorite) return invoke('favorites:remove', { kind, repoId })
+      if (isFavorite) {
+        const removed = favorites.data?.find((f) => f.repoId === repoId && f.kind === kind)
+        const list = await invoke('favorites:remove', { kind, repoId })
+        return { list, removed: removed?.summary }
+      }
       if (!detailData) throw new Error('not loaded')
-      return invoke('favorites:add', { summary: { ...detailData } })
+      const list = await invoke('favorites:add', { summary: { ...detailData } })
+      return { list, removed: undefined }
     },
-    onSuccess: (list) => queryClient.setQueryData(['favorites'], list)
+    onSuccess: ({ list, removed }) => {
+      queryClient.setQueryData(['favorites'], list)
+      if (removed) {
+        pushUndo(t('detail:favoriteRemoved'), {
+          label: t('common:undo'),
+          onClick: () => {
+            void invoke('favorites:add', { summary: removed }).then((restored) =>
+              queryClient.setQueryData(['favorites'], restored)
+            )
+          }
+        })
+      }
+    }
   })
 
   const download = useMutation({
@@ -124,14 +140,28 @@ export function RepoDetail({
     owner !== null &&
     (owner === auth.user.name || auth.user.orgs.some((o) => o.name === owner))
 
+  // Controlled tabs: the component persists across repo selection (parent keys
+  // by kind only), so the active tab resets per repo and clamps to 'card' when
+  // its value is no longer rendered (e.g. 'manage' on a repo you don't own).
+  const tabKey = `${kind}:${repoId}`
+  const [tabState, setTabState] = useState({ key: tabKey, value: 'card' })
+  if (tabState.key !== tabKey) setTabState({ key: tabKey, value: 'card' })
+  const tabRendered: Record<string, boolean> = {
+    run: kind === 'space',
+    preview: kind === 'dataset',
+    playground: showPlayground,
+    manage: isOwner
+  }
+  const tab = (tabRendered[tabState.value] ?? true) ? tabState.value : 'card'
+
   return (
     <div className="flex h-full min-w-0 flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[15px] font-semibold" title={repoId}>
+          <h1 className="truncate font-mono text-smd font-semibold text-ink-strong" title={repoId}>
             {owner !== null ? (
               <>
-                <UserLink username={owner} className="hover:text-primary">
+                <UserLink username={owner} className="hover:text-hover-title">
                   {owner}
                 </UserLink>
                 {repoId.slice(slash)}
@@ -140,12 +170,24 @@ export function RepoDetail({
               repoId
             )}
           </h1>
-          <div className="mt-0.5 flex items-center gap-2 text-[12px] text-ink-faint">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-faint">
+            {detailData?.pipelineTag && (
+              <Tag hue={taskHue(detailData.pipelineTag)} icon={taskIcon(detailData.pipelineTag)}>
+                {detailData.pipelineTag}
+              </Tag>
+            )}
+            {detailData?.gated ? <Badge variant="warning">{t('common:gated')}</Badge> : null}
+            {detailData?.private && <Badge variant="warning">{t('common:private')}</Badge>}
             {/* Signed in, the interactive LikeButton in the actions row shows the count. */}
             {auth.status !== 'signedIn' && (
               <span className="flex items-center gap-1">
                 <Heart className="size-3" aria-hidden />
                 {detailData ? formatCount(detailData.likes, locale) : '–'}
+              </span>
+            )}
+            {auth.status !== 'signedIn' && kind !== 'space' && (
+              <span className="text-decor" aria-hidden>
+                ·
               </span>
             )}
             {kind !== 'space' && (
@@ -154,8 +196,6 @@ export function RepoDetail({
                 {detailData ? formatCount(detailData.downloads, locale) : '–'}
               </span>
             )}
-            {detailData?.gated ? <Badge variant="warning">{t('common:gated')}</Badge> : null}
-            {detailData?.private && <Badge variant="warning">{t('common:private')}</Badge>}
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -196,7 +236,7 @@ export function RepoDetail({
             <TooltipContent>{t('common:openOnHub')}</TooltipContent>
           </Tooltip>
           <Button
-            variant="primary"
+            variant="cta"
             size="md"
             loading={download.isPending}
             onClick={() => download.mutate()}
@@ -207,7 +247,11 @@ export function RepoDetail({
         </div>
       </header>
 
-      <Tabs defaultValue="card" className="flex min-h-0 flex-1 flex-col">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTabState({ key: tabKey, value })}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <TabsList className="px-3">
           <TabsTrigger value="card">{t('detail:tabs.card')}</TabsTrigger>
           {kind === 'space' && <TabsTrigger value="run">{t('detail:tabs.run')}</TabsTrigger>}
@@ -223,7 +267,20 @@ export function RepoDetail({
           {isOwner && <TabsTrigger value="manage">{t('detail:tabs.manage')}</TabsTrigger>}
         </TabsList>
         <TabsContent value="card" className="min-h-0 flex-1 overflow-y-auto p-4">
-          {readme.isPending && (
+          {readmeError ? (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-[13px] text-ink-muted">{t('common:error.generic')}</p>
+              <Button variant="secondary" size="sm" onClick={() => void readme.refetch()}>
+                {t('common:retry')}
+              </Button>
+            </div>
+          ) : readmeData !== undefined ? (
+            readmeData.trim() === '' ? (
+              <p className="text-[13px] text-ink-muted">{t('detail:card.empty')}</p>
+            ) : (
+              <MarkdownView markdown={readmeData} kind={kind} repoId={repoId} />
+            )
+          ) : (
             <div className="flex max-w-[72ch] flex-col gap-3">
               <Skeleton className="h-6 w-1/2" />
               <Skeleton className="h-4 w-full" />
@@ -231,12 +288,6 @@ export function RepoDetail({
               <Skeleton className="h-32 w-full" />
             </div>
           )}
-          {readme.data !== undefined &&
-            (readme.data.trim() === '' ? (
-              <p className="text-[13px] text-ink-muted">{t('detail:card.empty')}</p>
-            ) : (
-              <MarkdownView markdown={readme.data} kind={kind} repoId={repoId} />
-            ))}
         </TabsContent>
         {kind === 'space' && (
           <TabsContent value="run" className="min-h-0 flex-1">
@@ -252,7 +303,24 @@ export function RepoDetail({
           <FileTreeView kind={kind} repoId={repoId} />
         </TabsContent>
         <TabsContent value="info" className="min-h-0 flex-1 overflow-y-auto">
-          {detailData && <InfoPanel detail={detailData} />}
+          {detailError ? (
+            <div className="flex flex-col items-start gap-2 p-4">
+              <p className="text-[13px] text-ink-muted">{t('common:error.generic')}</p>
+              <Button variant="secondary" size="sm" onClick={() => void detail.refetch()}>
+                {t('common:retry')}
+              </Button>
+            </div>
+          ) : detailData ? (
+            <InfoPanel detail={detailData} />
+          ) : (
+            <div className="flex flex-col gap-3 p-4">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-64" />
+              <Skeleton className="h-4 w-56" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-52" />
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="discussions" className="min-h-0 flex-1">
           <DiscussionsPanel kind={kind} repoId={repoId} />

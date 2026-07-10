@@ -163,10 +163,10 @@ export function HomePage(): React.JSX.Element {
     <div className="animate-fade-rise flex h-full min-w-0">
       <section className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-6 py-5">
-          <h1 className="text-[15px] font-semibold">{t('home:title')}</h1>
+          <h1 className="text-smd font-semibold text-ink-strong">{t('home:title')}</h1>
 
           {showEmptyFollowing ? (
-            <div className="rounded-lg border bg-panel">
+            <div className="rounded-lg border border-border-card bg-card-gradient">
               <EmptyState
                 icon={UserPlus}
                 title={t('home:feed.emptyFollowing')}
@@ -183,7 +183,10 @@ export function HomePage(): React.JSX.Element {
 
           {showSkeleton ? (
             Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="flex flex-col gap-3 rounded-lg border bg-panel p-4">
+              <div
+                key={i}
+                className="flex flex-col gap-3 rounded-lg border border-border-card bg-card-gradient p-4"
+              >
                 <div className="flex items-center gap-2.5">
                   <Skeleton className="size-8 rounded-full" />
                   <div className="flex flex-col gap-1.5">

@@ -92,11 +92,13 @@ export function CachePage(): React.JSX.Element {
       <div className="mx-auto flex max-w-3xl flex-col gap-3 p-5">
         <header className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h1 className="text-[15px] font-semibold">{t('cache:title')}</h1>
+            <h1 className="text-smd nums font-semibold text-ink-strong">{t('cache:title')}</h1>
             {report.data && (
-              <p className="nums text-[12.5px] text-ink-muted">
+              <p className="nums flex items-center gap-1.5 text-[12.5px] text-ink-muted">
                 {t('cache:totalOnDisk', { size: formatBytes(report.data.totalSize) })}
-                {' · '}
+                <span className="text-decor" aria-hidden>
+                  ·
+                </span>
                 {t('cache:reposCount', { count: report.data.repos.length })}
               </p>
             )}
@@ -138,7 +140,12 @@ export function CachePage(): React.JSX.Element {
           const Icon = KIND_ICON[repo.kind]
           return (
             <div key={repo.path} className="rounded-lg border">
-              <div className="flex items-center gap-2 px-3 py-2.5">
+              <div
+                className={cn(
+                  'flex items-center gap-2 rounded-t-lg px-3 py-2.5 transition-colors duration-150 hover:bg-panel',
+                  !isOpen && 'rounded-b-lg'
+                )}
+              >
                 <button
                   type="button"
                   onClick={() => toggle(repo.path)}
@@ -147,7 +154,7 @@ export function CachePage(): React.JSX.Element {
                 >
                   <ChevronRight
                     className={cn(
-                      'size-4 shrink-0 text-ink-faint transition-transform duration-150',
+                      'size-4 shrink-0 text-decor transition-transform duration-150',
                       isOpen && 'rotate-90'
                     )}
                     aria-hidden
@@ -155,12 +162,14 @@ export function CachePage(): React.JSX.Element {
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-panel">
                     <Icon className="size-3.5 text-ink-muted" aria-hidden />
                   </span>
-                  <span className="min-w-0 truncate text-[13px] font-medium">{repo.id}</span>
+                  <span className="min-w-0 truncate font-mono text-[13px] font-medium tracking-tight text-ink-strong">
+                    {repo.id}
+                  </span>
                   <Badge variant="outline" className="nums">
                     {t('cache:revisions', { count: repo.revisions.length })}
                   </Badge>
                 </button>
-                <span className="nums min-w-16 text-right font-mono text-[12px] text-ink-muted">
+                <span className="nums min-w-16 text-right font-mono text-[12px] text-ink-faint">
                   {formatBytes(repo.sizeOnDisk)}
                 </span>
                 {stale && (
@@ -181,7 +190,7 @@ export function CachePage(): React.JSX.Element {
               {isOpen && (
                 <div className="border-t px-3 py-1.5">
                   {/* 1px inset guide aligned under the chevron column — a tree rail, not an accent. */}
-                  <div className="ml-2 border-l pl-3.5">
+                  <div className="ml-2 border-l border-border-card pl-3.5">
                     {repo.revisions.map((rev) => (
                       <div key={rev.commitHash} className="flex h-9 items-center gap-2.5">
                         <span className="nums w-24 shrink-0 font-mono text-[12px] text-ink-muted">
@@ -189,7 +198,11 @@ export function CachePage(): React.JSX.Element {
                         </span>
                         {rev.refs.length > 0 ? (
                           rev.refs.map((ref) => (
-                            <Badge key={ref} variant="primary">
+                            <Badge
+                              key={ref}
+                              variant="outline"
+                              className="border-select/25 bg-select/10 text-select"
+                            >
                               {ref}
                             </Badge>
                           ))
@@ -202,7 +215,7 @@ export function CachePage(): React.JSX.Element {
                         <span className="nums text-[11.5px] text-ink-faint">
                           {formatRelativeTime(rev.lastModified, locale)}
                         </span>
-                        <span className="nums ml-auto font-mono text-[12px] text-ink-muted">
+                        <span className="nums ml-auto font-mono text-[12px] text-ink-faint">
                           {formatBytes(rev.sizeOnDisk)}
                         </span>
                         <Button

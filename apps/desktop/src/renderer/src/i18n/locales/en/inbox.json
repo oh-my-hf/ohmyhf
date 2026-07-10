@@ -18,6 +18,7 @@
     "importFromHub": "Import from Hugging Face",
     "papers": "Daily Papers digest",
     "placeholder": "username, org, or model:org/name",
+    "removed": "Unfollowed {{target}}",
     "title": "Following",
     "type": {
       "org": "Organization",

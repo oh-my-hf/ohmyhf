@@ -11,20 +11,27 @@ import {
   FileText,
   Filter,
   HardDrive,
+  Heart,
   Inbox,
+  Keyboard,
   LayoutGrid,
+  Loader2,
   Moon,
   Search,
   Settings,
   Star,
   Sun,
   SunMoon,
-  UploadCloud
+  UploadCloud,
+  User
 } from 'lucide-react'
-import type { RepoKind, RepoSort } from '@oh-my-huggingface/shared'
+import type { RepoKind, RepoSort, RepoSummary } from '@oh-my-huggingface/shared'
 import { LIBRARIES, LICENSES, PARAM_BUCKETS, TASKS } from '@/lib/catalog'
 import type { ParamBucket } from '@/lib/utils'
-import { useAppStore } from '@/stores/app'
+import { formatCount } from '@/lib/utils'
+import { Kbd } from '@/components/ui/kbd'
+import { useGlobalSearch } from '@/hooks/use-global-search'
+import { resolveLocale, useAppStore } from '@/stores/app'
 
 type Page = 'root' | 'task' | 'library' | 'license' | 'params' | 'sort'
 
@@ -33,14 +40,6 @@ const KEY_UP = '↑'
 const KEY_DOWN = '↓'
 const KEY_ENTER = '↵'
 const KEY_ESC = 'Esc'
-
-function Kbd({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return (
-    <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded-[4px] border bg-panel px-1 text-[10px] leading-none text-ink-muted">
-      {children}
-    </kbd>
-  )
-}
 
 const KIND_BY_PATH: Record<string, RepoKind> = {
   '/models': 'model',
@@ -54,6 +53,55 @@ const KIND_PATH: Record<RepoKind, string> = {
   space: '/spaces'
 }
 
+const KIND_ICON: Record<RepoKind, React.ComponentType<{ className?: string }>> = {
+  model: Boxes,
+  dataset: Database,
+  space: LayoutGrid
+}
+
+const KIND_LABEL_KEY: Record<RepoKind, string> = {
+  model: 'nav:models',
+  dataset: 'nav:datasets',
+  space: 'nav:spaces'
+}
+
+const ALL_KINDS: RepoKind[] = ['model', 'dataset', 'space']
+
+/** Result-group order: key into useGlobalSearch's buckets + the repo kind. */
+const SEARCH_GROUPS = [
+  ['models', 'model'],
+  ['datasets', 'dataset'],
+  ['spaces', 'space']
+] as const satisfies ReadonlyArray<readonly [string, RepoKind]>
+
+function RepoResultItem({
+  repo,
+  locale,
+  onSelect
+}: {
+  repo: RepoSummary
+  locale: string
+  onSelect: () => void
+}): React.JSX.Element {
+  const Icon = KIND_ICON[repo.kind]
+  return (
+    <Command.Item value={`${repo.kind}:${repo.id}`} onSelect={onSelect}>
+      <Icon className="size-4 shrink-0 text-ink-faint" aria-hidden />
+      <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{repo.id}</span>
+      <span className="nums flex shrink-0 items-center gap-2 text-[11px] text-ink-faint">
+        <span className="flex items-center gap-0.5">
+          <Heart className="size-3" aria-hidden />
+          {formatCount(repo.likes, locale)}
+        </span>
+        <span className="flex items-center gap-0.5">
+          <ArrowDownToLine className="size-3" aria-hidden />
+          {formatCount(repo.downloads, locale)}
+        </span>
+      </span>
+    </Command.Item>
+  )
+}
+
 export function CommandPalette(): React.JSX.Element {
   const { t } = useTranslation(['nav', 'browse', 'common'])
   const open = useAppStore((s) => s.paletteOpen)
@@ -61,6 +109,11 @@ export function CommandPalette(): React.JSX.Element {
   const setFilters = useAppStore((s) => s.setFilters)
   const resetFilters = useAppStore((s) => s.resetFilters)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const openSettings = useAppStore((s) => s.openSettings)
+  const setShortcutsOpen = useAppStore((s) => s.setShortcutsOpen)
+  const settings = useAppStore((s) => s.settings)
+  const appInfo = useAppStore((s) => s.appInfo)
+  const locale = resolveLocale(settings, appInfo)
   const navigate = useNavigate()
   const location = useLocation()
   const [page, setPage] = useState<Page>('root')
@@ -69,6 +122,12 @@ export function CommandPalette(): React.JSX.Element {
   const browseKind: RepoKind =
     Object.entries(KIND_BY_PATH).find(([path]) => location.pathname.startsWith(path))?.[1] ??
     'model'
+
+  const query = value.trim()
+  const needle = query.toLowerCase()
+  const matches = (label: string): boolean => needle === '' || label.toLowerCase().includes(needle)
+
+  const search = useGlobalSearch(page === 'root' ? value : '')
 
   const onOpenChange = useCallback(
     (next: boolean): void => {
@@ -89,10 +148,10 @@ export function CommandPalette(): React.JSX.Element {
     [setOpen]
   )
 
-  const applyFilter = (patch: Parameters<typeof setFilters>[1]): void =>
+  const applyFilter = (kind: RepoKind, patch: Parameters<typeof setFilters>[1]): void =>
     closeAnd(() => {
-      setFilters(browseKind, patch)
-      navigate(KIND_PATH[browseKind])
+      setFilters(kind, patch)
+      navigate(KIND_PATH[kind])
     })
 
   const navItems = [
@@ -105,19 +164,54 @@ export function CommandPalette(): React.JSX.Element {
     { to: '/cache', label: t('nav:cache'), icon: HardDrive },
     { to: '/inbox', label: t('nav:inbox'), icon: Inbox },
     { to: '/compare', label: t('nav:compare'), icon: Columns3 },
-    { to: '/upload', label: t('nav:upload'), icon: UploadCloud },
-    { to: '/settings', label: t('nav:settings'), icon: Settings }
+    { to: '/upload', label: t('nav:upload'), icon: UploadCloud }
   ]
 
+  const filterPages: Array<{ page: Page; label: string; icon: typeof Filter }> = [
+    { page: 'task', label: t('browse:filter.task'), icon: Filter },
+    { page: 'library', label: t('browse:filter.library'), icon: Filter },
+    { page: 'license', label: t('browse:filter.license'), icon: Filter },
+    { page: 'params', label: t('browse:filter.params'), icon: Filter },
+    { page: 'sort', label: t('browse:sort.label'), icon: ArrowUpDown }
+  ]
+
+  const themeItems = [
+    { theme: 'light', label: t('common:theme.light'), icon: Sun },
+    { theme: 'dark', label: t('common:theme.dark'), icon: Moon },
+    { theme: 'system', label: t('common:theme.system'), icon: SunMoon }
+  ] as const
+
   const sorts: RepoSort[] = ['trending', 'downloads', 'likes', 'updated', 'created']
+
+  const visibleNav = navItems.filter((item) => matches(item.label))
+  const visibleFilterPages = filterPages.filter((item) => matches(item.label))
+  const visibleThemes = themeItems.filter((item) => matches(item.label))
+  const showSettings = matches(t('nav:settings'))
+  const showClear = matches(t('browse:filter.clear'))
+  const showShortcuts = matches(t('nav:shortcuts'))
+  const staticCount =
+    visibleNav.length +
+    visibleFilterPages.length +
+    visibleThemes.length +
+    (showSettings ? 1 : 0) +
+    (showClear ? 1 : 0) +
+    (showShortcuts ? 1 : 0)
+
+  const asyncCount =
+    search.models.length + search.datasets.length + search.spaces.length + search.users.length
+  // Root: only surface Empty once every hub query settled with nothing and no static row matched.
+  const showEmpty =
+    page !== 'root' || needle === '' || (!search.isLoading && asyncCount === 0 && staticCount === 0)
+
+  const searchKinds: RepoKind[] = [browseKind, ...ALL_KINDS.filter((k) => k !== browseKind)]
 
   return (
     <Command.Dialog
       open={open}
       onOpenChange={onOpenChange}
       label={t('nav:commandPalette')}
-      shouldFilter={page === 'root' ? true : true}
-      className="animate-fade-rise fixed top-[18%] left-1/2 z-50 w-[36rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-xl border bg-bg shadow-overlay"
+      shouldFilter={false}
+      className="animate-fade-rise fixed top-[18%] left-1/2 z-50 w-[36rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-lg border bg-elevated shadow-overlay"
       overlayClassName="animate-fade fixed inset-0 z-40 bg-black/30"
     >
       <div className="flex items-center gap-2 border-b px-3">
@@ -125,118 +219,174 @@ export function CommandPalette(): React.JSX.Element {
         <Command.Input
           value={value}
           onValueChange={setValue}
-          placeholder={t('nav:search')}
+          placeholder={page === 'root' ? t('nav:globalSearch') : t('nav:search')}
           className="h-11 w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint"
         />
       </div>
-      <Command.List className="max-h-80 overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-ink-faint [&_[cmdk-group-heading]]:uppercase [&_[cmdk-item]]:flex [&_[cmdk-item]]:cursor-default [&_[cmdk-item]]:items-center [&_[cmdk-item]]:gap-2.5 [&_[cmdk-item]]:rounded-md [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]]:text-[13px] [&_[cmdk-item][data-selected=true]]:bg-primary/10 [&_[cmdk-item][data-selected=true]]:text-primary [&_[cmdk-item][data-selected=true]_svg]:text-primary">
-        <Command.Empty className="px-3 py-6 text-center text-[13px] text-ink-muted">
-          {t('browse:empty.title')}
-        </Command.Empty>
+      <Command.List className="max-h-80 overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-ink-faint [&_[cmdk-group-heading]]:uppercase [&_[cmdk-item]]:flex [&_[cmdk-item]]:cursor-default [&_[cmdk-item]]:items-center [&_[cmdk-item]]:gap-2.5 [&_[cmdk-item]]:rounded-md [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]]:text-[13px] [&_[cmdk-item][data-selected=true]]:bg-panel-2 [&_[cmdk-item][data-selected=true]]:text-ink-strong [&_[cmdk-item][data-selected=true]_svg]:text-ink">
+        {showEmpty && (
+          <Command.Empty className="px-3 py-6 text-center text-[13px] text-ink-muted">
+            {t('browse:empty.title')}
+          </Command.Empty>
+        )}
 
         {page === 'root' && (
           <>
-            {value.trim() !== '' && (
-              <Command.Item
-                value={`search ${value}`}
-                onSelect={() => applyFilter({ search: value.trim() })}
-              >
-                <Search className="size-4 text-ink-faint" aria-hidden />
-                <span>
-                  {t(`browse:searchPlaceholder.${browseKind}`)} {'“'}
-                  {value.trim()}
-                  {'”'}
-                </span>
-              </Command.Item>
-            )}
-            <Command.Group heading={t('nav:browse')}>
-              {navItems.map((item) => (
-                <Command.Item key={item.to} onSelect={() => closeAnd(() => navigate(item.to))}>
-                  <item.icon className="size-4 text-ink-faint" aria-hidden />
-                  {item.label}
+            {needle !== '' &&
+              (search.isLoading ? (
+                <Command.Loading>
+                  <div className="flex items-center gap-2.5 px-2 py-2 text-[13px] text-ink-muted">
+                    <Loader2 className="size-4 shrink-0 animate-spin text-ink-faint" aria-hidden />
+                    {t('nav:searching')}
+                  </div>
+                </Command.Loading>
+              ) : (
+                <>
+                  {SEARCH_GROUPS.map(([group, kind]) =>
+                    search[group].length > 0 ? (
+                      <Command.Group key={group} heading={t(KIND_LABEL_KEY[kind])}>
+                        {search[group].map((repo) => (
+                          <RepoResultItem
+                            key={repo.id}
+                            repo={repo}
+                            locale={locale}
+                            onSelect={() =>
+                              closeAnd(() => navigate(`${KIND_PATH[repo.kind]}/${repo.id}`))
+                            }
+                          />
+                        ))}
+                      </Command.Group>
+                    ) : null
+                  )}
+                  {search.users.length > 0 && (
+                    <Command.Group heading={t('nav:users')}>
+                      {search.users.map((user) => (
+                        <Command.Item
+                          key={user.name}
+                          value={`user:${user.name}`}
+                          onSelect={() => closeAnd(() => navigate(`/users/${user.name}`))}
+                        >
+                          <User className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">
+                            {user.name}
+                          </span>
+                          {user.fullname ? (
+                            <span className="max-w-40 shrink-0 truncate text-[11px] text-ink-faint">
+                              {user.fullname}
+                            </span>
+                          ) : null}
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+                  )}
+                </>
+              ))}
+            {needle !== '' &&
+              searchKinds.map((kind) => (
+                <Command.Item
+                  key={`searchIn:${kind}`}
+                  value={`searchIn:${kind}:${query}`}
+                  onSelect={() => applyFilter(kind, { search: query })}
+                >
+                  <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                  <span className="truncate">
+                    {t('nav:searchIn', { kind: t(KIND_LABEL_KEY[kind]), query })}
+                  </span>
                 </Command.Item>
               ))}
-            </Command.Group>
-            <Command.Group heading={t('browse:filter.task')}>
-              <Command.Item onSelect={() => setPage('task')}>
-                <Filter className="size-4 text-ink-faint" aria-hidden />
-                {t('browse:filter.task')}…
+
+            {(visibleNav.length > 0 || showSettings) && (
+              <Command.Group heading={t('nav:browse')}>
+                {visibleNav.map((item) => (
+                  <Command.Item key={item.to} onSelect={() => closeAnd(() => navigate(item.to))}>
+                    <item.icon className="size-4 text-ink-faint" aria-hidden />
+                    {item.label}
+                  </Command.Item>
+                ))}
+                {showSettings && (
+                  <Command.Item onSelect={() => closeAnd(() => openSettings())}>
+                    <Settings className="size-4 text-ink-faint" aria-hidden />
+                    {t('nav:settings')}
+                  </Command.Item>
+                )}
+              </Command.Group>
+            )}
+            {(visibleFilterPages.length > 0 || showClear) && (
+              <Command.Group heading={t('browse:filter.task')}>
+                {visibleFilterPages.map((item) => (
+                  <Command.Item key={item.page} onSelect={() => setPage(item.page)}>
+                    <item.icon className="size-4 text-ink-faint" aria-hidden />
+                    {item.label}…
+                  </Command.Item>
+                ))}
+                {showClear && (
+                  <Command.Item onSelect={() => closeAnd(() => resetFilters(browseKind))}>
+                    <Filter className="size-4 text-ink-faint" aria-hidden />
+                    {t('browse:filter.clear')}
+                  </Command.Item>
+                )}
+              </Command.Group>
+            )}
+            {visibleThemes.length > 0 && (
+              <Command.Group heading={t('common:theme.label')}>
+                {visibleThemes.map((item) => (
+                  <Command.Item
+                    key={item.theme}
+                    onSelect={() => closeAnd(() => void updateSettings({ theme: item.theme }))}
+                  >
+                    <item.icon className="size-4 text-ink-faint" aria-hidden />
+                    {item.label}
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+            {showShortcuts && (
+              <Command.Item onSelect={() => closeAnd(() => setShortcutsOpen(true))}>
+                <Keyboard className="size-4 text-ink-faint" aria-hidden />
+                {t('nav:shortcuts')}
               </Command.Item>
-              <Command.Item onSelect={() => setPage('library')}>
-                <Filter className="size-4 text-ink-faint" aria-hidden />
-                {t('browse:filter.library')}…
-              </Command.Item>
-              <Command.Item onSelect={() => setPage('license')}>
-                <Filter className="size-4 text-ink-faint" aria-hidden />
-                {t('browse:filter.license')}…
-              </Command.Item>
-              <Command.Item onSelect={() => setPage('params')}>
-                <Filter className="size-4 text-ink-faint" aria-hidden />
-                {t('browse:filter.params')}…
-              </Command.Item>
-              <Command.Item onSelect={() => setPage('sort')}>
-                <ArrowUpDown className="size-4 text-ink-faint" aria-hidden />
-                {t('browse:sort.label')}…
-              </Command.Item>
-              <Command.Item onSelect={() => closeAnd(() => resetFilters(browseKind))}>
-                <Filter className="size-4 text-ink-faint" aria-hidden />
-                {t('browse:filter.clear')}
-              </Command.Item>
-            </Command.Group>
-            <Command.Group heading={t('common:theme.label')}>
-              <Command.Item
-                onSelect={() => closeAnd(() => void updateSettings({ theme: 'light' }))}
-              >
-                <Sun className="size-4 text-ink-faint" aria-hidden />
-                {t('common:theme.light')}
-              </Command.Item>
-              <Command.Item onSelect={() => closeAnd(() => void updateSettings({ theme: 'dark' }))}>
-                <Moon className="size-4 text-ink-faint" aria-hidden />
-                {t('common:theme.dark')}
-              </Command.Item>
-              <Command.Item
-                onSelect={() => closeAnd(() => void updateSettings({ theme: 'system' }))}
-              >
-                <SunMoon className="size-4 text-ink-faint" aria-hidden />
-                {t('common:theme.system')}
-              </Command.Item>
-            </Command.Group>
+            )}
           </>
         )}
 
         {page === 'task' &&
-          TASKS.map((task) => (
-            <Command.Item key={task} onSelect={() => applyFilter({ pipelineTag: task })}>
+          TASKS.filter((task) => matches(task)).map((task) => (
+            <Command.Item
+              key={task}
+              onSelect={() => applyFilter(browseKind, { pipelineTag: task })}
+            >
               {task}
             </Command.Item>
           ))}
         {page === 'library' &&
-          LIBRARIES.map((lib) => (
-            <Command.Item key={lib} onSelect={() => applyFilter({ library: lib })}>
+          LIBRARIES.filter((lib) => matches(lib)).map((lib) => (
+            <Command.Item key={lib} onSelect={() => applyFilter(browseKind, { library: lib })}>
               {lib}
             </Command.Item>
           ))}
         {page === 'license' &&
-          LICENSES.map((license) => (
-            <Command.Item key={license} onSelect={() => applyFilter({ license })}>
+          LICENSES.filter((license) => matches(license)).map((license) => (
+            <Command.Item key={license} onSelect={() => applyFilter(browseKind, { license })}>
               {license}
             </Command.Item>
           ))}
         {page === 'params' &&
-          PARAM_BUCKETS.map((bucket) => (
+          PARAM_BUCKETS.filter((bucket) => matches(t(`browse:params.${bucket}`))).map((bucket) => (
             <Command.Item
               key={bucket}
-              onSelect={() => applyFilter({ paramBucket: bucket as ParamBucket })}
+              onSelect={() => applyFilter(browseKind, { paramBucket: bucket as ParamBucket })}
             >
               {t(`browse:params.${bucket}`)}
             </Command.Item>
           ))}
         {page === 'sort' &&
-          sorts.map((sort) => (
-            <Command.Item key={sort} onSelect={() => applyFilter({ sort })}>
-              {t(`browse:sort.${sort}`)}
-            </Command.Item>
-          ))}
+          sorts
+            .filter((sort) => matches(t(`browse:sort.${sort}`)))
+            .map((sort) => (
+              <Command.Item key={sort} onSelect={() => applyFilter(browseKind, { sort })}>
+                {t(`browse:sort.${sort}`)}
+              </Command.Item>
+            ))}
       </Command.List>
 
       <div className="flex items-center gap-4 border-t bg-panel/50 px-3 py-2 text-[11px] text-ink-faint">
@@ -252,6 +402,10 @@ export function CommandPalette(): React.JSX.Element {
         <span className="flex items-center gap-1.5">
           <Kbd>{KEY_ESC}</Kbd>
           {t('nav:palette.close', 'Close')}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd>?</Kbd>
+          {t('nav:shortcuts')}
         </span>
       </div>
     </Command.Dialog>

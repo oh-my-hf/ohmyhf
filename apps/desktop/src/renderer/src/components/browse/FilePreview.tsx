@@ -13,6 +13,7 @@ import { codeLanguageOf, fileKindOf, hubBlobUrl, resolveUrl } from '@/lib/file-k
 import { formatBytes, formatParams } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToasts } from '@/components/ui/toaster'
@@ -68,16 +69,18 @@ function NoPreview({
 }): React.JSX.Element {
   const { t } = useTranslation('detail')
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-      <FileQuestion className="size-8 text-ink-faint" aria-hidden />
-      <div>
-        <p className="text-[13.5px] font-medium">{t('preview.noPreviewTitle')}</p>
-        <p className="mt-1 max-w-80 text-[12.5px] text-ink-muted">{t('preview.noPreviewBody')}</p>
-      </div>
-      <Button variant="secondary" size="sm" loading={downloading} onClick={onDownload}>
-        <ArrowDownToLine className="size-3.5" aria-hidden />
-        {t('files.download')}
-      </Button>
+    <div className="flex h-full items-center justify-center">
+      <EmptyState
+        icon={FileQuestion}
+        title={t('preview.noPreviewTitle')}
+        body={t('preview.noPreviewBody')}
+        action={
+          <Button variant="secondary" size="sm" loading={downloading} onClick={onDownload}>
+            <ArrowDownToLine className="size-3.5" aria-hidden />
+            {t('files.download')}
+          </Button>
+        }
+      />
     </div>
   )
 }
@@ -131,7 +134,7 @@ function TextPreview({
         </div>
       ) : (
         <div className="p-3">
-          <div className="overflow-hidden rounded-lg border bg-panel [&_pre]:overflow-x-auto [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-[12px] [&_pre]:leading-relaxed [&_.shiki]:bg-transparent!">
+          <div className="overflow-hidden rounded-lg border border-border-card bg-panel [&_pre]:overflow-x-auto [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-[12px] [&_pre]:leading-relaxed [&_.shiki]:bg-transparent!">
             {/* Keyed by path so switching files never shows the previous file's highlight. */}
             <CodeBlock key={path} code={text.data.content} language={codeLanguageOf(path)} />
           </div>
@@ -183,7 +186,7 @@ function SafetensorsPreview({
           <div className="text-[10.5px] font-medium tracking-wide text-ink-faint uppercase">
             {t('preview.totalParams')}
           </div>
-          <div className="font-mono text-[15px] font-semibold">
+          <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {formatParams(header.data.totalParams)}
           </div>
         </div>
@@ -191,7 +194,9 @@ function SafetensorsPreview({
           <div className="text-[10.5px] font-medium tracking-wide text-ink-faint uppercase">
             {t('preview.tensors')}
           </div>
-          <div className="font-mono text-[15px] font-semibold">{header.data.tensors.length}</div>
+          <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
+            {header.data.tensors.length}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {[...dtypes.entries()]
@@ -290,7 +295,10 @@ export function FilePreview({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b px-3 py-2">
-        <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]" title={entry.path}>
+        <span
+          className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-ink-strong"
+          title={entry.path}
+        >
           {name}
         </span>
         {entry.lfs && (

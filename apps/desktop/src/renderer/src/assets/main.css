@@ -1,66 +1,156 @@
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/source-sans-3';
+@import '@fontsource-variable/source-sans-3/wght-italic.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens (see DESIGN.md). Restrained strategy: pure neutral surfaces,
- * one crimson primary carrying actions, selection, and focus.
+ * Design tokens (see DESIGN.md). We speak huggingface.co's visual dialect:
+ * cool-gray surfaces, faint gradients, border-heavy depth, near-black CTAs,
+ * blue/indigo focus + selection, brand yellow as an accent only.
  */
 :root {
+  /* Surfaces */
   --c-bg: oklch(1 0 0);
-  --c-panel: oklch(0.972 0 0);
-  --c-panel-2: oklch(0.945 0 0);
-  --c-border: oklch(0.908 0 0);
-  --c-ink: oklch(0.205 0 0);
-  --c-ink-muted: oklch(0.462 0 0);
-  --c-ink-faint: oklch(0.602 0 0);
-  --c-primary: oklch(0.578 0.226 22);
-  --c-primary-ink: oklch(0.995 0 0);
-  --c-accent: oklch(0.472 0.185 18);
-  --c-success: oklch(0.6 0.14 150);
-  --c-warning: oklch(0.72 0.15 75);
-  --c-error: oklch(0.55 0.2 27);
-  --c-info: oklch(0.6 0.12 240);
-  /* Overlay shadow ramp: dialogs, menus, palette, toasts — never in-page cards. */
-  --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.12);
+  --c-panel: oklch(0.985 0.002 247.839); /* gray-50: sidebar, toolbars, pre */
+  --c-panel-2: oklch(0.967 0.003 264.542); /* gray-100: hovers, chips, skeletons */
+  --c-elevated: oklch(1 0 0); /* dialog, menu, palette, toast */
+  --c-field: oklch(1 0 0); /* input/search interior */
+  /* Lines */
+  --c-border: oklch(0.928 0.006 264.531); /* gray-200: interactive borders (default via *) */
+  --c-border-card: oklch(0.967 0.003 264.542); /* gray-100: card outlines */
+  /* Ink */
+  --c-ink-strong: oklch(0.21 0.034 264.665); /* gray-900: headings, repo names, links */
+  --c-ink: oklch(0.373 0.034 259.733); /* gray-700: body (10.3:1) */
+  --c-ink-muted: oklch(0.446 0.03 256.802); /* gray-600: secondary text (7.6:1) */
+  --c-ink-faint: oklch(0.551 0.027 264.364); /* gray-500: metadata TEXT (4.8:1 — HF's gray-400 fails WCAG) */
+  --c-decor: oklch(0.707 0.022 261.325); /* gray-400: decorative glyphs/dots only, never text */
+  /* Interactive vocabulary */
+  --c-cta: oklch(0.21 0.034 264.665); /* black-pill CTA, inverts on hover */
+  --c-cta-ink: oklch(1 0 0);
+  --c-link: oklch(0.21 0.034 264.665); /* inline links: near-black */
+  --c-hover-title: oklch(0.511 0.262 276.966); /* indigo-600: mono title hover recolor */
+  --c-focus: oklch(0.623 0.214 259.815); /* blue-500: focus rings, ::selection */
+  --c-select: oklch(0.511 0.262 276.966); /* indigo-600: selection tint, progress, switch */
+  /* Brand accents — badges, star fills, small marks. Never CTAs. */
+  --c-brand: oklch(0.877 0.175 92.5); /* #FFD21E */
+  --c-brand-ink: oklch(0.21 0.034 264.665);
+  --c-brand-orange: oklch(0.779 0.173 66.5); /* #FF9D00 */
+  /* Signature gradients: cards left→right, buttons/tags top→bottom */
+  --c-card-from: oklch(0.985 0.002 247.839);
+  --c-card-to: oklch(1 0 0);
+  --c-btn-from: oklch(1 0 0);
+  --c-btn-to: oklch(0.967 0.003 264.542);
+  /* Tag category hues (leading icon tile; mapping in lib/tag-colors.ts) */
+  --c-tag-blue: oklch(0.623 0.214 259.815);
+  --c-tag-green: oklch(0.723 0.192 149.579);
+  --c-tag-indigo: oklch(0.585 0.233 277.117);
+  --c-tag-orange: oklch(0.705 0.197 46);
+  --c-tag-purple: oklch(0.627 0.265 303.9);
+  --c-tag-red: oklch(0.637 0.237 25.331);
+  --c-tag-yellow: oklch(0.769 0.188 70.08);
+  /* Semantic state — never conveyed by color alone */
+  --c-success: oklch(0.627 0.194 149.214);
+  --c-warning: oklch(0.666 0.179 58.318);
+  --c-error: oklch(0.577 0.245 27.325);
+  --c-info: oklch(0.546 0.245 262.881);
+  /* Depth: borders first; overlays get the only visible shadow, controls get insets */
+  --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.05), 0 8px 24px rgb(0 0 0 / 0.1);
+  --shadow-btn-inset: inset 0 2px 4px rgb(0 0 0 / 0.05);
+  --shadow-field-inset: inset 0 1px 2px rgb(0 0 0 / 0.05);
 }
 
 .dark {
-  --c-bg: oklch(0.185 0 0);
-  --c-panel: oklch(0.225 0 0);
-  --c-panel-2: oklch(0.26 0 0);
-  --c-border: oklch(0.31 0 0);
-  --c-ink: oklch(0.93 0 0);
-  --c-ink-muted: oklch(0.712 0 0);
-  --c-ink-faint: oklch(0.58 0 0);
-  --c-primary: oklch(0.64 0.216 21);
-  --c-primary-ink: oklch(0.995 0 0);
-  --c-accent: oklch(0.72 0.185 19);
-  --c-success: oklch(0.68 0.14 150);
-  --c-warning: oklch(0.78 0.15 80);
-  --c-error: oklch(0.66 0.19 25);
-  --c-info: oklch(0.68 0.12 240);
-  --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.42);
+  --c-bg: oklch(0.13 0.028 261.692); /* gray-950 #030712 */
+  --c-panel: oklch(0.17 0.022 267); /* #0b0f19 */
+  --c-panel-2: oklch(0.2 0.028 265); /* #101623 */
+  --c-elevated: oklch(0.17 0.022 267);
+  --c-field: oklch(0.2 0.028 265);
+  --c-border: oklch(0.278 0.033 256.848); /* gray-800 #1e2939 */
+  --c-border-card: oklch(0.23 0.037 266); /* #141c2e */
+  --c-ink-strong: oklch(0.967 0.003 264.542);
+  --c-ink: oklch(0.872 0.01 258.338);
+  --c-ink-muted: oklch(0.707 0.022 261.325);
+  --c-ink-faint: oklch(0.63 0.024 262); /* custom: 5:1 on #0b0f19 (gray-500 would fail) */
+  --c-decor: oklch(0.446 0.03 256.802);
+  --c-cta: oklch(0.967 0.003 264.542); /* inverts in dark: near-white pill */
+  --c-cta-ink: oklch(0.13 0.028 261.692);
+  --c-link: oklch(0.928 0.006 264.531);
+  --c-hover-title: oklch(0.795 0.184 86.047); /* yellow-500 — the signature dark recolor */
+  --c-focus: oklch(0.623 0.214 259.815);
+  --c-select: oklch(0.673 0.182 276.935); /* indigo-400 */
+  --c-brand: oklch(0.877 0.175 92.5);
+  --c-brand-ink: oklch(0.13 0.028 261.692);
+  --c-brand-orange: oklch(0.779 0.173 66.5);
+  --c-card-from: oklch(0.21 0.034 264.665); /* gray-900 → */
+  --c-card-to: oklch(0.17 0.022 267); /* #0b0f19 */
+  --c-btn-from: oklch(0.278 0.033 256.848);
+  --c-btn-to: oklch(0.21 0.034 264.665);
+  --c-tag-blue: oklch(0.707 0.165 254.624);
+  --c-tag-green: oklch(0.792 0.209 151.711);
+  --c-tag-indigo: oklch(0.673 0.182 276.935);
+  --c-tag-orange: oklch(0.75 0.183 55);
+  --c-tag-purple: oklch(0.714 0.203 305.504);
+  --c-tag-red: oklch(0.704 0.191 22.216);
+  --c-tag-yellow: oklch(0.828 0.189 84.429);
+  --c-success: oklch(0.723 0.192 149.579);
+  --c-warning: oklch(0.769 0.188 70.08);
+  --c-error: oklch(0.704 0.191 22.216);
+  --c-info: oklch(0.623 0.214 259.815);
+  --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-btn-inset: inset 0 2px 4px rgb(0 0 0 / 0.35);
+  --shadow-field-inset: inset 0 1px 2px rgb(0 0 0 / 0.35);
 }
 
 @theme inline {
   --color-bg: var(--c-bg);
   --color-panel: var(--c-panel);
   --color-panel-2: var(--c-panel-2);
+  --color-elevated: var(--c-elevated);
+  --color-field: var(--c-field);
   --color-border: var(--c-border);
+  --color-border-card: var(--c-border-card);
+  --color-ink-strong: var(--c-ink-strong);
   --color-ink: var(--c-ink);
   --color-ink-muted: var(--c-ink-muted);
   --color-ink-faint: var(--c-ink-faint);
-  --color-primary: var(--c-primary);
-  --color-primary-ink: var(--c-primary-ink);
-  --color-accent: var(--c-accent);
+  --color-decor: var(--c-decor);
+  --color-cta: var(--c-cta);
+  --color-cta-ink: var(--c-cta-ink);
+  --color-link: var(--c-link);
+  --color-hover-title: var(--c-hover-title);
+  --color-focus: var(--c-focus);
+  --color-select: var(--c-select);
+  --color-brand: var(--c-brand);
+  --color-brand-ink: var(--c-brand-ink);
+  --color-brand-orange: var(--c-brand-orange);
+  --color-card-from: var(--c-card-from);
+  --color-card-to: var(--c-card-to);
+  --color-btn-from: var(--c-btn-from);
+  --color-btn-to: var(--c-btn-to);
+  --color-tag-blue: var(--c-tag-blue);
+  --color-tag-green: var(--c-tag-green);
+  --color-tag-indigo: var(--c-tag-indigo);
+  --color-tag-orange: var(--c-tag-orange);
+  --color-tag-purple: var(--c-tag-purple);
+  --color-tag-red: var(--c-tag-red);
+  --color-tag-yellow: var(--c-tag-yellow);
   --color-success: var(--c-success);
   --color-warning: var(--c-warning);
   --color-error: var(--c-error);
   --color-info: var(--c-info);
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  /* HF's bespoke in-between size: titles, buttons, detail H1 */
+  --text-smd: 0.94rem;
+  --text-smd--line-height: 1.4;
+  --font-sans:
+    'Source Sans 3 Variable', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'PingFang SC',
+    'Microsoft YaHei', monospace;
 }
 
 /* Tabular figures for stat-heavy UI: byte counts, badges, timestamps, columns. */
@@ -70,6 +160,29 @@
 
 @utility shadow-overlay {
   box-shadow: var(--shadow-overlay);
+}
+@utility shadow-btn-inset {
+  box-shadow: var(--shadow-btn-inset);
+}
+@utility shadow-field-inset {
+  box-shadow: var(--shadow-field-inset);
+}
+
+/* Signature card texture: gray-50 → white, left to right. */
+@utility bg-card-gradient {
+  background-image: linear-gradient(to right, var(--c-card-from), var(--c-card-to));
+}
+
+/* HF aurora: multicolor at ~10% alpha — avatar fallbacks and banners only. */
+@utility bg-aurora {
+  background-image: linear-gradient(
+    45deg,
+    rgb(247 0 89 / 0.1),
+    rgb(82 255 0 / 0.1),
+    rgb(20 0 255 / 0.1),
+    rgb(255 0 0 / 0.1),
+    rgb(255 230 0 / 0.1)
+  );
 }
 
 /*
@@ -169,13 +282,13 @@ body {
 
 /* Keyboard-first: one consistent, visible focus treatment everywhere. */
 :focus-visible {
-  outline: 2px solid var(--c-primary);
+  outline: 2px solid var(--c-focus);
   outline-offset: 1px;
   border-radius: 4px;
 }
 
 ::selection {
-  background: color-mix(in oklch, var(--c-primary) 25%, transparent);
+  background: color-mix(in oklch, var(--c-focus) 25%, transparent);
 }
 
 *,
@@ -204,7 +317,7 @@ body {
   background: transparent;
 }
 
-/* macOS hiddenInset titlebar: the shell header doubles as the drag region. */
+/* macOS hiddenInset titlebar: the TopBar is the drag region. */
 .app-drag {
   -webkit-app-region: drag;
 }
@@ -212,7 +325,7 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* Rendered model cards (sanitized markdown). */
+/* Rendered model cards (sanitized markdown) — HF prose ramp. */
 .prose-card {
   @apply max-w-[72ch] leading-relaxed;
 }
@@ -220,11 +333,11 @@ body {
 .prose-card h2,
 .prose-card h3,
 .prose-card h4 {
-  @apply mt-6 mb-2 font-semibold text-ink;
+  @apply mt-6 mb-2 font-semibold text-ink-strong;
   text-wrap: balance;
 }
 .prose-card h1 {
-  @apply border-b pb-2 text-xl;
+  @apply border-b border-border-card pb-2 text-xl;
 }
 .prose-card h2 {
   @apply text-lg;
@@ -248,10 +361,10 @@ body {
   @apply mb-1;
 }
 .prose-card a {
-  @apply text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary;
+  @apply font-medium text-link underline decoration-decor underline-offset-2 hover:decoration-link;
 }
 .prose-card blockquote {
-  @apply my-3 border-l border-border pl-3 text-ink-muted;
+  @apply my-3 border-l-2 border-border pl-3 text-ink-muted;
 }
 .prose-card table {
   @apply my-3 block w-max max-w-full border-collapse overflow-x-auto text-[13px];
@@ -264,19 +377,19 @@ body {
   @apply bg-panel font-medium;
 }
 .prose-card code {
-  @apply rounded bg-panel px-1 py-0.5 font-mono text-[12.5px];
+  @apply rounded-md bg-panel-2 px-1 py-0.5 font-mono text-[12.5px];
 }
 .prose-card pre {
-  @apply my-3 overflow-x-auto rounded-lg border bg-panel p-3;
+  @apply my-3 overflow-x-auto rounded-lg border border-border-card bg-panel p-3;
 }
 .prose-card pre code {
   @apply bg-transparent p-0;
 }
 .prose-card img {
-  @apply my-3 h-auto max-w-full rounded-md;
+  @apply my-3 h-auto max-w-full rounded-lg;
 }
 .prose-card hr {
-  @apply my-5 border-border;
+  @apply my-5 border-border-card;
 }
 .prose-card .shiki {
   background: transparent !important;

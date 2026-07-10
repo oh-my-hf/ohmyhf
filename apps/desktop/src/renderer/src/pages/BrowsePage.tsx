@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Compass } from 'lucide-react'
 import type { RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
 import { FiltersBar } from '@/components/browse/FiltersBar'
-import { RepoList } from '@/components/browse/RepoList'
+import { RepoList, type SelectVia } from '@/components/browse/RepoList'
 import { RepoDetail } from '@/components/browse/RepoDetail'
 
 const KIND_PATH: Record<RepoKind, string> = {
@@ -20,10 +20,14 @@ export function BrowsePage({ kind }: { kind: RepoKind }): React.JSX.Element {
   const repoId = params['*'] || undefined
 
   const onSelect = useCallback(
-    (repo: RepoSummary): void => {
-      navigate(`/${KIND_PATH[kind]}/${repo.id}`, { replace: true })
+    (repo: RepoSummary, via: SelectVia): void => {
+      // Clicks (and the first selection) push history; j/k bursts collapse
+      // into one entry so Back returns to the pre-burst selection.
+      void navigate(`/${KIND_PATH[kind]}/${repo.id}`, {
+        replace: via === 'keyboard' && repoId !== undefined
+      })
     },
-    [navigate, kind]
+    [navigate, kind, repoId]
   )
 
   return (
@@ -34,7 +38,7 @@ export function BrowsePage({ kind }: { kind: RepoKind }): React.JSX.Element {
       </section>
       <section className="min-w-0 flex-1">
         {repoId ? (
-          <RepoDetail key={`${kind}:${repoId}`} kind={kind} repoId={repoId} />
+          <RepoDetail key={kind} kind={kind} repoId={repoId} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
             <Compass className="size-8 text-ink-faint" aria-hidden />

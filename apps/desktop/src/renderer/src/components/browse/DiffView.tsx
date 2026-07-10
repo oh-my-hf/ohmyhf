@@ -19,16 +19,9 @@ const LINE_MARKER: Record<DiffLineKind, string> = {
 }
 
 const LINE_CLASS: Record<DiffLineKind, string | undefined> = {
-  add: 'bg-success/10',
-  del: 'bg-error/10',
+  add: 'bg-success/10 text-ink',
+  del: 'bg-error/10 text-ink',
   context: undefined,
-  meta: 'text-ink-faint'
-}
-
-const MARKER_CLASS: Record<DiffLineKind, string> = {
-  add: 'text-success',
-  del: 'text-error',
-  context: 'text-ink-faint',
   meta: 'text-ink-faint'
 }
 
@@ -106,10 +99,7 @@ function FileSection({
                     LINE_CLASS[line.kind]
                   )}
                 >
-                  <span
-                    className={cn('w-6 shrink-0 text-center select-none', MARKER_CLASS[line.kind])}
-                    aria-hidden
-                  >
+                  <span className="w-6 shrink-0 text-center text-decor select-none" aria-hidden>
                     {LINE_MARKER[line.kind]}
                   </span>
                   <span className="pr-3">{line.text}</span>

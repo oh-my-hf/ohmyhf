@@ -12,6 +12,7 @@
     "title": "还没有下载任务"
   },
   "files": "{{done}}/{{total}} 个文件",
+  "removed": "已移除下载记录",
   "revision": "修订 {{revision}}",
   "speed": "{{speed}}/秒",
   "status": {

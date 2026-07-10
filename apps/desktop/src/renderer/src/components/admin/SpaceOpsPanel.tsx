@@ -35,8 +35,8 @@ function SectionHeading({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <h3 className="flex items-center gap-2 text-[13px] font-semibold">
-      <Icon className="size-4 text-ink-faint" aria-hidden />
+    <h3 className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-ink-faint uppercase">
+      <Icon className="size-3.5 text-ink-faint" aria-hidden />
       {children}
     </h3>
   )
@@ -194,10 +194,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
         )}
         <div className="flex flex-col gap-1">
           {secrets.data?.map((secret) => (
-            <div
-              key={secret.key}
-              className="group flex items-center gap-2 rounded-md border px-3 py-2"
-            >
+            <div key={secret.key} className="flex items-center gap-2 rounded-md border px-3 py-2">
               <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{secret.key}</span>
               {secret.description && (
                 <span className="hidden min-w-0 truncate text-[11.5px] text-ink-faint sm:block">
@@ -213,7 +210,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  className="size-6"
                   aria-label={t('common:delete')}
                   disabled={deleteSecret.isPending}
                   onClick={() => deleteSecret.mutate(secret.key)}
@@ -272,10 +269,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
         )}
         <div className="flex flex-col gap-1">
           {variables.data?.map((variable) => (
-            <div
-              key={variable.key}
-              className="group flex items-center gap-2 rounded-md border px-3 py-2"
-            >
+            <div key={variable.key} className="flex items-center gap-2 rounded-md border px-3 py-2">
               <span className="min-w-0 truncate font-mono text-[12.5px]">{variable.key}</span>
               <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-ink-muted">
                 {variable.value ?? ''}
@@ -286,7 +280,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
                 </span>
               )}
               {canManage && (
-                <span className="flex shrink-0 items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                <span className="flex shrink-0 items-center">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -361,7 +355,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
                 variant="ghost"
                 size="sm"
                 aria-pressed={logType === type}
-                className={cn(logType === type && 'bg-panel text-ink')}
+                className={cn(logType === type && 'bg-panel-2 text-ink-strong')}
                 onClick={() => setLogType(type)}
               >
                 {t(`admin:space.logs.${type}`)}
@@ -381,7 +375,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
         {logs.isError ? (
           <InlineError message={logs.error.message} onRetry={() => void logs.refetch()} />
         ) : (
-          <pre className="h-64 overflow-auto rounded-md border bg-panel p-3 font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap text-ink-muted">
+          <pre className="h-64 overflow-auto rounded-lg border border-border-card bg-panel p-3 font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap text-ink-muted">
             {logs.isPending
               ? t('common:loading')
               : logs.data.text.trim() !== ''
