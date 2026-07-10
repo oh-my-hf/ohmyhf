@@ -64,4 +64,17 @@ describe('ipcRequestSchemas', () => {
     )
     expect(schema.safeParse({ patch: { proxyUrl: 'not-a-url' } }).success).toBe(false)
   })
+
+  it('accepts hub quicksearch query channels and rejects empty/oversized', () => {
+    for (const channel of [
+      'hub:searchOrgs',
+      'hub:searchPapers',
+      'hub:searchCollections'
+    ] as const) {
+      const schema = ipcRequestSchemas[channel]!
+      expect(schema.safeParse({ query: 'meta' }).success).toBe(true)
+      expect(schema.safeParse({ query: '' }).success).toBe(false)
+      expect(schema.safeParse({ query: 'x'.repeat(65) }).success).toBe(false)
+    }
+  })
 })
