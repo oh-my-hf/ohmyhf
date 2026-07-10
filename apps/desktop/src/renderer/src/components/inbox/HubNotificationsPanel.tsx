@@ -16,7 +16,7 @@ import {
   ShieldAlert
 } from 'lucide-react'
 import type { HubNotification } from '@oh-my-huggingface/shared'
-import { invoke } from '@/lib/ipc'
+import { invoke, openExternal } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,13 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 
 /** The Hub serves a fixed 20 notifications per page (see HubClient.getNotifications). */
 const PAGE_SIZE = 20
+
+/**
+ * The notification inbox has no OAuth scope (see HF's supported-scopes list), so
+ * an OAuth token can never read /api/notifications — re-login cannot fix it. Send
+ * the user to the web UI, where their browser session can show notifications.
+ */
+const HUB_NOTIFICATIONS_URL = 'https://huggingface.co/notifications'
 
 const KIND_ICON: Record<HubNotification['kind'], React.ComponentType<{ className?: string }>> = {
   repo: GitBranch,
@@ -119,7 +126,11 @@ export function HubNotificationsPanel(): React.JSX.Element {
           title={t('inbox:hub.unauthorized.title')}
           body={t('inbox:hub.unauthorized.body')}
           action={
-            <Button variant="secondary" size="sm" onClick={() => openSettings('account')}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => openExternal(HUB_NOTIFICATIONS_URL)}
+            >
               {t('inbox:hub.unauthorized.action')}
             </Button>
           }

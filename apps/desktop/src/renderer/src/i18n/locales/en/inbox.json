@@ -54,8 +54,8 @@
       "title": "Sign in to see Hub notifications"
     },
     "unauthorized": {
-      "action": "Open account settings",
-      "body": "The Hub did not authorize this token to read notifications. Sign out and back in to grant the app access.",
+      "action": "Open on the Hub",
+      "body": "Hugging Face doesn't grant third-party apps access to the notification inbox, so it can't be shown here — signing out and back in won't change that. View your notifications on the Hub instead.",
       "title": "Hub notifications unavailable"
     }
   },
