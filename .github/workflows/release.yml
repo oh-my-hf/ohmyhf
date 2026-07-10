@@ -124,7 +124,8 @@ jobs:
         run: pnpm --filter oh-my-huggingface-desktop ${{ matrix.target }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS builds are currently unsigned; see docs/signing.md.
+          # Force ad-hoc (identity: '-') instead of picking a local Developer ID.
+          # See docs/signing.md.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
   publish:

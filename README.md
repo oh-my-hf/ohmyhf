@@ -45,20 +45,20 @@ Grab the latest release for your platform from
 - **Windows** — `.exe` (NSIS installer)
 - **Linux** — `.AppImage` or `.deb`
 
-### macOS: "app is damaged / unidentified developer"
+### macOS: Gatekeeper / quarantine
 
-Releases are currently **unsigned** (signing & notarization is a documented follow-up, see
-[docs/signing.md](docs/signing.md)). To open an unsigned build:
+macOS builds are **ad-hoc signed** (not Developer ID / notarized — see
+[docs/signing.md](docs/signing.md)). After a browser download, first launch may still need:
 
 ```sh
 xattr -dr com.apple.quarantine "/Applications/Oh My HuggingFace.app"
 ```
 
-or right-click the app → **Open** → **Open** on first launch.
+or right-click the app → **Open** → **Open**.
 
-The app can discover new GitHub Releases from **Settings → About**. macOS requires a signed and
-notarized release for automatic installation; while releases remain unsigned, use the GitHub
-Releases link in the updater as the fallback.
+The app can discover new GitHub Releases from **Settings → About**. macOS requires a notarized
+Developer ID release for automatic installation; until then, use the GitHub Releases link in the
+updater as the fallback.
 
 ## Development
 
@@ -78,7 +78,7 @@ Platform packaging (from `apps/desktop`):
 
 ```sh
 pnpm --filter oh-my-huggingface-desktop build:linux   # AppImage + deb
-pnpm --filter oh-my-huggingface-desktop build:mac     # dmg (unsigned)
+pnpm --filter oh-my-huggingface-desktop build:mac     # dmg (ad-hoc signed)
 pnpm --filter oh-my-huggingface-desktop build:win     # nsis
 ```
 

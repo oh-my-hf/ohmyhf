@@ -22,8 +22,13 @@ mac:
     # zip is required for Squirrel.Mac: without it electron-builder emits no
     # latest-mac.yml and electron-updater cannot stage macOS auto-updates.
     - zip
-  # Unsigned for now — see docs/signing.md for the notarization follow-up.
-  identity: null
+  # Ad-hoc signature (not Developer ID). Fixes the Gatekeeper "damaged" dialog
+  # caused by broken nested signatures; still not notarized — see docs/signing.md.
+  identity: '-'
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
 
 win:
   target:
