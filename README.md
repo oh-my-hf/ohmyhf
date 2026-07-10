@@ -156,3 +156,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Translations are especially welcome — 
 ## License
 
 [Apache-2.0](LICENSE). Not affiliated with Hugging Face, Inc.
+
+## Friendly Link
+
+- [linux.do](https://linux.do) —— Where possible begins
