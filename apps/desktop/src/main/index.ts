@@ -153,10 +153,31 @@ if (!gotLock) {
       }
     }
 
+    const isDarkTheme = (): boolean => {
+      const theme = settings.get().theme
+      return theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors)
+    }
+
+    // Native minimize/maximize/close drawn over the TopBar (h-11 = 44px);
+    // colors track the renderer theme (--c-bg / --c-ink-muted).
+    const titleBarOverlay = (): Electron.TitleBarOverlayOptions =>
+      isDarkTheme()
+        ? { color: '#030712', symbolColor: '#99a1af', height: 44 }
+        : { color: '#ffffff', symbolColor: '#4a5565', height: 44 }
+
+    const refreshTitleBarOverlay = (): void => {
+      if (process.platform !== 'win32') return
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.setTitleBarOverlay(titleBarOverlay())
+      }
+    }
+    nativeTheme.on('updated', refreshTitleBarOverlay)
+
     const applyDesktopSettings = (
-      next: { launchAtLogin: boolean; closeToTray: boolean },
-      prev: { launchAtLogin: boolean; closeToTray: boolean }
+      next: { launchAtLogin: boolean; closeToTray: boolean; theme: string },
+      prev: { launchAtLogin: boolean; closeToTray: boolean; theme: string }
     ): void => {
+      if (next.theme !== prev.theme) refreshTitleBarOverlay()
       if (next.launchAtLogin !== prev.launchAtLogin) {
         app.setLoginItemSettings({ openAtLogin: next.launchAtLogin })
       }
@@ -191,11 +212,7 @@ if (!gotLock) {
     rebuildMenu()
     if (initial.closeToTray) tray.ensure()
 
-    const windowBackground = (): string => {
-      const theme = settings.get().theme
-      const dark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors)
-      return dark ? '#030712' : '#ffffff'
-    }
+    const windowBackground = (): string => (isDarkTheme() ? '#030712' : '#ffffff')
 
     const createWindow = (backgroundColor: string): BrowserWindow => {
       const win = new BrowserWindow({
@@ -211,6 +228,11 @@ if (!gotLock) {
         autoHideMenuBar: true,
         ...(process.platform === 'darwin'
           ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 14 } }
+          : {}),
+        // Windows: drop the native title bar; the system window controls render
+        // as an overlay on the TopBar (keeps Snap Layouts on the maximize button).
+        ...(process.platform === 'win32'
+          ? { titleBarStyle: 'hidden' as const, titleBarOverlay: titleBarOverlay() }
           : {}),
         // Window/taskbar icon for Windows and Linux; macOS uses the app bundle icon.
         ...(process.platform !== 'darwin'

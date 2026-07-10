@@ -53,8 +53,8 @@ export interface AppContext {
     prev: { hubEndpoint: string | null; proxyUrl: string | null }
   ) => Promise<void>
   applyDesktopSettings: (
-    next: { launchAtLogin: boolean; closeToTray: boolean },
-    prev: { launchAtLogin: boolean; closeToTray: boolean }
+    next: { launchAtLogin: boolean; closeToTray: boolean; theme: string },
+    prev: { launchAtLogin: boolean; closeToTray: boolean; theme: string }
   ) => void
 }
 
@@ -144,8 +144,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
       { hubEndpoint: prev.hubEndpoint, proxyUrl: prev.proxyUrl }
     )
     ctx.applyDesktopSettings(
-      { launchAtLogin: next.launchAtLogin, closeToTray: next.closeToTray },
-      { launchAtLogin: prev.launchAtLogin, closeToTray: prev.closeToTray }
+      { launchAtLogin: next.launchAtLogin, closeToTray: next.closeToTray, theme: next.theme },
+      { launchAtLogin: prev.launchAtLogin, closeToTray: prev.closeToTray, theme: prev.theme }
     )
     return next
   })

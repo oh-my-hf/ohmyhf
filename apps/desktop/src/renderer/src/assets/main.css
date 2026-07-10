@@ -365,6 +365,12 @@ body {
 .app-no-drag {
   -webkit-app-region: no-drag;
 }
+/* Right padding that clears the Windows window-controls overlay drawn on the
+ * TopBar. Where no overlay exists (macOS/Linux, fullscreen) the env() vars are
+ * unset/full-width and this collapses to the plain 12px edge gap. */
+.app-drag-clearance {
+  padding-right: calc(100% - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100%) + 12px);
+}
 
 /* Rendered model cards (sanitized markdown) — HF prose ramp. */
 .prose-card {

@@ -65,7 +65,7 @@ export function TopBar(): React.JSX.Element {
   return (
     <header
       className={cn(
-        'app-drag relative z-30 flex h-11 shrink-0 items-center gap-1 border-b border-border-card bg-bg pr-3',
+        'app-drag app-drag-clearance relative z-30 flex h-11 shrink-0 items-center gap-1 border-b border-border-card bg-bg',
         // Clearance for the macOS traffic lights (x:16, ~52px wide).
         isMac ? 'pl-[76px]' : 'pl-2'
       )}
