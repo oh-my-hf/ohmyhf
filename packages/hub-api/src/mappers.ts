@@ -1,6 +1,9 @@
 /** Maps raw Hub REST payloads into the shared domain types. */
 import type {
   AccessRequest,
+  ActivityDiscussion,
+  ActivityFeed,
+  ActivityItem,
   BillingUsage,
   CollectionDetail,
   CollectionItem,
@@ -650,4 +653,87 @@ export function mapBillingUsage(raw: RawBillingUsage): BillingUsage {
     }
   }
   return { periodStart: raw.period?.periodStart, periodEnd: raw.period?.periodEnd, rows }
+}
+
+interface RawActivityRepo {
+  id?: string
+  author?: string
+  repoType?: RepoKind
+  likes?: number
+  downloads?: number
+  private?: boolean
+  gated?: string | boolean
+  lastModified?: string
+}
+
+interface RawActivityItem {
+  time?: string
+  user?: string
+  userAvatarUrl?: string
+  orgAvatarUrl?: string
+  type?: string
+  repoData?: RawActivityRepo
+  repoId?: string
+  repoType?: RepoKind
+  socialPost?: unknown
+  discussionData?: {
+    num?: number
+    title?: string
+    status?: string
+    isPullRequest?: boolean
+    numComments?: number
+  }
+}
+
+function mapActivityRepo(raw: RawActivityRepo, repoType: RepoKind): RepoSummary {
+  const id = raw.id ?? ''
+  const slash = id.indexOf('/')
+  return {
+    id,
+    kind: raw.repoType ?? repoType,
+    author: raw.author ?? (slash >= 0 ? id.slice(0, slash) : id),
+    name: slash >= 0 ? id.slice(slash + 1) : id,
+    likes: raw.likes ?? 0,
+    downloads: raw.downloads ?? 0,
+    updatedAt: raw.lastModified,
+    private: raw.private ?? false,
+    gated: raw.gated ?? false,
+    tags: []
+  }
+}
+
+/**
+ * Personalized following feed (`/api/recent-activity`). Maps the actor + verb +
+ * target for the kinds the app renders (repo like/update/publish, social posts,
+ * discussions); silently drops collection/upvote/paper-daily items for now.
+ */
+export function mapActivityFeed(
+  raw: { recentActivity?: RawActivityItem[]; cursor?: string },
+  endpoint: string
+): ActivityFeed {
+  const abs = (u: string | undefined): string | undefined =>
+    u ? new URL(u, endpoint).toString() : undefined
+  const items: ActivityItem[] = []
+  for (const a of raw.recentActivity ?? []) {
+    const actor = a.user ?? ''
+    const actorAvatarUrl = abs(a.userAvatarUrl ?? a.orgAvatarUrl)
+    const repoType = a.repoType ?? 'model'
+    if ((a.type === 'like' || a.type === 'update' || a.type === 'publish') && a.repoData?.id) {
+      items.push({ kind: a.type, time: a.time, actor, actorAvatarUrl, repo: mapActivityRepo(a.repoData, repoType) })
+    } else if (a.type === 'social-post' && a.socialPost) {
+      items.push({ kind: 'social-post', time: a.time, actor, actorAvatarUrl, post: mapPost(a.socialPost as never, endpoint) })
+    } else if (a.type === 'discussion' && a.discussionData && a.repoId && typeof a.discussionData.num === 'number') {
+      const d: ActivityDiscussion = {
+        repoId: a.repoId,
+        repoKind: repoType,
+        num: a.discussionData.num,
+        title: a.discussionData.title ?? '',
+        isPullRequest: a.discussionData.isPullRequest ?? false,
+        status: a.discussionData.status,
+        numComments: a.discussionData.numComments
+      }
+      items.push({ kind: 'discussion', time: a.time, actor, actorAvatarUrl, discussion: d })
+    }
+  }
+  return { items, cursor: raw.cursor }
 }

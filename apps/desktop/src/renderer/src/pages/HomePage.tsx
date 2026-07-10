@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PaperRow, PostCard, RepoEventRow } from '@/components/home/FeedItems'
+import { ActivityCard } from '@/components/home/ActivityFeedItems'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -59,6 +60,21 @@ export function HomePage(): React.JSX.Element {
   // local follows extend it (and are the only source when signed out).
   const auth = useAppStore((s) => s.auth)
   const me = auth.status === 'signedIn' ? auth.user.name : undefined
+  const signedIn = auth.status === 'signedIn'
+
+  // The real huggingface.co home feed: the signed-in account's personalized
+  // "following" activity stream. Primary when signed in and the Hub returns it;
+  // the merged posts/repos/papers feed below is the fallback (and the signed-out
+  // experience).
+  const recentActivity = useQuery({
+    queryKey: ['home', 'recent-activity'],
+    enabled: signedIn,
+    staleTime: STALE_TIME,
+    queryFn: () => invoke('hub:recentActivity', {})
+  })
+  const activityItems = recentActivity.data?.items ?? []
+  const personalized = signedIn && recentActivity.isSuccess && activityItems.length > 0
+
   const hubFollowing = useQuery({
     queryKey: ['hub-following', me],
     enabled: Boolean(me),
@@ -155,9 +171,16 @@ export function HomePage(): React.JSX.Element {
     follows.isPending ||
     (Boolean(me) && hubFollowing.isPending) ||
     (followTargets.length > 0 && activity.isPending)
-  const showSkeleton = feed.length === 0 && sourcesPending
+  // When signed in, the personalized feed is the primary source: show skeletons
+  // while it loads, and only fall through to the merged feed once it settles
+  // empty or errored.
+  const showSkeleton =
+    (signedIn && recentActivity.isPending) || (!personalized && feed.length === 0 && sourcesPending)
   const followSourcesSettled = follows.isSuccess && (!me || hubFollowing.isSuccess)
-  const showEmptyFollowing = followSourcesSettled && followTargets.length === 0
+  // The "follow someone" nudge only applies to the fallback feed, not the
+  // personalized stream (which already reflects the Hub following list).
+  const showEmptyFollowing =
+    !personalized && followSourcesSettled && followTargets.length === 0
 
   return (
     <div className="animate-fade-rise flex h-full min-w-0">
@@ -197,6 +220,10 @@ export function HomePage(): React.JSX.Element {
                 <Skeleton className="h-3.5 w-full" />
                 <Skeleton className="h-3.5 w-2/3" />
               </div>
+            ))
+          ) : personalized ? (
+            activityItems.map((item, i) => (
+              <ActivityCard key={`activity:${i}`} item={item} locale={locale} />
             ))
           ) : feed.length === 0 && !showEmptyFollowing ? (
             <EmptyState

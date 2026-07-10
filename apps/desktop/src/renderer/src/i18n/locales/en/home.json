@@ -1,5 +1,12 @@
 {
   "feed": {
+    "acted": {
+      "discussion": "<author>{{actor}}</author> in <repo>{{repo}}</repo>",
+      "liked": "<author>{{actor}}</author> liked",
+      "published": "<author>{{actor}}</author> published",
+      "untitledDiscussion": "Untitled",
+      "updated": "<author>{{actor}}</author> updated"
+    },
     "empty": "Nothing here yet",
     "emptyBody": "Activity from the Hub will show up here.",
     "emptyFollowing": "You're not following anyone yet",

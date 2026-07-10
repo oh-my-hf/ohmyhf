@@ -1,5 +1,6 @@
 import type {
   AccessRequest,
+  ActivityFeed,
   BillingUsage,
   CollectionDetail,
   CollectionSummary,
@@ -32,6 +33,7 @@ import type {
 import { HubApiError, isNotFound } from './errors'
 import {
   mapAccessRequest,
+  mapActivityFeed,
   mapBillingUsage,
   mapCollectionDetail,
   mapCollectionSummary,
@@ -594,6 +596,27 @@ export class HubClient {
       }
     }
     return { items, nextCursor }
+  }
+
+  /**
+   * Personalized "following" activity feed — the real huggingface.co home feed.
+   * Requires a signed-in token (it's account-specific). Paginates by an opaque
+   * cursor plus an advancing skip; `cursor` in the return is the next-page URL.
+   */
+  async getRecentActivity(cursor?: string): Promise<ActivityFeed> {
+    const url =
+      cursor ?? `${this.endpoint}/api/recent-activity?limit=30&feedType=following&activityType=all`
+    const { body } = await this.getJson<{ recentActivity?: unknown[]; cursor?: string }>(url)
+    const feed = mapActivityFeed(body as never, this.endpoint)
+    let nextCursor: string | undefined
+    if (feed.cursor && (body.recentActivity?.length ?? 0) > 0) {
+      const next = new URL(url)
+      const skip = Number(next.searchParams.get('skip') ?? '0') + (body.recentActivity?.length ?? 0)
+      next.searchParams.set('skip', String(skip))
+      next.searchParams.set('cursor', feed.cursor)
+      nextCursor = next.toString()
+    }
+    return { items: feed.items, cursor: nextCursor }
   }
 
   async getDiscussion(kind: RepoKind, repoId: string, num: number): Promise<DiscussionDetail> {

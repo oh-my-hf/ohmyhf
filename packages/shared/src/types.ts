@@ -322,6 +322,34 @@ export interface FollowedAccount {
   isOrg?: boolean
 }
 
+/** A discussion/PR surfaced in the activity feed. */
+export interface ActivityDiscussion {
+  repoId: string
+  repoKind: RepoKind
+  num: number
+  title: string
+  isPullRequest: boolean
+  status?: string
+  numComments?: number
+}
+
+/**
+ * One item in the personalized "following" activity feed
+ * (`/api/recent-activity`). Discriminated by `kind`; each carries the actor and
+ * a type-specific payload. Kinds the app doesn't render yet (collection, upvote,
+ * paper-daily) are dropped by the mapper.
+ */
+export type ActivityItem =
+  | { kind: 'like' | 'update' | 'publish' | 'new-repo'; time?: string; actor: string; actorAvatarUrl?: string; repo: RepoSummary }
+  | { kind: 'social-post'; time?: string; actor: string; actorAvatarUrl?: string; post: PostSummary }
+  | { kind: 'discussion'; time?: string; actor: string; actorAvatarUrl?: string; discussion: ActivityDiscussion }
+
+export interface ActivityFeed {
+  items: ActivityItem[]
+  /** Opaque cursor for the next page, when the Hub returns one. */
+  cursor?: string
+}
+
 export type ThemeSetting = 'system' | 'light' | 'dark'
 
 export interface AppSettings {

@@ -5,6 +5,7 @@
  */
 import type {
   AccessRequest,
+  ActivityFeed,
   AppInfo,
   AppSettings,
   AuthState,
@@ -94,6 +95,7 @@ export interface IpcInvokeContract {
     res: string
   }
   'hub:posts': { req: { cursor?: string }; res: Page<PostSummary> }
+  'hub:recentActivity': { req: { cursor?: string }; res: ActivityFeed }
   'hub:postDetail': { req: { author: string; slug: string }; res: PostSummary }
   'hub:userOverview': { req: { username: string }; res: UserOverview }
   /** Accounts the given user follows on the Hub (drained pagination, capped). */
@@ -356,6 +358,7 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:discussions',
   'hub:discussionDiff',
   'hub:posts',
+  'hub:recentActivity',
   'hub:postDetail',
   'hub:userOverview',
   'hub:userFollowing',

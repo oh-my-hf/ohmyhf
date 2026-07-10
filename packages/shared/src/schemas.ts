@@ -138,6 +138,7 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   }),
   'hub:discussionDiff': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
   'hub:posts': z.object({ cursor: z.string().max(4096).optional() }).optional(),
+  'hub:recentActivity': z.object({ cursor: z.string().max(4096).optional() }).optional(),
   'hub:postDetail': z.object({
     author: z.string().min(1).max(128),
     slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
