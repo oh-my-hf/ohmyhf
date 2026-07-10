@@ -302,7 +302,7 @@ export function SearchPage(): React.JSX.Element {
     if (trimmedQuery) next.set('q', trimmedQuery)
     else next.delete('q')
     next.set('type', nextType)
-    setSearchParams(next)
+    setSearchParams(next, { replace: true })
   }
 
   const navigateToRepo = (repo: RepoSummary): void => {
@@ -405,7 +405,7 @@ export function SearchPage(): React.JSX.Element {
               loading={search.repoFetchingMore}
               onClick={search.repoFetchMore}
             >
-              {t('common:loadMore', 'Load more')}
+              {t('searchPage.loadMore')}
             </Button>
           </div>
         ) : null}
@@ -447,7 +447,10 @@ export function SearchPage(): React.JSX.Element {
 
   return (
     <div className="flex h-full min-w-0 max-[760px]:flex-col">
-      <aside className="flex w-56 shrink-0 flex-col gap-2 border-r bg-panel/30 p-3 max-[760px]:w-full max-[760px]:border-r-0 max-[760px]:border-b">
+      <aside
+        aria-label={t('searchPage.title')}
+        className="flex w-56 shrink-0 flex-col gap-2 border-r bg-panel/30 p-3 max-[760px]:w-full max-[760px]:border-r-0 max-[760px]:border-b"
+      >
         <p className="px-2 text-[11px] font-semibold tracking-wider text-ink-faint uppercase">
           {t('nav:search')}
         </p>

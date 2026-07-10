@@ -31,7 +31,8 @@
     "emptyQueryTitle": "Search the Hub",
     "emptyQueryBody": "Enter a query in the command palette, or add ?q= to the URL.",
     "all": "All",
-    "viewMore": "View more"
+    "viewMore": "View more",
+    "loadMore": "Load more"
   },
   "searching": "Searching…",
   "settings": "Settings",

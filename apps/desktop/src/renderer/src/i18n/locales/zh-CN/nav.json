@@ -31,7 +31,8 @@
     "emptyQueryTitle": "搜索 Hub",
     "emptyQueryBody": "在命令面板输入关键词，或在 URL 加上 ?q=。",
     "all": "全部",
-    "viewMore": "查看更多"
+    "viewMore": "查看更多",
+    "loadMore": "加载更多"
   },
   "searching": "搜索中…",
   "settings": "设置",
