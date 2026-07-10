@@ -91,6 +91,7 @@
   "groups": {
     "about": "About",
     "account": "Account",
+    "data": "Data",
     "interface": "Interface"
   },
   "notifications": {
@@ -100,6 +101,35 @@
     "minutes_other": "{{count}} min",
     "pollInterval": "Check follows every",
     "title": "Notifications"
+  },
+  "privacy": {
+    "cache": {
+      "open": "Open cache manager",
+      "path": "Location",
+      "retry": "Retry",
+      "scanFailed": "Couldn't scan the cache.",
+      "size": "Total size",
+      "title": "HF cache"
+    },
+    "local": {
+      "clear": "Clear local data…",
+      "confirm": "Clear data",
+      "confirmBody": "This removes:",
+      "confirmTitle": "Clear local data?",
+      "description": "Clears favorites, history, download records, follows, and inbox on this device. Does not delete model or dataset files in the HF cache.",
+      "items": {
+        "downloads": "Download task records",
+        "favorites": "Favorites",
+        "follows": "Followed accounts",
+        "history": "Browse history",
+        "inbox": "Local inbox"
+      },
+      "signOutAlso": "Also sign out of Hub",
+      "success": "Local data cleared.",
+      "successSignedOut": "Local data cleared. You have been signed out.",
+      "title": "App local data"
+    },
+    "title": "Privacy & data"
   },
   "title": "Settings"
 }

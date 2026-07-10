@@ -32,7 +32,13 @@ const defaultFilters = (kind: RepoKind): BrowseFilters => ({
 })
 
 /** Sections of the settings dialog (left nav entries). */
-export type SettingsSection = 'account' | 'appearance' | 'downloads' | 'notifications' | 'about'
+export type SettingsSection =
+  | 'account'
+  | 'appearance'
+  | 'downloads'
+  | 'notifications'
+  | 'privacy'
+  | 'about'
 
 interface AppState {
   settings: AppSettings

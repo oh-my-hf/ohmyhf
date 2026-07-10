@@ -12,6 +12,7 @@ import {
   Monitor,
   Plus,
   RefreshCw,
+  Shield,
   UserCircle2,
   X
 } from 'lucide-react'
@@ -38,6 +39,7 @@ import { useToasts } from '@/components/ui/toaster'
 import type { SettingsSection } from '@/stores/app'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
+import { PrivacySection } from '@/components/settings/PrivacySection'
 
 const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
 const RELEASES_URL = `${REPO_URL}/releases`
@@ -74,6 +76,10 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'downloads', labelKey: 'settings:downloads.title', icon: ArrowDownToLine },
       { id: 'notifications', labelKey: 'settings:notifications.title', icon: Bell }
     ]
+  },
+  {
+    labelKey: 'settings:groups.data',
+    items: [{ id: 'privacy', labelKey: 'settings:privacy.title', icon: Shield }]
   },
   {
     labelKey: 'settings:groups.about',
@@ -734,6 +740,7 @@ const SECTION_CONTENT: Record<SettingsSection, () => React.JSX.Element> = {
   appearance: AppearanceSection,
   downloads: DownloadsSection,
   notifications: NotificationsSection,
+  privacy: PrivacySection,
   about: AboutSection
 }
 

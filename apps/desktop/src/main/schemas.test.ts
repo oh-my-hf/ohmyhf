@@ -41,4 +41,11 @@ describe('ipcRequestSchemas', () => {
       schema.safeParse({ discussionIds: ['post-abc_123', 'paper.2301'], read: true }).success
     ).toBe(true)
   })
+
+  it('accepts privacy:clearLocalData with optional signOut', () => {
+    const schema = ipcRequestSchemas['privacy:clearLocalData']!
+    expect(schema.safeParse({}).success).toBe(true)
+    expect(schema.safeParse({ signOut: true }).success).toBe(true)
+    expect(schema.safeParse({ signOut: 'yes' }).success).toBe(false)
+  })
 })

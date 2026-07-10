@@ -119,6 +119,7 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'system:openExternal': z.object({ url: z.url({ protocol: /^https$/ }) }),
   'system:showItemInFolder': z.object({ path: absolutePath }),
   'settings:set': z.object({ patch: settingsPatch }),
+  'privacy:clearLocalData': z.object({ signOut: z.boolean().optional() }),
   'hub:search': z.object({ query: searchQuery }),
   'hub:papers': z.object({ cursor: z.string().max(4096).optional() }).optional(),
   'hub:paper': z.object({ paperId: z.string().min(1).max(128) }),

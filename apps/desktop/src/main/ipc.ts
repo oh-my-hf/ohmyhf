@@ -17,10 +17,12 @@ import { defaultCacheDir } from '@oh-my-huggingface/hub-api'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import type { AuthManager } from './auth'
 import type { CacheManager } from './cache'
+import type { AppDatabase } from './db'
 import type { DownloadManager } from './downloads'
 import type { FollowsPoller } from './follows'
 import type { MainI18n } from './i18n'
 import type { Library } from './library'
+import { clearLocalAppData } from './privacy'
 import type { SettingsStore } from './settings'
 import type { UpdateManager } from './updater'
 import {
@@ -34,6 +36,7 @@ import {
 import { matchLocale } from './i18n'
 
 export interface AppContext {
+  db: AppDatabase
   hub: HubClient
   auth: AuthManager
   settings: SettingsStore
@@ -128,6 +131,16 @@ export function registerIpcHandlers(ctx: AppContext): void {
       ctx.rebuildMenu()
     }
     return next
+  })
+
+  handle('privacy:clearLocalData', async (req) => {
+    const signOut = req.signOut === true
+    ctx.downloads.clearAll()
+    clearLocalAppData(ctx.db, { signOut })
+    if (signOut) {
+      await ctx.auth.signOut()
+    }
+    return { cleared: true as const, signedOut: signOut }
   })
 
   // --- hub --------------------------------------------------------------------

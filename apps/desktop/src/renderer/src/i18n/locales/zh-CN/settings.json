@@ -91,6 +91,7 @@
   "groups": {
     "about": "关于",
     "account": "账号",
+    "data": "数据",
     "interface": "界面"
   },
   "notifications": {
@@ -99,6 +100,35 @@
     "minutes_other": "{{count}} 分钟",
     "pollInterval": "关注检查间隔",
     "title": "通知"
+  },
+  "privacy": {
+    "cache": {
+      "open": "打开缓存管理",
+      "path": "位置",
+      "retry": "重试",
+      "scanFailed": "无法扫描缓存。",
+      "size": "总占用",
+      "title": "HF 缓存"
+    },
+    "local": {
+      "clear": "清除本地数据…",
+      "confirm": "清除数据",
+      "confirmBody": "将移除：",
+      "confirmTitle": "清除本地数据？",
+      "description": "清除本机收藏、浏览历史、下载任务记录、关注与收件箱。不会删除 HF 缓存目录中的模型或数据集文件。",
+      "items": {
+        "downloads": "下载任务记录",
+        "favorites": "收藏",
+        "follows": "关注账号",
+        "history": "浏览历史",
+        "inbox": "本地收件箱"
+      },
+      "signOutAlso": "同时退出 Hub 登录",
+      "success": "本地数据已清除。",
+      "successSignedOut": "本地数据已清除，并已退出登录。",
+      "title": "应用本地数据"
+    },
+    "title": "隐私与数据"
   },
   "title": "设置"
 }

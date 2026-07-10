@@ -70,6 +70,12 @@ export interface IpcInvokeContract {
   'settings:get': { req: void; res: AppSettings }
   'settings:set': { req: { patch: Partial<AppSettings> }; res: AppSettings }
 
+  /** Wipe app SQLite library tables; optional Hub sign-out. Never deletes HF cache files. */
+  'privacy:clearLocalData': {
+    req: { signOut?: boolean }
+    res: { cleared: true; signedOut: boolean }
+  }
+
   'hub:search': { req: { query: SearchQuery }; res: Page<RepoSummary> }
   'hub:papers': { req: { cursor?: string }; res: Page<PaperSummary> }
   /** Single paper lookup for deep links outside the daily feed. */
@@ -351,6 +357,7 @@ export const IPC_INVOKE_CHANNELS = [
   'updater:install',
   'settings:get',
   'settings:set',
+  'privacy:clearLocalData',
   'hub:search',
   'hub:papers',
   'hub:paper',

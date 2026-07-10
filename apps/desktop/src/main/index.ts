@@ -155,6 +155,7 @@ if (!gotLock) {
 
     const rebuildMenu = (): void => buildMenu(i18n, navigate)
     registerIpcHandlers({
+      db,
       hub,
       auth,
       settings,
