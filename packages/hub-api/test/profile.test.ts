@@ -90,7 +90,7 @@ describe('HubClient.getUserOverview', () => {
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
     const overview = await client.getUserOverview('julien-c')
     expect(fetchImpl.mock.calls[0]![0]).toBe('https://huggingface.co/api/users/julien-c/overview')
-    expect(overview).toEqual({
+    expect(overview).toMatchObject({
       name: 'julien-c',
       fullname: 'Julien Chaumond',
       avatarUrl: 'https://huggingface.co/avatars/abc.svg',
@@ -130,7 +130,7 @@ describe('HubClient.getUserOverview', () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ user: 'minimal' }))
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
     const overview = await client.getUserOverview('minimal')
-    expect(overview).toEqual({
+    expect(overview).toMatchObject({
       name: 'minimal',
       fullname: undefined,
       avatarUrl: undefined,
@@ -200,5 +200,32 @@ describe('HubClient.getUserFollowing', () => {
     })
     expect(following[1]!.isOrg).toBe(true)
     expect(following[2]!.name).toBe('bob')
+  })
+})
+
+describe('HubClient.getUserOverview org fallback', () => {
+  it('falls back to the organizations endpoint on user 404', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('nope', { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            name: 'HackerNoon',
+            fullname: 'HackerNoon',
+            details: 'stories',
+            avatarUrl: 'https://cdn.example/a.jpg',
+            numModels: 2,
+            numFollowers: 10
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
+      )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0, maxRetries: 0 })
+    const overview = await client.getUserOverview('HackerNoon')
+    expect(overview.name).toBe('HackerNoon')
+    expect(overview.isOrg).toBe(true)
+    expect(overview.numFollowers).toBe(10)
+    expect(fetchImpl.mock.calls[1]![0]).toContain('/api/organizations/HackerNoon/overview')
   })
 })

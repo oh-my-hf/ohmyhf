@@ -12,7 +12,7 @@ test('app boots into the three-pane shell', async () => {
   const app = await electron.launch({
     args: ['.'],
     cwd: join(__dirname, '..'),
-    env: { ...process.env, OMH_USER_DATA_DIR: userDataDir }
+    env: { ...process.env, OMH_USER_DATA_DIR: userDataDir, OMH_CREDENTIALS_DIR: userDataDir }
   })
   try {
     const window = await app.firstWindow()

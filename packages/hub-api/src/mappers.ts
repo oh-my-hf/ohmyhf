@@ -238,6 +238,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
 }
 
 interface RawUserOverview {
+  name?: string
   isFollowing?: boolean
   user?: string
   fullname?: string
@@ -257,11 +258,15 @@ interface RawUserOverview {
   createdAt?: string
 }
 
-export function mapUserOverview(raw: RawUserOverview, endpoint: string): UserOverview {
+export function mapUserOverview(
+  raw: RawUserOverview,
+  endpoint: string,
+  isOrg = false
+): UserOverview {
   const absolutize = (u: string | undefined): string | undefined =>
     u ? new URL(u, endpoint).toString() : undefined
   return {
-    name: raw.user ?? '',
+    name: raw.user ?? raw.name ?? '',
     fullname: raw.fullname,
     avatarUrl: absolutize(raw.avatarUrl),
     bio: raw.details,
@@ -279,7 +284,8 @@ export function mapUserOverview(raw: RawUserOverview, endpoint: string): UserOve
       avatarUrl: absolutize(o.avatarUrl)
     })),
     createdAt: raw.createdAt,
-    isFollowing: raw.isFollowing
+    isFollowing: raw.isFollowing,
+    isOrg
   }
 }
 

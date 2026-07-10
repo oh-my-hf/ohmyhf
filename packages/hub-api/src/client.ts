@@ -712,11 +712,23 @@ export class HubClient {
     return post
   }
 
-  /** Public profile overview. Unknown users surface as a HubApiError 404. */
+  /**
+   * Public profile overview. Users and orgs share one namespace on the Hub but
+   * live on different endpoints, so a 404 on /users falls back to /organizations
+   * (org payloads carry `name` instead of `user`; both are handled by the mapper).
+   */
   async getUserOverview(username: string): Promise<UserOverview> {
-    const url = `${this.endpoint}/api/users/${encodeURIComponent(username)}/overview`
-    const { body } = await this.getJson<unknown>(url)
-    return mapUserOverview(body as never, this.endpoint)
+    const encoded = encodeURIComponent(username)
+    try {
+      const { body } = await this.getJson<unknown>(`${this.endpoint}/api/users/${encoded}/overview`)
+      return mapUserOverview(body as never, this.endpoint)
+    } catch (err) {
+      if (!isNotFound(err)) throw err
+      const { body } = await this.getJson<unknown>(
+        `${this.endpoint}/api/organizations/${encoded}/overview`
+      )
+      return mapUserOverview(body as never, this.endpoint, true)
+    }
   }
 
   /**

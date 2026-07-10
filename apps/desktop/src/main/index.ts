@@ -13,6 +13,10 @@ import { Library } from './library'
 import { buildMenu } from './menu'
 import { SettingsStore } from './settings'
 
+// One identity everywhere: dev and packaged share the same safeStorage keychain
+// entry and userData, so the ~/.oh_my_hf credentials decrypt in every session.
+app.setName('Oh My HuggingFace')
+
 const isDev = !app.isPackaged
 
 // E2E tests point userData at a temp dir so they never touch a real profile.
@@ -86,7 +90,9 @@ function createWindow(): BrowserWindow {
   return win
 }
 
-const gotLock = app.requestSingleInstanceLock()
+// Dev and packaged now share one app identity; skip the lock in dev so a running
+// packaged instance doesn't swallow `pnpm dev` launches.
+const gotLock = app.isPackaged ? app.requestSingleInstanceLock() : true
 if (!gotLock) {
   app.quit()
 } else {

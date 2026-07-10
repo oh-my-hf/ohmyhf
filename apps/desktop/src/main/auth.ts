@@ -1,4 +1,7 @@
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, type Server } from 'node:http'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { safeStorage, shell } from 'electron'
 import type { AuthState, UserProfile } from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
@@ -25,6 +28,16 @@ const SIGN_IN_TIMEOUT_MS = 5 * 60 * 1000
 
 /** Shared development client id; override with HF_OAUTH_CLIENT_ID (see README). */
 const CLIENT_ID = process.env.HF_OAUTH_CLIENT_ID ?? '91ed1d9e-c0b8-4dab-a81d-a44a26c11373'
+
+/**
+ * Credentials live OUTSIDE the per-profile userData so every session — packaged,
+ * dev, and any extra profile — shares one login. Still safeStorage-encrypted;
+ * never plaintext. Tests isolate themselves via OMH_CREDENTIALS_DIR.
+ */
+function credentialsFile(): string {
+  const dir = process.env.OMH_CREDENTIALS_DIR ?? join(homedir(), '.oh_my_hf')
+  return join(dir, 'credentials.json')
+}
 
 interface StoredToken {
   accessToken: string
@@ -72,7 +85,9 @@ export class AuthManager {
   }
 
   private persistToken(): void {
+    const file = credentialsFile()
     if (!this.token) {
+      rmSync(file, { force: true })
       this.db.prepare('DELETE FROM auth WHERE id = 1').run()
       return
     }
@@ -82,22 +97,40 @@ export class AuthManager {
       return
     }
     const cipher = safeStorage.encryptString(JSON.stringify(this.token))
-    this.db
-      .prepare(
-        `INSERT INTO auth (id, token_cipher, updated_at) VALUES (1, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET token_cipher = excluded.token_cipher, updated_at = excluded.updated_at`
-      )
-      .run(cipher, new Date().toISOString())
+    mkdirSync(join(file, '..'), { recursive: true, mode: 0o700 })
+    writeFileSync(
+      file,
+      JSON.stringify({ version: 1, cipher: cipher.toString('base64') }),
+      { mode: 0o600 }
+    )
+    // The pre-shared-credentials location; clear it so there is one source of truth.
+    this.db.prepare('DELETE FROM auth WHERE id = 1').run()
   }
 
   private loadPersistedToken(): StoredToken | null {
+    if (!safeStorage.isEncryptionAvailable()) return null
+    const file = credentialsFile()
+    if (existsSync(file)) {
+      try {
+        const { cipher } = JSON.parse(readFileSync(file, 'utf8')) as { cipher: string }
+        return JSON.parse(
+          safeStorage.decryptString(Buffer.from(cipher, 'base64'))
+        ) as StoredToken
+      } catch (err) {
+        console.warn('[auth] failed to decrypt shared credentials, discarding', err)
+        rmSync(file, { force: true })
+      }
+    }
+    // Legacy location (pre-shared-credentials): migrate out of the profile DB.
     const row = this.db.prepare('SELECT token_cipher FROM auth WHERE id = 1').get() as
       | { token_cipher: Buffer }
       | undefined
     if (!row) return null
-    if (!safeStorage.isEncryptionAvailable()) return null
     try {
-      return JSON.parse(safeStorage.decryptString(row.token_cipher)) as StoredToken
+      const token = JSON.parse(safeStorage.decryptString(row.token_cipher)) as StoredToken
+      this.token = token
+      this.persistToken()
+      return token
     } catch (err) {
       console.warn('[auth] failed to decrypt stored token, discarding', err)
       this.db.prepare('DELETE FROM auth WHERE id = 1').run()

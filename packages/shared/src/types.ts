@@ -292,6 +292,7 @@ export interface UserOverview {
   createdAt?: string
   /** Whether the signed-in account follows this user on the Hub. */
   isFollowing?: boolean
+  isOrg?: boolean
 }
 
 export interface FollowedAccount {

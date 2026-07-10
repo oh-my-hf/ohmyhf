@@ -170,7 +170,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
   )
 
   const addFollow = useMutation({
-    mutationFn: () => invoke('follows:add', { type: 'user', target: username }),
+    mutationFn: () => invoke('follows:add', { type: data?.isOrg ? 'org' : 'user', target: username }),
     onSuccess: (list) => queryClient.setQueryData(['follows'], list)
   })
   const removeFollow = useMutation({
