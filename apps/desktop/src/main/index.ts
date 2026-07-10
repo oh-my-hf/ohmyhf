@@ -206,11 +206,16 @@ if (!gotLock) {
         show: false,
         // Matches the renderer's --c-bg per theme so first paint never flashes white.
         backgroundColor,
-        autoHideMenuBar: false,
+        // Hide the native menu bar on Windows/Linux (Alt reveals it); its
+        // accelerators (Ctrl+1..8, Ctrl+,, zoom, reload) keep working.
+        autoHideMenuBar: true,
         ...(process.platform === 'darwin'
           ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 14 } }
           : {}),
-        ...(process.platform === 'linux' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
+        // Window/taskbar icon for Windows and Linux; macOS uses the app bundle icon.
+        ...(process.platform !== 'darwin'
+          ? { icon: join(__dirname, '../../build/icon.png') }
+          : {}),
         webPreferences: {
           preload: join(__dirname, '../preload/index.js'),
           contextIsolation: true,
