@@ -8,7 +8,7 @@ import { HubClient } from '@oh-my-huggingface/hub-api'
  */
 export function createHubClient(getAccessToken: () => string | undefined): HubClient {
   return new HubClient({
-    userAgent: `oh-my-huggingface/${app.getVersion()} (unofficial desktop client; +https://github.com/MoraxCheng/oh-my-huggingface)`,
+    userAgent: `oh-my-huggingface/${app.getVersion()} (unofficial desktop client; +https://github.com/oh-my-hf/ohmyhf)`,
     cacheTtlMs: 120_000,
     // Desktop browsing bursts (grids, file trees) get smoothed out instead of tripping
     // the Hub's per-IP rate limits: few sockets, spaced starts, a couple of retries.

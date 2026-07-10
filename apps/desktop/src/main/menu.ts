@@ -1,7 +1,7 @@
 import { Menu, app, dialog, shell, type MenuItemConstructorOptions } from 'electron'
 import type { MainI18n } from './i18n'
 
-const REPO_URL = 'https://github.com/MoraxCheng/oh-my-huggingface'
+const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
 
 /** Fully localized native application menu. Rebuilt whenever the locale changes. */
 export function buildMenu(i18n: MainI18n, navigate: (route: string) => void): void {

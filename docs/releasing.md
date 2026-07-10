@@ -40,6 +40,21 @@ acts only when the head commit's subject matches:
      draft to published and marks it "latest". A partial build leaves the release
      as a draft; fix and re-run rather than shipping a half-populated release.
 
+## In-app updater contract
+
+Packaged builds check the latest published GitHub Release at startup and expose the same check in
+**Settings → About**. Discovery does not download anything: downloading and restart-installing are
+separate user actions, and the main process asks for native confirmation before quitting to install.
+Development builds do not load the updater.
+
+The app uses the `electron-builder` generated `app-update.yml` and the release's `latest.yml`,
+`latest-mac.yml`, or `latest-linux.yml`; it does not call an arbitrary feed URL or compare version
+strings in the renderer. Keep each manifest and its artifacts from the same build together so the
+SHA-512 metadata remains valid.
+
+macOS automatic installation requires a signed and notarized app. Until the signing work in
+[signing.md](signing.md) is complete, the updater provides GitHub Releases as the manual fallback.
+
 ## Notes
 
 - The changelog is commit-subject driven, so write clear, releasable commit

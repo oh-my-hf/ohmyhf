@@ -3,6 +3,11 @@
 Current releases are **unsigned** on every platform. This document tracks what is needed to sign
 them properly.
 
+Until signing is configured, Windows and Linux in-app installation trusts the GitHub repository
+and release credentials as the update root: the downloaded artifact must match the SHA-512 value
+in the release manifest, but that manifest is not an independent publisher signature. Installation
+still requires both the renderer action and a native main-process confirmation.
+
 ## macOS
 
 Unsigned apps trigger Gatekeeper ("app is damaged / unidentified developer"). Users can bypass it:
@@ -12,6 +17,10 @@ xattr -dr com.apple.quarantine "/Applications/Oh My HuggingFace.app"
 ```
 
 or right-click the app → **Open** → **Open**.
+
+Squirrel.Mac also requires the current and replacement app to be signed for automatic updates.
+The in-app updater can check GitHub Releases before signing is configured, but automatic macOS
+installation must be treated as unavailable and the user should install the release manually.
 
 To sign + notarize for real:
 
@@ -23,6 +32,8 @@ To sign + notarize for real:
 4. In `apps/desktop/electron-builder.yml` remove `identity: null`, add
    `hardenedRuntime: true`, `gatekeeperAssess: false`, and a `notarize: true` block.
 5. Remove `CSC_IDENTITY_AUTO_DISCOVERY: 'false'` from `.github/workflows/release.yml`.
+6. After a signed update has been verified end to end, set `macAutoInstallEnabled` to `true` in
+   `apps/desktop/src/main/index.ts`; until then macOS intentionally stays on the manual fallback.
 
 ## Windows
 

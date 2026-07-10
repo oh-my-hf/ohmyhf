@@ -22,6 +22,7 @@ import type { FollowsPoller } from './follows'
 import type { MainI18n } from './i18n'
 import type { Library } from './library'
 import type { SettingsStore } from './settings'
+import type { UpdateManager } from './updater'
 import {
   cancelInference,
   createRepoAndUpload,
@@ -40,6 +41,7 @@ export interface AppContext {
   downloads: DownloadManager
   cache: CacheManager
   follows: FollowsPoller
+  updater: UpdateManager
   i18n: MainI18n
   rebuildMenu: () => void
   broadcast: <C extends IpcEventChannel>(channel: C, payload: IpcEventPayload<C>) => void
@@ -87,12 +89,40 @@ export function registerIpcHandlers(ctx: AppContext): void {
     return result.canceled ? null : (result.filePaths[0] ?? null)
   })
 
+  // --- updater --------------------------------------------------------------
+  handle('updater:getState', () => ctx.updater.getState())
+  handle('updater:check', () => ctx.updater.checkForUpdates())
+  handle('updater:download', () => ctx.updater.downloadUpdate())
+  handle('updater:install', async () => {
+    const state = ctx.updater.getState()
+    const version =
+      state.status === 'ready' ||
+      (state.status === 'error' && state.operation === 'install' && state.availableVersion)
+        ? state.availableVersion
+        : null
+    if (!version) return ctx.updater.installUpdate()
+
+    const result = await dialog.showMessageBox({
+      type: 'question',
+      title: ctx.i18n.t('dialogs.updateInstallTitle'),
+      message: ctx.i18n.t('dialogs.updateInstallMessage', { version }),
+      detail: ctx.i18n.t('dialogs.updateInstallDetail'),
+      buttons: [
+        ctx.i18n.t('dialogs.updateInstallButton'),
+        ctx.i18n.t('dialogs.updateInstallCancel')
+      ],
+      defaultId: 0,
+      cancelId: 1,
+      noLink: true
+    })
+    if (result.response === 0) await ctx.updater.installUpdate()
+  })
+
   // --- settings ---------------------------------------------------------------
   handle('settings:get', () => ctx.settings.get())
   handle('settings:set', ({ patch }) => {
     const next = ctx.settings.set(patch)
-    const locale =
-      next.locale === 'system' ? matchLocale(app.getLocale()) : next.locale
+    const locale = next.locale === 'system' ? matchLocale(app.getLocale()) : next.locale
     if (SUPPORTED_LOCALES.includes(locale) && locale !== ctx.i18n.getLocale()) {
       ctx.i18n.setLocale(locale)
       ctx.rebuildMenu()

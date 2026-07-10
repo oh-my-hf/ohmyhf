@@ -12,6 +12,7 @@ import { registerIpcHandlers } from './ipc'
 import { Library } from './library'
 import { buildMenu } from './menu'
 import { SettingsStore } from './settings'
+import { resolveUpdateClient, UpdateManager } from './updater'
 
 // One identity everywhere: dev and packaged share the same safeStorage keychain
 // entry and userData, so the ~/.oh_my_hf credentials decrypt in every session.
@@ -20,6 +21,9 @@ import { SettingsStore } from './settings'
 app.setName('oh-my-huggingface-desktop')
 
 const isDev = !app.isPackaged
+// Squirrel.Mac requires signed current and replacement apps. Keep automatic
+// installation gated until the signing checklist in docs/signing.md is complete.
+const macAutoInstallEnabled = false
 
 // E2E tests point userData at a temp dir so they never touch a real profile.
 if (process.env.OMH_USER_DATA_DIR) {
@@ -138,6 +142,16 @@ if (!gotLock) {
       (items) => broadcast('evt:inbox', items),
       navigate
     )
+    const updater = new UpdateManager({
+      currentVersion: app.getVersion(),
+      isPackaged: app.isPackaged,
+      autoInstallSupported: process.platform !== 'darwin' || macAutoInstallEnabled,
+      loadUpdater: async () => {
+        const updaterModule = await import('electron-updater')
+        return resolveUpdateClient(updaterModule)
+      },
+      onStateChange: (state) => broadcast('evt:updater', state)
+    })
 
     const rebuildMenu = (): void => buildMenu(i18n, navigate)
     registerIpcHandlers({
@@ -148,6 +162,7 @@ if (!gotLock) {
       downloads,
       cache,
       follows,
+      updater,
       i18n,
       rebuildMenu,
       broadcast
@@ -162,10 +177,9 @@ if (!gotLock) {
     follows.start()
 
     if (!isDev) {
-      // Auto-update from GitHub Releases; failures (offline, unsigned dev builds) are non-fatal.
-      void import('electron-updater')
-        .then(({ autoUpdater }) => autoUpdater.checkForUpdatesAndNotify())
-        .catch((err) => console.warn('[updater] check failed', err))
+      // Compare this packaged version with the latest published GitHub Release.
+      // Download and installation remain explicit user actions in Settings → About.
+      void updater.checkForUpdates()
     }
 
     // Session restore happens after the window exists so auth events reach the UI.

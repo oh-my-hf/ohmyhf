@@ -136,13 +136,7 @@ export interface NotificationsPage {
   items: HubNotification[]
 }
 
-export type DownloadStatus =
-  | 'queued'
-  | 'running'
-  | 'paused'
-  | 'completed'
-  | 'error'
-  | 'canceled'
+export type DownloadStatus = 'queued' | 'running' | 'paused' | 'completed' | 'error' | 'canceled'
 
 export interface DownloadFileState {
   path: string
@@ -355,6 +349,37 @@ export interface AppInfo {
   systemLocale: string
   hfCacheDir: string
 }
+
+export type AppUpdateErrorCode =
+  'network' | 'configuration' | 'verification' | 'permission' | 'unknown'
+
+export type AppUpdateOperation = 'check' | 'download' | 'install'
+
+interface AppUpdateStateBase {
+  currentVersion: string
+}
+
+/** Public updater state. Paths, feed URLs, and raw provider errors never cross IPC. */
+export type AppUpdateState =
+  | (AppUpdateStateBase & { status: 'unsupported' | 'idle' | 'checking' | 'up-to-date' })
+  | (AppUpdateStateBase & {
+      status: 'available' | 'manual' | 'ready'
+      availableVersion: string
+    })
+  | (AppUpdateStateBase & {
+      status: 'downloading'
+      availableVersion: string
+      percent: number
+      transferred: number
+      total: number
+      bytesPerSecond: number
+    })
+  | (AppUpdateStateBase & {
+      status: 'error'
+      operation: AppUpdateOperation
+      error: AppUpdateErrorCode
+      availableVersion?: string
+    })
 
 export type ExportTool = 'ollama' | 'lmstudio' | 'comfyui'
 

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
   Bell,
@@ -15,7 +15,7 @@ import {
   UserCircle2,
   X
 } from 'lucide-react'
-import type { Locale } from '@oh-my-huggingface/shared'
+import type { AppUpdateState, Locale } from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { changeLanguage } from '@/i18n'
@@ -32,12 +32,15 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
 import type { SettingsSection } from '@/stores/app'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
 
-const REPO_URL = 'https://github.com/MoraxCheng/oh-my-huggingface'
+const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
+const RELEASES_URL = `${REPO_URL}/releases`
 const SPEED_OPTIONS = [1, 5, 10, 20, 50] // MB/s
 const UI_SCALE_MIN = 80
 const UI_SCALE_MAX = 140
@@ -541,6 +544,156 @@ function NotificationsSection(): React.JSX.Element {
   )
 }
 
+function UpdatePanel(): React.JSX.Element {
+  const { t } = useTranslation(['settings'])
+  const queryClient = useQueryClient()
+  const push = useToasts((s) => s.push)
+  const updateQuery = useQuery({
+    queryKey: APP_UPDATE_QUERY_KEY,
+    queryFn: () => invoke('updater:getState', undefined),
+    staleTime: Infinity
+  })
+  const state = updateQuery.data
+
+  const updateAction = useMutation({
+    mutationFn: async (): Promise<AppUpdateState | undefined> => {
+      if (state?.status === 'available') return invoke('updater:download', undefined)
+      if (
+        state?.status === 'ready' ||
+        (state?.status === 'error' &&
+          state.operation === 'install' &&
+          state.availableVersion !== undefined)
+      ) {
+        await invoke('updater:install', undefined)
+        return undefined
+      }
+      return invoke('updater:check', undefined)
+    },
+    onSuccess: (next) => {
+      if (next) queryClient.setQueryData(APP_UPDATE_QUERY_KEY, next)
+    },
+    onError: () => push(t('settings:about.updates.errors.unknown'), 'error')
+  })
+
+  let statusText = t('settings:about.updates.checking')
+  if (state) {
+    switch (state.status) {
+      case 'unsupported':
+        statusText = t('settings:about.updates.unsupported')
+        break
+      case 'idle':
+        statusText = t('settings:about.updates.description')
+        break
+      case 'checking':
+        statusText = t('settings:about.updates.checking')
+        break
+      case 'up-to-date':
+        statusText = t('settings:about.updates.upToDate')
+        break
+      case 'available':
+        statusText = t('settings:about.updates.available', {
+          version: state.availableVersion
+        })
+        break
+      case 'manual':
+        statusText = t('settings:about.updates.manual', {
+          version: state.availableVersion
+        })
+        break
+      case 'downloading':
+        statusText = t('settings:about.updates.downloading', {
+          version: state.availableVersion,
+          percent: Math.round(state.percent)
+        })
+        break
+      case 'ready':
+        statusText = t('settings:about.updates.ready', { version: state.availableVersion })
+        break
+      case 'error':
+        statusText = t(`settings:about.updates.errors.${state.error}`)
+        break
+    }
+  }
+
+  const busy =
+    updateQuery.isPending ||
+    updateAction.isPending ||
+    state?.status === 'checking' ||
+    state?.status === 'downloading'
+  let actionLabel = t('settings:about.updates.check')
+  if (state?.status === 'up-to-date') actionLabel = t('settings:about.updates.checkAgain')
+  if (state?.status === 'available') actionLabel = t('settings:about.updates.download')
+  if (state?.status === 'downloading') {
+    actionLabel = t('settings:about.updates.downloadingButton', {
+      percent: Math.round(state.percent)
+    })
+  }
+  if (state?.status === 'ready') actionLabel = t('settings:about.updates.restartAndInstall')
+  if (state?.status === 'error') {
+    actionLabel = t(
+      state.operation === 'install' && state.availableVersion !== undefined
+        ? 'settings:about.updates.retryInstall'
+        : 'settings:about.updates.retry'
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-3 border-t pt-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h3 className="text-[13px] font-semibold text-ink-strong">
+            {t('settings:about.updates.title')}
+          </h3>
+          <p
+            className="max-w-[65ch] text-[12px] text-ink-muted"
+            role={state?.status === 'downloading' ? undefined : 'status'}
+            aria-live={state?.status === 'downloading' ? undefined : 'polite'}
+          >
+            {statusText}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {state?.status !== 'unsupported' && state?.status !== 'manual' && (
+            <Button
+              variant={state?.status === 'ready' ? 'cta' : 'secondary'}
+              size="sm"
+              loading={busy}
+              onClick={() => updateAction.mutate()}
+            >
+              {!busy && <RefreshCw className="size-3.5" aria-hidden />}
+              {actionLabel}
+            </Button>
+          )}
+          {(state?.status === 'unsupported' ||
+            state?.status === 'manual' ||
+            state?.status === 'error') && (
+            <Button variant="ghost" size="sm" onClick={() => openExternal(RELEASES_URL)}>
+              <ExternalLink className="size-3.5" aria-hidden />
+              {t('settings:about.updates.openReleases')}
+            </Button>
+          )}
+        </div>
+      </div>
+      {state?.status === 'downloading' && (
+        <div className="flex flex-col gap-1.5">
+          <Progress
+            value={state.percent / 100}
+            aria-label={t('settings:about.updates.progressLabel')}
+          />
+          {state.total > 0 && (
+            <span className="nums text-[11.5px] text-ink-faint">
+              {t('settings:about.updates.downloadProgress', {
+                transferred: formatBytes(state.transferred),
+                total: formatBytes(state.total)
+              })}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function AboutSection(): React.JSX.Element {
   const { t } = useTranslation(['settings', 'common'])
   const appInfo = useAppStore((s) => s.appInfo)
@@ -549,9 +702,7 @@ function AboutSection(): React.JSX.Element {
     <SectionShell title={t('settings:about.title')}>
       <div className="flex flex-col gap-2 text-[12.5px]">
         <div className="flex items-center gap-2">
-          <span className="text-[13.5px] font-semibold text-ink-strong">
-            {t('common:appName')}
-          </span>
+          <span className="text-[13.5px] font-semibold text-ink-strong">{t('common:appName')}</span>
           <Badge variant="warning">{t('settings:about.unofficialTitle')}</Badge>
           {appInfo && (
             <span className="nums text-ink-faint">
@@ -573,6 +724,7 @@ function AboutSection(): React.JSX.Element {
           </button>
         </div>
       </div>
+      <UpdatePanel />
     </SectionShell>
   )
 }

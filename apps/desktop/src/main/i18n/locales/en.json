@@ -56,7 +56,12 @@
   },
   "dialogs": {
     "aboutDetail": "An unofficial desktop client for the Hugging Face Hub.\nVersion {{version}}\n\nUNOFFICIAL: this application is not affiliated with, endorsed by, or sponsored by Hugging Face, Inc. \"Hugging Face\" is a trademark of Hugging Face, Inc., used here only to refer to the service this application connects to.\n\nLicensed under Apache-2.0.",
-    "ok": "OK"
+    "ok": "OK",
+    "updateInstallButton": "Restart and Install",
+    "updateInstallCancel": "Cancel",
+    "updateInstallDetail": "The app will close before installing. Make sure any active work is ready to be interrupted.",
+    "updateInstallMessage": "Install version {{version}} now?",
+    "updateInstallTitle": "Install Update"
   },
   "oauth": {
     "successTitle": "Signed in",

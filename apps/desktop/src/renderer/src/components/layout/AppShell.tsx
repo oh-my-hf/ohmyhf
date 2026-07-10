@@ -1,20 +1,26 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster, useToasts } from '@/components/ui/toaster'
 import { CommandPalette } from '@/components/CommandPalette'
 import { ShortcutsHelpDialog } from '@/components/ShortcutsHelpDialog'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { SettingsDialog } from '@/components/settings/SettingsDialog'
 import { useIpcEvent } from '@/hooks/use-ipc-event'
+import { invoke } from '@/lib/ipc'
+import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
 import { isEditableTarget } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
+
+const UPDATE_TOAST_ID = 10_001
 
 export function AppShell(): React.JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation('settings')
   const queryClient = useQueryClient()
   // Keyed by top-level section only: switching sections replays the fade-rise,
   // in-section navigation (e.g. /papers/:id) must not remount the page.
@@ -24,6 +30,14 @@ export function AppShell(): React.JSX.Element {
   const openSettings = useAppStore((s) => s.openSettings)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const setShortcutsOpen = useAppStore((s) => s.setShortcutsOpen)
+  const push = useToasts((s) => s.push)
+  const dismiss = useToasts((s) => s.dismiss)
+  const lastUpdateToast = useRef<string | null>(null)
+  const updateQuery = useQuery({
+    queryKey: APP_UPDATE_QUERY_KEY,
+    queryFn: () => invoke('updater:getState', undefined),
+    staleTime: Infinity
+  })
 
   useIpcEvent(
     'evt:navigate',
@@ -55,6 +69,38 @@ export function AppShell(): React.JSX.Element {
     'evt:inbox',
     useCallback((items) => queryClient.setQueryData(['inbox'], items), [queryClient])
   )
+  useIpcEvent(
+    'evt:updater',
+    useCallback((state) => queryClient.setQueryData(APP_UPDATE_QUERY_KEY, state), [queryClient])
+  )
+
+  useEffect(() => {
+    const state = updateQuery.data
+    if (state?.status !== 'available' && state?.status !== 'manual' && state?.status !== 'ready') {
+      dismiss(UPDATE_TOAST_ID)
+      lastUpdateToast.current = null
+      return
+    }
+
+    const toastKey = `${state.status}:${state.availableVersion}`
+    if (lastUpdateToast.current === toastKey) return
+    lastUpdateToast.current = toastKey
+    const ready = state.status === 'ready'
+    push(
+      t(ready ? 'about.updates.toastReady' : 'about.updates.toastAvailable', {
+        version: state.availableVersion
+      }),
+      ready ? 'success' : 'info',
+      {
+        id: UPDATE_TOAST_ID,
+        duration: ready ? null : 8000,
+        action: {
+          label: t('about.updates.view'),
+          onClick: () => openSettings('about')
+        }
+      }
+    )
+  }, [dismiss, openSettings, push, t, updateQuery.data])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {

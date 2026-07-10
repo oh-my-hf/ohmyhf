@@ -5,7 +5,7 @@
   "description": "Oh My HuggingFace — unofficial desktop client for the Hugging Face Hub",
   "license": "Apache-2.0",
   "author": "Oh My HuggingFace contributors",
-  "homepage": "https://github.com/MoraxCheng/oh-my-huggingface",
+  "homepage": "https://github.com/oh-my-hf/ohmyhf",
   "main": "./out/main/index.mjs",
   "scripts": {
     "dev": "electron-vite dev",

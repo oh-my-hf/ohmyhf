@@ -49,6 +49,7 @@ import type {
   UploadProgress,
   UploadRequest,
   UploadResult,
+  AppUpdateState,
   UserOverview,
   UserSearchResult
 } from './types'
@@ -59,6 +60,11 @@ export interface IpcInvokeContract {
   'system:openExternal': { req: { url: string }; res: void }
   'system:showItemInFolder': { req: { path: string }; res: void }
   'system:pickFolder': { req: void; res: string | null }
+
+  'updater:getState': { req: void; res: AppUpdateState }
+  'updater:check': { req: void; res: AppUpdateState }
+  'updater:download': { req: void; res: AppUpdateState }
+  'updater:install': { req: void; res: void }
 
   'settings:get': { req: void; res: AppSettings }
   'settings:set': { req: { patch: Partial<AppSettings> }; res: AppSettings }
@@ -247,7 +253,13 @@ export interface IpcInvokeContract {
     res: void
   }
   'hub:discussionStatusSet': {
-    req: { kind: RepoKind; repoId: string; num: number; status: 'open' | 'closed'; comment?: string }
+    req: {
+      kind: RepoKind
+      repoId: string
+      num: number
+      status: 'open' | 'closed'
+      comment?: string
+    }
     res: void
   }
   'hub:discussionTitleSet': {
@@ -318,6 +330,7 @@ export interface IpcEventContract {
   'evt:navigate': string
   'evt:upload': UploadProgress
   'evt:inference': InferenceStreamEvent
+  'evt:updater': AppUpdateState
 }
 
 export type IpcEventChannel = keyof IpcEventContract
@@ -328,6 +341,10 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'system:openExternal',
   'system:showItemInFolder',
   'system:pickFolder',
+  'updater:getState',
+  'updater:check',
+  'updater:download',
+  'updater:install',
   'settings:get',
   'settings:set',
   'hub:search',
@@ -429,12 +446,16 @@ export const IPC_EVENT_CHANNELS: readonly IpcEventChannel[] = [
   'evt:inbox',
   'evt:navigate',
   'evt:upload',
-  'evt:inference'
+  'evt:inference',
+  'evt:updater'
 ] as const
 
 /** Shape of the API exposed on `window.omh` by the preload script. */
 export interface RendererApi {
   invoke<C extends IpcInvokeChannel>(channel: C, req: IpcRequest<C>): Promise<IpcResponse<C>>
   /** Subscribe to a push event; returns an unsubscribe function. */
-  on<C extends IpcEventChannel>(channel: C, listener: (payload: IpcEventPayload<C>) => void): () => void
+  on<C extends IpcEventChannel>(
+    channel: C,
+    listener: (payload: IpcEventPayload<C>) => void
+  ): () => void
 }

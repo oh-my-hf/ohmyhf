@@ -56,7 +56,12 @@
   },
   "dialogs": {
     "aboutDetail": "一个非官方的 Hugging Face Hub 桌面客户端。\n版本 {{version}}\n\n非官方声明：本应用与 Hugging Face, Inc. 无任何隶属、背书或赞助关系。“Hugging Face” 是 Hugging Face, Inc. 的商标，此处仅用于指称本应用所连接的服务。\n\n基于 Apache-2.0 许可证发布。",
-    "ok": "好"
+    "ok": "好",
+    "updateInstallButton": "重启并安装",
+    "updateInstallCancel": "取消",
+    "updateInstallDetail": "应用将在安装前关闭，请先确认当前工作可以安全中断。",
+    "updateInstallMessage": "现在安装版本 {{version}} 吗？",
+    "updateInstallTitle": "安装更新"
   },
   "oauth": {
     "successTitle": "登录成功",

@@ -6,7 +6,38 @@
     "privacy": "Privacy: everything stays on your machine. No telemetry, no analytics. Your token is encrypted with your OS keychain and stored locally.",
     "title": "About",
     "unofficialTitle": "UNOFFICIAL",
-    "version": "Version {{version}}"
+    "version": "Version {{version}}",
+    "updates": {
+      "available": "Version {{version}} is available from GitHub Releases.",
+      "check": "Check for updates",
+      "checkAgain": "Check again",
+      "checking": "Checking GitHub Releases for updates…",
+      "description": "Updates are checked against the latest published GitHub Release.",
+      "download": "Download update",
+      "downloadProgress": "{{transferred}} of {{total}}",
+      "downloading": "Downloading version {{version}} — {{percent}}%",
+      "downloadingButton": "Downloading {{percent}}%",
+      "errors": {
+        "configuration": "The GitHub Release update metadata is unavailable.",
+        "network": "Couldn't reach GitHub Releases. Check your connection and try again.",
+        "permission": "The updater doesn't have permission to install this update.",
+        "unknown": "The update couldn't be completed. Try again or install it from GitHub Releases.",
+        "verification": "The update couldn't be verified, so it wasn't installed."
+      },
+      "manual": "Version {{version}} is available. This unsigned build must be updated manually.",
+      "openReleases": "Open GitHub Releases",
+      "progressLabel": "Update download progress",
+      "ready": "Version {{version}} is ready. Restart the app to install it.",
+      "restartAndInstall": "Restart and install",
+      "retry": "Retry",
+      "retryInstall": "Retry installation",
+      "title": "App updates",
+      "toastAvailable": "Version {{version}} is available.",
+      "toastReady": "Version {{version}} is ready to install.",
+      "unsupported": "In-app updates are available only in installed builds.",
+      "upToDate": "You're running the latest version.",
+      "view": "View"
+    }
   },
   "account": {
     "billing": {

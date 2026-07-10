@@ -1,16 +1,23 @@
+import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
-interface ProgressProps {
+interface ProgressProps extends Omit<ComponentProps<'div'>, 'children'> {
   /** 0..1 */
   value: number
   className?: string
   indeterminate?: boolean
 }
 
-export function Progress({ value, className, indeterminate }: ProgressProps): React.JSX.Element {
+export function Progress({
+  value,
+  className,
+  indeterminate,
+  ...props
+}: ProgressProps): React.JSX.Element {
   const pct = Math.max(0, Math.min(1, value)) * 100
   return (
     <div
+      {...props}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}

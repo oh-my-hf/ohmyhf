@@ -6,7 +6,38 @@
     "privacy": "隐私：一切数据都保存在你的设备上。无遥测、无分析统计。访问令牌经操作系统钥匙串加密后仅存储在本地。",
     "title": "关于",
     "unofficialTitle": "非官方声明",
-    "version": "版本 {{version}}"
+    "version": "版本 {{version}}",
+    "updates": {
+      "available": "GitHub Releases 上有新版本 {{version}}。",
+      "check": "检查更新",
+      "checkAgain": "再次检查",
+      "checking": "正在检查 GitHub Releases…",
+      "description": "应用会与 GitHub Releases 上最新发布的版本进行比较。",
+      "download": "下载更新",
+      "downloadProgress": "已下载 {{transferred}}，共 {{total}}",
+      "downloading": "正在下载版本 {{version}} — {{percent}}%",
+      "downloadingButton": "正在下载 {{percent}}%",
+      "errors": {
+        "configuration": "GitHub Release 更新清单暂不可用。",
+        "network": "无法连接 GitHub Releases，请检查网络后重试。",
+        "permission": "更新程序没有安装此更新所需的权限。",
+        "unknown": "无法完成更新，请重试或前往 GitHub Releases 手动安装。",
+        "verification": "更新未通过安全校验，因此没有安装。"
+      },
+      "manual": "版本 {{version}} 已发布。当前构建未签名，需要手动安装。",
+      "openReleases": "打开 GitHub Releases",
+      "progressLabel": "更新下载进度",
+      "ready": "版本 {{version}} 已准备就绪，重启应用即可安装。",
+      "restartAndInstall": "重启并安装",
+      "retry": "重试",
+      "retryInstall": "重试安装",
+      "title": "应用更新",
+      "toastAvailable": "发现新版本 {{version}}。",
+      "toastReady": "版本 {{version}} 已准备好安装。",
+      "unsupported": "应用内更新仅在已安装的正式构建中可用。",
+      "upToDate": "当前已是最新版本。",
+      "view": "查看"
+    }
   },
   "account": {
     "billing": {

@@ -30,9 +30,11 @@ services beyond the Hugging Face API itself. Your access token is encrypted with
   with one click.
 - **Follow & inbox** — follow users/orgs/repos and Daily Papers; get system notifications.
 - **Compare** — 2–4 models side by side (params, license, downloads, likes).
-- **Export** *(in progress)* — push GGUFs to Ollama / LM Studio, models to ComfyUI.
+- **Export** _(in progress)_ — push GGUFs to Ollama / LM Studio, models to ComfyUI.
 - **i18n** — English and 简体中文 built in; adding a language is a single JSON folder.
 - **Dark & light themes**, native menus, and OS conventions on every platform.
+- **In-app updates** — installed builds compare their version with the latest published GitHub
+  Release, then download and restart-install only after explicit confirmation.
 
 ## Install
 
@@ -53,6 +55,10 @@ xattr -dr com.apple.quarantine "/Applications/Oh My HuggingFace.app"
 ```
 
 or right-click the app → **Open** → **Open** on first launch.
+
+The app can discover new GitHub Releases from **Settings → About**. macOS requires a signed and
+notarized release for automatic installation; while releases remain unsigned, use the GitHub
+Releases link in the updater as the fallback.
 
 ## Development
 
@@ -106,13 +112,13 @@ features until then).
   copied ID cannot be rebranded. This is why obscuring the ID is pointless and a tight allowlist
   is not.
 - **One residual risk is inherent and cannot be closed client-side.** Because the redirect is a
-  loopback URI (RFC 8252), any *other* app already running on the same machine can reuse the
+  loopback URI (RFC 8252), any _other_ app already running on the same machine can reuse the
   public ID, bind its own server to `127.0.0.1:51789`, and open the authorize URL — the user
   then sees the legitimate "Oh My HuggingFace" consent screen and may hand a token to the
   impostor. PKCE does not help (the impostor mints its own verifier). No pinning, obfuscation, or
   allowlist prevents this local-impersonation case; it is the accepted trade-off of a public
   native OAuth client, and the real defense is the user not running untrusted software. The
-  allowlist prevents *remote* exfiltration, not *local* reuse.
+  allowlist prevents _remote_ exfiltration, not _local_ reuse.
 - **No network calls forward the token cross-host**: the `Authorization` header is only sent to
   `huggingface.co` API hosts, never to the CDN/`resolve` redirect targets.
 
