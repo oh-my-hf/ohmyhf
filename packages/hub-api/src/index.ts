@@ -13,6 +13,7 @@ export {
   mapDiscussionDetail,
   mapUserOverview,
   mapWhoAmI,
+  mapHubOrgPlan,
   mapCollectionSummary,
   mapCollectionDetail,
   mapNotification,

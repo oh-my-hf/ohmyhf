@@ -78,7 +78,12 @@ describe('HubClient.getUserOverview', () => {
         numFollowing: 42,
         numLikes: 7,
         orgs: [
-          { name: 'huggingface', fullname: 'Hugging Face', avatarUrl: '/avatars/org.svg' },
+          {
+            name: 'huggingface',
+            fullname: 'Hugging Face',
+            avatarUrl: '/avatars/org.svg',
+            plan: 'team'
+          },
           {
             user: 'hf-internal-testing',
             fullname: 'HF Internal Testing',
@@ -109,7 +114,8 @@ describe('HubClient.getUserOverview', () => {
         {
           name: 'huggingface',
           fullname: 'Hugging Face',
-          avatarUrl: 'https://huggingface.co/avatars/org.svg'
+          avatarUrl: 'https://huggingface.co/avatars/org.svg',
+          plan: 'team'
         },
         {
           name: 'hf-internal-testing',
@@ -167,6 +173,19 @@ describe('mapUserOverview', () => {
       numModels: 0,
       numFollowers: 0,
       orgs: []
+    })
+  })
+
+  it('normalizes known org plans and drops unknown ones', () => {
+    expect(
+      mapUserOverview(
+        { name: 'acme', plan: 'ENTERPRISE', orgs: [{ name: 'x', plan: 'nope' }] },
+        'https://huggingface.co',
+        true
+      )
+    ).toMatchObject({
+      plan: 'enterprise',
+      orgs: [{ name: 'x', plan: undefined }]
     })
   })
 })
@@ -231,6 +250,29 @@ describe('HubClient.getUserOverview org fallback', () => {
     expect(overview.numFollowers).toBe(10)
     expect(overview.numUsers).toBe(5)
     expect(fetchImpl.mock.calls[1]![0]).toContain('/api/organizations/HackerNoon/overview')
+  })
+
+  it('maps org plan tiers from the overview payload', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('nope', { status: 404 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          name: 'openai',
+          fullname: 'OpenAI',
+          plan: 'plus',
+          numModels: 1,
+          numFollowers: 2,
+          numUsers: 3
+        })
+      )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0, maxRetries: 0 })
+    const overview = await client.getUserOverview('openai')
+    expect(overview).toMatchObject({
+      name: 'openai',
+      isOrg: true,
+      plan: 'plus'
+    })
   })
 })
 

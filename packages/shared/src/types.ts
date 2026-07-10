@@ -93,10 +93,18 @@ export interface Page<T> {
   nextCursor?: string
 }
 
+/**
+ * Paid org plan from Hub overview / whoami (`plan` field).
+ * `plus` is Enterprise Plus; `academia` is the academic org tier.
+ */
+export type HubOrgPlan = 'team' | 'enterprise' | 'plus' | 'academia'
+
 export interface OrgSummary {
   name: string
   fullname?: string
   avatarUrl?: string
+  /** Present when the Hub payload includes a paid org plan. */
+  plan?: HubOrgPlan
 }
 
 export interface UserProfile {
@@ -300,7 +308,10 @@ export interface UserOverview {
   fullname?: string
   avatarUrl?: string
   bio?: string
+  /** Personal PRO subscription (users only). */
   isPro?: boolean
+  /** Org plan when this overview is an organization (`team` / `enterprise` / `plus` / …). */
+  plan?: HubOrgPlan
   numModels: number
   numDatasets: number
   numSpaces: number

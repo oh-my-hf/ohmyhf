@@ -27,6 +27,7 @@ import { cn, formatBytes, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { PlanBadge } from '@/components/profile/PlanBadge'
 import {
   Select,
   SelectContent,
@@ -172,15 +173,16 @@ function AccountSection(): React.JSX.Element {
                 <span className="truncate text-[13.5px] font-medium text-ink-strong">
                   {auth.user.fullname ?? auth.user.name}
                 </span>
-                {auth.user.isPro && <Badge variant="brand">{t('auth:pro')}</Badge>}
+                {auth.user.isPro && <PlanBadge kind="pro" />}
               </div>
               <div className="truncate text-[12px] text-ink-muted">@{auth.user.name}</div>
               {auth.user.orgs.length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   {auth.user.orgs.map((org) => (
-                    <Badge key={org.name} variant="outline">
-                      {org.name}
-                    </Badge>
+                    <span key={org.name} className="inline-flex items-center gap-1">
+                      <Badge variant="outline">{org.name}</Badge>
+                      {org.plan && <PlanBadge kind={org.plan} />}
+                    </span>
                   ))}
                 </div>
               )}

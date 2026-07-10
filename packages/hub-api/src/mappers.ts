@@ -12,6 +12,7 @@ import type {
   DiscussionSummary,
   FileTreeEntry,
   HubNotification,
+  HubOrgPlan,
   MyRepoEntry,
   NotificationsPage,
   PaperSummary,
@@ -279,6 +280,8 @@ interface RawUserOverview {
   fullname?: string
   avatarUrl?: string
   isPro?: boolean
+  /** Org paid plan (`team` / `enterprise` / `plus` / `academia`). */
+  plan?: string
   /** Free-form bio text. */
   details?: string
   numModels?: number
@@ -291,8 +294,23 @@ interface RawUserOverview {
   numUsers?: number
   numLikes?: number
   /** Org handle arrives under `name` or `user` depending on the payload. */
-  orgs?: Array<{ name?: string; user?: string; fullname?: string; avatarUrl?: string }>
+  orgs?: Array<{
+    name?: string
+    user?: string
+    fullname?: string
+    avatarUrl?: string
+    plan?: string
+  }>
   createdAt?: string
+}
+
+const HUB_ORG_PLANS = new Set(['team', 'enterprise', 'plus', 'academia'])
+
+/** Normalize Hub `plan` strings; unknown values are dropped. */
+export function mapHubOrgPlan(raw: string | undefined): HubOrgPlan | undefined {
+  if (raw === undefined || raw === '') return undefined
+  const plan = raw.toLowerCase()
+  return HUB_ORG_PLANS.has(plan) ? (plan as HubOrgPlan) : undefined
 }
 
 export function mapUserOverview(
@@ -309,6 +327,7 @@ export function mapUserOverview(
     avatarUrl: absolutize(raw.avatarUrl),
     bio: raw.details,
     isPro: raw.isPro,
+    plan: mapHubOrgPlan(raw.plan),
     numModels: raw.numModels ?? 0,
     numDatasets: raw.numDatasets ?? 0,
     numSpaces: raw.numSpaces ?? 0,
@@ -320,7 +339,8 @@ export function mapUserOverview(
     orgs: (raw.orgs ?? []).map((o) => ({
       name: o.name ?? o.user ?? '',
       fullname: o.fullname,
-      avatarUrl: absolutize(o.avatarUrl)
+      avatarUrl: absolutize(o.avatarUrl),
+      plan: mapHubOrgPlan(o.plan)
     })),
     createdAt: raw.createdAt,
     isFollowing: raw.isFollowing,
@@ -334,7 +354,7 @@ interface RawWhoAmI {
   email?: string
   avatarUrl?: string
   isPro?: boolean
-  orgs?: Array<{ name?: string; fullname?: string; avatarUrl?: string }>
+  orgs?: Array<{ name?: string; fullname?: string; avatarUrl?: string; plan?: string }>
 }
 
 export function mapWhoAmI(raw: RawWhoAmI): UserProfile {
@@ -347,7 +367,8 @@ export function mapWhoAmI(raw: RawWhoAmI): UserProfile {
     orgs: (raw.orgs ?? []).map((o) => ({
       name: o.name ?? '',
       fullname: o.fullname,
-      avatarUrl: o.avatarUrl
+      avatarUrl: o.avatarUrl,
+      plan: mapHubOrgPlan(o.plan)
     }))
   }
 }

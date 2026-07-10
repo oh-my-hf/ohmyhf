@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToasts } from '@/components/ui/toaster'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
+import { PlanBadge, planBadgeKind } from '@/components/profile/PlanBadge'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
@@ -264,6 +265,9 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
     : []
 
   const memberAccounts: FollowedAccount[] = members.data ?? []
+  const badgeKind = data
+    ? planBadgeKind({ isPro: data.isPro, plan: data.plan, isOrg })
+    : undefined
 
   return (
     <div className="h-full overflow-y-auto">
@@ -316,11 +320,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                       {t('profile:orgBadge')}
                     </Badge>
                   )}
-                  {data.isPro === true && (
-                    <span className="rounded-full bg-brand px-1.5 text-[10px] font-semibold text-brand-ink">
-                      {t('auth:pro')}
-                    </span>
-                  )}
+                  {badgeKind && <PlanBadge kind={badgeKind} />}
                 </div>
                 {data.bio !== undefined && data.bio !== '' && (
                   <p className="max-w-prose text-[13px] leading-relaxed text-ink-muted">
