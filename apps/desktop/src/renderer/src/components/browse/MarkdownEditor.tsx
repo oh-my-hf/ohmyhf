@@ -182,7 +182,9 @@ export function MarkdownEditor({
   const mentionMeta = useRef<Map<string, MentionInfo>>(new Map())
   // Latest value for the callback ref — remount sync must not close over a stale prop.
   const valueRef = useRef(value)
-  valueRef.current = value
+  useEffect(() => {
+    valueRef.current = value
+  }, [value])
 
   const mentionQuery = useDebounced(mention?.query ?? '', 200)
   const userSearch = useQuery({
