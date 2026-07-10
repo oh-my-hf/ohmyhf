@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { Globe, RotateCcw, Wifi } from 'lucide-react'
@@ -10,6 +10,7 @@ import { useAppStore } from '@/stores/app'
 
 /** Mirrors hub-api DEFAULT_ENDPOINT; do not import hub-api in the renderer (Node-only deps). */
 const DEFAULT_HUB_ENDPOINT = 'https://huggingface.co'
+const DEFAULT_PROXY_PLACEHOLDER = 'http://127.0.0.1:7890'
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -38,11 +39,18 @@ export function NetworkSection(): React.JSX.Element {
   const [proxyDraft, setProxyDraft] = useState(settings.proxyUrl ?? '')
   const [endpointError, setEndpointError] = useState(false)
   const [proxyError, setProxyError] = useState(false)
+  const [syncedEndpoint, setSyncedEndpoint] = useState(settings.hubEndpoint)
+  const [syncedProxy, setSyncedProxy] = useState(settings.proxyUrl)
 
-  useEffect(() => {
+  // Reset drafts when store values change externally (e.g. reset / apply from elsewhere).
+  if (settings.hubEndpoint !== syncedEndpoint) {
+    setSyncedEndpoint(settings.hubEndpoint)
     setEndpointDraft(settings.hubEndpoint ?? '')
+  }
+  if (settings.proxyUrl !== syncedProxy) {
+    setSyncedProxy(settings.proxyUrl)
     setProxyDraft(settings.proxyUrl ?? '')
-  }, [settings.hubEndpoint, settings.proxyUrl])
+  }
 
   const apply = useMutation({
     mutationFn: async () => {
@@ -120,7 +128,7 @@ export function NetworkSection(): React.JSX.Element {
           </span>
           <Input
             value={proxyDraft}
-            placeholder="http://127.0.0.1:7890"
+            placeholder={DEFAULT_PROXY_PLACEHOLDER}
             spellCheck={false}
             aria-invalid={proxyError}
             onChange={(e) => {

@@ -2,7 +2,8 @@
  * System tray: Show / Quit. Created when close-to-tray is enabled (or on first hide).
  */
 import { join } from 'node:path'
-import { BrowserWindow, Menu, Tray, app, nativeImage } from 'electron'
+import { Menu, Tray, nativeImage } from 'electron'
+import type { BrowserWindow } from 'electron'
 import type { MainI18n } from './i18n'
 
 function trayIconPath(): string {
