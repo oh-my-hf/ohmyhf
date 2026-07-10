@@ -110,7 +110,7 @@ Active download workers should be cancelled/stopped before wiping the `downloads
 }
 ```
 
-Zod: `{ signOut: z.boolean().optional() }` (or empty object / undefined payload with optional field).
+Zod request schema: `z.object({ signOut: z.boolean().optional() })`. Callers may pass `{}`.
 
 Implementation lives in main (dedicated helper or library method), registered in `apps/desktop/src/main/ipc.ts`.
 
