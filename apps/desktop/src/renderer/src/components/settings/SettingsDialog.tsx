@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Shield,
   UserCircle2,
+  Wifi,
   X
 } from 'lucide-react'
 import type { AppUpdateState, Locale } from '@oh-my-huggingface/shared'
@@ -40,6 +41,7 @@ import type { SettingsSection } from '@/stores/app'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
 import { PrivacySection } from '@/components/settings/PrivacySection'
+import { NetworkSection } from '@/components/settings/NetworkSection'
 
 const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
 const RELEASES_URL = `${REPO_URL}/releases`
@@ -76,6 +78,10 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'downloads', labelKey: 'settings:downloads.title', icon: ArrowDownToLine },
       { id: 'notifications', labelKey: 'settings:notifications.title', icon: Bell }
     ]
+  },
+  {
+    labelKey: 'settings:groups.connection',
+    items: [{ id: 'network', labelKey: 'settings:network.title', icon: Wifi }]
   },
   {
     labelKey: 'settings:groups.data',
@@ -740,6 +746,7 @@ const SECTION_CONTENT: Record<SettingsSection, () => React.JSX.Element> = {
   appearance: AppearanceSection,
   downloads: DownloadsSection,
   notifications: NotificationsSection,
+  network: NetworkSection,
   privacy: PrivacySection,
   about: AboutSection
 }

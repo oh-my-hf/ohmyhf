@@ -71,7 +71,9 @@ const settingsPatch = z
     hfCacheDir: z.string().max(1024).nullable(),
     notificationsEnabled: z.boolean(),
     pollIntervalMinutes: z.number().int().min(5).max(24 * 60),
-    uiScale: z.number().int().min(80).max(140)
+    uiScale: z.number().int().min(80).max(140),
+    hubEndpoint: z.union([z.url({ protocol: /^https?$/ }), z.null()]),
+    proxyUrl: z.union([z.url({ protocol: /^https?$/ }), z.null()])
   })
   .partial()
 

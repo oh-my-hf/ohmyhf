@@ -76,6 +76,12 @@ export interface IpcInvokeContract {
     res: { cleared: true; signedOut: boolean }
   }
 
+  /** Lightweight Hub reachability check using the current endpoint/proxy. */
+  'network:testConnection': {
+    req: void
+    res: { ok: true } | { ok: false; error: string }
+  }
+
   'hub:search': { req: { query: SearchQuery }; res: Page<RepoSummary> }
   'hub:papers': { req: { cursor?: string }; res: Page<PaperSummary> }
   /** Single paper lookup for deep links outside the daily feed. */
@@ -358,6 +364,7 @@ export const IPC_INVOKE_CHANNELS = [
   'settings:get',
   'settings:set',
   'privacy:clearLocalData',
+  'network:testConnection',
   'hub:search',
   'hub:papers',
   'hub:paper',

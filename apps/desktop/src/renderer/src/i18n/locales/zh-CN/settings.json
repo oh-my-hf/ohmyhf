@@ -91,8 +91,25 @@
   "groups": {
     "about": "关于",
     "account": "账号",
+    "connection": "连接",
     "data": "数据",
     "interface": "界面"
+  },
+  "network": {
+    "apply": "应用",
+    "description": "可覆盖 Hub API 地址，并可选通过 HTTP(S) 代理访问。留空则使用默认值。",
+    "downloadWarning": "进行中的下载可能仍使用旧的 endpoint 或代理，建议暂停后重新开始。",
+    "hubEndpoint": "Hub 地址",
+    "invalidUrl": "请输入有效的 http:// 或 https:// URL，或留空。",
+    "proxyUrl": "HTTP(S) 代理",
+    "reset": "恢复默认",
+    "resetEndpoint": "已恢复默认 Hub 地址。",
+    "resetProxy": "已清除代理。",
+    "saved": "网络设置已保存。",
+    "test": "测试连接",
+    "testFail": "连接失败：{{error}}",
+    "testOk": "已成功连接到 Hub。",
+    "title": "网络"
   },
   "notifications": {
     "enabled": "系统通知",

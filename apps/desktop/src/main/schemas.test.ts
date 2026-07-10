@@ -48,4 +48,20 @@ describe('ipcRequestSchemas', () => {
     expect(schema.safeParse({ signOut: true }).success).toBe(true)
     expect(schema.safeParse({ signOut: 'yes' }).success).toBe(false)
   })
+
+  it('accepts hubEndpoint and proxyUrl http(s) URLs or null', () => {
+    const schema = ipcRequestSchemas['settings:set']!
+    expect(
+      schema.safeParse({ patch: { hubEndpoint: 'https://hf-mirror.com' } }).success
+    ).toBe(true)
+    expect(schema.safeParse({ patch: { hubEndpoint: null } }).success).toBe(true)
+    expect(schema.safeParse({ patch: { proxyUrl: 'http://127.0.0.1:7890' } }).success).toBe(
+      true
+    )
+    expect(schema.safeParse({ patch: { proxyUrl: null } }).success).toBe(true)
+    expect(schema.safeParse({ patch: { hubEndpoint: 'ftp://bad.example' } }).success).toBe(
+      false
+    )
+    expect(schema.safeParse({ patch: { proxyUrl: 'not-a-url' } }).success).toBe(false)
+  })
 })

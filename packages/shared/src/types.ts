@@ -366,6 +366,10 @@ export interface AppSettings {
   pollIntervalMinutes: number
   /** UI zoom percentage (100 = default). */
   uiScale: number
+  /** null = https://huggingface.co */
+  hubEndpoint: string | null
+  /** null = no app-level HTTP(S) proxy override */
+  proxyUrl: string | null
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -376,7 +380,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hfCacheDir: null,
   notificationsEnabled: true,
   pollIntervalMinutes: 30,
-  uiScale: 100
+  uiScale: 100,
+  hubEndpoint: null,
+  proxyUrl: null
 }
 
 /** Subset of process.platform values the app runs on (kept Node-types-free for the renderer). */

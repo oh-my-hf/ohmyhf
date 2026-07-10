@@ -48,6 +48,10 @@ export interface AppContext {
   i18n: MainI18n
   rebuildMenu: () => void
   broadcast: <C extends IpcEventChannel>(channel: C, payload: IpcEventPayload<C>) => void
+  applyNetworkSettings: (
+    next: { hubEndpoint: string | null; proxyUrl: string | null },
+    prev: { hubEndpoint: string | null; proxyUrl: string | null }
+  ) => Promise<void>
 }
 
 function handle<C extends IpcInvokeChannel>(
@@ -123,13 +127,18 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- settings ---------------------------------------------------------------
   handle('settings:get', () => ctx.settings.get())
-  handle('settings:set', ({ patch }) => {
+  handle('settings:set', async ({ patch }) => {
+    const prev = ctx.settings.get()
     const next = ctx.settings.set(patch)
     const locale = next.locale === 'system' ? matchLocale(app.getLocale()) : next.locale
     if (SUPPORTED_LOCALES.includes(locale) && locale !== ctx.i18n.getLocale()) {
       ctx.i18n.setLocale(locale)
       ctx.rebuildMenu()
     }
+    await ctx.applyNetworkSettings(
+      { hubEndpoint: next.hubEndpoint, proxyUrl: next.proxyUrl },
+      { hubEndpoint: prev.hubEndpoint, proxyUrl: prev.proxyUrl }
+    )
     return next
   })
 
@@ -141,6 +150,18 @@ export function registerIpcHandlers(ctx: AppContext): void {
       await ctx.auth.signOut()
     }
     return { cleared: true as const, signedOut: signOut }
+  })
+
+  handle('network:testConnection', async () => {
+    try {
+      await ctx.hub.searchRepos({ kind: 'model', sort: 'trending', limit: 1 })
+      return { ok: true as const }
+    } catch (err) {
+      return {
+        ok: false as const,
+        error: err instanceof Error ? err.message : String(err)
+      }
+    }
   })
 
   // --- hub --------------------------------------------------------------------

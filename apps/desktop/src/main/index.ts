@@ -6,11 +6,12 @@ import { CacheManager } from './cache'
 import { openDatabase } from './db'
 import { DownloadManager } from './downloads'
 import { FollowsPoller } from './follows'
-import { createHubClient } from './hub'
+import { createHubClient, createHubProxy, rebuildHubClient, type HubHolder } from './hub'
 import { MainI18n, matchLocale } from './i18n'
 import { registerIpcHandlers } from './ipc'
 import { Library } from './library'
 import { buildMenu } from './menu'
+import { applyAppProxy } from './proxy'
 import { SettingsStore } from './settings'
 import { resolveUpdateClient, UpdateManager } from './updater'
 
@@ -120,8 +121,16 @@ if (!gotLock) {
     i18n.setLocale(configuredLocale === 'system' ? matchLocale(app.getLocale()) : configuredLocale)
 
     const auth = new AuthManager(db, i18n, (state) => broadcast('evt:auth', state))
-    const hub = createHubClient(() => auth.accessToken())
-    auth.attachClient(hub)
+    const initial = settings.get()
+    const hubHolder: HubHolder = {
+      current: createHubClient(() => auth.accessToken(), {
+        endpoint: initial.hubEndpoint,
+        proxyUrl: initial.proxyUrl
+      })
+    }
+    const hub = createHubProxy(hubHolder)
+    auth.attachClient(hubHolder.current)
+    await applyAppProxy(initial.proxyUrl)
 
     const library = new Library(db)
     const cache = new CacheManager(settings)
@@ -154,6 +163,24 @@ if (!gotLock) {
     })
 
     const rebuildMenu = (): void => buildMenu(i18n, navigate)
+
+    const applyNetworkSettings = async (
+      next: { hubEndpoint: string | null; proxyUrl: string | null },
+      prev: { hubEndpoint: string | null; proxyUrl: string | null }
+    ): Promise<void> => {
+      const endpointChanged = next.hubEndpoint !== prev.hubEndpoint
+      const proxyChanged = next.proxyUrl !== prev.proxyUrl
+      if (!endpointChanged && !proxyChanged) return
+      if (proxyChanged) await applyAppProxy(next.proxyUrl)
+      if (endpointChanged || proxyChanged) {
+        rebuildHubClient(hubHolder, () => auth.accessToken(), {
+          endpoint: next.hubEndpoint,
+          proxyUrl: next.proxyUrl
+        })
+        auth.attachClient(hubHolder.current)
+      }
+    }
+
     registerIpcHandlers({
       db,
       hub,
@@ -166,7 +193,8 @@ if (!gotLock) {
       updater,
       i18n,
       rebuildMenu,
-      broadcast
+      broadcast,
+      applyNetworkSettings
     })
     rebuildMenu()
     const windowBackground = (): string => {

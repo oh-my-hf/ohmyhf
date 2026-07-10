@@ -24,6 +24,7 @@ import {
 } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { parentPort, workerData } from 'node:worker_threads'
+import { ProxyAgent, fetch as undiciFetch } from 'undici'
 
 export interface DownloadJob {
   /** resolve URL, e.g. https://huggingface.co/org/name/resolve/main/file.bin */
@@ -36,10 +37,22 @@ export interface DownloadJob {
   authToken?: string
   speedLimitBps?: number | null
   userAgent: string
+  /** App-level HTTP(S) proxy; null/undefined = direct Node fetch. */
+  proxyUrl?: string | null
 }
 
 const job = workerData as DownloadJob
 const port = parentPort!
+
+const proxyAgent = job.proxyUrl ? new ProxyAgent(job.proxyUrl) : null
+
+function httpFetch(input: string, init?: RequestInit): Promise<Response> {
+  if (!proxyAgent) return fetch(input, init)
+  return undiciFetch(input, {
+    ...(init as object),
+    dispatcher: proxyAgent
+  }) as unknown as Promise<Response>
+}
 
 let aborted = false
 let abortController = new AbortController()
@@ -78,7 +91,7 @@ interface FileMetadata {
  * (mirrors huggingface_hub's hf_hub_download).
  */
 async function fetchMetadata(): Promise<FileMetadata> {
-  const res = await fetch(job.url, {
+  const res = await httpFetch(job.url, {
     method: 'HEAD',
     headers: requestHeaders(job.url),
     redirect: 'manual',
@@ -101,7 +114,7 @@ async function fetchMetadata(): Promise<FileMetadata> {
   let size = Number(res.headers.get('x-linked-size') ?? Number.NaN)
   if (!Number.isFinite(size)) {
     if (res.status >= 300 && location) {
-      const head = await fetch(downloadUrl, {
+      const head = await httpFetch(downloadUrl, {
         method: 'HEAD',
         headers: requestHeaders(downloadUrl),
         signal: abortController.signal
@@ -177,7 +190,7 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
     if (aborted) throw new Error('aborted')
     const headers: Record<string, string> = requestHeaders(meta.downloadUrl)
     if (offset > 0) headers.Range = `bytes=${offset}-`
-    const res = await fetch(meta.downloadUrl, { headers, signal: abortController.signal })
+    const res = await httpFetch(meta.downloadUrl, { headers, signal: abortController.signal })
     if (res.status === 200 && offset > 0) {
       // Server ignored the Range; start over.
       rmSync(incomplete, { force: true })

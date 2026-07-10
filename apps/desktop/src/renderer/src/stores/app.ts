@@ -38,6 +38,7 @@ export type SettingsSection =
   | 'downloads'
   | 'notifications'
   | 'privacy'
+  | 'network'
   | 'about'
 
 interface AppState {
