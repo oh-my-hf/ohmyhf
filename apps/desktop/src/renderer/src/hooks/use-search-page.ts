@@ -60,6 +60,8 @@ export function useSearchPage(query: string, type: SearchPageType): SearchPageRe
   const isRepoType = type === 'model' || type === 'dataset' || type === 'space'
   const allMode = type === 'all'
 
+  // Full list for a single repo tab (paginated). Sidebar counts always use the
+  // preview queries below so every type keeps a number when switching tabs.
   const repoInfinite = useInfiniteQuery({
     queryKey: ['searchPage', 'repo', type, q],
     queryFn: ({ pageParam }) =>
@@ -81,64 +83,64 @@ export function useSearchPage(query: string, type: SearchPageType): SearchPageRe
   const [models, datasets, spaces, users, orgs, papers, collections] = useQueries({
     queries: [
       {
-        queryKey: ['searchPage', 'all', 'model', q],
+        queryKey: ['searchPage', 'preview', 'model', q],
         queryFn: () =>
           invoke('hub:search', {
             query: { kind: 'model', search: q, sort: 'trending' as const, limit: ALL_LIMIT }
           }),
         staleTime: STALE_TIME,
-        enabled: enabled && allMode
+        enabled
       },
       {
-        queryKey: ['searchPage', 'all', 'dataset', q],
+        queryKey: ['searchPage', 'preview', 'dataset', q],
         queryFn: () =>
           invoke('hub:search', {
             query: { kind: 'dataset', search: q, sort: 'trending' as const, limit: ALL_LIMIT }
           }),
         staleTime: STALE_TIME,
-        enabled: enabled && allMode
+        enabled
       },
       {
-        queryKey: ['searchPage', 'all', 'space', q],
+        queryKey: ['searchPage', 'preview', 'space', q],
         queryFn: () =>
           invoke('hub:search', {
             query: { kind: 'space', search: q, sort: 'trending' as const, limit: ALL_LIMIT }
           }),
         staleTime: STALE_TIME,
-        enabled: enabled && allMode
+        enabled
       },
       {
         queryKey: ['searchPage', 'user', q],
         queryFn: () => invoke('hub:searchUsers', { query: q }),
         staleTime: STALE_TIME,
-        enabled: enabled && (allMode || type === 'user')
+        enabled
       },
       {
         queryKey: ['searchPage', 'org', q],
         queryFn: () => invoke('hub:searchOrgs', { query: q }),
         staleTime: STALE_TIME,
-        enabled: enabled && (allMode || type === 'org')
+        enabled
       },
       {
         queryKey: ['searchPage', 'paper', q],
         queryFn: () => invoke('hub:searchPapers', { query: q }),
         staleTime: STALE_TIME,
-        enabled: enabled && (allMode || type === 'paper')
+        enabled
       },
       {
         queryKey: ['searchPage', 'collection', q],
         queryFn: () => invoke('hub:searchCollections', { query: q }),
         staleTime: STALE_TIME,
-        enabled: enabled && (allMode || type === 'collection')
+        enabled
       }
     ]
   })
 
   const buckets: SearchPageBuckets = enabled
     ? {
-        models: allMode ? (models.data?.items ?? []) : [],
-        datasets: allMode ? (datasets.data?.items ?? []) : [],
-        spaces: allMode ? (spaces.data?.items ?? []) : [],
+        models: models.data?.items ?? [],
+        datasets: datasets.data?.items ?? [],
+        spaces: spaces.data?.items ?? [],
         users: users.data ?? [],
         orgs: orgs.data ?? [],
         papers: papers.data ?? [],
@@ -146,23 +148,22 @@ export function useSearchPage(query: string, type: SearchPageType): SearchPageRe
       }
     : EMPTY
 
-  const loadingQueries = allMode
-    ? [models, datasets, spaces, users, orgs, papers, collections]
+  // Content loading only — don't block the page on sidebar preview fetches.
+  const contentLoading = allMode
+    ? [models, datasets, spaces, users, orgs, papers, collections].some((r) => r.isLoading)
     : isRepoType
-      ? [repoInfinite]
+      ? repoInfinite.isLoading
       : type === 'user'
-        ? [users]
+        ? users.isLoading
         : type === 'org'
-          ? [orgs]
+          ? orgs.isLoading
           : type === 'paper'
-            ? [papers]
-            : [collections]
+            ? papers.isLoading
+            : collections.isLoading
 
   return {
     buckets,
-    isLoading:
-      trimmed !== '' &&
-      (trimmed !== q || loadingQueries.some((result) => result.isLoading)),
+    isLoading: trimmed !== '' && (trimmed !== q || contentLoading),
     repoItems: repoInfinite.data?.pages.flatMap((page) => page.items) ?? [],
     repoHasMore: Boolean(repoInfinite.hasNextPage),
     repoFetchMore: () => {

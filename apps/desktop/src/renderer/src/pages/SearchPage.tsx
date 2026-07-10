@@ -274,28 +274,26 @@ export function SearchPage(): React.JSX.Element {
   const activeType: SearchPageType = isSearchPageType(rawType) ? rawType : 'all'
   const search = useSearchPage(trimmedQuery, activeType)
 
+  // Always show every type's count from preview buckets so switching tabs
+  // doesn't blank the other numbers. Active repo tab may show more once paginated.
   const counts = useMemo(() => {
-    if (trimmedQuery === '' || search.isLoading) return new Map<SearchPageType, number>()
+    if (trimmedQuery === '') return new Map<SearchPageType, number>()
 
     const next = new Map<SearchPageType, number>()
-    if (activeType === 'all') {
-      for (const section of ALL_SECTIONS) {
-        next.set(section.type, bucketCount(search.buckets, section.bucket))
+    for (const section of ALL_SECTIONS) {
+      let n = bucketCount(search.buckets, section.bucket)
+      if (isRepoType(section.type) && activeType === section.type) {
+        n = Math.max(n, search.repoItems.length)
       }
-      next.set(
-        'all',
-        ALL_SECTIONS.reduce((sum, section) => sum + bucketCount(search.buckets, section.bucket), 0)
-      )
-      return next
+      if (n > 0) next.set(section.type, n)
     }
-
-    if (isRepoType(activeType)) {
-      next.set(activeType, search.repoItems.length)
-    } else {
-      next.set(activeType, bucketCount(search.buckets, TYPE_BUCKET[activeType]))
-    }
+    const allTotal = ALL_SECTIONS.reduce(
+      (sum, section) => sum + (next.get(section.type) ?? 0),
+      0
+    )
+    if (allTotal > 0) next.set('all', allTotal)
     return next
-  }, [activeType, search.buckets, search.isLoading, search.repoItems.length, trimmedQuery])
+  }, [activeType, search.buckets, search.repoItems.length, trimmedQuery])
 
   const setType = (nextType: SearchPageType): void => {
     const next = new URLSearchParams(searchParams)
