@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, FileWarning, MessageSquare } from 'lucide-react'
-import type { PostReaction, PostSummary } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -14,7 +13,6 @@ import { CommentComposer } from '@/components/community/CommentComposer'
 import { ReactionBar } from '@/components/community/ReactionBar'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
-import { WRITE_DISCUSSIONS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 /** Full view of a single community post (/posts/:author/:slug). */
@@ -37,22 +35,6 @@ export function PostPage(): React.JSX.Element {
     enabled: author !== '' && slug !== ''
   })
   const data = post.data
-
-  const me = auth.status === 'signedIn' ? auth.user.name : undefined
-  const canReact = auth.status === 'signedIn' && !scopeMissing(auth, WRITE_DISCUSSIONS_SCOPE)
-  const react = useMutation({
-    mutationFn: (emoji: string) => invoke('hub:postReact', { author, slug, reaction: emoji }),
-    onSuccess: (reactions: PostReaction[]) => {
-      // Patch the cached post with the Hub's authoritative reaction breakdown
-      // (avoids a full refetch and keeps the picker snappy).
-      queryClient.setQueryData<PostSummary>(['post', author, slug], (prev) =>
-        prev
-          ? { ...prev, reactions, numReactions: reactions.reduce((n, r) => n + r.count, 0) }
-          : prev
-      )
-    },
-    onError: (err) => push(err.message, 'error')
-  })
 
   return (
     <div className="h-full overflow-y-auto">
@@ -127,14 +109,7 @@ export function PostPage(): React.JSX.Element {
                   <MessageSquare className="size-3.5" aria-hidden />
                   {formatCount(data.numComments ?? 0, locale)}
                 </span>
-                <ReactionBar
-                  reactions={data.reactions}
-                  me={me}
-                  canReact={canReact}
-                  pending={react.isPending}
-                  locale={locale}
-                  onReact={(emoji) => react.mutate(emoji)}
-                />
+                <ReactionBar reactions={data.reactions} postUrl={data.url} locale={locale} />
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Button variant="secondary" size="sm" onClick={() => openExternal(data.url)}>

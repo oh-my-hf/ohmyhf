@@ -16,7 +16,6 @@ import type {
   NotificationsPage,
   Page,
   PaperSummary,
-  PostReaction,
   PostSummary,
   RepoDetail,
   RepoKind,
@@ -764,23 +763,6 @@ export class HubClient {
       .find((p) => p.slug === slug && p.author.toLowerCase() === wanted)
     if (!post) throw new HubApiError('post not found', 404, url)
     return post
-  }
-
-  /**
-   * Toggle the caller's reaction on a post. The Hub endpoint is a toggle: the
-   * same call adds the reaction if absent and removes it if already present.
-   * Undocumented (not in the public OpenAPI); gated by the write-discussions
-   * scope. Returns the post's fresh reaction breakdown so the UI can reconcile.
-   */
-  async reactToPost(author: string, slug: string, reaction: string): Promise<PostReaction[]> {
-    await this.sendJson(
-      'POST',
-      `${this.endpoint}/api/posts/${encodeURIComponent(author)}/${encodeURIComponent(slug)}/reaction`,
-      { reaction }
-    )
-    // The POST response body is not relied upon; re-read the post for the
-    // authoritative counts (and to pick up other users' concurrent reactions).
-    return (await this.getPostDetail(author, slug)).reactions
   }
 
   /**

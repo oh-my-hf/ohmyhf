@@ -11,7 +11,7 @@
     "post": "帖子"
   },
   "reactions": {
-    "add": "添加表情回应"
+    "onHub": "在 Hub 上回应"
   },
   "title": "首页",
   "trending": {

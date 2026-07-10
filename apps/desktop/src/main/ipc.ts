@@ -147,9 +147,6 @@ export function registerIpcHandlers(ctx: AppContext): void {
   )
   handle('hub:posts', (req) => ctx.hub.getPosts(req?.cursor))
   handle('hub:postDetail', ({ author, slug }) => ctx.hub.getPostDetail(author, slug))
-  handle('hub:postReact', ({ author, slug, reaction }) =>
-    ctx.hub.reactToPost(author, slug, reaction)
-  )
   handle('hub:userOverview', ({ username }) => ctx.hub.getUserOverview(username))
   handle('hub:userFollowing', ({ username }) => ctx.hub.getUserFollowing(username))
   handle('hub:discussionDetail', ({ kind, repoId, num }) =>

@@ -11,7 +11,7 @@
     "post": "Post"
   },
   "reactions": {
-    "add": "Add reaction"
+    "onHub": "React on the Hub"
   },
   "title": "Home",
   "trending": {
