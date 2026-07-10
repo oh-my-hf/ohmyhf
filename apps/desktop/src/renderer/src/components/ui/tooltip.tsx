@@ -15,7 +15,9 @@ export function TooltipContent({
       <TooltipPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          'animate-pop z-50 rounded-md border bg-elevated px-2 py-1 text-[12px] text-ink shadow-sm',
+          // Inverted bubble (cta: near-black in light, near-white in dark) so the
+          // floating tip carries the same strong contrast in both themes.
+          'animate-pop z-50 rounded-md bg-cta px-2 py-1 text-[12px] text-cta-ink shadow-sm',
           className
         )}
         {...props}

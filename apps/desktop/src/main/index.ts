@@ -159,11 +159,13 @@ if (!gotLock) {
     }
 
     // Native minimize/maximize/close drawn over the TopBar (h-11 = 44px);
-    // colors track the renderer theme (--c-bg / --c-ink-muted).
+    // colors track the renderer theme (--c-bg / --c-ink-muted). Height is
+    // 43px — one short of the TopBar — so the overlay's opaque background
+    // doesn't paint over the header's 1px bottom border.
     const titleBarOverlay = (): Electron.TitleBarOverlayOptions =>
       isDarkTheme()
-        ? { color: '#030712', symbolColor: '#99a1af', height: 44 }
-        : { color: '#ffffff', symbolColor: '#4a5565', height: 44 }
+        ? { color: '#030712', symbolColor: '#99a1af', height: 43 }
+        : { color: '#ffffff', symbolColor: '#4a5565', height: 43 }
 
     const refreshTitleBarOverlay = (): void => {
       if (process.platform !== 'win32') return
