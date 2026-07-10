@@ -19,6 +19,9 @@ mac:
   category: public.app-category.developer-tools
   target:
     - dmg
+    # zip is required for Squirrel.Mac: without it electron-builder emits no
+    # latest-mac.yml and electron-updater cannot stage macOS auto-updates.
+    - zip
   # Unsigned for now — see docs/signing.md for the notarization follow-up.
   identity: null
 
@@ -42,7 +45,9 @@ linux:
     entry:
       StartupWMClass: oh-my-huggingface
 
+# Must match the repository the release CI runs in: GITHUB_TOKEN can only publish
+# there, and electron-updater reads this same config to find update artifacts.
 publish:
   provider: github
-  owner: MoraxCheng
-  repo: oh-my-huggingface
+  owner: oh-my-hf
+  repo: ohmyhf

@@ -1,16 +1,105 @@
 name: Release
 
+# A release is cut by landing a commit on main whose subject is:
+#   [RELEASE] Vx.y.z
+# The version must already match apps/desktop/package.json. This job then tags
+# vx.y.z, drafts a GitHub Release whose notes are the commits since the previous
+# tag, builds all three platforms, uploads their artifacts, and publishes.
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history + tags so the changelog range and previous-tag lookup work.
+          fetch-depth: 0
+
+      - id: check
+        name: Detect [RELEASE] commit and validate the version
+        run: |
+          set -euo pipefail
+          msg="$(git log -1 --pretty=%s)"
+          echo "Head commit subject: $msg"
+          if [[ ! "$msg" =~ ^\[RELEASE\] ]]; then
+            echo "Not a [RELEASE] commit; nothing to release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # It IS a release commit: the version must be a plain semver x.y.z.
+          # Fail loudly on a malformed version rather than silently doing nothing.
+          if [[ "$msg" =~ ^\[RELEASE\][[:space:]]+[vV]?([0-9]+\.[0-9]+\.[0-9]+)([[:space:]].*)?$ ]]; then
+            version="${BASH_REMATCH[1]}"
+          else
+            echo "::error::[RELEASE] subject must be '[RELEASE] Vx.y.z' with a plain semver version (no pre-release or build suffix). Got: $msg"
+            exit 1
+          fi
+          pkg="$(jq -r .version apps/desktop/package.json)"
+          if [[ "$version" != "$pkg" ]]; then
+            echo "::error::[RELEASE] version v$version does not match apps/desktop/package.json ($pkg). Bump the package version first."
+            exit 1
+          fi
+          if git rev-parse "v$version" >/dev/null 2>&1; then
+            echo "::error::Tag v$version already exists; use a new version."
+            exit 1
+          fi
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$version"
+
+      - name: Generate changelog, tag, and draft the release
+        if: steps.check.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          prev="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          if [[ -n "$prev" ]]; then
+            range="$prev..HEAD"
+          else
+            range="HEAD"
+          fi
+          {
+            echo "## What's changed"
+            echo
+            # One bullet per non-merge commit since the previous release; drop the
+            # [RELEASE] commit itself. Fall back to a placeholder if the range is empty.
+            body="$(git log --no-merges --pretty='- %s (%h)' "$range" | grep -v '^- \[RELEASE\]' || true)"
+            if [[ -n "$body" ]]; then
+              echo "$body"
+            else
+              echo "- Maintenance release."
+            fi
+            echo
+            if [[ -n "$prev" ]]; then
+              echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${prev}...${tag}"
+            fi
+          } > CHANGELOG_RELEASE.md
+          echo "----- release notes -----"
+          cat CHANGELOG_RELEASE.md
+          echo "-------------------------"
+          # Create the tag and a DRAFT release; the matrix build uploads assets to it.
+          git tag "$tag"
+          git push origin "$tag"
+          gh release create "$tag" --draft --title "$tag" --notes-file CHANGELOG_RELEASE.md
+
   build:
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
     strategy:
+      # Don't cancel the other platforms if one fails; the draft stays for inspection.
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -22,6 +111,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.prepare.outputs.version }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -29,9 +120,21 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build and publish
+      - name: Build and upload to the draft release
         run: pnpm --filter oh-my-huggingface-desktop ${{ matrix.target }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS builds are currently unsigned; see docs/signing.md.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+  publish:
+    needs: [prepare, build]
+    # Only when every platform built; a partial matrix leaves the release drafted.
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "v${{ needs.prepare.outputs.version }}" --draft=false --latest
