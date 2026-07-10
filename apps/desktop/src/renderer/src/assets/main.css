@@ -280,21 +280,29 @@ body {
   overflow: hidden;
 }
 
-/* Keyboard-first: one consistent, visible focus treatment everywhere. */
-:focus-visible {
-  outline: 2px solid var(--c-focus);
-  outline-offset: 1px;
-  border-radius: 4px;
+/* Keyboard-first: one consistent, visible focus treatment everywhere.
+ * Lives in @layer base so component utilities (outline-none, focus-visible:ring-*)
+ * can override it; unlayered CSS would beat every Tailwind utility. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 1px;
+    border-radius: 4px;
+  }
 }
 
 ::selection {
   background: color-mix(in oklch, var(--c-focus) 25%, transparent);
 }
 
-*,
-::before,
-::after {
-  border-color: var(--c-border);
+/* Default border color for bare `border` utilities. In @layer base for the same
+ * reason as :focus-visible above: border-transparent etc. must win over it. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--c-border);
+  }
 }
 
 /* Slim, unobtrusive scrollbars that match both themes. */
