@@ -29,8 +29,6 @@ interface NavItem {
   labelKey: string
   icon: React.ComponentType<{ className?: string }>
   badge?: number
-  /** Match the route exactly; needed for "/" which prefixes every path. */
-  end?: boolean
 }
 
 function SidebarLink({
@@ -45,30 +43,45 @@ function SidebarLink({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
+        {/* `end`: highlight only on the page itself — a detail page under it
+            (/models/owner/name) is its own view and gets no sidebar box. */}
         <NavLink
           to={item.to}
-          end={item.end}
+          end
           className={({ isActive }) =>
             cn(
-              'group relative flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] font-medium transition-colors duration-150',
+              'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
               collapsed ? 'justify-center' : 'justify-start',
               isActive
-                ? 'bg-panel-2 text-ink-strong'
+                ? 'text-ink-strong'
                 : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
             )
           }
         >
-          <item.icon className="size-4 shrink-0" aria-hidden />
-          {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
-          {item.badge ? (
-            collapsed ? (
-              <span className="absolute top-1 right-1 size-1.5 rounded-full bg-brand" aria-hidden />
-            ) : (
-              <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
-                {item.badge > 99 ? '99+' : item.badge}
-              </span>
-            )
-          ) : null}
+          {({ isActive }) => (
+            <>
+              {isActive && (
+                <span
+                  className="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-full bg-select"
+                  aria-hidden
+                />
+              )}
+              <item.icon className={cn('size-4 shrink-0', isActive && 'text-select')} aria-hidden />
+              {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+              {item.badge ? (
+                collapsed ? (
+                  <span
+                    className="absolute top-1 right-1 size-1.5 rounded-full bg-brand"
+                    aria-hidden
+                  />
+                ) : (
+                  <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )
+              ) : null}
+            </>
+          )}
         </NavLink>
       </TooltipTrigger>
       <TooltipContent side="right" className={collapsed ? undefined : 'hidden'}>
@@ -98,7 +111,7 @@ export function Sidebar(): React.JSX.Element {
   const unread = inbox.data?.filter((i) => !i.readAt).length ?? 0
 
   const browse: NavItem[] = [
-    { to: '/', labelKey: 'home', icon: Home, end: true },
+    { to: '/', labelKey: 'home', icon: Home },
     { to: '/models', labelKey: 'models', icon: Boxes },
     { to: '/datasets', labelKey: 'datasets', icon: Database },
     { to: '/spaces', labelKey: 'spaces', icon: LayoutGrid },
@@ -152,14 +165,23 @@ export function Sidebar(): React.JSX.Element {
               type="button"
               onClick={() => openSettings()}
               className={cn(
-                'group relative flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] font-medium transition-colors duration-150',
+                'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
                 collapsed ? 'justify-center' : 'justify-start',
                 settingsOpen
-                  ? 'bg-panel-2 text-ink-strong'
+                  ? 'text-ink-strong'
                   : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
               )}
             >
-              <Settings className="size-4 shrink-0" aria-hidden />
+              {settingsOpen && (
+                <span
+                  className="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-full bg-select"
+                  aria-hidden
+                />
+              )}
+              <Settings
+                className={cn('size-4 shrink-0', settingsOpen && 'text-select')}
+                aria-hidden
+              />
               {!collapsed && (
                 <span className="min-w-0 flex-1 truncate text-left">{t('settings')}</span>
               )}
