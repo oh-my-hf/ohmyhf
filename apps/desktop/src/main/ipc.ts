@@ -212,6 +212,9 @@ export function registerIpcHandlers(ctx: AppContext): void {
   )
   handle('hub:datasetSplits', ({ repoId }) => ctx.hub.getDatasetSplits(repoId))
   handle('hub:searchUsers', ({ query }) => ctx.hub.searchUsers(query))
+  handle('hub:searchOrgs', ({ query }) => ctx.hub.searchOrgs(query))
+  handle('hub:searchPapers', ({ query }) => ctx.hub.searchPapers(query))
+  handle('hub:searchCollections', ({ query }) => ctx.hub.searchCollections(query))
   handle('hub:inferenceAvailable', ({ repoId }) => ctx.hub.isInferenceAvailable(repoId))
   handle('hub:datasetRows', ({ repoId, config, split, offset, length }) =>
     ctx.hub.getDatasetRows(repoId, config, split, offset, length)
