@@ -74,7 +74,7 @@ Org rows use a building/org icon; papers show title; collections show title (opt
 ## Shared types & IPC
 
 - Extend or reuse `UserSearchResult` for orgs (add optional `isOrg` if useful for badges; org quicksearch uses `name` / `fullname` / `avatarUrl`).
-- Add slim result types for paper/collection quicksearch hits if full `PaperSummary` / `CollectionSummary` cannot be filled from quicksearch alone (title/id/slug minimum).
+- Add slim result types for paper/collection quicksearch hits if full `PaperSummary` / `CollectionSummary` cannot be filled from quicksearch alone. Minimum fields: paper `{ id, title }` (Hub `_id` → `id`); collection `{ slug, title }` (Hub `_id` is the collection slug path).
 - Register `hub:searchOrgs`, `hub:searchPapers`, `hub:searchCollections` in shared IPC + zod schemas (query string min 1, max length aligned with users: 64).
 - Wire handlers in desktop main `ipc.ts` → `HubClient` methods.
 
