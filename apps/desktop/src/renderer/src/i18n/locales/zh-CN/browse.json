@@ -29,18 +29,28 @@
     "clearAll": "清除全部",
     "clientSide": "仅筛选已加载结果",
     "done": "完成",
+    "hardware": "硬件",
     "inferenceProviders": "推理服务商",
     "languages": "语言",
     "libraries": "框架",
     "library": "框架",
     "license": "许可证",
     "licenses": "许可证",
+    "mcp": "兼容 MCP",
+    "options": "选项",
     "other": "其他",
     "params": "参数量",
+    "runningOnly": "仅显示运行中",
     "sdk": "SDK",
+    "status": "状态",
     "task": "任务",
     "tasks": "任务",
     "title": "筛选"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
   },
   "likes": "点赞",
   "params": {

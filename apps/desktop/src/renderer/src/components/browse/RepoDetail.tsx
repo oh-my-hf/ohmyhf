@@ -18,6 +18,7 @@ import { FileTreeView } from '@/components/browse/FileTreeView'
 import { InfoPanel } from '@/components/browse/InfoPanel'
 import { MarkdownView } from '@/components/browse/MarkdownView'
 import { PlaygroundPanel } from '@/components/browse/PlaygroundPanel'
+import { SpaceRunner } from '@/components/browse/SpaceRunner'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const HUB_PREFIX: Record<RepoKind, string> = {
@@ -178,6 +179,7 @@ export function RepoDetail({
       <Tabs defaultValue="card" className="flex min-h-0 flex-1 flex-col">
         <TabsList className="px-3">
           <TabsTrigger value="card">{t('detail:tabs.card')}</TabsTrigger>
+          {kind === 'space' && <TabsTrigger value="run">{t('detail:tabs.run')}</TabsTrigger>}
           {kind === 'dataset' && (
             <TabsTrigger value="preview">{t('detail:tabs.preview')}</TabsTrigger>
           )}
@@ -204,6 +206,11 @@ export function RepoDetail({
               <MarkdownView markdown={readme.data} kind={kind} repoId={repoId} />
             ))}
         </TabsContent>
+        {kind === 'space' && (
+          <TabsContent value="run" className="min-h-0 flex-1">
+            <SpaceRunner repoId={repoId} detail={detailData} />
+          </TabsContent>
+        )}
         {kind === 'dataset' && (
           <TabsContent value="preview" className="min-h-0 flex-1">
             <DatasetPreview repoId={repoId} />

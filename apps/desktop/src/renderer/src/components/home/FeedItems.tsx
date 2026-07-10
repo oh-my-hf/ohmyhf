@@ -41,8 +41,22 @@ export function PostCard({
   locale: string
 }): React.JSX.Element {
   const { t } = useTranslation(['home', 'common'])
+  const open = (): void => openExternal(post.url)
   return (
-    <article className="flex flex-col gap-3 rounded-lg border bg-panel p-4">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(e) => {
+        // Only react to keys on the card itself, not on inner interactive elements.
+        if (e.target !== e.currentTarget) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          open()
+        }
+      }}
+      className="flex cursor-pointer flex-col gap-3 rounded-lg border bg-panel p-4 transition-colors duration-150 outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+    >
       <header className="flex items-center gap-2.5">
         {post.authorAvatarUrl ? (
           <img
@@ -90,7 +104,10 @@ export function PostCard({
               size="icon"
               className="h-6 w-6"
               aria-label={t('common:openOnHub')}
-              onClick={() => openExternal(post.url)}
+              onClick={(e) => {
+                e.stopPropagation()
+                openExternal(post.url)
+              }}
             >
               <ExternalLink className="size-3.5" aria-hidden />
             </Button>

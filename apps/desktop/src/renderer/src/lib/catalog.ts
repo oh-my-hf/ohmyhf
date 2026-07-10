@@ -152,7 +152,7 @@ export const DATASET_FORMATS = [
   'csv',
   'parquet',
   'imagefolder',
-  'soundfolder',
+  'audiofolder',
   'webdataset',
   'text',
   'arrow'
@@ -160,3 +160,18 @@ export const DATASET_FORMATS = [
 
 /** Space SDKs; the sdk is indexed as a plain tag on the Hub. */
 export const SPACE_SDKS = ['gradio', 'streamlit', 'docker', 'static'] as const
+
+/** Space hardware buckets (client-side; derived from the raw hardware id). */
+export const SPACE_HARDWARE = ['cpu', 'gpu', 'zerogpu'] as const
+export type SpaceHardware = (typeof SPACE_HARDWARE)[number]
+
+/** Buckets a Space's raw hardware id ("cpu-basic", "zero-a10g", "t4-small") for filtering. */
+export function hardwareBucketOf(hardware: string | undefined): SpaceHardware | undefined {
+  if (!hardware) return undefined
+  if (hardware.startsWith('zero')) return 'zerogpu'
+  if (hardware.startsWith('cpu')) return 'cpu'
+  return 'gpu'
+}
+
+/** Raw Hub `filter=` tag marking MCP-compatible Spaces (server-side filter). */
+export const MCP_TAG = 'mcp-server'

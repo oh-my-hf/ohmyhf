@@ -95,9 +95,11 @@
     "binary": "二进制",
     "diffTruncated": "差异内容已截断，仅显示部分变更。",
     "empty": "暂无拉取请求。",
+    "noDescription": "未提供描述。",
     "noDiff": "暂无变更内容。",
     "refsLabel": "合并方向",
     "renamed": "已重命名",
+    "statusChanged": "{{author}} 将状态改为 {{status}}",
     "tabDiscussion": "讨论",
     "tabFiles": "文件变更"
   },
@@ -108,9 +110,17 @@
     "copyRawUrl": "复制原始链接",
     "noPreviewBody": "此文件类型无法在应用内预览，可下载后在本地查看。",
     "noPreviewTitle": "暂不支持预览",
+    "pickFile": "选择要预览的文件",
+    "pickFileBody": "在左侧选择文件，即可在此处查看其内容。",
     "tensors": "张量数",
     "totalParams": "总参数量",
     "truncated": "预览已截断，仅显示前 {{size}}。"
+  },
+  "run": {
+    "loading": "正在加载 Space…",
+    "notRunning": "该 Space 当前处于“{{stage}}”状态，无法在此运行。请在 Hub 上打开以唤醒或重启它。",
+    "notRunningTitle": "该 Space 未在运行",
+    "reload": "重新加载"
   },
   "select": {
     "body": "从左侧列表选择一项，或按 ⌘K 全局搜索。",
@@ -122,6 +132,7 @@
     "files": "文件",
     "info": "信息",
     "playground": "试用",
-    "preview": "预览"
+    "preview": "预览",
+    "run": "运行"
   }
 }

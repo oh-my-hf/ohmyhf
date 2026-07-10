@@ -29,18 +29,28 @@
     "clearAll": "Clear all",
     "clientSide": "filters loaded results only",
     "done": "Done",
+    "hardware": "Hardware",
     "inferenceProviders": "Inference Providers",
     "languages": "Languages",
     "libraries": "Libraries",
     "library": "Library",
     "license": "License",
     "licenses": "Licenses",
+    "mcp": "MCP Compatible",
+    "options": "Options",
     "other": "Other",
     "params": "Parameters",
+    "runningOnly": "Running only",
     "sdk": "SDK",
+    "status": "Status",
     "task": "Task",
     "tasks": "Tasks",
     "title": "Filters"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
   },
   "likes": "Likes",
   "params": {

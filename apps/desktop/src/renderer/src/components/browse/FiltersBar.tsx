@@ -45,6 +45,20 @@ export function FiltersBar({ kind }: { kind: RepoKind }): React.JSX.Element {
       onRemove: () => setFilters(kind, { paramBucket: undefined })
     })
   }
+  if (filters.runningOnly) {
+    chips.push({
+      id: 'runningOnly',
+      label: t('filter.runningOnly'),
+      onRemove: () => setFilters(kind, { runningOnly: undefined })
+    })
+  }
+  if (filters.hardware) {
+    chips.push({
+      id: 'hardware',
+      label: t(`hardware.${filters.hardware}`),
+      onRemove: () => setFilters(kind, { hardware: undefined })
+    })
+  }
   for (const tag of filters.tags ?? []) {
     chips.push({
       id: `tag:${tag}`,

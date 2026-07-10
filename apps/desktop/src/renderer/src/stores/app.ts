@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { AppInfo, AppSettings, AuthState, RepoKind, RepoSort } from '@oh-my-huggingface/shared'
 import { DEFAULT_SETTINGS } from '@oh-my-huggingface/shared'
+import type { SpaceHardware } from '@/lib/catalog'
 import type { ParamBucket } from '@/lib/utils'
 import { invoke } from '@/lib/ipc'
 import { setTheme } from '@/lib/theme'
@@ -17,8 +18,12 @@ export interface BrowseFilters {
   tags?: string[]
   /** Models only: serverless inference provider id. */
   inferenceProvider?: string
-  /** Bare ISO code — the Hub indexes languages as plain tags, so this joins `tags`. */
+  /** Bare ISO code; RepoList emits it as-is for models and as `language:<code>` for datasets. */
   language?: string
+  /** Spaces only: client-side "runtime stage is RUNNING" filter. */
+  runningOnly?: boolean
+  /** Spaces only: client-side hardware bucket derived from the raw hardware id. */
+  hardware?: SpaceHardware
 }
 
 const defaultFilters = (kind: RepoKind): BrowseFilters => ({

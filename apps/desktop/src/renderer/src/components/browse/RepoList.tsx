@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { ArrowDownToLine, Heart, Lock, ShieldAlert } from 'lucide-react'
 import type { RepoKind, RepoSummary, SearchQuery } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { hardwareBucketOf } from '@/lib/catalog'
 import { cn, formatCount, formatParams, paramBucketOf } from '@/lib/utils'
 import { useDebounced } from '@/hooks/use-debounced'
 import { Badge } from '@/components/ui/badge'
@@ -38,7 +39,12 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
 
   const query: SearchQuery = useMemo(() => {
     // The Hub indexes languages as plain tags ("en"), so the language filter joins raw tags.
-    const tags = [...(filters.tags ?? []), ...(filters.language ? [filters.language] : [])]
+    const languageTag = filters.language
+      ? kind === 'dataset'
+        ? `language:${filters.language}`
+        : filters.language
+      : undefined
+    const tags = [...(filters.tags ?? []), ...(languageTag ? [languageTag] : [])]
     return {
       kind,
       search: search || undefined,
@@ -72,11 +78,20 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
     })
 
   const items = useMemo(() => {
-    const all = data?.pages.flatMap((p) => p.items) ?? []
-    if (!filters.paramBucket) return all
+    let all = data?.pages.flatMap((p) => p.items) ?? []
     // Parameter-count filtering is client-side (the public API has no param filter).
-    return all.filter((item) => paramBucketOf(item.paramCount) === filters.paramBucket)
-  }, [data, filters.paramBucket])
+    if (filters.paramBucket) {
+      all = all.filter((item) => paramBucketOf(item.paramCount) === filters.paramBucket)
+    }
+    // Space status/hardware are client-side too — the search API exposes neither.
+    if (isSpace && filters.runningOnly) {
+      all = all.filter((item) => item.runtimeStage === 'RUNNING')
+    }
+    if (isSpace && filters.hardware) {
+      all = all.filter((item) => hardwareBucketOf(item.hardware) === filters.hardware)
+    }
+    return all
+  }, [data, isSpace, filters.paramBucket, filters.runningOnly, filters.hardware])
 
   const rowCount = Math.ceil(items.length / perRow)
   const rowHeight = isSpace ? SPACE_ROW_HEIGHT : ROW_HEIGHT

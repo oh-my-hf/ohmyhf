@@ -34,10 +34,14 @@ export interface RepoSummary {
   colorTo?: string
   shortDescription?: string
   runtimeStage?: string
+  /** Spaces only: current hardware id, e.g. "cpu-basic", "zero-a10g". */
+  hardware?: string
 }
 
 export interface RepoDetail extends RepoSummary {
   sha?: string
+  /** Spaces only: the *.hf.space host serving the app (for in-app embedding). */
+  spaceDomain?: string
   lastModified?: string
   cardData?: Record<string, unknown>
   siblings?: Array<{ rfilename: string; size?: number }>
@@ -240,6 +244,11 @@ export interface DiscussionEvent {
   createdAt?: string
   /** Markdown content for comments. */
   content?: string
+  /** status-change events: the new status. */
+  status?: string
+  /** commit events. */
+  oid?: string
+  subject?: string
 }
 
 export interface DiscussionDetail extends DiscussionSummary {

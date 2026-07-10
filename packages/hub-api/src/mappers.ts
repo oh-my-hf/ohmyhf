@@ -29,7 +29,11 @@ interface RawRepo {
   trendingScore?: number
   safetensors?: { total?: number }
   cardData?: Record<string, unknown>
-  runtime?: { stage?: string }
+  runtime?: {
+    stage?: string
+    hardware?: { current?: string | null }
+    domains?: Array<{ domain?: string }>
+  }
   siblings?: Array<{ rfilename: string; size?: number }>
   sha?: string
   usedStorage?: number
@@ -79,7 +83,8 @@ export function mapRepoSummary(raw: RawRepo, kind: RepoKind): RepoSummary {
     colorFrom: optionalString(card?.colorFrom),
     colorTo: optionalString(card?.colorTo),
     shortDescription: optionalString(card?.short_description),
-    runtimeStage: kind === 'space' ? raw.runtime?.stage : undefined
+    runtimeStage: kind === 'space' ? raw.runtime?.stage : undefined,
+    hardware: kind === 'space' ? (raw.runtime?.hardware?.current ?? undefined) : undefined
   }
 }
 
@@ -87,6 +92,7 @@ export function mapRepoDetail(raw: RawRepo, kind: RepoKind): RepoDetail {
   return {
     ...mapRepoSummary(raw, kind),
     sha: raw.sha,
+    spaceDomain: kind === 'space' ? raw.runtime?.domains?.[0]?.domain : undefined,
     lastModified: raw.lastModified,
     cardData: raw.cardData,
     siblings: raw.siblings,
@@ -159,7 +165,7 @@ interface RawDiscussion {
     type?: string
     author?: { name?: string }
     createdAt?: string
-    data?: { latest?: { raw?: string } }
+    data?: { latest?: { raw?: string }; status?: string; oid?: string; subject?: string }
   }>
 }
 
@@ -186,7 +192,10 @@ export function mapDiscussionDetail(raw: RawDiscussion): DiscussionDetail {
       type: e.type ?? 'comment',
       author: e.author?.name,
       createdAt: e.createdAt,
-      content: e.data?.latest?.raw
+      content: e.data?.latest?.raw,
+      status: e.data?.status,
+      oid: e.data?.oid,
+      subject: e.data?.subject
     }))
   }
 }

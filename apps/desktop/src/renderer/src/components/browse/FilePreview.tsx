@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
-  ArrowLeft,
   ExternalLink,
   FileQuestion,
   Link as LinkIcon,
@@ -27,7 +26,6 @@ interface FilePreviewProps {
   kind: RepoKind
   repoId: string
   entry: FileTreeEntry
-  onBack: () => void
   onDownload: () => void
   downloading: boolean
 }
@@ -243,7 +241,6 @@ export function FilePreview({
   kind,
   repoId,
   entry,
-  onBack,
   onDownload,
   downloading
 }: FilePreviewProps): React.JSX.Element {
@@ -293,9 +290,6 @@ export function FilePreview({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b px-3 py-2">
-        <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('common:back')}>
-          <ArrowLeft className="size-4" aria-hidden />
-        </Button>
         <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]" title={entry.path}>
           {name}
         </span>

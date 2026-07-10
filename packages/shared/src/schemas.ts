@@ -31,7 +31,8 @@ const searchQuery = z.object({
   kind: repoKind,
   search: z.string().max(256).optional(),
   author: z.string().max(128).optional(),
-  tags: z.array(z.string().max(128)).max(20).optional(),
+  // Generous cap: the dataset filter panel can legitimately stack many tag chips.
+  tags: z.array(z.string().max(128)).max(48).optional(),
   pipelineTag: z.string().max(128).optional(),
   library: z.string().max(128).optional(),
   license: z.string().max(128).optional(),

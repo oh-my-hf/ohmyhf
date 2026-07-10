@@ -95,9 +95,11 @@
     "binary": "Binary",
     "diffTruncated": "This diff was truncated — only part of the changes are shown.",
     "empty": "No pull requests yet.",
+    "noDescription": "No description provided.",
     "noDiff": "No changes to show.",
     "refsLabel": "Merge direction",
     "renamed": "Renamed",
+    "statusChanged": "{{author}} changed status to {{status}}",
     "tabDiscussion": "Discussion",
     "tabFiles": "Files changed"
   },
@@ -108,9 +110,17 @@
     "copyRawUrl": "Copy raw URL",
     "noPreviewBody": "This file type can't be previewed here. Download it to inspect locally.",
     "noPreviewTitle": "No preview available",
+    "pickFile": "Select a file to preview",
+    "pickFileBody": "Choose a file on the left to see its contents here.",
     "tensors": "Tensors",
     "totalParams": "Total parameters",
     "truncated": "Preview truncated — showing the first {{size}}."
+  },
+  "run": {
+    "loading": "Loading the Space…",
+    "notRunning": "The Space is currently in the \"{{stage}}\" state, so it can't run here. Open it on the Hub to wake or restart it.",
+    "notRunningTitle": "This Space isn't running",
+    "reload": "Reload"
   },
   "select": {
     "body": "Pick an item from the list — or press ⌘K to search everything.",
@@ -122,6 +132,7 @@
     "files": "Files",
     "info": "Info",
     "playground": "Playground",
-    "preview": "Preview"
+    "preview": "Preview",
+    "run": "Run"
   }
 }

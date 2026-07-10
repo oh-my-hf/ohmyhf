@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import {
   DATASET_FORMATS,
   DATASET_MODALITIES,
@@ -10,9 +11,11 @@ import {
   LANGUAGES,
   LIBRARIES,
   LICENSES,
+  MCP_TAG,
   MODEL_OTHER_TAGS,
   PARAM_BUCKETS,
   PROVIDERS,
+  SPACE_HARDWARE,
   SPACE_SDKS,
   TASKS
 } from '@/lib/catalog'
@@ -94,7 +97,9 @@ export function FilterPanel({ kind }: { kind: RepoKind }): React.JSX.Element {
       paramBucket: undefined,
       language: undefined,
       inferenceProvider: undefined,
-      tags: undefined
+      tags: undefined,
+      runningOnly: undefined,
+      hardware: undefined
     })
 
   const languages = (
@@ -251,13 +256,44 @@ export function FilterPanel({ kind }: { kind: RepoKind }): React.JSX.Element {
         )}
 
         {kind === 'space' && (
-          <Section title={t('browse:filter.sdk')}>
-            {SPACE_SDKS.map((sdk) => (
-              <Chip key={sdk} selected={tags.includes(sdk)} onClick={() => toggleTag(sdk)}>
-                {sdk}
+          <>
+            <Section title={t('browse:filter.status')} hint={t('browse:filter.clientSide')}>
+              <label className="flex cursor-pointer items-center gap-2 py-0.5 text-[12.5px] text-ink-muted">
+                <Switch
+                  checked={filters.runningOnly ?? false}
+                  onCheckedChange={(checked) =>
+                    setFilters(kind, { runningOnly: checked || undefined })
+                  }
+                />
+                {t('browse:filter.runningOnly')}
+              </label>
+            </Section>
+            <Section title={t('browse:filter.sdk')}>
+              {SPACE_SDKS.map((sdk) => (
+                <Chip key={sdk} selected={tags.includes(sdk)} onClick={() => toggleTag(sdk)}>
+                  {sdk}
+                </Chip>
+              ))}
+            </Section>
+            <Section title={t('browse:filter.hardware')} hint={t('browse:filter.clientSide')}>
+              {SPACE_HARDWARE.map((hw) => (
+                <Chip
+                  key={hw}
+                  selected={filters.hardware === hw}
+                  onClick={() =>
+                    setFilters(kind, { hardware: filters.hardware === hw ? undefined : hw })
+                  }
+                >
+                  {t(`browse:hardware.${hw}`)}
+                </Chip>
+              ))}
+            </Section>
+            <Section title={t('browse:filter.options')}>
+              <Chip selected={tags.includes(MCP_TAG)} onClick={() => toggleTag(MCP_TAG)}>
+                {t('browse:filter.mcp')}
               </Chip>
-            ))}
-          </Section>
+            </Section>
+          </>
         )}
       </div>
 

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, GitPullRequest, MessageSquare } from 'lucide-react'
+import { ArrowLeft, GitCommitHorizontal, GitPullRequest, MessageSquare } from 'lucide-react'
 import type {
+  DiscussionEvent,
   DiscussionSummary,
   DiscussionType,
   DiscussionStatusFilter,
@@ -39,6 +40,99 @@ const PR_ICON_COLOR: Record<DiscussionSummary['status'], string> = {
 type StatusFilter = DiscussionStatusFilter | 'all'
 
 const STATUS_FILTERS: readonly StatusFilter[] = ['open', 'closed', 'all']
+
+/** Statuses with a localized word under detail:discussions.status.*. */
+const KNOWN_STATUSES: readonly string[] = ['open', 'closed', 'merged', 'draft']
+
+/** Icon tint for status-change timeline rows; unknown statuses fall back to faint ink. */
+const STATUS_EVENT_COLOR: Record<string, string> = {
+  open: 'text-success',
+  closed: 'text-error',
+  merged: 'text-primary'
+}
+
+function hasBody(event: DiscussionEvent): boolean {
+  return event.content !== undefined && event.content.trim() !== ''
+}
+
+/**
+ * One entry of the thread timeline. Comments (and unknown event types that carry
+ * markdown) render as cards; commits and status changes render as lighter rows.
+ * Unknown event types with no content render nothing.
+ */
+function ThreadEvent({
+  event,
+  kind,
+  repoId,
+  locale
+}: {
+  event: DiscussionEvent
+  kind: RepoKind
+  repoId: string
+  locale: string
+}): React.JSX.Element | null {
+  const { t } = useTranslation(['detail'])
+
+  if (event.type === 'commit') {
+    return (
+      <div className="flex items-center gap-2.5 px-1 text-[12.5px] text-ink-muted">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-panel ring-1 ring-border">
+          <GitCommitHorizontal className="size-3.5 text-ink-faint" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{event.subject}</span>
+        {event.oid !== undefined && event.oid !== '' && (
+          <code className="shrink-0 font-mono text-[11px] text-ink-faint">
+            {event.oid.slice(0, 7)}
+          </code>
+        )}
+        <span className="shrink-0 text-[11.5px] text-ink-faint">
+          {event.author} · {formatRelativeTime(event.createdAt, locale)}
+        </span>
+      </div>
+    )
+  }
+
+  if (event.type === 'status-change') {
+    const status = event.status
+    if (status === undefined || status === '') return null
+    const statusWord = KNOWN_STATUSES.includes(status)
+      ? t(`detail:discussions.status.${status}`)
+      : status
+    return (
+      <div className="flex items-center gap-2.5 px-1 text-[12.5px] text-ink-muted">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-panel ring-1 ring-border">
+          <GitPullRequest
+            className={cn('size-3.5', STATUS_EVENT_COLOR[status] ?? 'text-ink-faint')}
+            aria-hidden
+          />
+        </span>
+        <span className="min-w-0 flex-1 truncate">
+          {t('detail:pr.statusChanged', { author: event.author ?? '', status: statusWord })}
+        </span>
+        <span className="shrink-0 text-[11.5px] text-ink-faint">
+          {formatRelativeTime(event.createdAt, locale)}
+        </span>
+      </div>
+    )
+  }
+
+  // Comments always render (empty ones get a placeholder); other event types
+  // only when they carry markdown content.
+  if (event.type !== 'comment' && !hasBody(event)) return null
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="mb-2 flex items-center gap-2 text-[12px] text-ink-muted">
+        <span className="font-medium text-ink">{event.author}</span>
+        <span>{formatRelativeTime(event.createdAt, locale)}</span>
+      </div>
+      {hasBody(event) ? (
+        <MarkdownView markdown={event.content ?? ''} kind={kind} repoId={repoId} />
+      ) : (
+        <p className="text-[12.5px] text-ink-faint italic">{t('detail:pr.noDescription')}</p>
+      )}
+    </div>
+  )
+}
 
 function Thread({
   kind,
@@ -96,17 +190,9 @@ function Thread({
     <div className="min-h-0 flex-1 overflow-y-auto p-3">
       {thread.isLoading && <Skeleton className="h-24" />}
       <div className="flex flex-col gap-3">
-        {thread.data?.events
-          .filter((e) => e.content)
-          .map((event) => (
-            <div key={event.id} className="rounded-lg border p-3">
-              <div className="mb-2 flex items-center gap-2 text-[12px] text-ink-muted">
-                <span className="font-medium text-ink">{event.author}</span>
-                <span>{formatRelativeTime(event.createdAt, locale)}</span>
-              </div>
-              <MarkdownView markdown={event.content ?? ''} kind={kind} repoId={repoId} />
-            </div>
-          ))}
+        {thread.data?.events.map((event) => (
+          <ThreadEvent key={event.id} event={event} kind={kind} repoId={repoId} locale={locale} />
+        ))}
       </div>
     </div>
   )

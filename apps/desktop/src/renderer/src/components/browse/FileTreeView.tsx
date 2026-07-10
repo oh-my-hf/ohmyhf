@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowDownToLine, ChevronRight, File, Folder, Share } from 'lucide-react'
+import { ArrowDownToLine, ChevronRight, File, FileSearch, Folder, Share } from 'lucide-react'
 import type { ExportTool, FileTreeEntry, RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
-import { formatBytes } from '@/lib/utils'
+import { cn, formatBytes } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
 import { FilePreview } from '@/components/browse/FilePreview'
@@ -32,7 +33,11 @@ export function FileTreeView({
 }): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common', 'integrations'])
   const [path, setPath] = useState('')
-  const [preview, setPreview] = useState<FileTreeEntry | null>(null)
+  // Selection is a full repo-relative path (plus the entry metadata the preview
+  // header needs), independent of the browsed directory. It only resets when
+  // repoId changes because the parent keys RepoDetail — and thus this
+  // component — by repoId.
+  const [selected, setSelected] = useState<FileTreeEntry | null>(null)
   const push = useToasts((s) => s.push)
 
   const tree = useQuery({
@@ -59,146 +64,198 @@ export function FileTreeView({
   })
 
   const crumbs = path ? path.split('/') : []
+  const files = tree.data?.filter((entry) => entry.type === 'file') ?? []
 
-  if (preview) {
-    return (
-      <FilePreview
-        kind={kind}
-        repoId={repoId}
-        entry={preview}
-        onBack={() => setPreview(null)}
-        onDownload={() => download.mutate([preview.path])}
-        downloading={download.isPending}
-      />
-    )
+  // ArrowUp/Down moves the file selection within the current directory listing
+  // when focus sits inside the tree (row buttons bubble here). Skip events a
+  // descendant already claimed (e.g. the Radix dropdown trigger).
+  const onListKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    if (event.defaultPrevented || files.length === 0) return
+    event.preventDefault()
+    const delta = event.key === 'ArrowDown' ? 1 : -1
+    const index = files.findIndex((entry) => entry.path === selected?.path)
+    const next =
+      index === -1
+        ? delta === 1
+          ? 0
+          : files.length - 1
+        : Math.min(Math.max(index + delta, 0), files.length - 1)
+    const entry = files[next]
+    if (!entry) return
+    setSelected(entry)
+    event.currentTarget
+      .querySelector(`[data-path="${CSS.escape(entry.path)}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-center gap-1 border-b px-3 py-2 text-[12.5px] text-ink-muted">
-        <button
-          type="button"
-          onClick={() => setPath('')}
-          className="rounded px-1 hover:bg-panel hover:text-ink"
-        >
-          {t('detail:files.root')}
-        </button>
-        {crumbs.map((crumb, i) => (
-          <span key={i} className="flex items-center gap-1">
-            <ChevronRight className="size-3 text-ink-faint" aria-hidden />
-            <button
-              type="button"
-              onClick={() => setPath(crumbs.slice(0, i + 1).join('/'))}
-              className="rounded px-1 hover:bg-panel hover:text-ink"
-            >
-              {crumb}
-            </button>
-          </span>
-        ))}
-      </div>
+    <div className="flex h-full min-w-0">
+      <div className="flex w-72 min-w-56 flex-col border-r">
+        <div className="flex flex-wrap items-center gap-1 border-b px-3 py-2 text-[12.5px] text-ink-muted">
+          <button
+            type="button"
+            onClick={() => setPath('')}
+            className="rounded px-1 hover:bg-panel hover:text-ink"
+          >
+            {t('detail:files.root')}
+          </button>
+          {crumbs.map((crumb, i) => (
+            <span key={i} className="flex items-center gap-1">
+              <ChevronRight className="size-3 text-ink-faint" aria-hidden />
+              <button
+                type="button"
+                onClick={() => setPath(crumbs.slice(0, i + 1).join('/'))}
+                className="rounded px-1 hover:bg-panel hover:text-ink"
+              >
+                {crumb}
+              </button>
+            </span>
+          ))}
+        </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
-        {tree.isLoading && (
-          <div className="flex flex-col gap-1 p-1">
-            {Array.from({ length: 8 }, (_, i) => (
-              <Skeleton key={i} className="h-8" />
-            ))}
-          </div>
-        )}
-        {tree.error && (
-          <div className="p-6 text-center text-[13px] text-ink-muted">
-            {t('common:error.network')}
-          </div>
-        )}
-        {tree.data?.length === 0 && (
-          <div className="p-6 text-center text-[13px] text-ink-muted">
-            {t('detail:files.empty')}
-          </div>
-        )}
-        {tree.data?.map((entry) => {
-          const name = entry.path.split('/').at(-1) ?? entry.path
-          const isGguf = name.toLowerCase().endsWith('.gguf')
-          return (
-            <div
-              key={entry.path}
-              className="group flex h-8 items-center gap-2 rounded-md px-2 hover:bg-panel"
-            >
-              {entry.type === 'directory' ? (
-                <button
-                  type="button"
-                  onClick={() => setPath(entry.path)}
-                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                >
-                  <Folder className="size-4 shrink-0 text-info" aria-hidden />
-                  <span className="min-w-0 truncate text-[13px] font-medium">{name}</span>
-                </button>
-              ) : (
-                <>
+        <div className="min-h-0 flex-1 overflow-y-auto p-1.5" onKeyDown={onListKeyDown}>
+          {tree.isLoading && (
+            <div className="flex flex-col gap-1 p-1">
+              {Array.from({ length: 8 }, (_, i) => (
+                <Skeleton key={i} className="h-8" />
+              ))}
+            </div>
+          )}
+          {tree.error && (
+            <div className="p-6 text-center text-[13px] text-ink-muted">
+              {t('common:error.network')}
+            </div>
+          )}
+          {tree.data?.length === 0 && (
+            <div className="p-6 text-center text-[13px] text-ink-muted">
+              {t('detail:files.empty')}
+            </div>
+          )}
+          {tree.data?.map((entry) => {
+            const name = entry.path.split('/').at(-1) ?? entry.path
+            const isGguf = name.toLowerCase().endsWith('.gguf')
+            const isSelected = entry.type === 'file' && entry.path === selected?.path
+            return (
+              <div
+                key={entry.path}
+                data-path={entry.path}
+                className={cn(
+                  'group flex h-8 items-center gap-2 rounded-md px-2',
+                  isSelected ? 'bg-primary/10' : 'hover:bg-panel'
+                )}
+              >
+                {entry.type === 'directory' ? (
                   <button
                     type="button"
-                    onClick={() => setPreview(entry)}
+                    onClick={() => setPath(entry.path)}
                     className="flex min-w-0 flex-1 items-center gap-2 text-left"
                   >
-                    <File className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{name}</span>
+                    <Folder className="size-4 shrink-0 text-info" aria-hidden />
+                    <span className="min-w-0 truncate text-[13px] font-medium">{name}</span>
                   </button>
-                  {entry.lfs && (
-                    <Badge variant="outline" className="text-[10px]">
-                      {t('detail:files.lfs')}
-                    </Badge>
-                  )}
-                  <span className="w-16 text-right font-mono text-[11.5px] text-ink-faint">
-                    {formatBytes(entry.size)}
-                  </span>
-                  {isGguf && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                          aria-label={t('detail:files.export')}
-                        >
-                          <Share className="size-3.5" aria-hidden />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {targets.data?.filter((target) => target.detected).length === 0 && (
-                          <DropdownMenuItem disabled>
-                            {t('detail:files.noTargets')}
-                          </DropdownMenuItem>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(entry)}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    >
+                      <File
+                        className={cn(
+                          'size-4 shrink-0',
+                          isSelected ? 'text-primary' : 'text-ink-faint'
                         )}
-                        {targets.data
-                          ?.filter((target) => target.detected)
-                          .map((target) => (
-                            <DropdownMenuItem
-                              key={target.tool}
-                              onSelect={() =>
-                                exportRun.mutate({ tool: target.tool, filePath: entry.path })
-                              }
-                            >
-                              {t('detail:files.exportTo', { tool: TOOL_LABELS[target.tool] })}
+                        aria-hidden
+                      />
+                      <span
+                        className={cn(
+                          'min-w-0 flex-1 truncate font-mono text-[12.5px]',
+                          isSelected && 'text-primary'
+                        )}
+                      >
+                        {name}
+                      </span>
+                    </button>
+                    {entry.lfs && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {t('detail:files.lfs')}
+                      </Badge>
+                    )}
+                    <span className="w-16 text-right font-mono text-[11.5px] text-ink-faint">
+                      {formatBytes(entry.size)}
+                    </span>
+                    {isGguf && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                            aria-label={t('detail:files.export')}
+                          >
+                            <Share className="size-3.5" aria-hidden />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {targets.data?.filter((target) => target.detected).length === 0 && (
+                            <DropdownMenuItem disabled>
+                              {t('detail:files.noTargets')}
                             </DropdownMenuItem>
-                          ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                    aria-label={t('detail:files.download')}
-                    loading={download.isPending}
-                    onClick={() => download.mutate([entry.path])}
-                  >
-                    <ArrowDownToLine className="size-3.5" aria-hidden />
-                  </Button>
-                </>
-              )}
-            </div>
-          )
-        })}
+                          )}
+                          {targets.data
+                            ?.filter((target) => target.detected)
+                            .map((target) => (
+                              <DropdownMenuItem
+                                key={target.tool}
+                                onSelect={() =>
+                                  exportRun.mutate({ tool: target.tool, filePath: entry.path })
+                                }
+                              >
+                                {t('detail:files.exportTo', { tool: TOOL_LABELS[target.tool] })}
+                              </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                      aria-label={t('detail:files.download')}
+                      loading={download.isPending}
+                      onClick={() => download.mutate([entry.path])}
+                    >
+                      <ArrowDownToLine className="size-3.5" aria-hidden />
+                    </Button>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
+
+      {selected ? (
+        <div className="min-w-0 flex-1">
+          <FilePreview
+            key={selected.path}
+            kind={kind}
+            repoId={repoId}
+            entry={selected}
+            onDownload={() => download.mutate([selected.path])}
+            downloading={download.isPending}
+          />
+        </div>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center justify-center">
+          <EmptyState
+            icon={FileSearch}
+            title={t('detail:preview.pickFile')}
+            body={t('detail:preview.pickFileBody')}
+          />
+        </div>
+      )}
     </div>
   )
 }
