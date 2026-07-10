@@ -341,7 +341,7 @@ export interface IpcEventContract {
 export type IpcEventChannel = keyof IpcEventContract
 export type IpcEventPayload<C extends IpcEventChannel> = IpcEventContract[C]
 
-export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
+export const IPC_INVOKE_CHANNELS = [
   'system:getAppInfo',
   'system:openExternal',
   'system:showItemInFolder',
@@ -362,6 +362,7 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:discussionDiff',
   'hub:posts',
   'hub:postDetail',
+  'hub:postReact',
   'hub:userOverview',
   'hub:userFollowing',
   'hub:discussionDetail',
@@ -443,7 +444,17 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'inference:run',
   'inference:stream',
   'inference:cancel'
-] as const
+] as const satisfies readonly IpcInvokeChannel[]
+
+// Compile-time drift guard: every channel in the IpcInvokeChannels type map must
+// be listed in IPC_INVOKE_CHANNELS, or the preload allowlist rejects it at runtime
+// with "Unknown IPC channel". This errors if the array and the type ever diverge —
+// the assignment fails to compile, naming the missing channel(s).
+type MissingInvokeChannels = Exclude<IpcInvokeChannel, (typeof IPC_INVOKE_CHANNELS)[number]>
+const _invokeChannelsExhaustive: [MissingInvokeChannels] extends [never]
+  ? true
+  : MissingInvokeChannels = true
+void _invokeChannelsExhaustive
 
 export const IPC_EVENT_CHANNELS: readonly IpcEventChannel[] = [
   'evt:downloads',
