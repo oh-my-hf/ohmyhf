@@ -52,6 +52,10 @@ export interface AppContext {
     next: { hubEndpoint: string | null; proxyUrl: string | null },
     prev: { hubEndpoint: string | null; proxyUrl: string | null }
   ) => Promise<void>
+  applyDesktopSettings: (
+    next: { launchAtLogin: boolean; closeToTray: boolean },
+    prev: { launchAtLogin: boolean; closeToTray: boolean }
+  ) => void
 }
 
 function handle<C extends IpcInvokeChannel>(
@@ -138,6 +142,10 @@ export function registerIpcHandlers(ctx: AppContext): void {
     await ctx.applyNetworkSettings(
       { hubEndpoint: next.hubEndpoint, proxyUrl: next.proxyUrl },
       { hubEndpoint: prev.hubEndpoint, proxyUrl: prev.proxyUrl }
+    )
+    ctx.applyDesktopSettings(
+      { launchAtLogin: next.launchAtLogin, closeToTray: next.closeToTray },
+      { launchAtLogin: prev.launchAtLogin, closeToTray: prev.closeToTray }
     )
     return next
   })

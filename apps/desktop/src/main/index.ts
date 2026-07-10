@@ -13,6 +13,7 @@ import { Library } from './library'
 import { buildMenu } from './menu'
 import { applyAppProxy } from './proxy'
 import { SettingsStore } from './settings'
+import { TrayManager } from './tray'
 import { resolveUpdateClient, UpdateManager } from './updater'
 
 // One identity everywhere: dev and packaged share the same safeStorage keychain
@@ -54,61 +55,19 @@ function navigate(route: string): void {
   broadcast('evt:navigate', route)
 }
 
-function createWindow(backgroundColor: string): BrowserWindow {
-  const win = new BrowserWindow({
-    width: 1360,
-    height: 860,
-    minWidth: 760,
-    minHeight: 520,
-    show: false,
-    // Matches the renderer's --c-bg per theme so first paint never flashes white.
-    backgroundColor,
-    autoHideMenuBar: false,
-    ...(process.platform === 'darwin'
-      ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 14 } }
-      : {}),
-    ...(process.platform === 'linux' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      webSecurity: true
-    }
-  })
-
-  win.on('ready-to-show', () => win.show())
-
-  // Every external navigation goes through the system browser; the window never leaves the app.
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://')) void shell.openExternal(url)
-    return { action: 'deny' }
-  })
-  win.webContents.on('will-navigate', (event, url) => {
-    if (url !== win.webContents.getURL()) {
-      event.preventDefault()
-      if (url.startsWith('https://')) void shell.openExternal(url)
-    }
-  })
-
-  if (isDev && process.env.ELECTRON_RENDERER_URL) {
-    void win.loadURL(process.env.ELECTRON_RENDERER_URL)
-  } else {
-    void win.loadFile(join(__dirname, '../renderer/index.html'))
-  }
-  return win
-}
-
 // Dev and packaged now share one app identity; skip the lock in dev so a running
 // packaged instance doesn't swallow `pnpm dev` launches.
 const gotLock = app.isPackaged ? app.requestSingleInstanceLock() : true
 if (!gotLock) {
   app.quit()
 } else {
+  let isQuitting = false
+
   app.on('second-instance', () => {
     const win = BrowserWindow.getAllWindows()[0]
     if (win) {
       if (win.isMinimized()) win.restore()
+      win.show()
       win.focus()
     }
   })
@@ -131,6 +90,7 @@ if (!gotLock) {
     const hub = createHubProxy(hubHolder)
     auth.attachClient(hubHolder.current)
     await applyAppProxy(initial.proxyUrl)
+    app.setLoginItemSettings({ openAtLogin: initial.launchAtLogin })
 
     const library = new Library(db)
     const cache = new CacheManager(settings)
@@ -162,7 +122,19 @@ if (!gotLock) {
       onStateChange: (state) => broadcast('evt:updater', state)
     })
 
-    const rebuildMenu = (): void => buildMenu(i18n, navigate)
+    const tray = new TrayManager(
+      () => BrowserWindow.getAllWindows()[0],
+      i18n,
+      () => {
+        isQuitting = true
+        app.quit()
+      }
+    )
+
+    const rebuildMenu = (): void => {
+      buildMenu(i18n, navigate)
+      tray.refreshMenu()
+    }
 
     const applyNetworkSettings = async (
       next: { hubEndpoint: string | null; proxyUrl: string | null },
@@ -181,6 +153,25 @@ if (!gotLock) {
       }
     }
 
+    const applyDesktopSettings = (
+      next: { launchAtLogin: boolean; closeToTray: boolean },
+      prev: { launchAtLogin: boolean; closeToTray: boolean }
+    ): void => {
+      if (next.launchAtLogin !== prev.launchAtLogin) {
+        app.setLoginItemSettings({ openAtLogin: next.launchAtLogin })
+      }
+      if (next.closeToTray === prev.closeToTray) return
+      if (next.closeToTray) {
+        tray.ensure()
+      } else {
+        const win = BrowserWindow.getAllWindows()[0]
+        if (win && !win.isDestroyed() && !win.isVisible()) {
+          win.show()
+        }
+        tray.destroy()
+      }
+    }
+
     registerIpcHandlers({
       db,
       hub,
@@ -194,14 +185,70 @@ if (!gotLock) {
       i18n,
       rebuildMenu,
       broadcast,
-      applyNetworkSettings
+      applyNetworkSettings,
+      applyDesktopSettings
     })
     rebuildMenu()
+    if (initial.closeToTray) tray.ensure()
+
     const windowBackground = (): string => {
       const theme = settings.get().theme
       const dark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors)
       return dark ? '#030712' : '#ffffff'
     }
+
+    const createWindow = (backgroundColor: string): BrowserWindow => {
+      const win = new BrowserWindow({
+        width: 1360,
+        height: 860,
+        minWidth: 760,
+        minHeight: 520,
+        show: false,
+        // Matches the renderer's --c-bg per theme so first paint never flashes white.
+        backgroundColor,
+        autoHideMenuBar: false,
+        ...(process.platform === 'darwin'
+          ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 14 } }
+          : {}),
+        ...(process.platform === 'linux' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
+        webPreferences: {
+          preload: join(__dirname, '../preload/index.js'),
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: true,
+          webSecurity: true
+        }
+      })
+
+      win.on('ready-to-show', () => win.show())
+
+      win.on('close', (event) => {
+        if (isQuitting || !settings.get().closeToTray) return
+        event.preventDefault()
+        win.hide()
+        tray.ensure()
+      })
+
+      // Every external navigation goes through the system browser; the window never leaves the app.
+      win.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('https://')) void shell.openExternal(url)
+        return { action: 'deny' }
+      })
+      win.webContents.on('will-navigate', (event, url) => {
+        if (url !== win.webContents.getURL()) {
+          event.preventDefault()
+          if (url.startsWith('https://')) void shell.openExternal(url)
+        }
+      })
+
+      if (isDev && process.env.ELECTRON_RENDERER_URL) {
+        void win.loadURL(process.env.ELECTRON_RENDERER_URL)
+      } else {
+        void win.loadFile(join(__dirname, '../renderer/index.html'))
+      }
+      return win
+    }
+
     createWindow(windowBackground())
     follows.start()
 
@@ -215,12 +262,21 @@ if (!gotLock) {
     void auth.init()
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow(windowBackground())
+      const win = BrowserWindow.getAllWindows()[0]
+      if (win) {
+        if (win.isMinimized()) win.restore()
+        win.show()
+        win.focus()
+      } else {
+        createWindow(windowBackground())
+      }
     })
 
     app.on('before-quit', () => {
+      isQuitting = true
       downloads.shutdown()
       follows.stop()
+      tray.destroy()
     })
   })
 

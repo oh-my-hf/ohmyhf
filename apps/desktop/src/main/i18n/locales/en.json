@@ -2,6 +2,10 @@
   "app": {
     "name": "Oh My HuggingFace"
   },
+  "tray": {
+    "show": "Show Oh My HuggingFace",
+    "quit": "Quit"
+  },
   "menu": {
     "file": "File",
     "edit": "Edit",

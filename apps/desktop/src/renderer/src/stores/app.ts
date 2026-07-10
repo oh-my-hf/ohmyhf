@@ -26,10 +26,18 @@ export interface BrowseFilters {
   hardware?: SpaceHardware
 }
 
-const defaultFilters = (kind: RepoKind): BrowseFilters => ({
+const defaultFilters = (sort: RepoSort = DEFAULT_SETTINGS.defaultRepoSort): BrowseFilters => ({
   search: '',
-  sort: kind === 'space' ? 'likes' : 'trending'
+  sort
 })
+
+function filtersForSort(sort: RepoSort): Record<RepoKind, BrowseFilters> {
+  return {
+    model: defaultFilters(sort),
+    dataset: defaultFilters(sort),
+    space: defaultFilters(sort)
+  }
+}
 
 /** Sections of the settings dialog (left nav entries). */
 export type SettingsSection =
@@ -39,6 +47,7 @@ export type SettingsSection =
   | 'notifications'
   | 'privacy'
   | 'network'
+  | 'desktop'
   | 'about'
 
 interface AppState {
@@ -78,11 +87,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   appInfo: null,
   auth: { status: 'signedOut' },
   paletteOpen: false,
-  filters: {
-    model: defaultFilters('model'),
-    dataset: defaultFilters('dataset'),
-    space: defaultFilters('space')
-  },
+  filters: filtersForSort(DEFAULT_SETTINGS.defaultRepoSort),
   filterPanelOpen: false,
   settingsOpen: false,
   settingsSection: 'account',
@@ -93,7 +98,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     setTheme(settings.theme)
     // CSS zoom scales the whole UI; 100 = default (settings:set clamps to 80–140).
     document.body.style.zoom = String(settings.uiScale / 100)
-    set({ settings })
+    set((state) => {
+      const sortChanged = state.settings.defaultRepoSort !== settings.defaultRepoSort
+      return {
+        settings,
+        filters: sortChanged
+          ? {
+              model: { ...state.filters.model, sort: settings.defaultRepoSort },
+              dataset: { ...state.filters.dataset, sort: settings.defaultRepoSort },
+              space: { ...state.filters.space, sort: settings.defaultRepoSort }
+            }
+          : state.filters
+      }
+    })
   },
   updateSettings: async (patch) => {
     const settings = await invoke('settings:set', { patch })
@@ -101,12 +118,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setAuth: (auth) => set({ auth }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
-  setFilters: (kind, patch) =>
+  setFilters: (kind, patch) => {
     set((state) => ({
       filters: { ...state.filters, [kind]: { ...state.filters[kind], ...patch } }
-    })),
+    }))
+    if (patch.sort !== undefined && patch.sort !== get().settings.defaultRepoSort) {
+      void get().updateSettings({ defaultRepoSort: patch.sort })
+    }
+  },
   resetFilters: (kind) =>
-    set((state) => ({ filters: { ...state.filters, [kind]: defaultFilters(kind) } })),
+    set((state) => ({
+      filters: { ...state.filters, [kind]: defaultFilters(state.settings.defaultRepoSort) }
+    })),
   setFilterPanelOpen: (filterPanelOpen) => set({ filterPanelOpen }),
   openSettings: (section) =>
     set((state) => ({

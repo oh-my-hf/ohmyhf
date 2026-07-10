@@ -1,6 +1,8 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
+import type { DefaultHome } from '@oh-my-huggingface/shared'
 import { queryClient } from '@/lib/query'
+import { useAppStore } from '@/stores/app'
 import { AppShell } from '@/components/layout/AppShell'
 import { BrowsePage } from '@/pages/BrowsePage'
 import { CachePage } from '@/pages/CachePage'
@@ -17,13 +19,27 @@ import { PostPage } from '@/pages/PostPage'
 import { UploadPage } from '@/pages/UploadPage'
 import { UserPage } from '@/pages/UserPage'
 
+const HOME_PATH: Record<DefaultHome, string> = {
+  home: '/',
+  models: '/models',
+  datasets: '/datasets',
+  spaces: '/spaces',
+  papers: '/papers'
+}
+
+function DefaultHomeRedirect(): React.JSX.Element {
+  const home = useAppStore((s) => s.settings.defaultHome)
+  if (home === 'home') return <HomePage />
+  return <Navigate to={HOME_PATH[home]} replace />
+}
+
 export function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <HashRouter>
         <Routes>
           <Route element={<AppShell />}>
-            <Route index element={<HomePage />} />
+            <Route index element={<DefaultHomeRedirect />} />
             <Route path="models/*" element={<BrowsePage kind="model" />} />
             <Route path="datasets/*" element={<BrowsePage kind="dataset" />} />
             <Route path="spaces/*" element={<BrowsePage kind="space" />} />

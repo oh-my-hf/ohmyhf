@@ -354,6 +354,8 @@ export interface ActivityFeed {
 
 export type ThemeSetting = 'system' | 'light' | 'dark'
 
+export type DefaultHome = 'home' | 'models' | 'datasets' | 'spaces' | 'papers'
+
 export interface AppSettings {
   locale: 'system' | Locale
   theme: ThemeSetting
@@ -370,6 +372,14 @@ export interface AppSettings {
   hubEndpoint: string | null
   /** null = no app-level HTTP(S) proxy override */
   proxyUrl: string | null
+  /** Open the app automatically when the user logs into the OS. */
+  launchAtLogin: boolean
+  /** Hide to the system tray instead of quitting when the window is closed. */
+  closeToTray: boolean
+  /** Landing route when opening the app at `/`. */
+  defaultHome: DefaultHome
+  /** Default browse sort for models/datasets/spaces. */
+  defaultRepoSort: RepoSort
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -382,7 +392,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pollIntervalMinutes: 30,
   uiScale: 100,
   hubEndpoint: null,
-  proxyUrl: null
+  proxyUrl: null,
+  launchAtLogin: false,
+  closeToTray: false,
+  defaultHome: 'home',
+  defaultRepoSort: 'trending'
 }
 
 /** Subset of process.platform values the app runs on (kept Node-types-free for the renderer). */

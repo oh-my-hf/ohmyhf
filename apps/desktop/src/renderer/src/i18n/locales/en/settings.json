@@ -71,11 +71,28 @@
     "title": "Account"
   },
   "appearance": {
+    "defaultHome": "Default home",
+    "defaultSort": "Default sort",
+    "homeOptions": {
+      "datasets": "Datasets",
+      "home": "Home feed",
+      "models": "Models",
+      "papers": "Papers",
+      "spaces": "Spaces"
+    },
     "language": "Language",
     "title": "Appearance",
     "uiScale": "Interface scale",
     "uiScaleDecrease": "Decrease interface scale",
     "uiScaleIncrease": "Increase interface scale"
+  },
+  "desktop": {
+    "closeHintMac": "Closing the window hides the app to the menu bar tray. Quit from the tray menu or Dock to exit fully.",
+    "closeHintOther": "Closing the window hides the app to the system tray. Quit from the tray menu to exit fully.",
+    "closeToTray": "Close to tray",
+    "launchAtLogin": "Launch at login",
+    "launchAtLoginHint": "Start Oh My HuggingFace when you sign in to this computer.",
+    "title": "Desktop"
   },
   "downloads": {
     "cacheDir": "HF cache directory",
@@ -93,7 +110,8 @@
     "account": "Account",
     "connection": "Connection",
     "data": "Data",
-    "interface": "Interface"
+    "interface": "Interface",
+    "system": "System"
   },
   "network": {
     "apply": "Apply",

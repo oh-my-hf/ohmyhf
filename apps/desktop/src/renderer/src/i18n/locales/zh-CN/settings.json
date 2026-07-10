@@ -71,11 +71,28 @@
     "title": "账户"
   },
   "appearance": {
+    "defaultHome": "默认首页",
+    "defaultSort": "默认排序",
+    "homeOptions": {
+      "datasets": "数据集",
+      "home": "首页动态",
+      "models": "模型",
+      "papers": "论文",
+      "spaces": "Spaces"
+    },
     "language": "语言",
     "title": "外观",
     "uiScale": "界面缩放",
     "uiScaleDecrease": "缩小界面",
     "uiScaleIncrease": "放大界面"
+  },
+  "desktop": {
+    "closeHintMac": "关闭窗口时应用会隐藏到菜单栏托盘。从托盘菜单或 Dock 退出才会完全关闭。",
+    "closeHintOther": "关闭窗口时应用会隐藏到系统托盘。从托盘菜单退出才会完全关闭。",
+    "closeToTray": "关闭时最小化到托盘",
+    "launchAtLogin": "开机启动",
+    "launchAtLoginHint": "登录此电脑时自动启动 Oh My HuggingFace。",
+    "title": "桌面"
   },
   "downloads": {
     "cacheDir": "HF 缓存目录",
@@ -93,7 +110,8 @@
     "account": "账号",
     "connection": "连接",
     "data": "数据",
-    "interface": "界面"
+    "interface": "界面",
+    "system": "系统"
   },
   "network": {
     "apply": "应用",

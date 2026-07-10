@@ -2,6 +2,10 @@
   "app": {
     "name": "Oh My HuggingFace"
   },
+  "tray": {
+    "show": "显示 Oh My HuggingFace",
+    "quit": "退出"
+  },
   "menu": {
     "file": "文件",
     "edit": "编辑",

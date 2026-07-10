@@ -73,7 +73,11 @@ const settingsPatch = z
     pollIntervalMinutes: z.number().int().min(5).max(24 * 60),
     uiScale: z.number().int().min(80).max(140),
     hubEndpoint: z.union([z.url({ protocol: /^https?$/ }), z.null()]),
-    proxyUrl: z.union([z.url({ protocol: /^https?$/ }), z.null()])
+    proxyUrl: z.union([z.url({ protocol: /^https?$/ }), z.null()]),
+    launchAtLogin: z.boolean(),
+    closeToTray: z.boolean(),
+    defaultHome: z.enum(['home', 'models', 'datasets', 'spaces', 'papers']),
+    defaultRepoSort: z.enum(['trending', 'downloads', 'likes', 'updated', 'created'])
   })
   .partial()
 

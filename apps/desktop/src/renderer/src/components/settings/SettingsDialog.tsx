@@ -10,6 +10,7 @@ import {
   LogOut,
   Minus,
   Monitor,
+  PanelTop,
   Plus,
   RefreshCw,
   Shield,
@@ -17,7 +18,7 @@ import {
   Wifi,
   X
 } from 'lucide-react'
-import type { AppUpdateState, Locale } from '@oh-my-huggingface/shared'
+import type { AppUpdateState, DefaultHome, Locale, RepoSort } from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { changeLanguage } from '@/i18n'
@@ -42,6 +43,7 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
 import { PrivacySection } from '@/components/settings/PrivacySection'
 import { NetworkSection } from '@/components/settings/NetworkSection'
+import { DesktopSection } from '@/components/settings/DesktopSection'
 
 const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
 const RELEASES_URL = `${REPO_URL}/releases`
@@ -82,6 +84,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     labelKey: 'settings:groups.connection',
     items: [{ id: 'network', labelKey: 'settings:network.title', icon: Wifi }]
+  },
+  {
+    labelKey: 'settings:groups.system',
+    items: [{ id: 'desktop', labelKey: 'settings:desktop.title', icon: PanelTop }]
   },
   {
     labelKey: 'settings:groups.data',
@@ -364,7 +370,7 @@ function BillingUsageCard(): React.JSX.Element {
 }
 
 function AppearanceSection(): React.JSX.Element {
-  const { t } = useTranslation(['settings', 'common'])
+  const { t } = useTranslation(['settings', 'common', 'browse'])
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const updateSettings = useAppStore((s) => s.updateSettings)
@@ -380,6 +386,9 @@ function AppearanceSection(): React.JSX.Element {
     const uiScale = Math.min(UI_SCALE_MAX, Math.max(UI_SCALE_MIN, settings.uiScale + delta))
     if (uiScale !== settings.uiScale) void updateSettings({ uiScale })
   }
+
+  const homeOptions: DefaultHome[] = ['home', 'models', 'datasets', 'spaces', 'papers']
+  const sortOptions: RepoSort[] = ['trending', 'downloads', 'likes', 'updated', 'created']
 
   return (
     <SectionShell title={t('settings:appearance.title')}>
@@ -437,6 +446,40 @@ function AppearanceSection(): React.JSX.Element {
             <Plus className="size-3.5" aria-hidden />
           </Button>
         </div>
+      </Row>
+      <Row label={t('settings:appearance.defaultHome')}>
+        <Select
+          value={settings.defaultHome}
+          onValueChange={(v) => void updateSettings({ defaultHome: v as DefaultHome })}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {homeOptions.map((home) => (
+              <SelectItem key={home} value={home}>
+                {t(`settings:appearance.homeOptions.${home}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Row>
+      <Row label={t('settings:appearance.defaultSort')}>
+        <Select
+          value={settings.defaultRepoSort}
+          onValueChange={(v) => void updateSettings({ defaultRepoSort: v as RepoSort })}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((sort) => (
+              <SelectItem key={sort} value={sort}>
+                {t(`browse:sort.${sort}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Row>
     </SectionShell>
   )
@@ -747,6 +790,7 @@ const SECTION_CONTENT: Record<SettingsSection, () => React.JSX.Element> = {
   downloads: DownloadsSection,
   notifications: NotificationsSection,
   network: NetworkSection,
+  desktop: DesktopSection,
   privacy: PrivacySection,
   about: AboutSection
 }
