@@ -83,7 +83,7 @@ export function NetworkSection(): React.JSX.Element {
           </span>
           <Input
             value={endpointDraft}
-            placeholder={DEFAULT_ENDPOINT}
+            placeholder={DEFAULT_HUB_ENDPOINT}
             spellCheck={false}
             aria-invalid={endpointError}
             onChange={(e) => {
