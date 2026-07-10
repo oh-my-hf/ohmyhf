@@ -537,6 +537,26 @@ export interface UserSearchResult {
   avatarUrl?: string
 }
 
+/** Org hit from `/api/quicksearch?type=org` (Hub uses `name`, not `user`). */
+export interface OrgSearchResult {
+  name: string
+  fullname?: string
+  avatarUrl?: string
+}
+
+/** Paper hit from `/api/quicksearch?type=paper` (`_id` → `id`). */
+export interface PaperSearchResult {
+  id: string
+  title: string
+}
+
+/** Collection hit from `/api/quicksearch?type=collection` (`_id` is the routable slug). */
+export interface CollectionSearchResult {
+  slug: string
+  title: string
+  description?: string
+}
+
 export interface DatasetRows {
   columns: string[]
   /** Cell values pre-stringified and truncated for display. */

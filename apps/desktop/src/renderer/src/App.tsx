@@ -16,6 +16,7 @@ import { InboxPage } from '@/pages/InboxPage'
 import { MyReposPage } from '@/pages/MyReposPage'
 import { PapersPage } from '@/pages/PapersPage'
 import { PostPage } from '@/pages/PostPage'
+import { SearchPage } from '@/pages/SearchPage'
 import { UploadPage } from '@/pages/UploadPage'
 import { UserPage } from '@/pages/UserPage'
 
@@ -56,6 +57,7 @@ export function App(): React.JSX.Element {
             <Route path="inbox" element={<InboxPage />} />
             <Route path="compare" element={<ComparePage />} />
             <Route path="upload" element={<UploadPage />} />
+            <Route path="search" element={<SearchPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

@@ -52,7 +52,10 @@ import type {
   UploadResult,
   AppUpdateState,
   UserOverview,
-  UserSearchResult
+  UserSearchResult,
+  OrgSearchResult,
+  PaperSearchResult,
+  CollectionSearchResult
 } from './types'
 
 /** Request/response map for `ipcRenderer.invoke`-style calls. */
@@ -144,6 +147,9 @@ export interface IpcInvokeContract {
   }
   'hub:datasetSplits': { req: { repoId: string }; res: DatasetSplit[] }
   'hub:searchUsers': { req: { query: string }; res: UserSearchResult[] }
+  'hub:searchOrgs': { req: { query: string }; res: OrgSearchResult[] }
+  'hub:searchPapers': { req: { query: string }; res: PaperSearchResult[] }
+  'hub:searchCollections': { req: { query: string }; res: CollectionSearchResult[] }
   /** Whether at least one inference provider serves this model. */
   'hub:inferenceAvailable': { req: { repoId: string }; res: boolean }
   'hub:datasetRows': {
@@ -390,6 +396,9 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:datasetSplits',
   'hub:datasetRows',
   'hub:searchUsers',
+  'hub:searchOrgs',
+  'hub:searchPapers',
+  'hub:searchCollections',
   'hub:inferenceAvailable',
   'hub:collections',
   'hub:collection',

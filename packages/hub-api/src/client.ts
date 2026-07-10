@@ -28,7 +28,10 @@ import type {
   SpaceVariable,
   UserOverview,
   UserProfile,
-  UserSearchResult
+  UserSearchResult,
+  OrgSearchResult,
+  PaperSearchResult,
+  CollectionSearchResult
 } from '@oh-my-huggingface/shared'
 import { HubApiError, isNotFound } from './errors'
 import {
@@ -872,6 +875,68 @@ export class HubClient {
           name: u.user ?? '',
           fullname: u.fullname,
           avatarUrl: u.avatarUrl ? new URL(u.avatarUrl, this.endpoint).toString() : undefined
+        }))
+    } catch {
+      return []
+    }
+  }
+
+  /** Org lookup for command palette / search-all. Failures degrade to []. */
+  async searchOrgs(query: string): Promise<OrgSearchResult[]> {
+    const url = new URL(`${this.endpoint}/api/quicksearch`)
+    url.searchParams.set('q', query)
+    url.searchParams.set('type', 'org')
+    try {
+      const { body } = await this.getJson<{
+        orgs?: Array<{ name?: string; fullname?: string; avatarUrl?: string }>
+      }>(url.toString(), { ttl: 60_000 })
+      return (body.orgs ?? [])
+        .filter((o) => o.name)
+        .slice(0, 8)
+        .map((o) => ({
+          name: o.name ?? '',
+          fullname: o.fullname,
+          avatarUrl: o.avatarUrl ? new URL(o.avatarUrl, this.endpoint).toString() : undefined
+        }))
+    } catch {
+      return []
+    }
+  }
+
+  /** Paper lookup for command palette / search-all. Failures degrade to []. */
+  async searchPapers(query: string): Promise<PaperSearchResult[]> {
+    const url = new URL(`${this.endpoint}/api/quicksearch`)
+    url.searchParams.set('q', query)
+    url.searchParams.set('type', 'paper')
+    try {
+      const { body } = await this.getJson<{
+        papers?: Array<{ _id?: string; id?: string }>
+      }>(url.toString(), { ttl: 60_000 })
+      return (body.papers ?? [])
+        .filter((p) => p._id && p.id)
+        .slice(0, 8)
+        .map((p) => ({ id: p._id ?? '', title: p.id ?? '' }))
+    } catch {
+      return []
+    }
+  }
+
+  /** Collection lookup for command palette / search-all. Failures degrade to []. */
+  async searchCollections(query: string): Promise<CollectionSearchResult[]> {
+    const url = new URL(`${this.endpoint}/api/quicksearch`)
+    url.searchParams.set('q', query)
+    url.searchParams.set('type', 'collection')
+    try {
+      const { body } = await this.getJson<{
+        collections?: Array<{ _id?: string; title?: string; description?: string }>
+      }>(url.toString(), { ttl: 60_000 })
+      return (body.collections ?? [])
+        .filter((c) => c._id && c.title)
+        .slice(0, 8)
+        .map((c) => ({
+          slug: c._id ?? '',
+          title: c.title ?? '',
+          description: c.description
         }))
     } catch {
       return []
