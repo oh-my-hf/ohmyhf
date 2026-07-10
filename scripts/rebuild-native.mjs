@@ -17,9 +17,13 @@ if (!has('electron/package.json') || !has('better-sqlite3/package.json')) {
   process.exit(0)
 }
 
-const result = spawnSync(
-  process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['electron-rebuild', '-f', '-w', 'better-sqlite3'],
-  { cwd: root, stdio: 'inherit' }
-)
+// Run through a shell: Node 22+ refuses to spawn a `.cmd`/`.bat` directly on
+// Windows (CVE-2024-27980), so invoking `npx.cmd` without a shell fails
+// instantly with no output. `shell: true` + bare `npx` works on every OS; the
+// fixed args have no whitespace/metacharacters, so shell quoting is safe.
+const result = spawnSync('npx', ['electron-rebuild', '-f', '-w', 'better-sqlite3'], {
+  cwd: root,
+  stdio: 'inherit',
+  shell: true,
+})
 process.exit(result.status ?? 1)
