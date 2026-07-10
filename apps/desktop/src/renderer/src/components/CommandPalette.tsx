@@ -6,6 +6,7 @@ import {
   ArrowDownToLine,
   ArrowUpDown,
   Boxes,
+  Building2,
   Columns3,
   Database,
   FileText,
@@ -14,6 +15,7 @@ import {
   Heart,
   Inbox,
   Keyboard,
+  Library,
   LayoutGrid,
   Loader2,
   Moon,
@@ -198,7 +200,13 @@ export function CommandPalette(): React.JSX.Element {
     (showShortcuts ? 1 : 0)
 
   const asyncCount =
-    search.models.length + search.datasets.length + search.spaces.length + search.users.length
+    search.models.length +
+    search.datasets.length +
+    search.spaces.length +
+    search.orgs.length +
+    search.users.length +
+    search.papers.length +
+    search.collections.length
   // Root: only surface Empty once every hub query settled with nothing and no static row matched.
   const showEmpty =
     page !== 'root' || needle === '' || (!search.isLoading && asyncCount === 0 && staticCount === 0)
@@ -258,6 +266,27 @@ export function CommandPalette(): React.JSX.Element {
                       </Command.Group>
                     ) : null
                   )}
+                  {search.orgs.length > 0 && (
+                    <Command.Group heading={t('nav:organizations')}>
+                      {search.orgs.map((org) => (
+                        <Command.Item
+                          key={org.name}
+                          value={`org:${org.name}`}
+                          onSelect={() => closeAnd(() => navigate(`/users/${org.name}`))}
+                        >
+                          <Building2 className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">
+                            {org.name}
+                          </span>
+                          {org.fullname ? (
+                            <span className="max-w-40 shrink-0 truncate text-[11px] text-ink-faint">
+                              {org.fullname}
+                            </span>
+                          ) : null}
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+                  )}
                   {search.users.length > 0 && (
                     <Command.Group heading={t('nav:users')}>
                       {search.users.map((user) => (
@@ -279,8 +308,57 @@ export function CommandPalette(): React.JSX.Element {
                       ))}
                     </Command.Group>
                   )}
+                  {search.papers.length > 0 && (
+                    <Command.Group heading={t('nav:papers')}>
+                      {search.papers.map((paper) => (
+                        <Command.Item
+                          key={paper.id}
+                          value={`paper:${paper.id}`}
+                          onSelect={() => closeAnd(() => navigate(`/papers/${paper.id}`))}
+                        >
+                          <FileText className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate text-ink-strong">
+                            {paper.title}
+                          </span>
+                          <span className="max-w-40 shrink-0 truncate font-mono text-[11px] text-ink-faint">
+                            {paper.id}
+                          </span>
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+                  )}
+                  {search.collections.length > 0 && (
+                    <Command.Group heading={t('nav:collections')}>
+                      {search.collections.map((col) => (
+                        <Command.Item
+                          key={col.slug}
+                          value={`collection:${col.slug}`}
+                          onSelect={() => closeAnd(() => navigate(`/collections/${col.slug}`))}
+                        >
+                          <Library className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate text-ink-strong">
+                            {col.title}
+                          </span>
+                          <span className="max-w-40 shrink-0 truncate font-mono text-[11px] text-ink-faint">
+                            {col.slug}
+                          </span>
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+                  )}
                 </>
               ))}
+            {needle !== '' && (
+              <Command.Item
+                value={`searchAll:${query}`}
+                onSelect={() =>
+                  closeAnd(() => navigate(`/search?q=${encodeURIComponent(query)}&type=all`))
+                }
+              >
+                <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                <span className="truncate">{t('nav:searchAll', { query })}</span>
+              </Command.Item>
+            )}
             {needle !== '' &&
               searchKinds.map((kind) => (
                 <Command.Item
