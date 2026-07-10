@@ -15,3 +15,5 @@ test-results/
 
 # macOS Finder-style duplicate artifacts (created spuriously by the environment)
 * 2.*
+
+.superpowers/
