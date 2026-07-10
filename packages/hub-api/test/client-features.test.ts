@@ -36,6 +36,93 @@ describe('HubClient.searchUsers', () => {
   })
 })
 
+describe('HubClient.searchOrgs', () => {
+  it('maps orgs and absolutizes avatar URLs', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        orgs: [
+          { name: 'meta-llama', fullname: 'Meta Llama', avatarUrl: '/avatars/a.png' },
+          { name: 'facebook' }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const orgs = await client.searchOrgs('meta')
+    expect(orgs).toEqual([
+      {
+        name: 'meta-llama',
+        fullname: 'Meta Llama',
+        avatarUrl: 'https://huggingface.co/avatars/a.png'
+      },
+      { name: 'facebook', fullname: undefined, avatarUrl: undefined }
+    ])
+    const url = new URL(fetchImpl.mock.calls[0]![0] as string)
+    expect(url.pathname).toBe('/api/quicksearch')
+    expect(url.searchParams.get('type')).toBe('org')
+    expect(url.searchParams.get('q')).toBe('meta')
+  })
+
+  it('degrades to empty on failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response('x', { status: 500 }))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0, maxRetries: 0 })
+    await expect(client.searchOrgs('x')).resolves.toEqual([])
+  })
+})
+
+describe('HubClient.searchPapers', () => {
+  it('maps paper _id and title', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        papers: [{ _id: '2509.26507', id: 'The Dragon Hatchling' }]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    await expect(client.searchPapers('transformer')).resolves.toEqual([
+      { id: '2509.26507', title: 'The Dragon Hatchling' }
+    ])
+    const url = new URL(fetchImpl.mock.calls[0]![0] as string)
+    expect(url.searchParams.get('type')).toBe('paper')
+  })
+
+  it('degrades to empty on failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response('x', { status: 500 }))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0, maxRetries: 0 })
+    await expect(client.searchPapers('x')).resolves.toEqual([])
+  })
+})
+
+describe('HubClient.searchCollections', () => {
+  it('maps collection _id as slug and title', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        collections: [
+          {
+            _id: 'meta-llama/llama-4-67f0c30d9fe03840bc9d0164',
+            title: 'Llama 4',
+            description: 'Llama 4 release'
+          }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    await expect(client.searchCollections('llama')).resolves.toEqual([
+      {
+        slug: 'meta-llama/llama-4-67f0c30d9fe03840bc9d0164',
+        title: 'Llama 4',
+        description: 'Llama 4 release'
+      }
+    ])
+    const url = new URL(fetchImpl.mock.calls[0]![0] as string)
+    expect(url.searchParams.get('type')).toBe('collection')
+  })
+
+  it('degrades to empty on failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response('x', { status: 500 }))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0, maxRetries: 0 })
+    await expect(client.searchCollections('x')).resolves.toEqual([])
+  })
+})
+
 describe('HubClient.getPosts', () => {
   const rawPost = {
     slug: '943499680377839',
