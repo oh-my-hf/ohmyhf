@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { Globe, RotateCcw, Wifi } from 'lucide-react'
-import { DEFAULT_ENDPOINT } from '@oh-my-huggingface/hub-api'
 import { invoke } from '@/lib/ipc'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToasts } from '@/components/ui/toaster'
 import { useAppStore } from '@/stores/app'
+
+/** Mirrors hub-api DEFAULT_ENDPOINT; do not import hub-api in the renderer (Node-only deps). */
+const DEFAULT_HUB_ENDPOINT = 'https://huggingface.co'
 
 function isHttpUrl(value: string): boolean {
   try {
