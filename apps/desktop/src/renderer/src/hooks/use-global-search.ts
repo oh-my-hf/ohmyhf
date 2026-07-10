@@ -1,5 +1,12 @@
 import { useQueries } from '@tanstack/react-query'
-import type { RepoKind, RepoSummary, UserSearchResult } from '@oh-my-huggingface/shared'
+import type {
+  CollectionSearchResult,
+  OrgSearchResult,
+  PaperSearchResult,
+  RepoKind,
+  RepoSummary,
+  UserSearchResult
+} from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { useDebounced } from '@/hooks/use-debounced'
 
@@ -10,10 +17,13 @@ export interface GlobalSearchResults {
   datasets: RepoSummary[]
   spaces: RepoSummary[]
   users: UserSearchResult[]
+  orgs: OrgSearchResult[]
+  papers: PaperSearchResult[]
+  collections: CollectionSearchResult[]
   isLoading: boolean
 }
 
-/** Debounced hub-wide search across repos and users for the command palette. */
+/** Debounced hub-wide search across repos, users, orgs, papers, collections. */
 export function useGlobalSearch(query: string): GlobalSearchResults {
   const trimmed = query.trim()
   const q = useDebounced(trimmed, 200)
@@ -27,7 +37,7 @@ export function useGlobalSearch(query: string): GlobalSearchResults {
     enabled
   })
 
-  const [models, datasets, spaces, users] = useQueries({
+  const [models, datasets, spaces, users, orgs, papers, collections] = useQueries({
     queries: [
       repoQuery('model'),
       repoQuery('dataset'),
@@ -37,18 +47,39 @@ export function useGlobalSearch(query: string): GlobalSearchResults {
         queryFn: () => invoke('hub:searchUsers', { query: q }),
         staleTime: STALE_TIME,
         enabled
+      },
+      {
+        queryKey: ['globalSearch', 'org', q],
+        queryFn: () => invoke('hub:searchOrgs', { query: q }),
+        staleTime: STALE_TIME,
+        enabled
+      },
+      {
+        queryKey: ['globalSearch', 'paper', q],
+        queryFn: () => invoke('hub:searchPapers', { query: q }),
+        staleTime: STALE_TIME,
+        enabled
+      },
+      {
+        queryKey: ['globalSearch', 'collection', q],
+        queryFn: () => invoke('hub:searchCollections', { query: q }),
+        staleTime: STALE_TIME,
+        enabled
       }
     ]
   })
+
+  const asyncQueries = [models, datasets, spaces, users, orgs, papers, collections]
 
   return {
     models: models.data?.items ?? [],
     datasets: datasets.data?.items ?? [],
     spaces: spaces.data?.items ?? [],
     users: users.data ?? [],
-    // The debounce gap counts as loading so the palette never flashes "empty".
+    orgs: orgs.data ?? [],
+    papers: papers.data ?? [],
+    collections: collections.data ?? [],
     isLoading:
-      trimmed !== '' &&
-      (trimmed !== q || [models, datasets, spaces, users].some((r) => r.isLoading))
+      trimmed !== '' && (trimmed !== q || asyncQueries.some((r) => r.isLoading))
   }
 }
