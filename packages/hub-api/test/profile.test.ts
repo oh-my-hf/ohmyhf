@@ -168,3 +168,37 @@ describe('mapUserOverview', () => {
     })
   })
 })
+
+describe('HubClient.getUserFollowing', () => {
+  it('drains Link pagination and maps accounts', async () => {
+    const page1 = new Response(
+      JSON.stringify([
+        { user: 'alice', fullname: 'Alice', avatarUrl: '/avatars/a.svg', type: 'user' },
+        { user: 'acme', fullname: 'Acme', type: 'org' }
+      ]),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          Link: '<https://huggingface.co/api/users/me/following?cursor=x>; rel="next"'
+        }
+      }
+    )
+    const page2 = new Response(JSON.stringify([{ user: 'bob', type: 'user' }]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
+    const fetchImpl = vi.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2)
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const following = await client.getUserFollowing('me')
+    expect(following).toHaveLength(3)
+    expect(following[0]).toEqual({
+      name: 'alice',
+      fullname: 'Alice',
+      avatarUrl: 'https://huggingface.co/avatars/a.svg',
+      isOrg: false
+    })
+    expect(following[1]!.isOrg).toBe(true)
+    expect(following[2]!.name).toBe('bob')
+  })
+})

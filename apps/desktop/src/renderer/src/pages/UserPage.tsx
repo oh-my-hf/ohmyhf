@@ -303,6 +303,9 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                 >
                   {followEntry ? t('profile:unfollow') : t('profile:follow')}
                 </Button>
+                {data.isFollowing && (
+                  <Badge variant="success">{t('profile:followingOnHub')}</Badge>
+                )}
               </div>
             </header>
 

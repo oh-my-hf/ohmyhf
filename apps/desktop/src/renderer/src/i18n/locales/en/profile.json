@@ -8,6 +8,7 @@
     "title": "Couldn't load this profile"
   },
   "follow": "Follow",
+  "followingOnHub": "Following on the Hub",
   "post": {
     "commentsOnHub": "Replies and comments happen on the Hub.",
     "error": {

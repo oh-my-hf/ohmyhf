@@ -8,6 +8,7 @@
     "title": "无法加载该用户主页"
   },
   "follow": "关注",
+  "followingOnHub": "已在 Hub 关注",
   "post": {
     "commentsOnHub": "回复和评论需前往 Hub 进行。",
     "error": {

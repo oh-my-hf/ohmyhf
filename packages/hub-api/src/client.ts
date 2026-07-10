@@ -1,6 +1,7 @@
 import type {
   DatasetRows,
   DatasetSplit,
+  FollowedAccount,
   DiscussionDetail,
   DiscussionStatusFilter,
   DiscussionSummary,
@@ -716,6 +717,35 @@ export class HubClient {
     const url = `${this.endpoint}/api/users/${encodeURIComponent(username)}/overview`
     const { body } = await this.getJson<unknown>(url)
     return mapUserOverview(body as never, this.endpoint)
+  }
+
+  /**
+   * Accounts a user follows on the Hub. Live-verified: paginated via Link header
+   * (500/page); drained up to 4 pages (2000 accounts) to bound the fan-out.
+   */
+  async getUserFollowing(username: string): Promise<FollowedAccount[]> {
+    let url: string | undefined =
+      `${this.endpoint}/api/users/${encodeURIComponent(username)}/following`
+    const all: FollowedAccount[] = []
+    let pages = 0
+    while (url && pages < 4) {
+      const page: {
+        body: Array<{ user?: string; fullname?: string; avatarUrl?: string; type?: string }>
+        nextUrl?: string
+      } = await this.getJson(url, { ttl: 5 * 60_000 })
+      for (const raw of page.body) {
+        if (!raw.user) continue
+        all.push({
+          name: raw.user,
+          fullname: raw.fullname,
+          avatarUrl: raw.avatarUrl ? new URL(raw.avatarUrl, this.endpoint).toString() : undefined,
+          isOrg: raw.type === 'org'
+        })
+      }
+      url = page.nextUrl
+      pages++
+    }
+    return all
   }
 
   /** User/org lookup for @mention autocompletion. Failures degrade to an empty list. */

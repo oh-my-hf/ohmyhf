@@ -13,7 +13,7 @@ import { TrendingRail } from '@/components/home/TrendingRail'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
-const MAX_FOLLOWS = 6
+const MAX_FOLLOWS = 8
 const PAPERS_SHOWN = 3
 
 type FeedItem =
@@ -55,27 +55,51 @@ export function HomePage(): React.JSX.Element {
     staleTime: STALE_TIME
   })
 
-  const followTargets = useMemo(
-    () =>
-      (follows.data ?? [])
-        .filter((f) => f.type === 'user' || f.type === 'org')
-        .slice(0, MAX_FOLLOWS),
-    [follows.data]
-  )
+  // The REAL Hugging Face following list of the signed-in account drives the feed;
+  // local follows extend it (and are the only source when signed out).
+  const auth = useAppStore((s) => s.auth)
+  const me = auth.status === 'signedIn' ? auth.user.name : undefined
+  const hubFollowing = useQuery({
+    queryKey: ['hub-following', me],
+    enabled: Boolean(me),
+    staleTime: STALE_TIME,
+    queryFn: () => invoke('hub:userFollowing', { username: me ?? '' })
+  })
+
+  const followTargets = useMemo(() => {
+    const seen = new Set<string>()
+    const targets: string[] = []
+    for (const account of hubFollowing.data ?? []) {
+      const key = account.name.toLowerCase()
+      if (!seen.has(key)) {
+        seen.add(key)
+        targets.push(account.name)
+      }
+    }
+    for (const follow of follows.data ?? []) {
+      if (follow.type !== 'user' && follow.type !== 'org') continue
+      const key = follow.target.toLowerCase()
+      if (!seen.has(key)) {
+        seen.add(key)
+        targets.push(follow.target)
+      }
+    }
+    return targets.slice(0, MAX_FOLLOWS)
+  }, [hubFollowing.data, follows.data])
 
   const activity = useQuery({
-    queryKey: ['home', 'activity', followTargets.map((f) => f.target)],
+    queryKey: ['home', 'activity', followTargets],
     enabled: followTargets.length > 0,
     staleTime: STALE_TIME,
     queryFn: async (): Promise<RepoSummary[]> => {
       // allSettled: one broken author query must not sink the whole group.
       const results = await Promise.allSettled(
-        followTargets.flatMap((f) => [
+        followTargets.flatMap((author) => [
           invoke('hub:search', {
-            query: { kind: 'model', author: f.target, sort: 'updated', limit: 3 }
+            query: { kind: 'model', author, sort: 'updated', limit: 3 }
           }),
           invoke('hub:search', {
-            query: { kind: 'dataset', author: f.target, sort: 'updated', limit: 2 }
+            query: { kind: 'dataset', author, sort: 'updated', limit: 2 }
           })
         ])
       )
@@ -129,9 +153,11 @@ export function HomePage(): React.JSX.Element {
     posts.isPending ||
     papers.isPending ||
     follows.isPending ||
+    (Boolean(me) && hubFollowing.isPending) ||
     (followTargets.length > 0 && activity.isPending)
   const showSkeleton = feed.length === 0 && sourcesPending
-  const showEmptyFollowing = follows.isSuccess && followTargets.length === 0
+  const followSourcesSettled = follows.isSuccess && (!me || hubFollowing.isSuccess)
+  const showEmptyFollowing = followSourcesSettled && followTargets.length === 0
 
   return (
     <div className="animate-fade-rise flex h-full min-w-0">

@@ -22,6 +22,7 @@ import type {
   FavoriteItem,
   FileTextResult,
   FileTreeEntry,
+  FollowedAccount,
   Follow,
   FollowTargetType,
   HistoryItem,
@@ -80,6 +81,8 @@ export interface IpcInvokeContract {
   'hub:posts': { req: { cursor?: string }; res: Page<PostSummary> }
   'hub:postDetail': { req: { author: string; slug: string }; res: PostSummary }
   'hub:userOverview': { req: { username: string }; res: UserOverview }
+  /** Accounts the given user follows on the Hub (drained pagination, capped). */
+  'hub:userFollowing': { req: { username: string }; res: FollowedAccount[] }
   'hub:discussionDetail': {
     req: { kind: RepoKind; repoId: string; num: number }
     res: DiscussionDetail
@@ -189,6 +192,7 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:posts',
   'hub:postDetail',
   'hub:userOverview',
+  'hub:userFollowing',
   'hub:discussionDetail',
   'hub:discussionComment',
   'hub:notifications',

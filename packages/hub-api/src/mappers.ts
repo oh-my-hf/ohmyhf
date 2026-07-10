@@ -238,6 +238,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
 }
 
 interface RawUserOverview {
+  isFollowing?: boolean
   user?: string
   fullname?: string
   avatarUrl?: string
@@ -277,7 +278,8 @@ export function mapUserOverview(raw: RawUserOverview, endpoint: string): UserOve
       fullname: o.fullname,
       avatarUrl: absolutize(o.avatarUrl)
     })),
-    createdAt: raw.createdAt
+    createdAt: raw.createdAt,
+    isFollowing: raw.isFollowing
   }
 }
 

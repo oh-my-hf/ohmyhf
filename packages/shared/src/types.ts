@@ -290,6 +290,15 @@ export interface UserOverview {
   numLikes?: number
   orgs: OrgSummary[]
   createdAt?: string
+  /** Whether the signed-in account follows this user on the Hub. */
+  isFollowing?: boolean
+}
+
+export interface FollowedAccount {
+  name: string
+  fullname?: string
+  avatarUrl?: string
+  isOrg?: boolean
 }
 
 export type ThemeSetting = 'system' | 'light' | 'dark'

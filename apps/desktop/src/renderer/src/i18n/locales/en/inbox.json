@@ -12,6 +12,10 @@
   "follows": {
     "add": "Follow",
     "empty": "Not following anything yet.",
+    "importFromHub": "Import from Hugging Face",
+    "imported": "Imported {{count}} account(s) you follow on the Hub",
+    "imported_one": "Imported {{count}} account you follow on the Hub",
+    "imported_other": "Imported {{count}} accounts you follow on the Hub",
     "papers": "Daily Papers digest",
     "placeholder": "username, org, or model:org/name",
     "title": "Following",

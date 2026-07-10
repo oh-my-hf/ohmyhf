@@ -108,6 +108,7 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
   }),
   'hub:userOverview': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
+  'hub:userFollowing': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
   'hub:discussionDetail': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
   'hub:discussionComment': z.object({
     kind: repoKind,

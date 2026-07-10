@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bell, FileText, GitBranch, Inbox, Plus, RefreshCw, User, X } from 'lucide-react'
+import { Bell, CloudDownload, FileText, GitBranch, Inbox, Plus, RefreshCw, User, X } from 'lucide-react'
 import type { FollowTargetType, InboxItem } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
@@ -62,6 +62,36 @@ export function InboxPage(): React.JSX.Element {
   const removeFollow = useMutation({
     mutationFn: (id: string) => invoke('follows:remove', { id }),
     onSuccess: (list) => queryClient.setQueryData(['follows'], list)
+  })
+
+  // Pull the REAL Hugging Face following list of the signed-in account into the
+  // local follow store so the notification poller tracks those authors too.
+  const auth = useAppStore((s) => s.auth)
+  const me = auth.status === 'signedIn' ? auth.user.name : undefined
+  const importFromHub = useMutation({
+    mutationFn: async () => {
+      if (!me) return 0
+      const following = await invoke('hub:userFollowing', { username: me })
+      const existing = new Set(
+        (follows.data ?? [])
+          .filter((f) => f.type === 'user' || f.type === 'org')
+          .map((f) => f.target.toLowerCase())
+      )
+      let added = 0
+      let list = follows.data ?? []
+      for (const account of following) {
+        if (existing.has(account.name.toLowerCase())) continue
+        list = await invoke('follows:add', {
+          type: account.isOrg ? 'org' : 'user',
+          target: account.name
+        })
+        added++
+      }
+      queryClient.setQueryData(['follows'], list)
+      return added
+    },
+    onSuccess: (added) => push(t('inbox:follows.imported', { count: added ?? 0 }), 'success'),
+    onError: (err) => push(err.message, 'error')
   })
 
   const submitFollow = (): void => {
@@ -164,6 +194,17 @@ export function InboxPage(): React.JSX.Element {
           <Bell className="size-4 text-ink-faint" aria-hidden />
           {t('inbox:follows.title')}
         </h2>
+        {me && (
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={importFromHub.isPending}
+            onClick={() => importFromHub.mutate()}
+          >
+            <CloudDownload className="size-3.5" aria-hidden />
+            {t('inbox:follows.importFromHub')}
+          </Button>
+        )}
         <div className="flex gap-1.5">
           <Input
             value={target}
