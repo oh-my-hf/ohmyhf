@@ -1,4 +1,5 @@
 import type { HubOrgPlan } from '@oh-my-huggingface/shared'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -22,34 +23,40 @@ export interface PlanBadgeProps {
 }
 
 export function PlanBadge({ kind, className }: PlanBadgeProps): React.JSX.Element | null {
+  const { t } = useTranslation('profile')
+
   if (kind === 'pro') {
+    const label = t('plan.pro')
     return (
-      <span className={cn(PRO_SHELL, className)} title="PRO">
-        PRO
+      <span className={cn(PRO_SHELL, className)} title={label}>
+        {label}
       </span>
     )
   }
 
   if (kind === 'team') {
+    const label = t('plan.team')
     return (
-      <span className={cn(ORG_SHELL, className)} title="Team">
-        <span>Team</span>
+      <span className={cn(ORG_SHELL, className)} title={label}>
+        <span>{label}</span>
       </span>
     )
   }
 
   if (kind === 'enterprise') {
+    const label = t('plan.enterprise')
     return (
-      <span className={cn(ORG_SHELL, className)} title="Enterprise">
-        <span>Enterprise</span>
+      <span className={cn(ORG_SHELL, className)} title={label}>
+        <span>{label}</span>
       </span>
     )
   }
 
   if (kind === 'plus') {
+    const label = t('plan.enterprisePlus')
     return (
-      <span className={cn(ORG_SHELL, 'gap-1', className)} title="Enterprise Plus">
-        <span>Enterprise</span>
+      <span className={cn(ORG_SHELL, 'gap-1', className)} title={label}>
+        <span>{t('plan.enterprise')}</span>
         <span className={PLUS_MARK} aria-hidden>
           +
         </span>
@@ -58,9 +65,10 @@ export function PlanBadge({ kind, className }: PlanBadgeProps): React.JSX.Elemen
   }
 
   if (kind === 'academia') {
+    const label = t('plan.academia')
     return (
-      <span className={cn(ORG_SHELL, className)} title="Academia">
-        <span>Academia</span>
+      <span className={cn(ORG_SHELL, className)} title={label}>
+        <span>{label}</span>
       </span>
     )
   }

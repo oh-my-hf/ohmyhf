@@ -12,6 +12,13 @@
   "members": "成员",
   "orgBadge": "组织",
   "orgsLabel": "所属组织",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
   "post": {
     "commentPlaceholder": "写下评论（支持 Markdown）…",
     "commentPosted": "评论已发布",

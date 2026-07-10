@@ -12,6 +12,13 @@
   "members": "Members",
   "orgBadge": "Organization",
   "orgsLabel": "Organizations",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
   "post": {
     "commentPlaceholder": "Write a comment (Markdown supported)…",
     "commentPosted": "Comment posted",
