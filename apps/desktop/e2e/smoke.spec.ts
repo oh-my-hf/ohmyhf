@@ -18,13 +18,16 @@ test('app boots into the three-pane shell', async () => {
     const window = await app.firstWindow()
     await expect(window).toHaveTitle('Oh My HuggingFace')
 
-    // Sidebar (navigation), list pane, and detail pane are all present.
+    // Sidebar (navigation), main pane, and the Home feed are all present.
     await window.waitForSelector('aside nav', { timeout: 30_000 })
     await window.waitForSelector('main', { timeout: 10_000 })
 
-    // The models route is the default and its search box is localized (never a raw key).
+    // Browse routes keep the localized search box (never a raw i18n key).
+    await window.evaluate(() => {
+      window.location.hash = '#/models'
+    })
     const searchBox = window.locator('input[aria-label]').first()
-    await expect(searchBox).toBeVisible()
+    await expect(searchBox).toBeVisible({ timeout: 10_000 })
     const label = await searchBox.getAttribute('aria-label')
     expect(label).toBeTruthy()
     expect(label).not.toContain('searchPlaceholder')
