@@ -15,7 +15,9 @@ import { SettingsStore } from './settings'
 
 // One identity everywhere: dev and packaged share the same safeStorage keychain
 // entry and userData, so the ~/.oh_my_hf credentials decrypt in every session.
-app.setName('Oh My HuggingFace')
+// This matches the identity existing installs already used — never change it,
+// or stored ciphertexts stop decrypting and profiles orphan.
+app.setName('oh-my-huggingface-desktop')
 
 const isDev = !app.isPackaged
 
