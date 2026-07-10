@@ -1,9 +1,42 @@
 @import '@fontsource-variable/source-sans-3';
 @import '@fontsource-variable/source-sans-3/wght-italic.css';
+/* Source Han Sans (Noto Sans SC): the CJK companion to Source Sans, with matching
+ * vertical metrics. Bundled so Windows never falls back to Microsoft YaHei, whose
+ * metrics render CJK text visibly off-center in flex-centered controls. */
+@import '@fontsource-variable/noto-sans-sc';
+
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
 @import 'tailwindcss';
+
+/* Same Source Sans files, adjusted vertical metrics. The strut (and thus where
+ * the baseline sits inside every line box) comes solely from the first font in
+ * the stack; Source Sans's stock metrics ((ascent−descent)/2 = 0.31em) leave CJK
+ * glyphs ~0.9px high and Latin caps ~0.5px low of center in 13px flex-centered
+ * controls. 107.5%/34.9% (same total, measured empirically in Chromium) centers
+ * both scripts to within ±0.3px. Glyph coverage is unchanged: codepoints missing
+ * from these files still fall through to the fonts behind them in the stack. */
+@font-face {
+  font-family: 'Source Sans 3 Adjusted';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('@fontsource-variable/source-sans-3/files/source-sans-3-latin-wght-normal.woff2')
+    format('woff2-variations');
+  ascent-override: 107.5%;
+  descent-override: 34.9%;
+}
+@font-face {
+  font-family: 'Source Sans 3 Adjusted';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('@fontsource-variable/source-sans-3/files/source-sans-3-latin-wght-italic.woff2')
+    format('woff2-variations');
+  ascent-override: 107.5%;
+  descent-override: 34.9%;
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -146,11 +179,11 @@
   --text-smd: 0.94rem;
   --text-smd--line-height: 1.4;
   --font-sans:
-    'Source Sans 3 Variable', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
-    'Noto Sans SC', ui-sans-serif, system-ui, sans-serif;
+    'Source Sans 3 Adjusted', 'Source Sans 3 Variable', 'PingFang SC', 'Hiragino Sans GB',
+    'Noto Sans SC Variable', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
   --font-mono:
     'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'PingFang SC',
-    'Microsoft YaHei', monospace;
+    'Noto Sans SC Variable', 'Microsoft YaHei', monospace;
 }
 
 /* Tabular figures for stat-heavy UI: byte counts, badges, timestamps, columns. */

@@ -42,6 +42,9 @@ importers:
         specifier: ^6.8.9
         version: 6.8.9
     devDependencies:
+      '@fontsource-variable/noto-sans-sc':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@fontsource-variable/source-sans-3':
         specifier: ^5.2.9
         version: 5.2.9
@@ -545,6 +548,9 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/noto-sans-sc@5.2.10':
+    resolution: {integrity: sha512-zdk10i5HrDQTXI7ldD61zToX1fsgig8vDTsu7zB48SXOitWfuX0e5viZAwnkHuhwh096PU6X6i1AyAsbBCISpA==}
 
   '@fontsource-variable/source-sans-3@5.2.9':
     resolution: {integrity: sha512-K9fkQbb0BNnRmmaU+Gpr6U4IaYKpNzA8t07J6aam2i+6v84RT72MVpar8OBr3yYAEznj4riKivPQ2nAF2fPKsw==}
@@ -4249,6 +4255,8 @@ snapshots:
       react-dom: 19.2.7(react@19.2.7)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource-variable/noto-sans-sc@5.2.10': {}
 
   '@fontsource-variable/source-sans-3@5.2.9': {}
 

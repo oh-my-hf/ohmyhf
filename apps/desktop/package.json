@@ -24,6 +24,7 @@
     "electron-updater": "^6.8.9"
   },
   "devDependencies": {
+    "@fontsource-variable/noto-sans-sc": "^5.2.10",
     "@fontsource-variable/source-sans-3": "^5.2.9",
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@oh-my-huggingface/hub-api": "workspace:*",
