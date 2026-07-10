@@ -13,7 +13,7 @@ Face Hub, managing large model downloads, and plugging models into your local AI
 services beyond the Hugging Face API itself. Your access token is encrypted with your OS keychain
 (Electron `safeStorage`) and stored in a local SQLite database.
 
-![Screenshot placeholder — three-pane browse view](docs/screenshots/browse.png)
+![Three-pane browse view: model list with a live detail pane](docs/screenshots/browse.png)
 
 ## Features
 
