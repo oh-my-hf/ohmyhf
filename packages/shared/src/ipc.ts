@@ -100,6 +100,8 @@ export interface IpcInvokeContract {
   'hub:userOverview': { req: { username: string }; res: UserOverview }
   /** Accounts the given user follows on the Hub (drained pagination, capped). */
   'hub:userFollowing': { req: { username: string }; res: FollowedAccount[] }
+  /** Organization members (capped avatar strip for the profile page). */
+  'hub:orgMembers': { req: { org: string; limit?: number }; res: FollowedAccount[] }
   'hub:discussionDetail': {
     req: { kind: RepoKind; repoId: string; num: number }
     res: DiscussionDetail
@@ -362,6 +364,7 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:postDetail',
   'hub:userOverview',
   'hub:userFollowing',
+  'hub:orgMembers',
   'hub:discussionDetail',
   'hub:discussionComment',
   'hub:notifications',

@@ -307,6 +307,8 @@ export interface UserOverview {
   numPapers?: number
   numFollowers: number
   numFollowing: number
+  /** Org member count (`numUsers` on the organizations overview). */
+  numUsers?: number
   numLikes?: number
   orgs: OrgSummary[]
   createdAt?: string

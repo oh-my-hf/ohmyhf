@@ -287,6 +287,8 @@ interface RawUserOverview {
   numPapers?: number
   numFollowers?: number
   numFollowing?: number
+  /** Present on organization overviews (member count). */
+  numUsers?: number
   numLikes?: number
   /** Org handle arrives under `name` or `user` depending on the payload. */
   orgs?: Array<{ name?: string; user?: string; fullname?: string; avatarUrl?: string }>
@@ -313,6 +315,7 @@ export function mapUserOverview(
     numPapers: raw.numPapers ?? 0,
     numFollowers: raw.numFollowers ?? 0,
     numFollowing: raw.numFollowing ?? 0,
+    numUsers: raw.numUsers,
     numLikes: raw.numLikes ?? 0,
     orgs: (raw.orgs ?? []).map((o) => ({
       name: o.name ?? o.user ?? '',

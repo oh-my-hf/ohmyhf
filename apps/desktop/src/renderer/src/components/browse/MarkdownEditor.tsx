@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -177,9 +177,12 @@ export function MarkdownEditor({
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const [mention, setMention] = useState<{ start: number; query: string } | null>(null)
   const [mentionIndex, setMentionIndex] = useState(0)
-  const editorRef = useRef<HTMLDivElement>(null)
+  const editorRef = useRef<HTMLDivElement | null>(null)
   // Known avatars/names, so re-renders keep chips rich; survives across edits.
   const mentionMeta = useRef<Map<string, MentionInfo>>(new Map())
+  // Latest value for the callback ref — remount sync must not close over a stale prop.
+  const valueRef = useRef(value)
+  valueRef.current = value
 
   const mentionQuery = useDebounced(mention?.query ?? '', 200)
   const userSearch = useQuery({
@@ -191,6 +194,20 @@ export function MarkdownEditor({
   const mentionResults: UserSearchResult[] =
     mention && mentionQuery.length >= 1 ? (userSearch.data ?? []) : []
   const activeIndex = Math.min(mentionIndex, Math.max(0, mentionResults.length - 1))
+
+  /** Paint `value` into the contenteditable when the DOM is empty/stale. */
+  const syncEditorDom = (root: HTMLDivElement): void => {
+    if (valueRef.current === serialize(root)) return
+    renderInto(root, valueRef.current, mentionMeta.current)
+  }
+
+  // Callback ref: Radix Presence can mount the Write pane *after* a tab-change
+  // effect would have run (and found editorRef === null). Syncing here restores
+  // text as soon as the node actually attaches.
+  const setEditorRef = useCallback((node: HTMLDivElement | null) => {
+    editorRef.current = node
+    if (node) syncEditorDom(node)
+  }, [])
 
   // Push the current DOM to the parent as markdown.
   const emit = (): string => {
@@ -210,15 +227,12 @@ export function MarkdownEditor({
     setMention(next)
   }
 
-  // Keep the DOM in sync with `value` whenever they diverge: on mount, when the
-  // Write pane remounts after a Preview round-trip, and on external resets (draft
-  // cleared after send, restored on error). While typing, `value` already equals
-  // the serialized DOM, so this is a no-op and the caret never jumps.
+  // External value changes (draft cleared after send, restored on error) while
+  // the editor is mounted. Tab switches are handled by forceMount + setEditorRef.
   useEffect(() => {
     const root = editorRef.current
     if (!root) return
-    if (value === serialize(root)) return
-    renderInto(root, value, mentionMeta.current)
+    syncEditorDom(root)
   }, [value])
 
   const onInput = (): void => {
@@ -342,9 +356,16 @@ export function MarkdownEditor({
             ))}
           </div>
         </div>
-        <TabsContent value="write" className="relative">
+        {/* forceMount keeps the contenteditable alive across Preview round-trips;
+            without it Radix unmounts the pane and the DOM (but not `value`) is lost.
+            Inactive state is hidden via data-state so both panes don't stack. */}
+        <TabsContent
+          value="write"
+          forceMount
+          className="relative data-[state=inactive]:hidden"
+        >
           <div
-            ref={editorRef}
+            ref={setEditorRef}
             contentEditable
             suppressContentEditableWarning
             role="textbox"

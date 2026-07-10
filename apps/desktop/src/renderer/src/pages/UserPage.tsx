@@ -5,13 +5,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
   Boxes,
+  Building2,
   Database,
   ExternalLink,
   Heart,
   LayoutGrid,
   UserX
 } from 'lucide-react'
-import type { RepoKind, RepoSummary, UserOverview } from '@oh-my-huggingface/shared'
+import type {
+  FollowedAccount,
+  OrgSummary,
+  RepoKind,
+  RepoSummary,
+  UserOverview
+} from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -59,6 +66,34 @@ function bestKind(overview: UserOverview): RepoKind {
     if (counts[kind] > counts[best]) best = kind
   }
   return best
+}
+
+function AccountChip({
+  account,
+  onNavigate
+}: {
+  account: Pick<OrgSummary, 'name' | 'fullname' | 'avatarUrl'>
+  onNavigate: (name: string) => void
+}): React.JSX.Element {
+  const label = account.fullname ?? account.name
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          onClick={() => onNavigate(account.name)}
+          className="inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border border-border-card bg-bg px-1.5 py-0.5 text-left outline-none transition-colors duration-150 hover:border-border hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
+        >
+          <ProfileAvatar name={account.name} url={account.avatarUrl} className="size-5 text-[10px]" />
+          <span className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted">
+            {account.name}
+          </span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 function UserRepoRow({ repo, locale }: { repo: RepoSummary; locale: string }): React.JSX.Element {
@@ -168,6 +203,16 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
     queryFn: () => invoke('follows:list', undefined)
   })
 
+  const data = overview.data
+  const isOrg = data?.isOrg === true
+
+  const members = useQuery({
+    queryKey: ['org-members', username],
+    queryFn: () => invoke('hub:orgMembers', { org: username, limit: 24 }),
+    enabled: isOrg,
+    staleTime: STALE_TIME
+  })
+
   // Users and orgs share a namespace on the Hub; either follow type counts.
   const followEntry = follows.data?.find(
     (f) =>
@@ -190,7 +235,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
   }
 
   const addFollow = useMutation({
-    mutationFn: () => invoke('follows:add', { type: data?.isOrg ? 'org' : 'user', target: username }),
+    mutationFn: () => invoke('follows:add', { type: isOrg ? 'org' : 'user', target: username }),
     onSuccess: (list) => {
       queryClient.setQueryData(['follows'], list)
       syncWatch('add')
@@ -204,7 +249,6 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
     }
   })
 
-  const data = overview.data
   const activeTab = tabChoice ?? (data ? bestKind(data) : 'model')
 
   const stats: Array<{ key: string; value: number }> = data
@@ -213,9 +257,13 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
         { key: 'datasets', value: data.numDatasets },
         { key: 'spaces', value: data.numSpaces },
         { key: 'followers', value: data.numFollowers },
-        { key: 'following', value: data.numFollowing }
+        ...(isOrg
+          ? [{ key: 'members', value: data.numUsers ?? 0 }]
+          : [{ key: 'following', value: data.numFollowing }])
       ]
     : []
+
+  const memberAccounts: FollowedAccount[] = members.data ?? []
 
   return (
     <div className="h-full overflow-y-auto">
@@ -262,6 +310,12 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                   <span className="truncate font-mono text-[12.5px] text-ink-faint">
                     @{data.name}
                   </span>
+                  {isOrg && (
+                    <Badge variant="outline" className="gap-1 font-medium">
+                      <Building2 className="size-3" aria-hidden />
+                      {t('profile:orgBadge')}
+                    </Badge>
+                  )}
                   {data.isPro === true && (
                     <span className="rounded-full bg-brand px-1.5 text-[10px] font-semibold text-brand-ink">
                       {t('auth:pro')}
@@ -290,27 +344,36 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                     </Fragment>
                   ))}
                 </div>
-                {data.orgs.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    {data.orgs.map((org) => (
-                      <Tooltip key={org.name}>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={org.fullname ?? org.name}
-                            onClick={() => navigate(`/users/${org.name}`)}
-                            className="rounded-full outline-none transition-opacity duration-150 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
-                          >
-                            <ProfileAvatar
-                              name={org.name}
-                              url={org.avatarUrl}
-                              className="size-6 text-[11px]"
-                            />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>{org.fullname ?? org.name}</TooltipContent>
-                      </Tooltip>
-                    ))}
+                {!isOrg && data.orgs.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <span className="text-[11px] font-medium tracking-wide text-ink-faint uppercase">
+                      {t('profile:orgsLabel')}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {data.orgs.map((org) => (
+                        <AccountChip
+                          key={org.name}
+                          account={org}
+                          onNavigate={(name) => navigate(`/users/${name}`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {isOrg && memberAccounts.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <span className="text-[11px] font-medium tracking-wide text-ink-faint uppercase">
+                      {t('profile:members')}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {memberAccounts.map((member) => (
+                        <AccountChip
+                          key={member.name}
+                          account={member}
+                          onNavigate={(name) => navigate(`/users/${name}`)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

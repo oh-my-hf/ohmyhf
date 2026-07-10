@@ -808,6 +808,26 @@ export class HubClient {
   }
 
   /**
+   * Organization members. The Hub returns the full list in one shot (no Link
+   * pagination); we cap at 40 for the profile avatar strip.
+   */
+  async getOrgMembers(org: string, limit = 40): Promise<FollowedAccount[]> {
+    const url = `${this.endpoint}/api/organizations/${encodeURIComponent(org)}/members`
+    const { body } = await this.getJson<
+      Array<{ user?: string; fullname?: string; avatarUrl?: string; type?: string }>
+    >(url, { ttl: 5 * 60_000 })
+    return body
+      .filter((m) => m.user)
+      .slice(0, limit)
+      .map((m) => ({
+        name: m.user ?? '',
+        fullname: m.fullname,
+        avatarUrl: m.avatarUrl ? new URL(m.avatarUrl, this.endpoint).toString() : undefined,
+        isOrg: m.type === 'org'
+      }))
+  }
+
+  /**
    * Accounts a user follows on the Hub. Live-verified: paginated via Link header
    * (500/page); drained up to 4 pages (2000 accounts) to bound the fan-out.
    */

@@ -9,6 +9,9 @@
   },
   "follow": "关注",
   "followingOnHub": "已在 Hub 关注",
+  "members": "成员",
+  "orgBadge": "组织",
+  "orgsLabel": "所属组织",
   "post": {
     "commentPlaceholder": "写下评论（支持 Markdown）…",
     "commentPosted": "评论已发布",
@@ -22,6 +25,7 @@
     "datasets": "数据集",
     "followers": "关注者",
     "following": "正在关注",
+    "members": "成员",
     "models": "模型",
     "spaces": "Spaces"
   },

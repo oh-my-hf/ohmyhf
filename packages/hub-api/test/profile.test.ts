@@ -218,7 +218,8 @@ describe('HubClient.getUserOverview org fallback', () => {
             details: 'stories',
             avatarUrl: 'https://cdn.example/a.jpg',
             numModels: 2,
-            numFollowers: 10
+            numFollowers: 10,
+            numUsers: 5
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         )
@@ -228,6 +229,30 @@ describe('HubClient.getUserOverview org fallback', () => {
     expect(overview.name).toBe('HackerNoon')
     expect(overview.isOrg).toBe(true)
     expect(overview.numFollowers).toBe(10)
+    expect(overview.numUsers).toBe(5)
     expect(fetchImpl.mock.calls[1]![0]).toContain('/api/organizations/HackerNoon/overview')
+  })
+})
+
+describe('HubClient.getOrgMembers', () => {
+  it('maps members and absolutizes avatars', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse([
+        { user: 'alice', fullname: 'Alice', avatarUrl: '/avatars/a.svg', type: 'user' },
+        { user: 'bob', type: 'user' }
+      ])
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const members = await client.getOrgMembers('acme', 10)
+    expect(fetchImpl.mock.calls[0]![0]).toContain('/api/organizations/acme/members')
+    expect(members).toEqual([
+      {
+        name: 'alice',
+        fullname: 'Alice',
+        avatarUrl: 'https://huggingface.co/avatars/a.svg',
+        isOrg: false
+      },
+      { name: 'bob', fullname: undefined, avatarUrl: undefined, isOrg: false }
+    ])
   })
 })

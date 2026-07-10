@@ -9,6 +9,9 @@
   },
   "follow": "Follow",
   "followingOnHub": "Following on the Hub",
+  "members": "Members",
+  "orgBadge": "Organization",
+  "orgsLabel": "Organizations",
   "post": {
     "commentPlaceholder": "Write a comment (Markdown supported)…",
     "commentPosted": "Comment posted",
@@ -22,6 +25,7 @@
     "datasets": "Datasets",
     "followers": "Followers",
     "following": "Following",
+    "members": "Members",
     "models": "Models",
     "spaces": "Spaces"
   },
