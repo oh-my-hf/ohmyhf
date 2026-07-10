@@ -10,6 +10,9 @@
   "kind": {
     "post": "Post"
   },
+  "reactions": {
+    "add": "Add reaction"
+  },
   "title": "Home",
   "trending": {
     "all": "All",

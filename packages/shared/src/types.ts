@@ -269,6 +269,14 @@ export interface DiscussionDetail extends DiscussionSummary {
 export type DiscussionType = 'discussion' | 'pull_request'
 export type DiscussionStatusFilter = 'open' | 'closed'
 
+/** One emoji reaction on a post, with who reacted (to derive the current user's state). */
+export interface PostReaction {
+  emoji: string
+  count: number
+  /** Usernames that reacted with this emoji; used to highlight the caller's own reaction. */
+  users: string[]
+}
+
 export interface PostSummary {
   slug: string
   author: string
@@ -279,6 +287,8 @@ export interface PostSummary {
   publishedAt?: string
   numComments?: number
   numReactions?: number
+  /** Per-emoji reaction breakdown (empty when the post has no reactions). */
+  reactions: PostReaction[]
   /** Absolute huggingface.co URL. */
   url: string
 }

@@ -74,6 +74,10 @@ describe('HubClient.getPosts', () => {
       numComments: 3,
       // count (2) + users fallback (3)
       numReactions: 5,
+      reactions: [
+        { emoji: '🔥', count: 2, users: ['dipankarsarkar', 'John6666'] },
+        { emoji: '👍', count: 3, users: ['a', 'b', 'c'] }
+      ],
       url: 'https://huggingface.co/posts/razaali10/943499680377839'
     })
   })

@@ -39,6 +39,7 @@ describe('HubClient.getPostDetail', () => {
       publishedAt: '2026-07-10T01:53:20.000Z',
       numComments: 3,
       numReactions: 2,
+      reactions: [{ emoji: '🔥', count: 2, users: ['a', 'b'] }],
       url: 'https://huggingface.co/posts/RazaAli10/943499680377839'
     })
   })
@@ -56,6 +57,30 @@ describe('HubClient.getPostDetail', () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ socialPosts: [] }))
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
     await expect(client.getPostDetail('razaali10', 'missing')).rejects.toBeInstanceOf(HubApiError)
+  })
+})
+
+describe('HubClient.reactToPost', () => {
+  it('POSTs the emoji to the toggle endpoint then returns the fresh reactions', async () => {
+    const toggled = {
+      ...rawPost,
+      reactions: [{ reaction: '🔥', users: ['a', 'b'], count: 2 }, { reaction: '👍', users: ['me'], count: 1 }]
+    }
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ ok: true })) // the POST /reaction
+      .mockResolvedValueOnce(jsonResponse({ socialPosts: [toggled] })) // the re-read
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const reactions = await client.reactToPost('RazaAli10', '943499680377839', '👍')
+
+    const [url, init] = fetchImpl.mock.calls[0]!
+    expect(url).toBe('https://huggingface.co/api/posts/RazaAli10/943499680377839/reaction')
+    expect(init.method).toBe('POST')
+    expect(JSON.parse(init.body)).toEqual({ reaction: '👍' })
+    expect(reactions).toEqual([
+      { emoji: '🔥', count: 2, users: ['a', 'b'] },
+      { emoji: '👍', count: 1, users: ['me'] }
+    ])
   })
 })
 

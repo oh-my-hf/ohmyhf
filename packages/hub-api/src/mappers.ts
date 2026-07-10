@@ -244,13 +244,16 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     u ? new URL(u, endpoint).toString() : undefined
   const author = raw.author?.name ?? ''
   const slug = raw.slug ?? ''
-  // Reaction items carry both a count and a users array; trust count first and
-  // degrade to users.length, then to "one reaction per item".
-  const numReactions = (raw.reactions ?? []).reduce((acc, r) => {
-    if (typeof r?.count === 'number') return acc + r.count
-    if (Array.isArray(r?.users)) return acc + r.users.length
-    return acc + 1
-  }, 0)
+  // Normalize each reaction to {emoji, count, users}; keep only entries with an
+  // emoji so a malformed row can't produce an unclickable ghost pill.
+  const reactions = (raw.reactions ?? []).flatMap((r) => {
+    const emoji = r?.reaction
+    if (!emoji) return []
+    const users = Array.isArray(r?.users) ? r.users.filter((u): u is string => typeof u === 'string') : []
+    const count = typeof r?.count === 'number' ? r.count : users.length
+    return [{ emoji, count, users }]
+  })
+  const numReactions = reactions.reduce((acc, r) => acc + (r.count || 1), 0)
   return {
     slug,
     author,
@@ -260,6 +263,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     publishedAt: raw.publishedAt,
     numComments: raw.numComments,
     numReactions,
+    reactions,
     url: absolutize(raw.url) ?? `${endpoint}/posts/${author}/${slug}`
   }
 }

@@ -142,6 +142,12 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     author: z.string().min(1).max(128),
     slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
   }),
+  'hub:postReact': z.object({
+    author: z.string().min(1).max(128),
+    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    // A single emoji; ZWJ sequences push a few emoji past one code point.
+    reaction: z.string().min(1).max(32)
+  }),
   'hub:userOverview': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
   'hub:userFollowing': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
   'hub:discussionDetail': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),

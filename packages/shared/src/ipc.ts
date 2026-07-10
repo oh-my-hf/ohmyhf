@@ -38,6 +38,7 @@ import type {
   NotificationsPage,
   Page,
   PaperSummary,
+  PostReaction,
   PostSummary,
   RepoDetail,
   RepoKind,
@@ -95,6 +96,10 @@ export interface IpcInvokeContract {
   }
   'hub:posts': { req: { cursor?: string }; res: Page<PostSummary> }
   'hub:postDetail': { req: { author: string; slug: string }; res: PostSummary }
+  'hub:postReact': {
+    req: { author: string; slug: string; reaction: string }
+    res: PostReaction[]
+  }
   'hub:userOverview': { req: { username: string }; res: UserOverview }
   /** Accounts the given user follows on the Hub (drained pagination, capped). */
   'hub:userFollowing': { req: { username: string }; res: FollowedAccount[] }

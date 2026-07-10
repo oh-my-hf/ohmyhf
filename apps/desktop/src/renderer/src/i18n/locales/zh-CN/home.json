@@ -10,6 +10,9 @@
   "kind": {
     "post": "帖子"
   },
+  "reactions": {
+    "add": "添加表情回应"
+  },
   "title": "首页",
   "trending": {
     "all": "全部",
