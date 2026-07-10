@@ -19,6 +19,7 @@ import { InfoPanel } from '@/components/browse/InfoPanel'
 import { MarkdownView } from '@/components/browse/MarkdownView'
 import { PlaygroundPanel } from '@/components/browse/PlaygroundPanel'
 import { SpaceRunner } from '@/components/browse/SpaceRunner'
+import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const HUB_PREFIX: Record<RepoKind, string> = {
@@ -107,12 +108,25 @@ export function RepoDetail({
   const isModel = kind === 'model'
   const showPlayground = isModel && inferenceAvailable.data === true
 
+  // Owner segment of "owner/name" links to the public profile; the rest stays plain.
+  const slash = repoId.indexOf('/')
+  const owner = slash > 0 ? repoId.slice(0, slash) : null
+
   return (
     <div className="flex h-full min-w-0 flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[15px] font-semibold" title={repoId}>
-            {repoId}
+            {owner !== null ? (
+              <>
+                <UserLink username={owner} className="hover:text-primary">
+                  {owner}
+                </UserLink>
+                {repoId.slice(slash)}
+              </>
+            ) : (
+              repoId
+            )}
           </h1>
           <div className="mt-0.5 flex items-center gap-2 text-[12px] text-ink-faint">
             <span className="flex items-center gap-1">

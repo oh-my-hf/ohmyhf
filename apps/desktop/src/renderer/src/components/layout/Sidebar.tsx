@@ -67,6 +67,8 @@ export function Sidebar(): React.JSX.Element {
   const { t } = useTranslation(['nav', 'auth', 'common'])
   const auth = useAppStore((s) => s.auth)
   const appInfo = useAppStore((s) => s.appInfo)
+  const settingsOpen = useAppStore((s) => s.settingsOpen)
+  const openSettings = useAppStore((s) => s.openSettings)
 
   const downloads = useQuery({
     queryKey: ['downloads'],
@@ -132,12 +134,31 @@ export function Sidebar(): React.JSX.Element {
       </nav>
 
       <div className="flex flex-col gap-0.5 border-t p-2">
-        <SidebarLink
-          item={{ to: '/settings', labelKey: 'settings', icon: Settings }}
-          label={t('settings')}
-        />
-        <NavLink
-          to="/settings"
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => openSettings()}
+              className={cn(
+                'group relative flex h-8 items-center justify-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150 min-[860px]:justify-start',
+                settingsOpen
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
+              )}
+            >
+              <Settings className="size-4 shrink-0" aria-hidden />
+              <span className="hidden min-w-0 flex-1 truncate text-left min-[860px]:block">
+                {t('settings')}
+              </span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="min-[860px]:hidden">
+            {t('settings')}
+          </TooltipContent>
+        </Tooltip>
+        <button
+          type="button"
+          onClick={() => openSettings('account')}
           className="mt-0.5 flex h-9 items-center justify-center gap-2.5 rounded-md border bg-bg px-2 text-[13px] text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink min-[860px]:justify-start"
         >
           {auth.status === 'signedIn' && auth.user.avatarUrl ? (
@@ -145,10 +166,10 @@ export function Sidebar(): React.JSX.Element {
           ) : (
             <UserCircle2 className="size-4 shrink-0" aria-hidden />
           )}
-          <span className="hidden min-w-0 flex-1 truncate font-medium min-[860px]:block">
+          <span className="hidden min-w-0 flex-1 truncate text-left font-medium min-[860px]:block">
             {auth.status === 'signedIn' ? auth.user.name : t('auth:signedOut')}
           </span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   )

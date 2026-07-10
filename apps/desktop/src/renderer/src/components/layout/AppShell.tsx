@@ -5,6 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/toaster'
 import { CommandPalette } from '@/components/CommandPalette'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { SettingsDialog } from '@/components/settings/SettingsDialog'
 import { useIpcEvent } from '@/hooks/use-ipc-event'
 import { useAppStore } from '@/stores/app'
 
@@ -17,10 +18,18 @@ export function AppShell(): React.JSX.Element {
   const section = location.pathname.split('/')[1] ?? ''
   const setAuth = useAppStore((s) => s.setAuth)
   const setPaletteOpen = useAppStore((s) => s.setPaletteOpen)
+  const openSettings = useAppStore((s) => s.openSettings)
 
   useIpcEvent(
     'evt:navigate',
-    useCallback((route: string) => navigate(route), [navigate])
+    useCallback(
+      (route: string) => {
+        // Settings is a dialog, not a route; the native menu (Cmd+,) still sends "/settings".
+        if (route === '/settings') openSettings()
+        else navigate(route)
+      },
+      [navigate, openSettings]
+    )
   )
   useIpcEvent(
     'evt:auth',
@@ -48,10 +57,14 @@ export function AppShell(): React.JSX.Element {
         e.preventDefault()
         setPaletteOpen(true)
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+        e.preventDefault()
+        openSettings()
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [setPaletteOpen])
+  }, [setPaletteOpen, openSettings])
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -64,6 +77,7 @@ export function AppShell(): React.JSX.Element {
         </main>
       </div>
       <CommandPalette />
+      <SettingsDialog />
       <Toaster />
     </TooltipProvider>
   )

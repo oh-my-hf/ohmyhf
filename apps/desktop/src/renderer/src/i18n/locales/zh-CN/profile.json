@@ -1,0 +1,26 @@
+{
+  "empty": {
+    "dataset": "还没有公开的数据集",
+    "model": "还没有公开的模型",
+    "space": "还没有公开的 Space"
+  },
+  "error": {
+    "title": "无法加载该用户主页"
+  },
+  "follow": "关注",
+  "post": {
+    "commentsOnHub": "回复和评论需前往 Hub 进行。",
+    "error": {
+      "title": "无法加载该帖子"
+    }
+  },
+  "stats": {
+    "datasets": "数据集",
+    "followers": "关注者",
+    "following": "正在关注",
+    "models": "模型",
+    "spaces": "Spaces"
+  },
+  "unfollow": "取消关注",
+  "viewProfile": "查看主页"
+}

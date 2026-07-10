@@ -20,6 +20,7 @@ import { useToasts } from '@/components/ui/toaster'
 import { DiffStat, DiffView } from '@/components/browse/DiffView'
 import { MarkdownEditor } from '@/components/browse/MarkdownEditor'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STATUS_VARIANT = {
@@ -86,7 +87,11 @@ function ThreadEvent({
           </code>
         )}
         <span className="shrink-0 text-[11.5px] text-ink-faint">
-          {event.author} · {formatRelativeTime(event.createdAt, locale)}
+          {event.author !== undefined && event.author !== '' && (
+            <UserLink username={event.author} className="hover:text-ink" />
+          )}
+          {' · '}
+          {formatRelativeTime(event.createdAt, locale)}
         </span>
       </div>
     )
@@ -122,7 +127,9 @@ function ThreadEvent({
   return (
     <div className="rounded-lg border p-3">
       <div className="mb-2 flex items-center gap-2 text-[12px] text-ink-muted">
-        <span className="font-medium text-ink">{event.author}</span>
+        {event.author !== undefined && event.author !== '' && (
+          <UserLink username={event.author} className="font-medium text-ink" />
+        )}
         <span>{formatRelativeTime(event.createdAt, locale)}</span>
       </div>
       {hasBody(event) ? (

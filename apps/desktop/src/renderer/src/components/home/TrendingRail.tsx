@@ -7,6 +7,7 @@ import type { Page, RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
@@ -37,6 +38,8 @@ function useTrending(kind: RepoKind): UseQueryResult<Page<RepoSummary>> {
 function TrendingRow({ repo, locale }: { repo: RepoSummary; locale: string }): React.JSX.Element {
   const navigate = useNavigate()
   const Icon = KIND_ICON[repo.kind]
+  const slash = repo.id.indexOf('/')
+  const owner = slash > 0 ? repo.id.slice(0, slash) : null
   return (
     <button
       type="button"
@@ -51,7 +54,18 @@ function TrendingRow({ repo, locale }: { repo: RepoSummary; locale: string }): R
         ) : (
           <Icon className="size-3.5 shrink-0 text-ink-faint" aria-hidden />
         )}
-        <span className="truncate font-mono text-[13px] tracking-tight text-ink">{repo.id}</span>
+        <span className="truncate font-mono text-[13px] tracking-tight text-ink">
+          {owner !== null ? (
+            <>
+              <UserLink username={owner} className="hover:text-primary">
+                {owner}
+              </UserLink>
+              {repo.id.slice(slash)}
+            </>
+          ) : (
+            repo.id
+          )}
+        </span>
       </span>
       <span className="nums flex items-center gap-2.5 pl-[22px] text-[11px] text-ink-faint">
         <span className="flex items-center gap-0.5">

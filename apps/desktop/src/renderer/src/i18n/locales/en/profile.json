@@ -1,0 +1,26 @@
+{
+  "empty": {
+    "dataset": "No public datasets yet",
+    "model": "No public models yet",
+    "space": "No public Spaces yet"
+  },
+  "error": {
+    "title": "Couldn't load this profile"
+  },
+  "follow": "Follow",
+  "post": {
+    "commentsOnHub": "Replies and comments happen on the Hub.",
+    "error": {
+      "title": "Couldn't load this post"
+    }
+  },
+  "stats": {
+    "datasets": "Datasets",
+    "followers": "Followers",
+    "following": "Following",
+    "models": "Models",
+    "spaces": "Spaces"
+  },
+  "unfollow": "Unfollow",
+  "viewProfile": "View profile"
+}

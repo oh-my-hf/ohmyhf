@@ -70,7 +70,8 @@ const settingsPatch = z
     speedLimitBps: z.number().int().min(1024).nullable(),
     hfCacheDir: z.string().max(1024).nullable(),
     notificationsEnabled: z.boolean(),
-    pollIntervalMinutes: z.number().int().min(5).max(24 * 60)
+    pollIntervalMinutes: z.number().int().min(5).max(24 * 60),
+    uiScale: z.number().int().min(80).max(140)
   })
   .partial()
 
@@ -102,6 +103,11 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   }),
   'hub:discussionDiff': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
   'hub:posts': z.object({ cursor: z.string().max(4096).optional() }).optional(),
+  'hub:postDetail': z.object({
+    author: z.string().min(1).max(128),
+    slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
+  }),
+  'hub:userOverview': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
   'hub:discussionDetail': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
   'hub:discussionComment': z.object({
     kind: repoKind,

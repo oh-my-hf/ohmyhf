@@ -8,6 +8,7 @@ import type {
   RepoDetail,
   RepoKind,
   RepoSummary,
+  UserOverview,
   UserProfile
 } from '@oh-my-huggingface/shared'
 
@@ -233,6 +234,50 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     numComments: raw.numComments,
     numReactions,
     url: absolutize(raw.url) ?? `${endpoint}/posts/${author}/${slug}`
+  }
+}
+
+interface RawUserOverview {
+  user?: string
+  fullname?: string
+  avatarUrl?: string
+  isPro?: boolean
+  /** Free-form bio text. */
+  details?: string
+  numModels?: number
+  numDatasets?: number
+  numSpaces?: number
+  numPapers?: number
+  numFollowers?: number
+  numFollowing?: number
+  numLikes?: number
+  /** Org handle arrives under `name` or `user` depending on the payload. */
+  orgs?: Array<{ name?: string; user?: string; fullname?: string; avatarUrl?: string }>
+  createdAt?: string
+}
+
+export function mapUserOverview(raw: RawUserOverview, endpoint: string): UserOverview {
+  const absolutize = (u: string | undefined): string | undefined =>
+    u ? new URL(u, endpoint).toString() : undefined
+  return {
+    name: raw.user ?? '',
+    fullname: raw.fullname,
+    avatarUrl: absolutize(raw.avatarUrl),
+    bio: raw.details,
+    isPro: raw.isPro,
+    numModels: raw.numModels ?? 0,
+    numDatasets: raw.numDatasets ?? 0,
+    numSpaces: raw.numSpaces ?? 0,
+    numPapers: raw.numPapers ?? 0,
+    numFollowers: raw.numFollowers ?? 0,
+    numFollowing: raw.numFollowing ?? 0,
+    numLikes: raw.numLikes ?? 0,
+    orgs: (raw.orgs ?? []).map((o) => ({
+      name: o.name ?? o.user ?? '',
+      fullname: o.fullname,
+      avatarUrl: absolutize(o.avatarUrl)
+    })),
+    createdAt: raw.createdAt
   }
 }
 

@@ -16,6 +16,7 @@ import enCompare from './locales/en/compare.json'
 import enUpload from './locales/en/upload.json'
 import enIntegrations from './locales/en/integrations.json'
 import enHome from './locales/en/home.json'
+import enProfile from './locales/en/profile.json'
 import zhCommon from './locales/zh-CN/common.json'
 import zhNav from './locales/zh-CN/nav.json'
 import zhBrowse from './locales/zh-CN/browse.json'
@@ -30,6 +31,7 @@ import zhCompare from './locales/zh-CN/compare.json'
 import zhUpload from './locales/zh-CN/upload.json'
 import zhIntegrations from './locales/zh-CN/integrations.json'
 import zhHome from './locales/zh-CN/home.json'
+import zhProfile from './locales/zh-CN/profile.json'
 
 export const NAMESPACES = [
   'common',
@@ -45,7 +47,8 @@ export const NAMESPACES = [
   'compare',
   'upload',
   'integrations',
-  'home'
+  'home',
+  'profile'
 ] as const
 
 const resources = {
@@ -63,7 +66,8 @@ const resources = {
     compare: enCompare,
     upload: enUpload,
     integrations: enIntegrations,
-    home: enHome
+    home: enHome,
+    profile: enProfile
   },
   'zh-CN': {
     common: zhCommon,
@@ -79,7 +83,8 @@ const resources = {
     compare: zhCompare,
     upload: zhUpload,
     integrations: zhIntegrations,
-    home: zhHome
+    home: zhHome,
+    profile: zhProfile
   }
 }
 

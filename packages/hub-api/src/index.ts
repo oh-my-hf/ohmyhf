@@ -10,5 +10,6 @@ export {
   mapPost,
   mapDiscussionSummary,
   mapDiscussionDetail,
+  mapUserOverview,
   mapWhoAmI
 } from './mappers'

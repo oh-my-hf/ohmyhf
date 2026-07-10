@@ -17,6 +17,7 @@ import type {
   SafetensorsHeader,
   SafetensorsTensor,
   SearchQuery,
+  UserOverview,
   UserProfile,
   UserSearchResult
 } from '@oh-my-huggingface/shared'
@@ -29,6 +30,7 @@ import {
   mapPost,
   mapRepoDetail,
   mapRepoSummary,
+  mapUserOverview,
   mapWhoAmI
 } from './mappers'
 
@@ -692,6 +694,28 @@ export class HubClient {
       return columns.map((col) => formatCell(record[col]))
     })
     return { columns, rows, total: body.num_rows_total }
+  }
+
+  /**
+   * Single post lookup. The direct /api/posts/{author}/{slug} endpoint errors,
+   * so filter the feed by slug and match the author case-insensitively.
+   */
+  async getPostDetail(author: string, slug: string): Promise<PostSummary> {
+    const url = `${this.endpoint}/api/posts?slug=${encodeURIComponent(slug)}`
+    const { body } = await this.getJson<{ socialPosts?: unknown[] }>(url, { ttl: 60_000 })
+    const wanted = author.toLowerCase()
+    const post = (body.socialPosts ?? [])
+      .map((raw) => mapPost(raw as never, this.endpoint))
+      .find((p) => p.slug === slug && p.author.toLowerCase() === wanted)
+    if (!post) throw new HubApiError('post not found', 404, url)
+    return post
+  }
+
+  /** Public profile overview. Unknown users surface as a HubApiError 404. */
+  async getUserOverview(username: string): Promise<UserOverview> {
+    const url = `${this.endpoint}/api/users/${encodeURIComponent(username)}/overview`
+    const { body } = await this.getJson<unknown>(url)
+    return mapUserOverview(body as never, this.endpoint)
   }
 
   /** User/org lookup for @mention autocompletion. Failures degrade to an empty list. */

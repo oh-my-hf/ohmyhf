@@ -13,7 +13,10 @@
   },
   "appearance": {
     "language": "Language",
-    "title": "Appearance"
+    "title": "Appearance",
+    "uiScale": "Interface scale",
+    "uiScaleDecrease": "Decrease interface scale",
+    "uiScaleIncrease": "Increase interface scale"
   },
   "downloads": {
     "cacheDir": "HF cache directory",
@@ -25,6 +28,11 @@
     "speedPerSecond": "{{value}}/s",
     "title": "Downloads",
     "unlimited": "Unlimited"
+  },
+  "groups": {
+    "about": "About",
+    "account": "Account",
+    "interface": "Interface"
   },
   "notifications": {
     "enabled": "System notifications",

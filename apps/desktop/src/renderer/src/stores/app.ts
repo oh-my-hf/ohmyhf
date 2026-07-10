@@ -31,6 +31,9 @@ const defaultFilters = (kind: RepoKind): BrowseFilters => ({
   sort: kind === 'space' ? 'likes' : 'trending'
 })
 
+/** Sections of the settings dialog (left nav entries). */
+export type SettingsSection = 'account' | 'appearance' | 'downloads' | 'notifications' | 'about'
+
 interface AppState {
   settings: AppSettings
   appInfo: AppInfo | null
@@ -39,6 +42,10 @@ interface AppState {
   filters: Record<RepoKind, BrowseFilters>
   /** Whether the browse filter sidebar overlays the list pane. */
   filterPanelOpen: boolean
+  /** Whether the settings dialog is open. */
+  settingsOpen: boolean
+  /** Active section inside the settings dialog. */
+  settingsSection: SettingsSection
 
   setSettings: (settings: AppSettings) => void
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
@@ -47,6 +54,8 @@ interface AppState {
   setFilters: (kind: RepoKind, patch: Partial<BrowseFilters>) => void
   resetFilters: (kind: RepoKind) => void
   setFilterPanelOpen: (open: boolean) => void
+  openSettings: (section?: SettingsSection) => void
+  closeSettings: () => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -60,9 +69,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     space: defaultFilters('space')
   },
   filterPanelOpen: false,
+  settingsOpen: false,
+  settingsSection: 'account',
 
   setSettings: (settings) => {
     setTheme(settings.theme)
+    // CSS zoom scales the whole UI; 100 = default (settings:set clamps to 80–140).
+    document.body.style.zoom = String(settings.uiScale / 100)
     set({ settings })
   },
   updateSettings: async (patch) => {
@@ -77,7 +90,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   resetFilters: (kind) =>
     set((state) => ({ filters: { ...state.filters, [kind]: defaultFilters(kind) } })),
-  setFilterPanelOpen: (filterPanelOpen) => set({ filterPanelOpen })
+  setFilterPanelOpen: (filterPanelOpen) => set({ filterPanelOpen }),
+  openSettings: (section) =>
+    set((state) => ({
+      settingsOpen: true,
+      settingsSection: section ?? state.settingsSection
+    })),
+  closeSettings: () => set({ settingsOpen: false })
 }))
 
 /** UI locale resolved from settings + system locale; used by i18n and formatters. */

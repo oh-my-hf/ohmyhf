@@ -13,7 +13,10 @@
   },
   "appearance": {
     "language": "语言",
-    "title": "外观"
+    "title": "外观",
+    "uiScale": "界面缩放",
+    "uiScaleDecrease": "缩小界面",
+    "uiScaleIncrease": "放大界面"
   },
   "downloads": {
     "cacheDir": "HF 缓存目录",
@@ -25,6 +28,11 @@
     "speedPerSecond": "{{value}}/秒",
     "title": "下载",
     "unlimited": "不限速"
+  },
+  "groups": {
+    "about": "关于",
+    "account": "账号",
+    "interface": "界面"
   },
   "notifications": {
     "enabled": "系统通知",

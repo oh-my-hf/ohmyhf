@@ -275,6 +275,23 @@ export interface PostSummary {
   url: string
 }
 
+export interface UserOverview {
+  name: string
+  fullname?: string
+  avatarUrl?: string
+  bio?: string
+  isPro?: boolean
+  numModels: number
+  numDatasets: number
+  numSpaces: number
+  numPapers?: number
+  numFollowers: number
+  numFollowing: number
+  numLikes?: number
+  orgs: OrgSummary[]
+  createdAt?: string
+}
+
 export type ThemeSetting = 'system' | 'light' | 'dark'
 
 export interface AppSettings {
@@ -287,6 +304,8 @@ export interface AppSettings {
   hfCacheDir: string | null
   notificationsEnabled: boolean
   pollIntervalMinutes: number
+  /** UI zoom percentage (100 = default). */
+  uiScale: number
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -296,7 +315,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   speedLimitBps: null,
   hfCacheDir: null,
   notificationsEnabled: true,
-  pollIntervalMinutes: 30
+  pollIntervalMinutes: 30,
+  uiScale: 100
 }
 
 /** Subset of process.platform values the app runs on (kept Node-types-free for the renderer). */

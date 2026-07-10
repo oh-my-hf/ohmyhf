@@ -41,6 +41,7 @@ import type {
   UploadProgress,
   UploadRequest,
   UploadResult,
+  UserOverview,
   UserSearchResult
 } from './types'
 
@@ -77,6 +78,8 @@ export interface IpcInvokeContract {
     res: string
   }
   'hub:posts': { req: { cursor?: string }; res: Page<PostSummary> }
+  'hub:postDetail': { req: { author: string; slug: string }; res: PostSummary }
+  'hub:userOverview': { req: { username: string }; res: UserOverview }
   'hub:discussionDetail': {
     req: { kind: RepoKind; repoId: string; num: number }
     res: DiscussionDetail
@@ -184,6 +187,8 @@ export const IPC_INVOKE_CHANNELS: readonly IpcInvokeChannel[] = [
   'hub:discussions',
   'hub:discussionDiff',
   'hub:posts',
+  'hub:postDetail',
+  'hub:userOverview',
   'hub:discussionDetail',
   'hub:discussionComment',
   'hub:notifications',

@@ -15,6 +15,7 @@ import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { UserLink } from '@/components/profile/UserLink'
 
 const KIND_PATH: Record<RepoKind, string> = {
   model: 'models',
@@ -41,7 +42,10 @@ export function PostCard({
   locale: string
 }): React.JSX.Element {
   const { t } = useTranslation(['home', 'common'])
-  const open = (): void => openExternal(post.url)
+  const navigate = useNavigate()
+  const open = (): void => {
+    void navigate(`/posts/${post.author}/${post.slug}`)
+  }
   return (
     <article
       role="button"
@@ -58,21 +62,23 @@ export function PostCard({
       className="flex cursor-pointer flex-col gap-3 rounded-lg border bg-panel p-4 transition-colors duration-150 outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
     >
       <header className="flex items-center gap-2.5">
-        {post.authorAvatarUrl ? (
-          <img
-            src={absoluteAvatarUrl(post.authorAvatarUrl)}
-            alt=""
-            className="size-8 shrink-0 rounded-full border"
-            draggable={false}
-          />
-        ) : (
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-panel-2 text-[12px] font-semibold text-ink-muted uppercase ring-1 ring-border">
-            {post.author.slice(0, 1)}
-          </div>
-        )}
+        <UserLink username={post.author} ariaLabel={post.author} className="shrink-0 rounded-full">
+          {post.authorAvatarUrl ? (
+            <img
+              src={absoluteAvatarUrl(post.authorAvatarUrl)}
+              alt=""
+              className="size-8 shrink-0 rounded-full border"
+              draggable={false}
+            />
+          ) : (
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-panel-2 text-[12px] font-semibold text-ink-muted uppercase ring-1 ring-border">
+              {post.author.slice(0, 1)}
+            </span>
+          )}
+        </UserLink>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-baseline gap-1.5">
-            <span className="truncate text-[13px] font-medium">{post.author}</span>
+            <UserLink username={post.author} className="truncate text-[13px] font-medium" />
             {post.authorFullname ? (
               <span className="truncate text-[12px] text-ink-muted">{post.authorFullname}</span>
             ) : null}
@@ -145,7 +151,7 @@ export function RepoEventRow({
             ns="home"
             values={{ author: repo.author, repo: repo.id }}
             components={{
-              author: <span className="font-medium text-ink" />,
+              author: <UserLink username={repo.author} className="font-medium text-ink" />,
               repo: <span className="font-medium text-ink" />
             }}
           />

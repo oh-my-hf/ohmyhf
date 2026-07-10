@@ -10,8 +10,9 @@ import { FavoritesPage } from '@/pages/FavoritesPage'
 import { HomePage } from '@/pages/HomePage'
 import { InboxPage } from '@/pages/InboxPage'
 import { PapersPage } from '@/pages/PapersPage'
-import { SettingsPage } from '@/pages/SettingsPage'
+import { PostPage } from '@/pages/PostPage'
 import { UploadPage } from '@/pages/UploadPage'
+import { UserPage } from '@/pages/UserPage'
 
 export function App(): React.JSX.Element {
   return (
@@ -24,13 +25,14 @@ export function App(): React.JSX.Element {
             <Route path="datasets/*" element={<BrowsePage kind="dataset" />} />
             <Route path="spaces/*" element={<BrowsePage kind="space" />} />
             <Route path="papers/*" element={<PapersPage />} />
+            <Route path="posts/:author/:slug" element={<PostPage />} />
+            <Route path="users/:username" element={<UserPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="downloads" element={<DownloadsPage />} />
             <Route path="cache" element={<CachePage />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="compare" element={<ComparePage />} />
             <Route path="upload" element={<UploadPage />} />
-            <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
