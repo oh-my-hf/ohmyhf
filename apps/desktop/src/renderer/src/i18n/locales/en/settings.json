@@ -6,7 +6,6 @@
     "privacy": "Privacy: everything stays on your machine. No telemetry, no analytics. Your token is encrypted with your OS keychain and stored locally.",
     "title": "About",
     "unofficialTitle": "UNOFFICIAL",
-    "version": "Version {{version}}",
     "updates": {
       "available": "Version {{version}} is available from GitHub Releases.",
       "check": "Check for updates",
@@ -37,7 +36,8 @@
       "unsupported": "In-app updates are available only in installed builds.",
       "upToDate": "You're running the latest version.",
       "view": "View"
-    }
+    },
+    "version": "Version {{version}}"
   },
   "account": {
     "billing": {
@@ -207,6 +207,28 @@
       "importSuccess": "Settings imported.",
       "title": "Settings transfer"
     }
+  },
+  "profile": {
+    "avatar": "Avatar",
+    "avatarHint": "PNG, JPEG or WebP, up to 10 MB.",
+    "avatarUpload": "Upload image",
+    "bluesky": "Bluesky username",
+    "details": "AI & ML interests",
+    "error": "Couldn't save the profile: {{error}}",
+    "fullname": "Full name",
+    "github": "GitHub username",
+    "homepage": "Homepage",
+    "linkedin": "LinkedIn profile",
+    "loadError": "Couldn't load your profile: {{error}}",
+    "needsSession": "Editing your public profile needs a Hub web session — connect one under Account.",
+    "openAccount": "Go to Account",
+    "primaryOrg": "Primary organization",
+    "primaryOrgHint": "Only available for Team/Enterprise organizations.",
+    "primaryOrgNone": "None",
+    "save": "Save changes",
+    "saved": "Profile saved",
+    "title": "Public profile",
+    "twitter": "Twitter username"
   },
   "title": "Settings"
 }

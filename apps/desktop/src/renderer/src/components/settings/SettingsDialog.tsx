@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Shield,
   UserCircle2,
+  UserPen,
   Wifi
 } from 'lucide-react'
 import type {
@@ -56,6 +57,7 @@ import type { SettingsSection } from '@/stores/app'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
 import { PrivacySection } from '@/components/settings/PrivacySection'
+import { ProfileSection } from '@/components/settings/ProfileSection'
 import { NetworkSection } from '@/components/settings/NetworkSection'
 import { DesktopSection } from '@/components/settings/DesktopSection'
 
@@ -91,7 +93,10 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     labelKey: 'settings:groups.account',
-    items: [{ id: 'account', labelKey: 'settings:account.title', icon: UserCircle2 }]
+    items: [
+      { id: 'account', labelKey: 'settings:account.title', icon: UserCircle2 },
+      { id: 'profile', labelKey: 'settings:profile.title', icon: UserPen }
+    ]
   },
   {
     labelKey: 'settings:groups.interface',
@@ -1066,6 +1071,7 @@ function AboutSection(): React.JSX.Element {
 
 const SECTION_CONTENT: Record<SettingsSection, () => React.JSX.Element> = {
   account: AccountSection,
+  profile: ProfileSection,
   appearance: AppearanceSection,
   downloads: DownloadsSection,
   notifications: NotificationsSection,

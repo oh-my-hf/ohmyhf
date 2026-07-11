@@ -43,6 +43,7 @@ function filtersForSort(sort: RepoSort): Record<RepoKind, BrowseFilters> {
 /** Sections of the settings dialog (left nav entries). */
 export type SettingsSection =
   | 'account'
+  | 'profile'
   | 'appearance'
   | 'downloads'
   | 'notifications'

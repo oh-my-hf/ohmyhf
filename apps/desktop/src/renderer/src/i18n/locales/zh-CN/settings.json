@@ -6,7 +6,6 @@
     "privacy": "隐私：一切数据都保存在你的设备上。无遥测、无分析统计。访问令牌经操作系统钥匙串加密后仅存储在本地。",
     "title": "关于",
     "unofficialTitle": "非官方声明",
-    "version": "版本 {{version}}",
     "updates": {
       "available": "GitHub Releases 上有新版本 {{version}}。",
       "check": "检查更新",
@@ -37,7 +36,8 @@
       "unsupported": "应用内更新仅在已安装的正式构建中可用。",
       "upToDate": "当前已是最新版本。",
       "view": "查看"
-    }
+    },
+    "version": "版本 {{version}}"
   },
   "account": {
     "billing": {
@@ -206,6 +206,28 @@
       "importSuccess": "设置已导入。",
       "title": "设置迁移"
     }
+  },
+  "profile": {
+    "avatar": "头像",
+    "avatarHint": "支持 PNG、JPEG、WebP，最大 10 MB。",
+    "avatarUpload": "上传图片",
+    "bluesky": "Bluesky 用户名",
+    "details": "AI & ML 兴趣",
+    "error": "保存资料失败：{{error}}",
+    "fullname": "姓名",
+    "github": "GitHub 用户名",
+    "homepage": "主页",
+    "linkedin": "LinkedIn 主页",
+    "loadError": "无法加载资料：{{error}}",
+    "needsSession": "编辑公开资料需要 Hub 网页会话——请先在“账户”中连接。",
+    "openAccount": "前往账户",
+    "primaryOrg": "主要组织",
+    "primaryOrgHint": "仅 Team/Enterprise 组织可选。",
+    "primaryOrgNone": "无",
+    "save": "保存修改",
+    "saved": "资料已保存",
+    "title": "公开资料",
+    "twitter": "Twitter 用户名"
   },
   "title": "设置"
 }
