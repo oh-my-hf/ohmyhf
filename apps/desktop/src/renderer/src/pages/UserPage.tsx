@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -7,12 +7,14 @@ import {
   Boxes,
   Building2,
   Database,
+  Eye,
   ExternalLink,
   Heart,
   LayoutGrid,
   UserX
 } from 'lucide-react'
 import type {
+  Follow,
   FollowedAccount,
   OrgSummary,
   RepoKind,
@@ -29,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { PlanBadge, planBadgeKind } from '@/components/profile/PlanBadge'
-import { useWatchSync } from '@/hooks/use-watch-sync'
+import { useToasts } from '@/components/ui/toaster'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
@@ -186,24 +188,50 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
   const { t } = useTranslation(['profile', 'common', 'auth'])
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const push = useToasts((s) => s.push)
+  const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
   const [tabChoice, setTabChoice] = useState<RepoKind | null>(null)
+  const signedIn = auth.status === 'signedIn'
 
   const overview = useQuery({
     queryKey: ['user-overview', username],
     queryFn: () => invoke('hub:userOverview', { username }),
     staleTime: STALE_TIME
   })
-  // Shares the ['follows'] cache entry with the Inbox and Home pages.
-  const follows = useQuery({
-    queryKey: ['follows'],
-    queryFn: () => invoke('follows:list', undefined)
+
+  const watched = useQuery({
+    queryKey: ['hub-watched'],
+    queryFn: () => invoke('hub:watchList', undefined),
+    enabled: signedIn,
+    staleTime: 60_000
   })
+
+  // After toggling Watch on the website, refresh when the app regains focus.
+  useEffect(() => {
+    if (!signedIn) return
+    const onFocus = (): void => {
+      void queryClient.invalidateQueries({ queryKey: ['hub-watched'] })
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [signedIn, queryClient])
 
   const data = overview.data
   const isOrg = data?.isOrg === true
+  // Hub social follow — same flag the website Follow button uses.
+  const followingOnHub = data?.isFollowing === true
+  const watchingOnHub =
+    data !== undefined &&
+    (watched.data ?? []).some(
+      (w) =>
+        w.name.toLowerCase() === username.toLowerCase() ||
+        (data.internalId !== undefined &&
+          data.internalId !== '' &&
+          w.internalId === data.internalId)
+    )
 
   const members = useQuery({
     queryKey: ['org-members', username],
@@ -212,29 +240,79 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
     staleTime: STALE_TIME
   })
 
-  // Users and orgs share a namespace on the Hub; either follow type counts.
-  const followEntry = follows.data?.find(
-    (f) =>
-      (f.type === 'user' || f.type === 'org') && f.target.toLowerCase() === username.toLowerCase()
-  )
-
-  const syncWatch = useWatchSync()
-  const watchTarget = (): Array<{ username: string; internalId?: string; isOrg?: boolean }> => [
-    { username, internalId: overview.data?.internalId, isOrg }
-  ]
-
-  const addFollow = useMutation({
-    mutationFn: () => invoke('follows:add', { type: isOrg ? 'org' : 'user', target: username }),
-    onSuccess: (list) => {
-      queryClient.setQueryData(['follows'], list)
-      syncWatch('add', watchTarget())
+  const setFollow = useMutation({
+    mutationFn: (next: boolean) =>
+      invoke('hub:followSet', { username, following: next, isOrg }),
+    onMutate: async (next) => {
+      await queryClient.cancelQueries({ queryKey: ['user-overview', username] })
+      const prev = queryClient.getQueryData<UserOverview>(['user-overview', username])
+      if (prev) {
+        const delta = next ? 1 : -1
+        queryClient.setQueryData<UserOverview>(['user-overview', username], {
+          ...prev,
+          isFollowing: next,
+          numFollowers: Math.max(0, prev.numFollowers + delta)
+        })
+      }
+      return { prev }
+    },
+    onError: (err, _next, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['user-overview', username], ctx.prev)
+      push(t('profile:followError', { error: err.message }), 'error')
+    },
+    onSuccess: async (_res, next) => {
+      // Keep the local inbox poller in sync with the Hub social graph.
+      if (next) {
+        const list = await invoke('follows:add', {
+          type: isOrg ? 'org' : 'user',
+          target: username
+        })
+        queryClient.setQueryData(['follows'], list)
+        return
+      }
+      let local = queryClient.getQueryData<Follow[]>(['follows'])
+      if (local === undefined) {
+        local = await invoke('follows:list', undefined)
+        queryClient.setQueryData(['follows'], local)
+      }
+      const entry = local.find(
+        (f) =>
+          (f.type === 'user' || f.type === 'org') &&
+          f.target.toLowerCase() === username.toLowerCase()
+      )
+      if (entry) {
+        const list = await invoke('follows:remove', { id: entry.id })
+        queryClient.setQueryData(['follows'], list)
+      }
     }
   })
-  const removeFollow = useMutation({
-    mutationFn: (id: string) => invoke('follows:remove', { id }),
-    onSuccess: (list) => {
-      queryClient.setQueryData(['follows'], list)
-      syncWatch('delete', watchTarget())
+
+  const setWatch = useMutation({
+    mutationFn: async (next: boolean) => {
+      const id = overview.data?.internalId
+      if (id === undefined || id === '') {
+        return { applied: false as const, watched: watched.data ?? [] }
+      }
+      return invoke('hub:watchSet', {
+        id,
+        type: isOrg ? 'org' : 'user',
+        watching: next
+      })
+    },
+    onSuccess: (result, next) => {
+      queryClient.setQueryData(['hub-watched'], result.watched)
+      if (result.applied) return
+      // Token sessions cannot mutate watches — open the website control.
+      openExternal(`https://huggingface.co/${username}`)
+      push(t(next ? 'profile:watchOpenHub' : 'profile:unwatchOpenHub'), 'info', {
+        action: {
+          label: t('profile:watchOnHub'),
+          onClick: () => openExternal(`https://huggingface.co/${username}`)
+        }
+      })
+    },
+    onError: (err) => {
+      push(t('profile:watchError', { error: err.message }), 'error')
     }
   })
 
@@ -379,20 +457,30 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                   </TooltipTrigger>
                   <TooltipContent>{t('common:openOnHub')}</TooltipContent>
                 </Tooltip>
-                <Button
-                  variant={followEntry ? 'secondary' : 'cta'}
-                  size="md"
-                  disabled={follows.isPending}
-                  loading={addFollow.isPending || removeFollow.isPending}
-                  onClick={() => {
-                    if (followEntry) removeFollow.mutate(followEntry.id)
-                    else addFollow.mutate()
-                  }}
-                >
-                  {followEntry ? t('profile:unfollow') : t('profile:follow')}
-                </Button>
-                {data.isFollowing && (
-                  <Badge variant="success">{t('profile:followingOnHub')}</Badge>
+                {signedIn && (
+                  <>
+                    <Button
+                      variant={watchingOnHub ? 'secondary' : 'outline'}
+                      size="md"
+                      className="gap-1.5"
+                      loading={setWatch.isPending}
+                      disabled={watched.isPending || data.internalId === undefined}
+                      aria-pressed={watchingOnHub}
+                      onClick={() => setWatch.mutate(!watchingOnHub)}
+                    >
+                      <Eye className="size-3.5" aria-hidden />
+                      {watchingOnHub ? t('profile:unwatch') : t('profile:watch')}
+                    </Button>
+                    <Button
+                      variant={followingOnHub ? 'secondary' : 'cta'}
+                      size="md"
+                      loading={setFollow.isPending}
+                      aria-pressed={followingOnHub}
+                      onClick={() => setFollow.mutate(!followingOnHub)}
+                    >
+                      {followingOnHub ? t('profile:unfollow') : t('profile:follow')}
+                    </Button>
+                  </>
                 )}
               </div>
             </header>

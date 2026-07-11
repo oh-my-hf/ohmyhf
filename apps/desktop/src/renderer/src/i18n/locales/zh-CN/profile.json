@@ -8,7 +8,7 @@
     "title": "无法加载该用户主页"
   },
   "follow": "关注",
-  "followingOnHub": "已在 Hub 关注",
+  "followError": "无法更新关注状态：{{error}}",
   "members": "成员",
   "orgBadge": "组织",
   "orgsLabel": "所属组织",
@@ -37,7 +37,12 @@
     "spaces": "Spaces"
   },
   "unfollow": "取消关注",
+  "unwatch": "取消 Watch",
+  "unwatchOpenHub": "Hub 会忽略应用发起的 Unwatch——请到其 Hub 页面上操作。",
   "viewProfile": "查看主页",
+  "watch": "Watch",
+  "watchError": "无法更新 Watch：{{error}}",
   "watchOnHub": "在 Hub 中打开",
+  "watchOpenHub": "Hub 会忽略应用发起的 Watch——请到其 Hub 页面上点 Watch repositories。",
   "watchSyncNotApplied": "已在本地关注。Hub 会忽略应用发起的 watch 请求——如需该账号的 Hub 通知，请到其 Hub 页面上点 Watch。"
 }

@@ -238,6 +238,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- hub: repo administration ---------------------------------------------------
   handle('hub:watchUpdate', (changes) => ctx.hub.updateWatch(changes))
+  handle('hub:watchList', () => ctx.hub.listWatched())
+  handle('hub:watchSet', ({ id, type, watching }) => ctx.hub.setWatch({ id, type }, watching))
   handle('hub:myRepos', () => ctx.hub.listMyRepos())
   handle('hub:repoSettingsUpdate', ({ kind, repoId, patch }) =>
     ctx.hub.updateRepoSettings(kind, repoId, patch)
@@ -283,6 +285,9 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- hub: community & billing --------------------------------------------------------
   handle('hub:likeSet', ({ kind, repoId, liked }) => ctx.hub.setLike(kind, repoId, liked))
+  handle('hub:followSet', ({ username, following, isOrg }) =>
+    ctx.hub.setFollow(username, following, isOrg === true)
+  )
   handle('hub:userLikes', ({ username }) => ctx.hub.getUserLikes(username))
   handle('hub:postComment', ({ author, slug, comment, replyToCommentId }) =>
     ctx.hub.commentOnPost(author, slug, comment, replyToCommentId)

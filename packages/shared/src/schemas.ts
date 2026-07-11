@@ -189,6 +189,11 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     add: watchTargets.optional(),
     delete: watchTargets.optional()
   }),
+  'hub:watchSet': z.object({
+    id: hexId,
+    type: z.enum(['user', 'org']),
+    watching: z.boolean()
+  }),
   'hub:datasetSplits': z.object({ repoId }),
   'hub:searchUsers': z.object({ query: z.string().min(1).max(64) }),
   'hub:searchOrgs': z.object({ query: z.string().min(1).max(64) }),
@@ -296,6 +301,11 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'hub:spaceLogs': z.object({ repoId, logType: z.enum(['build', 'run']) }),
   'hub:spaceRestart': z.object({ repoId, factory: z.boolean().optional() }),
   'hub:likeSet': z.object({ kind: repoKind, repoId, liked: z.boolean() }),
+  'hub:followSet': z.object({
+    username,
+    following: z.boolean(),
+    isOrg: z.boolean().optional()
+  }),
   'hub:userLikes': z.object({ username }),
   'hub:postComment': z.object({
     author: username,

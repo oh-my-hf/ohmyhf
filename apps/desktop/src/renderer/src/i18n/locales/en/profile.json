@@ -8,7 +8,7 @@
     "title": "Couldn't load this profile"
   },
   "follow": "Follow",
-  "followingOnHub": "Following on the Hub",
+  "followError": "Couldn't update follow: {{error}}",
   "members": "Members",
   "orgBadge": "Organization",
   "orgsLabel": "Organizations",
@@ -37,7 +37,12 @@
     "spaces": "Spaces"
   },
   "unfollow": "Unfollow",
+  "unwatch": "Unwatch",
+  "unwatchOpenHub": "The Hub ignores Unwatch from apps — use Unwatch on their Hub page.",
   "viewProfile": "View profile",
+  "watch": "Watch",
+  "watchError": "Couldn't update watch: {{error}}",
   "watchOnHub": "Open on the Hub",
+  "watchOpenHub": "The Hub ignores Watch from apps — use Watch repositories on their Hub page.",
   "watchSyncNotApplied": "Followed locally. The Hub ignores watch requests from apps — to also get Hub notifications for this account, use the Watch button on its Hub page."
 }

@@ -223,6 +223,31 @@ describe('HubClient.setLike', () => {
   })
 })
 
+describe('HubClient.setFollow', () => {
+  it('POSTs/DELETEs the user follow endpoint', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await client.setFollow('julien-c', true)
+    expect(requestOf(fetchImpl, 0).url).toBe('https://huggingface.co/api/users/julien-c/follow')
+    expect(requestOf(fetchImpl, 0).init.method).toBe('POST')
+    await client.setFollow('julien-c', false)
+    expect(requestOf(fetchImpl, 1).url).toBe('https://huggingface.co/api/users/julien-c/follow')
+    expect(requestOf(fetchImpl, 1).init.method).toBe('DELETE')
+  })
+
+  it('routes org follows to the organizations endpoint', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await client.setFollow('huggingface', true, true)
+    expect(requestOf(fetchImpl, 0).url).toBe(
+      'https://huggingface.co/api/organizations/huggingface/follow'
+    )
+    expect(requestOf(fetchImpl, 0).init.method).toBe('POST')
+    await client.setFollow('huggingface', false, true)
+    expect(requestOf(fetchImpl, 1).init.method).toBe('DELETE')
+  })
+})
+
 describe('HubClient.getUserLikes', () => {
   it('maps liked repos and drops bucket/kernel entries', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(

@@ -134,7 +134,7 @@ export interface IpcInvokeContract {
   /**
    * Watch/unwatch users and orgs by their 24-hex internal id. Returns the
    * resulting watch list so callers can VERIFY an add took effect — the Hub
-   * silently ignores token-based org adds (HTTP 200, not applied).
+   * silently ignores token-based mutations (HTTP 200, list unchanged).
    */
   'hub:watchUpdate': {
     req: {
@@ -142,6 +142,17 @@ export interface IpcInvokeContract {
       delete?: { id: string; type: 'user' | 'org' }[]
     }
     res: WatchedEntry[]
+  }
+  /** Current Hub watch list (read via a no-op watch PATCH). */
+  'hub:watchList': { req: void; res: WatchedEntry[] }
+  /**
+   * Attempt watch/unwatch and report whether the Hub applied it. Token
+   * sessions usually get applied=false — UI should open the website Watch
+   * control as a fallback.
+   */
+  'hub:watchSet': {
+    req: { id: string; type: 'user' | 'org'; watching: boolean }
+    res: { applied: boolean; watched: WatchedEntry[] }
   }
   'hub:fileText': {
     req: { kind: RepoKind; repoId: string; path: string; revision?: string; maxBytes?: number }
@@ -267,6 +278,11 @@ export interface IpcInvokeContract {
   'hub:spaceRestart': { req: { repoId: string; factory?: boolean }; res: void }
 
   'hub:likeSet': { req: { kind: RepoKind; repoId: string; liked: boolean }; res: void }
+  /** Social follow/unfollow on the Hub (same as the website Follow button). */
+  'hub:followSet': {
+    req: { username: string; following: boolean; isOrg?: boolean }
+    res: void
+  }
   'hub:userLikes': { req: { username: string }; res: RepoSummary[] }
   'hub:postComment': {
     req: { author: string; slug: string; comment: string; replyToCommentId?: string }
@@ -399,6 +415,8 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:notificationsMarkRead',
   'hub:notificationsClear',
   'hub:watchUpdate',
+  'hub:watchList',
+  'hub:watchSet',
   'hub:fileText',
   'hub:safetensorsHeader',
   'hub:datasetSplits',
@@ -437,6 +455,7 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:spaceLogs',
   'hub:spaceRestart',
   'hub:likeSet',
+  'hub:followSet',
   'hub:userLikes',
   'hub:postComment',
   'hub:paperComment',

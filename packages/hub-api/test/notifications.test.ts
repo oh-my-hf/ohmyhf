@@ -199,6 +199,48 @@ describe('HubClient.updateWatch', () => {
   })
 })
 
+describe('HubClient.listWatched', () => {
+  it('reads the watch list via a no-op delete of a nonexistent id', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        watched: [{ _id: HEX, name: 'alice', type: 'user' }]
+      })
+    )
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await expect(client.listWatched()).resolves.toEqual([
+      { internalId: HEX, name: 'alice', type: 'user' }
+    ])
+    const { url, init } = requestOf(fetchImpl)
+    expect(url).toBe('https://huggingface.co/api/settings/watch')
+    expect(jsonBodyOf(init)).toEqual({
+      add: [],
+      delete: [{ id: '0'.repeat(24), type: 'user' }]
+    })
+  })
+})
+
+describe('HubClient.setWatch', () => {
+  it('reports applied=false when the Hub silently ignores the mutation', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ watched: [] }))
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await expect(client.setWatch({ id: HEX, type: 'user' }, true)).resolves.toEqual({
+      applied: false,
+      watched: []
+    })
+  })
+
+  it('reports applied=true when the target appears after an add', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({ watched: [{ _id: HEX, name: 'alice', type: 'user' }] })
+    )
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await expect(client.setWatch({ id: HEX, type: 'user' }, true)).resolves.toEqual({
+      applied: true,
+      watched: [{ internalId: HEX, name: 'alice', type: 'user' }]
+    })
+  })
+})
+
 describe('HubClient.listMyRepos', () => {
   it('maps entries and drops bucket/kernel repos', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(

@@ -1073,11 +1073,13 @@ export class HubClient {
 
   /**
    * Watch/unwatch users and orgs by their 24-hex internal id. Returns the
-   * resulting watch list from the response body — the Hub answers 200 but
-   * SILENTLY ignores token-based org adds (live-verified 2026-07-11), so
-   * callers must check the returned list to know whether an add took effect.
-   * Do not send add and delete in the same call: the endpoint 400s when both
-   * are non-empty.
+   * resulting watch list from the response body.
+   *
+   * Live-verified 2026-07-11: token-based ADD and DELETE of real user/org
+   * targets both return HTTP 200 but are SILENTLY IGNORED (list unchanged).
+   * Only a browser cookie session can mutate watches. Callers must check the
+   * returned list. Do not send add and delete in the same call: the endpoint
+   * 400s when both are non-empty. An empty add+delete also 400s.
    */
   async updateWatch(changes: {
     add?: WatchTarget[]
@@ -1095,6 +1097,30 @@ export class HubClient {
       name: w.name ?? w.id ?? '',
       type: w.type === 'org' ? ('org' as const) : ('user' as const)
     }))
+  }
+
+  /**
+   * Current Hub watch list. There is no GET endpoint; a no-op DELETE of a
+   * nonexistent id returns 200 with the full list (live-verified 2026-07-11).
+   */
+  async listWatched(): Promise<WatchedEntry[]> {
+    return this.updateWatch({ delete: [{ id: '0'.repeat(24), type: 'user' }] })
+  }
+
+  /**
+   * Attempt to watch/unwatch and report whether the Hub actually applied it.
+   * Token sessions typically get `applied: false` — callers should fall back
+   * to the website Watch control.
+   */
+  async setWatch(
+    target: WatchTarget,
+    watching: boolean
+  ): Promise<{ applied: boolean; watched: WatchedEntry[] }> {
+    const watched = await this.updateWatch(
+      watching ? { add: [target] } : { delete: [target] }
+    )
+    const present = watched.some((w) => w.internalId === target.id)
+    return { applied: present === watching, watched }
   }
 
   /** Repos the signed-in user administers, with storage usage. */
@@ -1327,6 +1353,19 @@ export class HubClient {
       liked ? 'POST' : 'DELETE',
       `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/like`
     )
+  }
+
+  /**
+   * Social follow/unfollow for a user or org — the same action as the Follow
+   * button on huggingface.co profile pages. Not in the public OpenAPI spec;
+   * runtime-verified 2026-07-11 (401 without auth; distinct from watch).
+   */
+  async setFollow(username: string, following: boolean, isOrg = false): Promise<void> {
+    const encoded = encodeURIComponent(username)
+    const base = isOrg
+      ? `${this.endpoint}/api/organizations/${encoded}/follow`
+      : `${this.endpoint}/api/users/${encoded}/follow`
+    await this.sendJson(following ? 'POST' : 'DELETE', base)
   }
 
   /** Repos a user has liked. Entries are minimal ({name, type}); buckets/kernels are dropped. */
