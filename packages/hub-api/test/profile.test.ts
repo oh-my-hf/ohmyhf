@@ -41,6 +41,7 @@ describe('HubClient.getPostDetail', () => {
       numComments: 3,
       numReactions: 2,
       reactions: [{ emoji: '🔥', count: 2, users: ['a', 'b'] }],
+      attachments: [],
       url: 'https://huggingface.co/posts/RazaAli10/943499680377839'
     })
   })

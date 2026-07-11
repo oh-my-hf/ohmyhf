@@ -165,8 +165,37 @@ describe('HubClient.getPosts', () => {
         { emoji: '🔥', count: 2, users: ['dipankarsarkar', 'John6666'] },
         { emoji: '👍', count: 3, users: ['a', 'b', 'c'] }
       ],
+      attachments: [],
       url: 'https://huggingface.co/posts/razaali10/943499680377839'
     })
+  })
+
+  it('maps image/video attachments (absolutized) and drops unknown/blank types', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        socialPosts: [
+          {
+            ...rawPost,
+            attachments: [
+              { type: 'image', url: 'https://cdn-uploads.huggingface.co/x/y.jpeg' },
+              { type: 'video', url: 'https://cdn-uploads.huggingface.co/x/z.mp4' },
+              { type: 'image', url: '/relative/w.png' },
+              { type: 'audio', url: 'https://cdn-uploads.huggingface.co/x/a.mp3' },
+              { type: 'image' }
+            ]
+          }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const page = await client.getPosts()
+    expect(page.items[0]!.attachments).toEqual([
+      { type: 'image', url: 'https://cdn-uploads.huggingface.co/x/y.jpeg' },
+      { type: 'video', url: 'https://cdn-uploads.huggingface.co/x/z.mp4' },
+      // Relative URLs get absolutized against the endpoint.
+      { type: 'image', url: 'https://huggingface.co/relative/w.png' }
+      // audio (unknown type) and the url-less entry are dropped.
+    ])
   })
 
   it('builds a skip cursor from the received item count', async () => {

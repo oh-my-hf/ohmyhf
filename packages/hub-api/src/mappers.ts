@@ -8,9 +8,11 @@ import type {
   CollectionDetail,
   CollectionItem,
   CollectionSummary,
+  DatasetRows,
   DiscussionDetail,
   DiscussionSummary,
   FileTreeEntry,
+  GatedFormField,
   HubNotification,
   HubOrgPlan,
   HubProfileSettings,
@@ -18,6 +20,7 @@ import type {
   NotificationsPage,
   PaperSummary,
   PostComment,
+  PostAttachment,
   PostReaction,
   PostSummary,
   RepoDetail,
@@ -272,8 +275,22 @@ interface RawPost {
   publishedAt?: string
   numComments?: number
   reactions?: Array<{ reaction?: string; count?: number; users?: string[] }>
+  /** Image/video media, kept separate from rawContent (live-verified 2026-07-11). */
+  attachments?: Array<{ type?: string; url?: string }>
   /** Relative path like "/posts/<author>/<slug>". */
   url?: string
+}
+
+/** Keep only well-formed image/video attachments, with absolutized URLs. */
+function mapPostAttachments(
+  raw: RawPost['attachments'],
+  absolutize: (u: string | undefined) => string | undefined
+): PostAttachment[] {
+  return (raw ?? []).flatMap((a) => {
+    const url = absolutize(a?.url)
+    if (url === undefined || (a?.type !== 'image' && a?.type !== 'video')) return []
+    return [{ type: a.type, url }]
+  })
 }
 
 export function mapPost(raw: RawPost, endpoint: string): PostSummary {
@@ -294,6 +311,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     numComments: raw.numComments,
     numReactions,
     reactions,
+    attachments: mapPostAttachments(raw.attachments, absolutize),
     url: absolutize(raw.url) ?? `${endpoint}/posts/${author}/${slug}`
   }
 }
@@ -424,6 +442,88 @@ export function parseProfileSettingsPage(
       primaryOrgOptions
     }
   }
+}
+
+/**
+ * The gated repo access form, parsed from the repo page's SSR HTML
+ * (live-captured 2026-07-11: `<form action=".../ask-access...">` posting
+ * urlencoded csrf + one field per gate question, named by the question text).
+ * Returns undefined when the page offers no ask-access form — either the repo
+ * isn't gated for this account, or a manual request is already pending.
+ */
+export function parseAskAccessForm(
+  html: string
+): { csrf: string; fields: GatedFormField[] } | undefined {
+  const form = html.split('<form').find((chunk) => chunk.includes('/ask-access'))
+  if (form === undefined) return undefined
+  const body = form.slice(0, form.indexOf('</form>'))
+
+  let csrf = ''
+  const fields: GatedFormField[] = []
+  for (const m of body.matchAll(/<(input|textarea|select)\b([^>]*)>/g)) {
+    const attrs = m[2]!
+    const name = decodeHtmlAttribute(/\bname="([^"]*)"/.exec(attrs)?.[1] ?? '')
+    if (name === '') continue
+    const type = /\btype="([^"]*)"/.exec(attrs)?.[1] ?? 'text'
+    if (name === 'csrf') {
+      csrf = decodeHtmlAttribute(/\bvalue="([^"]*)"/.exec(attrs)?.[1] ?? '')
+      continue
+    }
+    if (type === 'hidden') continue
+    const required = /\brequired\b/.test(attrs)
+    if (m[1] === 'select') {
+      const selectHtml = new RegExp(`<select[^>]*name="${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?</select>`).exec(body)?.[0] ?? ''
+      const options = [...selectHtml.matchAll(/<option[^>]*value="([^"]*)"/g)]
+        .map((o) => decodeHtmlAttribute(o[1]!))
+        .filter((v) => v !== '')
+      fields.push({ name, type: 'select', required, options })
+    } else if (m[1] === 'textarea') {
+      fields.push({ name, type: 'textarea', required })
+    } else if (type === 'checkbox') {
+      fields.push({ name, type: 'checkbox', required })
+    } else if (type === 'date') {
+      fields.push({ name, type: 'date', required })
+    } else {
+      fields.push({ name, type: 'text', required })
+    }
+  }
+  if (csrf === '') return undefined
+  return { csrf, fields }
+}
+
+/**
+ * SSR sample rows from a dataset page's DatasetViewer island — the Hub's own
+ * fallback when the datasets-server viewer is unavailable (huge or failed
+ * builds). Returns undefined when the island carries no sample.
+ */
+export function parseDatasetSampleRows(html: string): DatasetRows | undefined {
+  const match =
+    /data-target="DatasetViewer"[^>]*data-props="([^"]*)"/.exec(html) ??
+    /data-props="([^"]*)"[^>]*data-target="DatasetViewer"/.exec(html)
+  if (!match) return undefined
+  let sample: {
+    columns?: Array<{ name?: string }>
+    rows?: Array<{ cells?: Record<string, { value?: unknown }> }>
+  }
+  try {
+    const props = JSON.parse(decodeHtmlAttribute(match[1]!)) as {
+      data?: { sampleData?: { sampleData?: typeof sample } }
+    }
+    sample = props.data?.sampleData?.sampleData ?? {}
+  } catch {
+    return undefined
+  }
+  const columns = (sample.columns ?? []).flatMap((c) => (c?.name ? [c.name] : []))
+  const rows = (sample.rows ?? []).map((r) =>
+    columns.map((col) => {
+      const value = r?.cells?.[col]?.value
+      if (value === undefined || value === null) return ''
+      const text = typeof value === 'string' ? value : JSON.stringify(value)
+      return text.length > 500 ? `${text.slice(0, 500)}…` : text
+    })
+  )
+  if (columns.length === 0 || rows.length === 0) return undefined
+  return { columns, rows, sample: true }
 }
 
 interface RawUserOverview {

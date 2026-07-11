@@ -22,6 +22,7 @@ import type {
   PaperSummary,
   PostComment,
   PostSummary,
+  RepoAccessGate,
   RepoDetail,
   RepoKind,
   RepoSummary,
@@ -60,6 +61,8 @@ import {
   mapUserOverview,
   mapWhoAmI,
   mapWhoAmIAuth,
+  parseAskAccessForm,
+  parseDatasetSampleRows,
   parsePostComments,
   parseProfileSettingsPage,
   type WhoAmIDetailed
@@ -847,6 +850,66 @@ export class HubClient {
     }
     tensors.sort((a, b) => a.name.localeCompare(b.name))
     return { tensors, metadata, totalParams }
+  }
+
+  /**
+   * The signed-in account's standing with a gated repo. auth-check answers
+   * whether access is already granted (live-verified 2026-07-11: 200 granted,
+   * 403 not yet); when not granted, the repo page's ask-access form supplies
+   * the gate questions — its absence means a manual request is pending.
+   */
+  async getRepoAccessGate(kind: RepoKind, repoId: string): Promise<RepoAccessGate> {
+    const checkUrl = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/auth-check`
+    const res = await this.fetchWithPolicy(checkUrl, { headers: this.headers(checkUrl) })
+    if (res.ok) return { status: 'granted', fields: [] }
+    if (res.status !== 401 && res.status !== 403) await this.throwHttpError(res, 'GET', checkUrl)
+    const page = await this.fetchRepoPage(kind, repoId)
+    const form = parseAskAccessForm(page)
+    return form ? { status: 'ask', fields: form.fields } : { status: 'pending', fields: [] }
+  }
+
+  /**
+   * Submit the gated-repo access form exactly like the Hub web app: urlencoded
+   * POST to /{repo}/ask-access with the page's csrf token plus one entry per
+   * gate question (live-captured 2026-07-11). Needs a Hub web session.
+   */
+  async askRepoAccess(
+    kind: RepoKind,
+    repoId: string,
+    fields: Record<string, string>
+  ): Promise<void> {
+    const url = `${this.endpoint}/${RESOLVE_PREFIX[kind]}${repoId}/ask-access`
+    if (!this.getSessionCookie() || !this.allowsAuth(url)) throw new CookieRequiredError(url)
+    const form = parseAskAccessForm(await this.fetchRepoPage(kind, repoId))
+    if (!form) throw new HubApiError('the repo offers no access-request form', 409, url)
+    const res = await this.fetchWithPolicy(url, {
+      method: 'POST',
+      headers: {
+        ...this.headers(url, 'cookie'),
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({ csrf: form.csrf, ...fields }).toString()
+    })
+    if (!res.ok) await this.throwHttpError(res, 'POST', url)
+  }
+
+  /**
+   * SSR sample rows from the dataset page — the Hub's own preview fallback
+   * when the datasets-server viewer is unavailable. Authenticated with the
+   * web session when connected (gated pages embed the sample only for
+   * accounts with access), the bearer token otherwise.
+   */
+  async getDatasetSampleRows(repoId: string): Promise<DatasetRows | undefined> {
+    return parseDatasetSampleRows(await this.fetchRepoPage('dataset', repoId))
+  }
+
+  /** Repo web page HTML, uncached (carries per-account gate state and csrf). */
+  private async fetchRepoPage(kind: RepoKind, repoId: string): Promise<string> {
+    const url = `${this.endpoint}/${RESOLVE_PREFIX[kind]}${repoId}`
+    const auth = this.getSessionCookie() ? ('cookie' as const) : ('token' as const)
+    const res = await this.fetchWithPolicy(url, { headers: this.headers(url, auth) })
+    if (!res.ok) await this.throwHttpError(res, 'GET', url)
+    return res.text()
   }
 
   /** Dataset viewer config/split list via the datasets-server API. */
