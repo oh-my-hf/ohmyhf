@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import type { PostAttachment } from '@oh-my-huggingface/shared'
 import { cn } from '@/lib/utils'
+import { Lightbox } from '@/components/ui/lightbox'
 
 /**
  * Renders a post's media attachments (images/videos). The Hub stores these
@@ -16,6 +18,7 @@ export function PostAttachments({
   compact?: boolean
   className?: string
 }): React.JSX.Element | null {
+  const [lightbox, setLightbox] = useState<string>()
   if (attachments.length === 0) return null
 
   return (
@@ -48,12 +51,18 @@ export function PostAttachments({
             loading="lazy"
             decoding="async"
             className={cn(
-              'w-full rounded-lg border border-border-card bg-panel object-cover',
+              'w-full cursor-zoom-in rounded-lg border border-border-card bg-panel object-cover',
               compact ? 'max-h-48' : 'max-h-[32rem] object-contain'
             )}
+            onClick={(e) => {
+              // Feed cards navigate on click; the lightbox takes precedence.
+              e.stopPropagation()
+              setLightbox(att.url)
+            }}
           />
         )
       )}
+      <Lightbox src={lightbox} onClose={() => setLightbox(undefined)} />
     </div>
   )
 }

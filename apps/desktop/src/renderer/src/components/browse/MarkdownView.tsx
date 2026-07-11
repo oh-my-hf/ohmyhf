@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
@@ -7,6 +7,7 @@ import type { RepoKind } from '@oh-my-huggingface/shared'
 import { openExternal } from '@/lib/ipc'
 import { RESOLVE_PREFIX } from '@/lib/file-kinds'
 import { CodeBlock } from '@/components/browse/CodeBlock'
+import { Lightbox } from '@/components/ui/lightbox'
 
 /**
  * Model cards are untrusted third-party content: raw HTML is allowed through
@@ -43,6 +44,8 @@ export function MarkdownView({
 }: MarkdownViewProps): React.JSX.Element {
   const content = useMemo(() => stripFrontmatter(markdown), [markdown])
   const base = kind && repoId ? `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}` : undefined
+  // Any rendered image opens full-size in the lightbox.
+  const [lightbox, setLightbox] = useState<string>()
 
   const resolveRelative = (url: string, forImage: boolean): string => {
     if (/^(https?:|data:)/.test(url)) return url
@@ -71,13 +74,18 @@ export function MarkdownView({
               {children}
             </a>
           ),
-          img: ({ src, alt }) => (
-            <img
-              src={typeof src === 'string' ? resolveRelative(src, true) : undefined}
-              alt={alt ?? ''}
-              loading="lazy"
-            />
-          ),
+          img: ({ src, alt }) => {
+            const resolved = typeof src === 'string' ? resolveRelative(src, true) : undefined
+            return (
+              <img
+                src={resolved}
+                alt={alt ?? ''}
+                loading="lazy"
+                className="cursor-zoom-in"
+                onClick={() => resolved !== undefined && setLightbox(resolved)}
+              />
+            )
+          },
           pre: ({ children }) => <>{children}</>,
           code: ({ className, children }) => {
             const language = /language-(\w+)/.exec(className ?? '')?.[1]
@@ -91,6 +99,7 @@ export function MarkdownView({
       >
         {content}
       </Markdown>
+      <Lightbox src={lightbox} onClose={() => setLightbox(undefined)} />
     </div>
   )
 }
