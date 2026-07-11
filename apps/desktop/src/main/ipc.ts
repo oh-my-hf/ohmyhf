@@ -391,6 +391,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
   )
   handle('hub:postCanCreate', () => ctx.hub.canCreatePost())
   handle('hub:postCreate', ({ content }) => cookieBacked(() => ctx.hub.createPost(content)))
+  handle('hub:profileGet', () => cookieBacked(() => ctx.hub.getProfileSettings()))
+  handle('hub:profileUpdate', (update) => cookieBacked(() => ctx.hub.updateProfileSettings(update)))
   handle('hub:paperUpvoteSet', ({ paperId, upvoted }) =>
     cookieBacked(() => ctx.hub.setPaperUpvote(paperId, upvoted))
   )
