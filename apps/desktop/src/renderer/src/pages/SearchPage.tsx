@@ -23,6 +23,7 @@ import type {
   UserSearchResult
 } from '@oh-my-huggingface/shared'
 import { cn, formatCount } from '@/lib/utils'
+import { openRepo } from '@/lib/repo-open'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,12 +47,6 @@ const VALID_TYPES: SearchPageType[] = [
   'paper',
   'collection'
 ]
-
-const REPO_PATH: Record<RepoKind, string> = {
-  model: 'models',
-  dataset: 'datasets',
-  space: 'spaces'
-}
 
 const REPO_BUCKET: Record<RepoKind, 'models' | 'datasets' | 'spaces'> = {
   model: 'models',
@@ -304,7 +299,7 @@ export function SearchPage(): React.JSX.Element {
   }
 
   const navigateToRepo = (repo: RepoSummary): void => {
-    void navigate(`/${REPO_PATH[repo.kind]}/${repo.id}`)
+    openRepo(repo.kind, repo.id, settings.repoOpenTarget, navigate, settings.hubEndpoint)
   }
 
   const renderRows = (typeToRender: Exclude<SearchPageType, 'all'>): React.JSX.Element[] => {

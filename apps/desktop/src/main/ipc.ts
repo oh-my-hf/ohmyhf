@@ -4,15 +4,22 @@
  * payload reject anything non-null. No string channels appear outside the contract.
  */
 import { app, dialog, ipcMain, shell } from 'electron'
+import { readFile, writeFile } from 'node:fs/promises'
 import type {
   AppInfo,
+  AppSettings,
   IpcEventChannel,
   IpcEventPayload,
   IpcInvokeChannel,
   IpcRequest,
   IpcResponse
 } from '@oh-my-huggingface/shared'
-import { SUPPORTED_LOCALES, ipcRequestSchemas } from '@oh-my-huggingface/shared'
+import {
+  DEFAULT_SETTINGS,
+  SUPPORTED_LOCALES,
+  ipcRequestSchemas,
+  settingsExportFileSchema
+} from '@oh-my-huggingface/shared'
 import { defaultCacheDir } from '@oh-my-huggingface/hub-api'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import type { AuthManager } from './auth'
@@ -78,6 +85,28 @@ function handle<C extends IpcInvokeChannel>(
   })
 }
 
+async function applySettingsPatch(
+  ctx: AppContext,
+  patch: Partial<AppSettings>
+): Promise<AppSettings> {
+  const prev = ctx.settings.get()
+  const next = ctx.settings.set(patch)
+  const locale = next.locale === 'system' ? matchLocale(app.getLocale()) : next.locale
+  if (SUPPORTED_LOCALES.includes(locale) && locale !== ctx.i18n.getLocale()) {
+    ctx.i18n.setLocale(locale)
+    ctx.rebuildMenu()
+  }
+  await ctx.applyNetworkSettings(
+    { hubEndpoint: next.hubEndpoint, proxyUrl: next.proxyUrl },
+    { hubEndpoint: prev.hubEndpoint, proxyUrl: prev.proxyUrl }
+  )
+  ctx.applyDesktopSettings(
+    { launchAtLogin: next.launchAtLogin, closeToTray: next.closeToTray, theme: next.theme },
+    { launchAtLogin: prev.launchAtLogin, closeToTray: prev.closeToTray, theme: prev.theme }
+  )
+  return next
+}
+
 export function registerIpcHandlers(ctx: AppContext): void {
   // --- system ---------------------------------------------------------------
   handle('system:getAppInfo', (): AppInfo => {
@@ -131,29 +160,55 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- settings ---------------------------------------------------------------
   handle('settings:get', () => ctx.settings.get())
-  handle('settings:set', async ({ patch }) => {
-    const prev = ctx.settings.get()
-    const next = ctx.settings.set(patch)
-    const locale = next.locale === 'system' ? matchLocale(app.getLocale()) : next.locale
-    if (SUPPORTED_LOCALES.includes(locale) && locale !== ctx.i18n.getLocale()) {
-      ctx.i18n.setLocale(locale)
-      ctx.rebuildMenu()
+  handle('settings:set', async ({ patch }) => applySettingsPatch(ctx, patch))
+
+  handle('settings:export', async () => {
+    const result = await dialog.showSaveDialog({
+      defaultPath: 'ohmyhf-settings.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    if (result.canceled || !result.filePath) return { canceled: true as const }
+    const payload = {
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      settings: ctx.settings.get()
     }
-    await ctx.applyNetworkSettings(
-      { hubEndpoint: next.hubEndpoint, proxyUrl: next.proxyUrl },
-      { hubEndpoint: prev.hubEndpoint, proxyUrl: prev.proxyUrl }
-    )
-    ctx.applyDesktopSettings(
-      { launchAtLogin: next.launchAtLogin, closeToTray: next.closeToTray, theme: next.theme },
-      { launchAtLogin: prev.launchAtLogin, closeToTray: prev.closeToTray, theme: prev.theme }
-    )
-    return next
+    await writeFile(result.filePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
+    return { canceled: false as const, path: result.filePath }
+  })
+
+  handle('settings:import', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    const filePath = result.filePaths[0]
+    if (result.canceled || !filePath) return { canceled: true as const }
+    let raw: unknown
+    try {
+      raw = JSON.parse(await readFile(filePath, 'utf8')) as unknown
+    } catch {
+      throw new Error('Invalid settings file')
+    }
+    const parsed = settingsExportFileSchema.safeParse(raw)
+    if (!parsed.success) throw new Error('Invalid settings file')
+    const prev = ctx.settings.get()
+    const next = await applySettingsPatch(ctx, {
+      ...DEFAULT_SETTINGS,
+      ...parsed.data.settings,
+      hfCacheDir: prev.hfCacheDir
+    })
+    return { canceled: false as const, settings: next }
   })
 
   handle('privacy:clearLocalData', async (req) => {
     const signOut = req.signOut === true
-    ctx.downloads.clearAll()
-    clearLocalAppData(ctx.db, { signOut })
+    const selective = (
+      ['favorites', 'history', 'downloads', 'follows', 'inbox', 'otherKv'] as const
+    ).some((key) => req[key] !== undefined)
+    const clearDownloads = selective ? req.downloads === true : true
+    if (clearDownloads) ctx.downloads.clearAll()
+    clearLocalAppData(ctx.db, req)
     if (signOut) {
       await ctx.auth.signOut()
     }

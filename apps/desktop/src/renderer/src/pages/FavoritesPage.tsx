@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Star, X } from 'lucide-react'
-import type { FavoriteItem, RepoKind } from '@oh-my-huggingface/shared'
+import type { FavoriteItem } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { openRepo } from '@/lib/repo-open'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,12 +12,6 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { pushUndo } from '@/components/ui/toaster'
 import { resolveLocale, useAppStore } from '@/stores/app'
-
-const KIND_PATH: Record<RepoKind, string> = {
-  model: 'models',
-  dataset: 'datasets',
-  space: 'spaces'
-}
 
 export function FavoritesPage(): React.JSX.Element {
   const { t } = useTranslation(['nav', 'common', 'browse', 'detail'])
@@ -84,7 +79,15 @@ export function FavoritesPage(): React.JSX.Element {
           >
             <button
               type="button"
-              onClick={() => navigate(`/${KIND_PATH[fav.kind]}/${fav.repoId}`)}
+              onClick={() =>
+                openRepo(
+                  fav.kind,
+                  fav.repoId,
+                  settings.repoOpenTarget,
+                  navigate,
+                  settings.hubEndpoint
+                )
+              }
               className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
             >
               <Badge variant="outline">{t(`common:kind.${fav.kind}`)}</Badge>

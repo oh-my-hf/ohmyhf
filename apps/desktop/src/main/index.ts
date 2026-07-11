@@ -92,7 +92,7 @@ if (!gotLock) {
     await applyAppProxy(initial.proxyUrl)
     app.setLoginItemSettings({ openAtLogin: initial.launchAtLogin })
 
-    const library = new Library(db)
+    const library = new Library(db, () => settings.get().historyLimit)
     const cache = new CacheManager(settings)
     const downloads = new DownloadManager(
       db,

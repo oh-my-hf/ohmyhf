@@ -58,7 +58,7 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
       tags: tags.length > 0 ? tags : undefined,
       inferenceProvider: filters.inferenceProvider,
       sort: filters.sort,
-      limit: 30
+      limit: settings.browsePageSize
     }
   }, [
     kind,
@@ -69,7 +69,8 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
     filters.tags,
     filters.language,
     filters.inferenceProvider,
-    filters.sort
+    filters.sort,
+    settings.browsePageSize
   ])
 
   const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =

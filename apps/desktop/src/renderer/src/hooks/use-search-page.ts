@@ -9,6 +9,7 @@ import type {
 } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { useDebounced } from '@/hooks/use-debounced'
+import { useAppStore } from '@/stores/app'
 
 const STALE_TIME = 60_000
 const ALL_LIMIT = 10
@@ -59,18 +60,19 @@ export function useSearchPage(query: string, type: SearchPageType): SearchPageRe
   const enabled = q !== ''
   const isRepoType = type === 'model' || type === 'dataset' || type === 'space'
   const allMode = type === 'all'
+  const browsePageSize = useAppStore((s) => s.settings.browsePageSize)
 
   // Full list for a single repo tab (paginated). Sidebar counts always use the
   // preview queries below so every type keeps a number when switching tabs.
   const repoInfinite = useInfiniteQuery({
-    queryKey: ['searchPage', 'repo', type, q],
+    queryKey: ['searchPage', 'repo', type, q, browsePageSize],
     queryFn: ({ pageParam }) =>
       invoke('hub:search', {
         query: {
           kind: type as RepoKind,
           search: q,
           sort: 'trending' as const,
-          limit: 30,
+          limit: browsePageSize,
           ...(pageParam ? { cursor: pageParam } : {})
         }
       }),

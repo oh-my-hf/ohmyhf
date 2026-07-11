@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ipcRequestSchemas } from '@oh-my-huggingface/shared'
+import { ipcRequestSchemas, settingsExportFileSchema } from '@oh-my-huggingface/shared'
 
 /**
  * The IPC request schemas are the input-validation boundary for the main
@@ -47,6 +47,46 @@ describe('ipcRequestSchemas', () => {
     expect(schema.safeParse({}).success).toBe(true)
     expect(schema.safeParse({ signOut: true }).success).toBe(true)
     expect(schema.safeParse({ signOut: 'yes' }).success).toBe(false)
+    expect(
+      schema.safeParse({ favorites: true, history: false, downloads: true }).success
+    ).toBe(true)
+  })
+
+  it('accepts personalization settings patches and rejects out-of-range fontScale', () => {
+    const schema = ipcRequestSchemas['settings:set']!
+    expect(
+      schema.safeParse({
+        patch: {
+          uiDensity: 'compact',
+          accent: 'violet',
+          fontScale: 110,
+          sidebarCollapsed: true,
+          browsePageSize: 50,
+          repoOpenTarget: 'browser',
+          historyLimit: 100
+        }
+      }).success
+    ).toBe(true)
+    expect(schema.safeParse({ patch: { fontScale: 80 } }).success).toBe(false)
+    expect(schema.safeParse({ patch: { browsePageSize: 25 } }).success).toBe(false)
+    expect(schema.safeParse({ patch: { accent: 'pink' } }).success).toBe(false)
+  })
+
+  it('accepts a version-1 settings export envelope', () => {
+    expect(
+      settingsExportFileSchema.safeParse({
+        version: 1,
+        exportedAt: '2026-07-11T00:00:00.000Z',
+        settings: { theme: 'dark', fontScale: 110 }
+      }).success
+    ).toBe(true)
+    expect(
+      settingsExportFileSchema.safeParse({
+        version: 2,
+        exportedAt: '2026-07-11T00:00:00.000Z',
+        settings: {}
+      }).success
+    ).toBe(false)
   })
 
   it('accepts hubEndpoint and proxyUrl http(s) URLs or null', () => {

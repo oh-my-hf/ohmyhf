@@ -18,7 +18,17 @@ import {
   UserCircle2,
   Wifi
 } from 'lucide-react'
-import type { AppUpdateState, DefaultHome, Locale, RepoSort } from '@oh-my-huggingface/shared'
+import type {
+  AccentPreset,
+  AppUpdateState,
+  BrowsePageSize,
+  DefaultHome,
+  HistoryLimit,
+  Locale,
+  RepoOpenTarget,
+  RepoSort,
+  UiDensity
+} from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { changeLanguage } from '@/i18n'
@@ -53,6 +63,19 @@ const SPEED_OPTIONS = [1, 5, 10, 20, 50] // MB/s
 const UI_SCALE_MIN = 80
 const UI_SCALE_MAX = 140
 const UI_SCALE_STEP = 10
+const FONT_SCALE_MIN = 90
+const FONT_SCALE_MAX = 120
+const FONT_SCALE_STEP = 5
+const ACCENT_OPTIONS: AccentPreset[] = ['default', 'blue', 'green', 'orange', 'violet']
+const ACCENT_SWATCH: Record<AccentPreset, string> = {
+  default: 'oklch(0.623 0.214 259.815)',
+  blue: 'oklch(0.623 0.214 259.815)',
+  green: 'oklch(0.723 0.192 149.579)',
+  orange: 'oklch(0.705 0.197 46)',
+  violet: 'oklch(0.606 0.25 292.717)'
+}
+const PAGE_SIZE_OPTIONS: BrowsePageSize[] = [20, 30, 50]
+const HISTORY_LIMIT_OPTIONS: HistoryLimit[] = [50, 100, 200, 500]
 
 /** IPC flattens HubApiError into a message string; sniff auth failures from it. */
 function isAuthErrorMessage(message: string): boolean {
@@ -439,6 +462,14 @@ function AppearanceSection(): React.JSX.Element {
     if (uiScale !== settings.uiScale) void updateSettings({ uiScale })
   }
 
+  const stepFontScale = (delta: number): void => {
+    const fontScale = Math.min(
+      FONT_SCALE_MAX,
+      Math.max(FONT_SCALE_MIN, settings.fontScale + delta)
+    )
+    if (fontScale !== settings.fontScale) void updateSettings({ fontScale })
+  }
+
   const homeOptions: DefaultHome[] = ['home', 'models', 'datasets', 'spaces', 'papers']
   const sortOptions: RepoSort[] = ['trending', 'downloads', 'likes', 'updated', 'created']
 
@@ -499,6 +530,77 @@ function AppearanceSection(): React.JSX.Element {
           </Button>
         </div>
       </Row>
+      <Row label={t('settings:appearance.fontScale')}>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="w-7 px-0"
+            aria-label={t('settings:appearance.fontScaleDecrease')}
+            disabled={settings.fontScale <= FONT_SCALE_MIN}
+            onClick={() => stepFontScale(-FONT_SCALE_STEP)}
+          >
+            <Minus className="size-3.5" aria-hidden />
+          </Button>
+          <span className="nums w-12 text-center text-[13px]">{settings.fontScale}%</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="w-7 px-0"
+            aria-label={t('settings:appearance.fontScaleIncrease')}
+            disabled={settings.fontScale >= FONT_SCALE_MAX}
+            onClick={() => stepFontScale(FONT_SCALE_STEP)}
+          >
+            <Plus className="size-3.5" aria-hidden />
+          </Button>
+        </div>
+      </Row>
+      <Row label={t('settings:appearance.density')}>
+        <Select
+          value={settings.uiDensity}
+          onValueChange={(v) => void updateSettings({ uiDensity: v as UiDensity })}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="comfortable">
+              {t('settings:appearance.densityOptions.comfortable')}
+            </SelectItem>
+            <SelectItem value="compact">
+              {t('settings:appearance.densityOptions.compact')}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </Row>
+      <Row label={t('settings:appearance.accent')}>
+        <div className="flex items-center gap-1.5" role="radiogroup" aria-label={t('settings:appearance.accent')}>
+          {ACCENT_OPTIONS.map((accent) => (
+            <button
+              key={accent}
+              type="button"
+              role="radio"
+              aria-checked={settings.accent === accent}
+              aria-label={t(`settings:appearance.accentOptions.${accent}`)}
+              title={t(`settings:appearance.accentOptions.${accent}`)}
+              className={cn(
+                'size-6 rounded-full border-2 transition-shadow',
+                settings.accent === accent
+                  ? 'border-ink-strong ring-2 ring-focus/40'
+                  : 'border-border hover:border-ink-muted'
+              )}
+              style={{ background: ACCENT_SWATCH[accent] }}
+              onClick={() => void updateSettings({ accent })}
+            />
+          ))}
+        </div>
+      </Row>
+      <Row label={t('settings:appearance.sidebarCollapsed')}>
+        <Switch
+          checked={settings.sidebarCollapsed}
+          onCheckedChange={(sidebarCollapsed) => void updateSettings({ sidebarCollapsed })}
+        />
+      </Row>
       <Row label={t('settings:appearance.defaultHome')}>
         <Select
           value={settings.defaultHome}
@@ -528,6 +630,56 @@ function AppearanceSection(): React.JSX.Element {
             {sortOptions.map((sort) => (
               <SelectItem key={sort} value={sort}>
                 {t(`browse:sort.${sort}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Row>
+      <Row label={t('settings:appearance.browsePageSize')}>
+        <Select
+          value={String(settings.browsePageSize)}
+          onValueChange={(v) =>
+            void updateSettings({ browsePageSize: Number(v) as BrowsePageSize })
+          }
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <SelectItem key={n} value={String(n)}>
+                {t('settings:appearance.browsePageSizeOption', { count: n })}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Row>
+      <Row label={t('settings:appearance.repoOpenTarget')}>
+        <Select
+          value={settings.repoOpenTarget}
+          onValueChange={(v) => void updateSettings({ repoOpenTarget: v as RepoOpenTarget })}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="app">{t('settings:appearance.openTarget.app')}</SelectItem>
+            <SelectItem value="browser">{t('settings:appearance.openTarget.browser')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </Row>
+      <Row label={t('settings:appearance.historyLimit')}>
+        <Select
+          value={String(settings.historyLimit)}
+          onValueChange={(v) => void updateSettings({ historyLimit: Number(v) as HistoryLimit })}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {HISTORY_LIMIT_OPTIONS.map((n) => (
+              <SelectItem key={n} value={String(n)}>
+                {t('settings:appearance.historyLimitOption', { count: n })}
               </SelectItem>
             ))}
           </SelectContent>

@@ -2,15 +2,36 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FolderOpen, HardDrive, RefreshCw, Trash2 } from 'lucide-react'
+import { Download, FolderOpen, HardDrive, RefreshCw, Trash2, Upload } from 'lucide-react'
 import { invoke } from '@/lib/ipc'
+import { changeLanguage } from '@/i18n'
 import { formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
-import { useAppStore } from '@/stores/app'
+import { resolveLocale, useAppStore } from '@/stores/app'
+
+type ClearCategory = 'favorites' | 'history' | 'downloads' | 'follows' | 'inbox' | 'otherKv'
+
+const CLEAR_CATEGORIES: ClearCategory[] = [
+  'favorites',
+  'history',
+  'downloads',
+  'follows',
+  'inbox',
+  'otherKv'
+]
+
+const DEFAULT_CLEAR: Record<ClearCategory, boolean> = {
+  favorites: true,
+  history: true,
+  downloads: true,
+  follows: true,
+  inbox: true,
+  otherKv: true
+}
 
 export function PrivacySection(): React.JSX.Element {
   const { t } = useTranslation(['settings', 'common'])
@@ -19,11 +40,14 @@ export function PrivacySection(): React.JSX.Element {
   const push = useToasts((s) => s.push)
   const appInfo = useAppStore((s) => s.appInfo)
   const settings = useAppStore((s) => s.settings)
+  const setSettings = useAppStore((s) => s.setSettings)
   const closeSettings = useAppStore((s) => s.closeSettings)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [signOutAlso, setSignOutAlso] = useState(false)
+  const [categories, setCategories] = useState(DEFAULT_CLEAR)
 
   const cachePath = settings.hfCacheDir ?? appInfo?.hfCacheDir ?? '—'
+  const anyCategory = CLEAR_CATEGORIES.some((key) => categories[key])
 
   const report = useQuery({
     queryKey: ['cache'],
@@ -32,7 +56,11 @@ export function PrivacySection(): React.JSX.Element {
   })
 
   const clearLocal = useMutation({
-    mutationFn: () => invoke('privacy:clearLocalData', { signOut: signOutAlso }),
+    mutationFn: () =>
+      invoke('privacy:clearLocalData', {
+        ...categories,
+        signOut: signOutAlso
+      }),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ['favorites'] })
       void queryClient.invalidateQueries({ queryKey: ['follows'] })
@@ -46,10 +74,31 @@ export function PrivacySection(): React.JSX.Element {
       )
       setConfirmOpen(false)
       setSignOutAlso(false)
+      setCategories(DEFAULT_CLEAR)
     },
     onError: (err) => {
       push(err.message, 'error')
     }
+  })
+
+  const exportSettings = useMutation({
+    mutationFn: () => invoke('settings:export', undefined),
+    onSuccess: (result) => {
+      if (result.canceled) return
+      push(t('settings:privacy.transfer.exportSuccess'), 'success')
+    },
+    onError: (err) => push(err.message, 'error')
+  })
+
+  const importSettings = useMutation({
+    mutationFn: () => invoke('settings:import', undefined),
+    onSuccess: (result) => {
+      if (result.canceled) return
+      setSettings(result.settings)
+      void changeLanguage(resolveLocale(result.settings, appInfo))
+      push(t('settings:privacy.transfer.importSuccess'), 'success')
+    },
+    onError: (err) => push(err.message, 'error')
   })
 
   return (
@@ -113,12 +162,44 @@ export function PrivacySection(): React.JSX.Element {
         </div>
       </div>
 
+      <div className="flex flex-col gap-3 rounded-lg border p-4">
+        <div className="text-[13px] font-medium text-ink-strong">
+          {t('settings:privacy.transfer.title')}
+        </div>
+        <p className="text-[12.5px] leading-relaxed text-ink-muted">
+          {t('settings:privacy.transfer.description')}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={exportSettings.isPending}
+            onClick={() => exportSettings.mutate()}
+          >
+            <Download className="size-3.5" aria-hidden />
+            {t('settings:privacy.transfer.export')}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={importSettings.isPending}
+            onClick={() => importSettings.mutate()}
+          >
+            <Upload className="size-3.5" aria-hidden />
+            {t('settings:privacy.transfer.import')}
+          </Button>
+        </div>
+      </div>
+
       <Dialog
         open={confirmOpen}
         onOpenChange={(open) => {
           if (!clearLocal.isPending) {
             setConfirmOpen(open)
-            if (!open) setSignOutAlso(false)
+            if (!open) {
+              setSignOutAlso(false)
+              setCategories(DEFAULT_CLEAR)
+            }
           }
         }}
       >
@@ -129,13 +210,23 @@ export function PrivacySection(): React.JSX.Element {
           <DialogDescription className="mt-2 text-[13px] text-ink-muted">
             {t('settings:privacy.local.confirmBody')}
           </DialogDescription>
-          <ul className="mt-3 list-inside list-disc text-[12.5px] text-ink-muted">
-            <li>{t('settings:privacy.local.items.favorites')}</li>
-            <li>{t('settings:privacy.local.items.history')}</li>
-            <li>{t('settings:privacy.local.items.downloads')}</li>
-            <li>{t('settings:privacy.local.items.follows')}</li>
-            <li>{t('settings:privacy.local.items.inbox')}</li>
-          </ul>
+          <div className="mt-3 flex flex-col gap-2">
+            {CLEAR_CATEGORIES.map((key) => (
+              <label
+                key={key}
+                className="flex items-center justify-between gap-3 text-[13px] text-ink"
+              >
+                <span>{t(`settings:privacy.local.items.${key}`)}</span>
+                <Switch
+                  checked={categories[key]}
+                  onCheckedChange={(checked) =>
+                    setCategories((prev) => ({ ...prev, [key]: checked }))
+                  }
+                  disabled={clearLocal.isPending}
+                />
+              </label>
+            ))}
+          </div>
           <label className="mt-4 flex items-center justify-between gap-3 text-[13px] text-ink">
             <span>{t('settings:privacy.local.signOutAlso')}</span>
             <Switch
@@ -157,6 +248,7 @@ export function PrivacySection(): React.JSX.Element {
               variant="danger"
               size="sm"
               loading={clearLocal.isPending}
+              disabled={!anyCategory && !signOutAlso}
               onClick={() => clearLocal.mutate()}
             >
               {t('settings:privacy.local.confirm')}

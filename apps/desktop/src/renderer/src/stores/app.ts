@@ -3,6 +3,7 @@ import type { AppInfo, AppSettings, AuthState, RepoKind, RepoSort } from '@oh-my
 import { DEFAULT_SETTINGS } from '@oh-my-huggingface/shared'
 import type { SpaceHardware } from '@/lib/catalog'
 import type { ParamBucket } from '@/lib/utils'
+import { applyAppearance } from '@/lib/appearance'
 import { invoke } from '@/lib/ipc'
 import { setTheme } from '@/lib/theme'
 
@@ -82,6 +83,18 @@ interface AppState {
 
 const SIDEBAR_COLLAPSED_KEY = 'omh:sidebarCollapsed'
 
+/** One-time migrate legacy localStorage sidebar flag into AppSettings. */
+function migrateSidebarCollapsed(settings: AppSettings): AppSettings {
+  if (typeof localStorage === 'undefined') return settings
+  const legacy = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
+  if (legacy === null) return settings
+  localStorage.removeItem(SIDEBAR_COLLAPSED_KEY)
+  if (legacy === '1' && !settings.sidebarCollapsed) {
+    return { ...settings, sidebarCollapsed: true }
+  }
+  return settings
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   settings: DEFAULT_SETTINGS,
   appInfo: null,
@@ -91,26 +104,32 @@ export const useAppStore = create<AppState>((set, get) => ({
   filterPanelOpen: false,
   settingsOpen: false,
   settingsSection: 'account',
-  sidebarCollapsed: localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1',
+  sidebarCollapsed: DEFAULT_SETTINGS.sidebarCollapsed,
   shortcutsOpen: false,
 
   setSettings: (settings) => {
-    setTheme(settings.theme)
+    const next = migrateSidebarCollapsed(settings)
+    setTheme(next.theme)
+    applyAppearance(next)
     // CSS zoom scales the whole UI; 100 = default (settings:set clamps to 80–140).
-    document.body.style.zoom = String(settings.uiScale / 100)
+    document.body.style.zoom = String(next.uiScale / 100)
     set((state) => {
-      const sortChanged = state.settings.defaultRepoSort !== settings.defaultRepoSort
+      const sortChanged = state.settings.defaultRepoSort !== next.defaultRepoSort
       return {
-        settings,
+        settings: next,
+        sidebarCollapsed: next.sidebarCollapsed,
         filters: sortChanged
           ? {
-              model: { ...state.filters.model, sort: settings.defaultRepoSort },
-              dataset: { ...state.filters.dataset, sort: settings.defaultRepoSort },
-              space: { ...state.filters.space, sort: settings.defaultRepoSort }
+              model: { ...state.filters.model, sort: next.defaultRepoSort },
+              dataset: { ...state.filters.dataset, sort: next.defaultRepoSort },
+              space: { ...state.filters.space, sort: next.defaultRepoSort }
             }
           : state.filters
       }
     })
+    if (next.sidebarCollapsed !== settings.sidebarCollapsed) {
+      void invoke('settings:set', { patch: { sidebarCollapsed: next.sidebarCollapsed } })
+    }
   },
   updateSettings: async (patch) => {
     const settings = await invoke('settings:set', { patch })
@@ -137,12 +156,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       settingsSection: section ?? state.settingsSection
     })),
   closeSettings: () => set({ settingsOpen: false }),
-  toggleSidebar: () =>
-    set((state) => {
-      const sidebarCollapsed = !state.sidebarCollapsed
-      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? '1' : '0')
-      return { sidebarCollapsed }
-    }),
+  toggleSidebar: () => {
+    const sidebarCollapsed = !get().sidebarCollapsed
+    set({ sidebarCollapsed })
+    void get().updateSettings({ sidebarCollapsed })
+  },
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen })
 }))
 

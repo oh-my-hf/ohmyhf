@@ -75,10 +75,30 @@ export interface IpcInvokeContract {
   'settings:get': { req: void; res: AppSettings }
   'settings:set': { req: { patch: Partial<AppSettings> }; res: AppSettings }
 
-  /** Wipe app SQLite library tables; optional Hub sign-out. Never deletes HF cache files. */
+  /** Wipe selected app SQLite library tables; optional Hub sign-out. Never deletes HF cache files. */
   'privacy:clearLocalData': {
-    req: { signOut?: boolean }
+    req: {
+      favorites?: boolean
+      history?: boolean
+      downloads?: boolean
+      follows?: boolean
+      inbox?: boolean
+      otherKv?: boolean
+      signOut?: boolean
+    }
     res: { cleared: true; signedOut: boolean }
+  }
+
+  /** Save current AppSettings to a JSON file via native save dialog. */
+  'settings:export': {
+    req: void
+    res: { canceled: true } | { canceled: false; path: string }
+  }
+
+  /** Load AppSettings from a JSON file; preserves local hfCacheDir. */
+  'settings:import': {
+    req: void
+    res: { canceled: true } | { canceled: false; settings: AppSettings }
   }
 
   /** Lightweight Hub reachability check using the current endpoint/proxy. */
@@ -391,6 +411,8 @@ export const IPC_INVOKE_CHANNELS = [
   'updater:install',
   'settings:get',
   'settings:set',
+  'settings:export',
+  'settings:import',
   'privacy:clearLocalData',
   'network:testConnection',
   'hub:search',

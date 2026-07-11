@@ -31,6 +31,7 @@ import type { RepoKind, RepoSort, RepoSummary } from '@oh-my-huggingface/shared'
 import { LIBRARIES, LICENSES, PARAM_BUCKETS, TASKS } from '@/lib/catalog'
 import type { ParamBucket } from '@/lib/utils'
 import { formatCount } from '@/lib/utils'
+import { openRepo } from '@/lib/repo-open'
 import { Kbd } from '@/components/ui/kbd'
 import { useGlobalSearch } from '@/hooks/use-global-search'
 import { resolveLocale, useAppStore } from '@/stores/app'
@@ -259,7 +260,15 @@ export function CommandPalette(): React.JSX.Element {
                             repo={repo}
                             locale={locale}
                             onSelect={() =>
-                              closeAnd(() => navigate(`${KIND_PATH[repo.kind]}/${repo.id}`))
+                              closeAnd(() =>
+                                openRepo(
+                                  repo.kind,
+                                  repo.id,
+                                  settings.repoOpenTarget,
+                                  navigate,
+                                  settings.hubEndpoint
+                                )
+                              )
                             }
                           />
                         ))}

@@ -54,4 +54,20 @@ describe('clearLocalAppData', () => {
     expect(statements).toContain('DELETE FROM auth WHERE id = 1')
     expect(authDeleted()).toBe(true)
   })
+
+  it('clears only selected categories when flags are provided', () => {
+    const { db, statements, authDeleted } = createRecordingDb()
+    const result = clearLocalAppData(db, {
+      favorites: true,
+      history: false,
+      downloads: false,
+      follows: false,
+      inbox: false,
+      otherKv: false,
+      signOut: false
+    })
+    expect(result).toEqual({ signedOut: false })
+    expect(statements).toEqual(['DELETE FROM favorites'])
+    expect(authDeleted()).toBe(false)
+  })
 })

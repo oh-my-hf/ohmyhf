@@ -5,16 +5,20 @@ import type {
   Follow,
   FollowTargetType,
   HistoryItem,
+  HistoryLimit,
   InboxItem,
   RepoKind,
   RepoSummary
 } from '@oh-my-huggingface/shared'
 import type { AppDatabase } from './db'
 
-const HISTORY_LIMIT = 200
+const DEFAULT_HISTORY_LIMIT: HistoryLimit = 200
 
 export class Library {
-  constructor(private readonly db: AppDatabase) {}
+  constructor(
+    private readonly db: AppDatabase,
+    private readonly getHistoryLimit: () => number = () => DEFAULT_HISTORY_LIMIT
+  ) {}
 
   listFavorites(): FavoriteItem[] {
     const rows = this.db
@@ -44,9 +48,10 @@ export class Library {
   }
 
   listHistory(): HistoryItem[] {
+    const limit = this.getHistoryLimit()
     const rows = this.db
       .prepare('SELECT * FROM history ORDER BY viewed_at DESC LIMIT ?')
-      .all(HISTORY_LIMIT) as Array<{
+      .all(limit) as Array<{
       repo_id: string
       kind: string
       viewed_at: string
@@ -68,6 +73,17 @@ export class Library {
            viewed_at = excluded.viewed_at, summary_json = excluded.summary_json`
       )
       .run(summary.id, summary.kind, new Date().toISOString(), JSON.stringify(summary))
+    this.pruneHistory(this.getHistoryLimit())
+  }
+
+  private pruneHistory(limit: number): void {
+    this.db
+      .prepare(
+        `DELETE FROM history WHERE rowid NOT IN (
+           SELECT rowid FROM history ORDER BY viewed_at DESC LIMIT ?
+         )`
+      )
+      .run(limit)
   }
 
   clearHistory(): void {

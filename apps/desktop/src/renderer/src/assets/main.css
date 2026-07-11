@@ -386,9 +386,43 @@ body,
   height: 100%;
 }
 
+:root {
+  --font-scale: 1;
+}
+
 body {
-  @apply bg-bg font-sans text-[14px] text-ink antialiased;
+  @apply bg-bg font-sans text-ink antialiased;
+  font-size: calc(14px * var(--font-scale));
   overflow: hidden;
+}
+
+/* Compact density: tighter rows, gaps, and padding without changing font size. */
+html[data-density='compact'] .h-8 {
+  height: 1.75rem;
+}
+html[data-density='compact'] .h-9 {
+  height: 1.875rem;
+}
+html[data-density='compact'] .gap-4 {
+  gap: 0.75rem;
+}
+html[data-density='compact'] .gap-3 {
+  gap: 0.5rem;
+}
+html[data-density='compact'] .gap-2\.5 {
+  gap: 0.375rem;
+}
+html[data-density='compact'] .p-4 {
+  padding: 0.75rem;
+}
+html[data-density='compact'] .p-3 {
+  padding: 0.5rem;
+}
+html[data-density='compact'] .py-2 {
+  padding-block: 0.25rem;
+}
+html[data-density='compact'] .px-3 {
+  padding-inline: 0.5rem;
 }
 
 /* Keyboard-first: one consistent, visible focus treatment everywhere.

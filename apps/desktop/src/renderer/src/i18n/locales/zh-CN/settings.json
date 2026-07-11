@@ -78,8 +78,28 @@
     "title": "账户"
   },
   "appearance": {
+    "accent": "强调色",
+    "accentOptions": {
+      "blue": "蓝色",
+      "default": "默认",
+      "green": "绿色",
+      "orange": "橙色",
+      "violet": "紫色"
+    },
+    "browsePageSize": "浏览每页条数",
+    "browsePageSizeOption": "每页 {{count}} 条",
     "defaultHome": "默认首页",
     "defaultSort": "默认排序",
+    "density": "界面密度",
+    "densityOptions": {
+      "comfortable": "舒适",
+      "compact": "紧凑"
+    },
+    "fontScale": "文字大小",
+    "fontScaleDecrease": "缩小文字",
+    "fontScaleIncrease": "放大文字",
+    "historyLimit": "历史记录上限",
+    "historyLimitOption": "{{count}} 条",
     "homeOptions": {
       "datasets": "数据集",
       "home": "首页动态",
@@ -88,6 +108,12 @@
       "spaces": "Spaces"
     },
     "language": "语言",
+    "openTarget": {
+      "app": "应用内",
+      "browser": "系统浏览器"
+    },
+    "repoOpenTarget": "打开收藏与历史",
+    "sidebarCollapsed": "默认折叠侧栏",
     "title": "外观",
     "uiScale": "界面缩放",
     "uiScaleDecrease": "缩小界面",
@@ -155,22 +181,31 @@
     "local": {
       "clear": "清除本地数据…",
       "confirm": "清除数据",
-      "confirmBody": "将移除：",
+      "confirmBody": "选择要在本机清除的内容：",
       "confirmTitle": "清除本地数据？",
-      "description": "清除本机收藏、浏览历史、下载任务记录、关注与收件箱。不会删除 HF 缓存目录中的模型或数据集文件。",
+      "description": "可清除本机收藏、浏览历史、下载任务记录、关注与收件箱。不会删除 HF 缓存目录中的模型或数据集文件。",
       "items": {
         "downloads": "下载任务记录",
         "favorites": "收藏",
         "follows": "关注账号",
         "history": "浏览历史",
-        "inbox": "本地收件箱"
+        "inbox": "本地收件箱",
+        "otherKv": "其他本地应用数据"
       },
       "signOutAlso": "同时退出 Hub 登录",
       "success": "本地数据已清除。",
       "successSignedOut": "本地数据已清除，并已退出登录。",
       "title": "应用本地数据"
     },
-    "title": "隐私与数据"
+    "title": "隐私与数据",
+    "transfer": {
+      "description": "以 JSON 导出或导入外观与偏好设置。不包含账号令牌或收藏/历史等库数据。导入时保留本机缓存目录。",
+      "export": "导出设置…",
+      "exportSuccess": "设置已导出。",
+      "import": "导入设置…",
+      "importSuccess": "设置已导入。",
+      "title": "设置迁移"
+    }
   },
   "title": "设置"
 }

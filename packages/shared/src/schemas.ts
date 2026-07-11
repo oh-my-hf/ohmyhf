@@ -77,9 +77,28 @@ const settingsPatch = z
     launchAtLogin: z.boolean(),
     closeToTray: z.boolean(),
     defaultHome: z.enum(['home', 'models', 'datasets', 'spaces', 'papers']),
-    defaultRepoSort: z.enum(['trending', 'downloads', 'likes', 'updated', 'created'])
+    defaultRepoSort: z.enum(['trending', 'downloads', 'likes', 'updated', 'created']),
+    uiDensity: z.enum(['comfortable', 'compact']),
+    accent: z.enum(['default', 'blue', 'green', 'orange', 'violet']),
+    fontScale: z.number().int().min(90).max(120),
+    sidebarCollapsed: z.boolean(),
+    browsePageSize: z.union([z.literal(20), z.literal(30), z.literal(50)]),
+    repoOpenTarget: z.enum(['app', 'browser']),
+    historyLimit: z.union([
+      z.literal(50),
+      z.literal(100),
+      z.literal(200),
+      z.literal(500)
+    ])
   })
   .partial()
+
+/** On-disk settings export envelope (import/export). */
+export const settingsExportFileSchema = z.object({
+  version: z.literal(1),
+  exportedAt: z.string().min(1),
+  settings: settingsPatch
+})
 
 const absolutePath = z.string().min(1).max(4096)
 
@@ -125,7 +144,15 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'system:openExternal': z.object({ url: z.url({ protocol: /^https$/ }) }),
   'system:showItemInFolder': z.object({ path: absolutePath }),
   'settings:set': z.object({ patch: settingsPatch }),
-  'privacy:clearLocalData': z.object({ signOut: z.boolean().optional() }),
+  'privacy:clearLocalData': z.object({
+    favorites: z.boolean().optional(),
+    history: z.boolean().optional(),
+    downloads: z.boolean().optional(),
+    follows: z.boolean().optional(),
+    inbox: z.boolean().optional(),
+    otherKv: z.boolean().optional(),
+    signOut: z.boolean().optional()
+  }),
   // No hf_ prefix check: fine-grained/org tokens and mirror deployments vary.
   'auth:signInWithToken': z.object({ token: z.string().trim().min(1).max(512) }),
   'hub:search': z.object({ query: searchQuery }),

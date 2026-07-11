@@ -416,6 +416,16 @@ export type ThemeSetting = 'system' | 'light' | 'dark'
 
 export type DefaultHome = 'home' | 'models' | 'datasets' | 'spaces' | 'papers'
 
+export type UiDensity = 'comfortable' | 'compact'
+
+export type AccentPreset = 'default' | 'blue' | 'green' | 'orange' | 'violet'
+
+export type BrowsePageSize = 20 | 30 | 50
+
+export type RepoOpenTarget = 'app' | 'browser'
+
+export type HistoryLimit = 50 | 100 | 200 | 500
+
 export interface AppSettings {
   locale: 'system' | Locale
   theme: ThemeSetting
@@ -440,6 +450,20 @@ export interface AppSettings {
   defaultHome: DefaultHome
   /** Default browse sort for models/datasets/spaces. */
   defaultRepoSort: RepoSort
+  /** List/sidebar spacing density. */
+  uiDensity: UiDensity
+  /** Focus/selection accent preset (does not change CTA or brand yellow). */
+  accent: AccentPreset
+  /** Root font-size percentage (100 = default); independent of uiScale zoom. */
+  fontScale: number
+  /** Manual sidebar collapse persisted in settings. */
+  sidebarCollapsed: boolean
+  /** Page size for main browse / search lists. */
+  browsePageSize: BrowsePageSize
+  /** Where favorites/history/global-search open repos. */
+  repoOpenTarget: RepoOpenTarget
+  /** Max local history rows retained. */
+  historyLimit: HistoryLimit
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -456,7 +480,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   launchAtLogin: false,
   closeToTray: false,
   defaultHome: 'home',
-  defaultRepoSort: 'trending'
+  defaultRepoSort: 'trending',
+  uiDensity: 'comfortable',
+  accent: 'default',
+  fontScale: 100,
+  sidebarCollapsed: false,
+  browsePageSize: 30,
+  repoOpenTarget: 'app',
+  historyLimit: 200
 }
 
 /** Subset of process.platform values the app runs on (kept Node-types-free for the renderer). */

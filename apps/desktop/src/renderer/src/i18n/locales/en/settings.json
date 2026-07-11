@@ -78,8 +78,28 @@
     "title": "Account"
   },
   "appearance": {
+    "accent": "Accent color",
+    "accentOptions": {
+      "blue": "Blue",
+      "default": "Default",
+      "green": "Green",
+      "orange": "Orange",
+      "violet": "Violet"
+    },
+    "browsePageSize": "Browse page size",
+    "browsePageSizeOption": "{{count}} per page",
     "defaultHome": "Default home",
     "defaultSort": "Default sort",
+    "density": "Density",
+    "densityOptions": {
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
+    "fontScale": "Text size",
+    "fontScaleDecrease": "Decrease text size",
+    "fontScaleIncrease": "Increase text size",
+    "historyLimit": "History limit",
+    "historyLimitOption": "{{count}} items",
     "homeOptions": {
       "datasets": "Datasets",
       "home": "Home feed",
@@ -88,6 +108,12 @@
       "spaces": "Spaces"
     },
     "language": "Language",
+    "openTarget": {
+      "app": "In app",
+      "browser": "System browser"
+    },
+    "repoOpenTarget": "Open favorites & history",
+    "sidebarCollapsed": "Collapse sidebar by default",
     "title": "Appearance",
     "uiScale": "Interface scale",
     "uiScaleDecrease": "Decrease interface scale",
@@ -156,22 +182,31 @@
     "local": {
       "clear": "Clear local data…",
       "confirm": "Clear data",
-      "confirmBody": "This removes:",
+      "confirmBody": "Choose what to remove on this device:",
       "confirmTitle": "Clear local data?",
-      "description": "Clears favorites, history, download records, follows, and inbox on this device. Does not delete model or dataset files in the HF cache.",
+      "description": "Clears selected favorites, history, download records, follows, and inbox on this device. Does not delete model or dataset files in the HF cache.",
       "items": {
         "downloads": "Download task records",
         "favorites": "Favorites",
         "follows": "Followed accounts",
         "history": "Browse history",
-        "inbox": "Local inbox"
+        "inbox": "Local inbox",
+        "otherKv": "Other local app data"
       },
       "signOutAlso": "Also sign out of Hub",
       "success": "Local data cleared.",
       "successSignedOut": "Local data cleared. You have been signed out.",
       "title": "App local data"
     },
-    "title": "Privacy & data"
+    "title": "Privacy & data",
+    "transfer": {
+      "description": "Export or import appearance and preference settings as JSON. Does not include account tokens or library data. Cache directory on this machine is kept when importing.",
+      "export": "Export settings…",
+      "exportSuccess": "Settings exported.",
+      "import": "Import settings…",
+      "importSuccess": "Settings imported.",
+      "title": "Settings transfer"
+    }
   },
   "title": "Settings"
 }
