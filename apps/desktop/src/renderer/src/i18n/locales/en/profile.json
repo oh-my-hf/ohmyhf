@@ -1,4 +1,5 @@
 {
+  "editProfile": "Edit profile",
   "empty": {
     "dataset": "No public datasets yet",
     "model": "No public models yet",
@@ -28,6 +29,7 @@
     },
     "signInToComment": "Sign in to comment."
   },
+  "selfBadge": "Your profile",
   "stats": {
     "datasets": "Datasets",
     "followers": "Followers",

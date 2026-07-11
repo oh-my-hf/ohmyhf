@@ -6,11 +6,13 @@ import {
   ArrowDownToLine,
   Boxes,
   Building2,
+  CircleUserRound,
   Database,
   Eye,
   ExternalLink,
   Heart,
   LayoutGrid,
+  SquarePen,
   UserX
 } from 'lucide-react'
 import type {
@@ -221,6 +223,12 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
 
   const data = overview.data
   const isOrg = data?.isOrg === true
+  const selfName = auth.status === 'signedIn' ? auth.user.name : undefined
+  // The signed-in user's own profile: no Follow/Watch, show the owner affordances.
+  const isSelf =
+    data !== undefined &&
+    selfName !== undefined &&
+    data.name.toLowerCase() === selfName.toLowerCase()
   // Hub social follow — same flag the website Follow button uses.
   const followingOnHub = data?.isFollowing === true
   const watchingOnHub =
@@ -380,6 +388,12 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                   <span className="truncate font-mono text-[12.5px] text-ink-faint">
                     @{data.name}
                   </span>
+                  {isSelf && (
+                    <Badge variant="select" className="gap-1 font-medium">
+                      <CircleUserRound className="size-3" aria-hidden />
+                      {t('profile:selfBadge')}
+                    </Badge>
+                  )}
                   {isOrg && (
                     <Badge variant="outline" className="gap-1 font-medium">
                       <Building2 className="size-3" aria-hidden />
@@ -457,7 +471,18 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                   </TooltipTrigger>
                   <TooltipContent>{t('common:openOnHub')}</TooltipContent>
                 </Tooltip>
-                {signedIn && (
+                {isSelf && (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    className="gap-1.5"
+                    onClick={() => openExternal('https://huggingface.co/settings/profile')}
+                  >
+                    <SquarePen className="size-3.5" aria-hidden />
+                    {t('profile:editProfile')}
+                  </Button>
+                )}
+                {signedIn && !isSelf && (
                   <>
                     <Button
                       variant={watchingOnHub ? 'secondary' : 'outline'}

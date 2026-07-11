@@ -1,4 +1,5 @@
 {
+  "editProfile": "编辑资料",
   "empty": {
     "dataset": "还没有公开的数据集",
     "model": "还没有公开的模型",
@@ -28,6 +29,7 @@
     },
     "signInToComment": "登录后可评论。"
   },
+  "selfBadge": "我的主页",
   "stats": {
     "datasets": "数据集",
     "followers": "关注者",
