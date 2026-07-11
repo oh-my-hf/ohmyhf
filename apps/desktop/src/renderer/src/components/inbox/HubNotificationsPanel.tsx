@@ -204,7 +204,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
               key={item.discussionId ?? `${item.kind}-${index}`}
               type="button"
               onClick={() => openItem(item)}
-              className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-panel"
+              className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
             >
               <span
                 className={cn(
@@ -247,6 +247,8 @@ export function HubNotificationsPanel(): React.JSX.Element {
                         key={participant.user}
                         src={participant.avatar}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="size-4 rounded-full border bg-panel"
                       />
                     ) : null

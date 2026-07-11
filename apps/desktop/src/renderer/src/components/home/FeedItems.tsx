@@ -130,7 +130,7 @@ export function PostCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="size-6"
               aria-label={t('common:openOnHub')}
               onClick={(e) => {
                 e.stopPropagation()

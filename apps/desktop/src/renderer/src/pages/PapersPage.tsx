@@ -160,6 +160,8 @@ export function PapersPage(): React.JSX.Element {
               <img
                 src={selected.thumbnail}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="max-h-64 w-full rounded-lg border object-cover"
               />
             )}

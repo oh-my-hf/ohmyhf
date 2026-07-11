@@ -1,27 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Heart } from 'lucide-react'
 import type { RepoSummary } from '@oh-my-huggingface/shared'
+import { hubThemeColor } from '@/lib/theme-colors'
 import { cn, formatCount } from '@/lib/utils'
-
-/**
- * Hub space-card color names → OKLCH. The pair (colorFrom, colorTo) forms the
- * card gradient, matching how huggingface.co renders Space thumbnails.
- */
-const SPACE_COLORS: Record<string, string> = {
-  red: 'oklch(0.62 0.2 25)',
-  yellow: 'oklch(0.76 0.15 85)',
-  green: 'oklch(0.64 0.16 150)',
-  blue: 'oklch(0.56 0.17 255)',
-  indigo: 'oklch(0.51 0.19 275)',
-  purple: 'oklch(0.54 0.2 300)',
-  pink: 'oklch(0.63 0.19 350)',
-  gray: 'oklch(0.5 0.02 260)'
-}
-const FALLBACK_COLOR = 'oklch(0.5 0.02 260)'
-
-function colorOf(name: string | undefined): string {
-  return (name && SPACE_COLORS[name.toLowerCase()]) || FALLBACK_COLOR
-}
 
 export interface SpaceCardProps {
   repo: RepoSummary
@@ -44,7 +25,7 @@ export function SpaceCard({ repo, selected, onSelect, locale }: SpaceCardProps):
         selected && 'ring-2 ring-select'
       )}
       style={{
-        background: `linear-gradient(135deg, ${colorOf(repo.colorFrom)}, ${colorOf(repo.colorTo)})`
+        background: `linear-gradient(135deg, ${hubThemeColor(repo.colorFrom)}, ${hubThemeColor(repo.colorTo)})`
       }}
     >
       {/* Bottom scrim keeps the white text readable on light gradients. */}
@@ -73,8 +54,8 @@ export function SpaceCard({ repo, selected, onSelect, locale }: SpaceCardProps):
             {t('common:running')}
           </span>
         ) : repo.runtimeStage ? (
-          <span className="flex shrink-0 items-center gap-1 text-[10.5px] text-white/60">
-            <span className="size-1.5 rounded-full bg-white/40" aria-hidden />
+          <span className="flex shrink-0 items-center gap-1 text-[10.5px] text-white/90">
+            <span className="size-1.5 rounded-full bg-white/50" aria-hidden />
             {repo.runtimeStage.toLowerCase().replace(/_/g, ' ')}
           </span>
         ) : null}

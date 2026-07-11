@@ -183,7 +183,7 @@ function SafetensorsPreview({
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b px-4 py-3">
         <div>
-          <div className="text-[10.5px] font-medium tracking-wide text-ink-faint uppercase">
+          <div className="text-[11px] font-medium text-ink-faint">
             {t('preview.totalParams')}
           </div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
@@ -191,7 +191,7 @@ function SafetensorsPreview({
           </div>
         </div>
         <div>
-          <div className="text-[10.5px] font-medium tracking-wide text-ink-faint uppercase">
+          <div className="text-[11px] font-medium text-ink-faint">
             {t('preview.tensors')}
           </div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">

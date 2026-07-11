@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FolderKanban, Lock, Plus, ThumbsUp } from 'lucide-react'
 import { invoke } from '@/lib/ipc'
+import { hubThemeColor } from '@/lib/theme-colors'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,22 +24,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToasts } from '@/components/ui/toaster'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
-
-/** Hub collection theme names → OKLCH accents (mirrors SpaceCard's color map). */
-const THEME_COLORS: Record<string, string> = {
-  orange: 'oklch(0.7 0.17 55)',
-  blue: 'oklch(0.56 0.17 255)',
-  green: 'oklch(0.64 0.16 150)',
-  purple: 'oklch(0.54 0.2 300)',
-  red: 'oklch(0.62 0.2 25)',
-  indigo: 'oklch(0.51 0.19 275)',
-  pink: 'oklch(0.63 0.19 350)'
-}
-const FALLBACK_THEME_COLOR = 'oklch(0.5 0.02 260)'
-
-function themeColorOf(theme: string | undefined): string {
-  return (theme && THEME_COLORS[theme.toLowerCase()]) || FALLBACK_THEME_COLOR
-}
 
 /** My collections: card grid + create dialog (/collections). */
 export function CollectionsPage(): React.JSX.Element {
@@ -170,13 +155,13 @@ export function CollectionsPage(): React.JSX.Element {
               key={col.slug}
               type="button"
               onClick={() => navigate(`/collections/${col.slug}`)}
-              className="flex flex-col gap-1.5 rounded-lg border border-border-card bg-card-gradient p-4 text-left transition-colors duration-150 hover:border-border"
+              className="flex flex-col gap-1.5 rounded-lg border border-border-card bg-card-gradient p-4 text-left transition-colors duration-150 outline-none hover:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
             >
               <span className="flex w-full min-w-0 items-center gap-2">
                 {/* Theme dot, matching the Hub's collection theme color. */}
                 <span
                   className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: themeColorOf(col.theme) }}
+                  style={{ backgroundColor: hubThemeColor(col.theme) }}
                   aria-hidden
                 />
                 <span className="min-w-0 truncate text-smd font-semibold text-ink-strong">

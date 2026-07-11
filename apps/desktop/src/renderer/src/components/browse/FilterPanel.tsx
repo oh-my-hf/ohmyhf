@@ -68,9 +68,9 @@ function Section({
 }): React.JSX.Element {
   return (
     <section>
-      <h3 className="mb-1.5 text-[11px] font-semibold tracking-wider text-ink-faint uppercase">
+      <h3 className="mb-1.5 text-[12px] font-semibold text-ink-faint">
         {title}
-        {hint && <span className="ml-1.5 font-normal normal-case tracking-normal">{hint}</span>}
+        {hint && <span className="ml-1.5 font-normal text-ink-faint/80">{hint}</span>}
       </h3>
       <div className="flex flex-wrap gap-1">{children}</div>
     </section>

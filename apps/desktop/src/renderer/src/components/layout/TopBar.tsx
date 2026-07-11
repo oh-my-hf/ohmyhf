@@ -29,7 +29,7 @@ function BarButton({
           aria-label={label}
           disabled={disabled}
           onClick={onClick}
-          className="app-no-drag flex size-7 items-center justify-center rounded-lg text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+          className="app-no-drag flex size-8 items-center justify-center rounded-lg text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
         >
           {children}
         </button>
@@ -106,7 +106,7 @@ export function TopBar(): React.JSX.Element {
       <button
         type="button"
         onClick={() => setPaletteOpen(true)}
-        className="app-no-drag mx-auto flex h-7 w-80 max-w-[40vw] items-center gap-2 rounded-full border bg-field px-3 text-[12.5px] text-ink-faint shadow-field-inset transition-colors duration-150 hover:border-decor hover:text-ink-muted"
+        className="app-no-drag mx-auto flex h-8 w-80 max-w-[40vw] items-center gap-2 rounded-full border bg-field px-3 text-[12.5px] text-ink-faint shadow-field-inset transition-colors duration-150 hover:border-decor hover:text-ink-muted"
       >
         <Search className="size-3.5 shrink-0" aria-hidden />
         <span className="min-w-0 flex-1 truncate text-left">{t('nav:globalSearch')}</span>
@@ -120,10 +120,16 @@ export function TopBar(): React.JSX.Element {
         type="button"
         aria-label={t('nav:account')}
         onClick={() => openSettings('account')}
-        className="app-no-drag flex size-7 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
+        className="app-no-drag flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
       >
         {auth.status === 'signedIn' && auth.user.avatarUrl ? (
-          <img src={auth.user.avatarUrl} alt="" className="size-5 rounded-full border" />
+          <img
+            src={auth.user.avatarUrl}
+            alt=""
+            loading="eager"
+            decoding="async"
+            className="size-5 rounded-full border"
+          />
         ) : (
           <UserCircle2 className="size-[18px]" aria-hidden />
         )}

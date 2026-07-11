@@ -428,7 +428,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                 </div>
                 {!isOrg && data.orgs.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1.5">
-                    <span className="text-[11px] font-medium tracking-wide text-ink-faint uppercase">
+                    <span className="text-[12px] font-medium text-ink-faint">
                       {t('profile:orgsLabel')}
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -444,7 +444,7 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                 )}
                 {isOrg && memberAccounts.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1.5">
-                    <span className="text-[11px] font-medium tracking-wide text-ink-faint uppercase">
+                    <span className="text-[12px] font-medium text-ink-faint">
                       {t('profile:members')}
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5">

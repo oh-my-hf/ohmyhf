@@ -26,10 +26,10 @@ export function Progress({
     >
       <div
         className={cn(
-          'h-full rounded-full bg-select transition-[width] duration-300 ease-out',
+          'h-full w-full origin-left rounded-full bg-select transition-transform duration-300 ease-out',
           indeterminate && 'animate-pulse'
         )}
-        style={{ width: indeterminate ? '100%' : `${pct}%` }}
+        style={{ transform: indeterminate ? 'scaleX(1)' : `scaleX(${pct / 100})` }}
       />
     </div>
   )

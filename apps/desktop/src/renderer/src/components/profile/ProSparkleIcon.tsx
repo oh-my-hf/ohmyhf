@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 /**
  * Hub `IconProSparkle` — rainbow four-point star used on Pro avatars.
- * Stroke color comes from `currentColor` (callers set `text-white dark:text-gray-950`).
+ * Stroke color comes from `currentColor` (callers set `text-pro-face`).
  */
 export function ProSparkleIcon({ className }: { className?: string }): React.JSX.Element {
   const gradientId = useId().replace(/:/g, '')

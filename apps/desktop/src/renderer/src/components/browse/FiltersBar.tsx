@@ -153,7 +153,7 @@ export function FiltersBar({ kind }: { kind: RepoKind }): React.JSX.Element {
               <button
                 type="button"
                 aria-label={t('filter.clear')}
-                className="rounded-full p-0.5 text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
+                className="flex size-6 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
                 onClick={chip.onRemove}
               >
                 <X className="size-3" aria-hidden />

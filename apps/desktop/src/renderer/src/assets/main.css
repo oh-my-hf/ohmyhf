@@ -72,6 +72,23 @@
   --c-brand: oklch(0.877 0.175 92.5); /* #FFD21E */
   --c-brand-ink: oklch(0.21 0.034 264.665);
   --c-brand-orange: oklch(0.779 0.173 66.5); /* #FF9D00 */
+  /* Hub Pro / plan ornaments (avatar ring, PlanBadge) — light recipe */
+  --c-pro-from: oklch(0.78 0.12 350); /* pink-300 — profile ring */
+  --c-pro-via: oklch(0.84 0.17 150); /* green-400 */
+  --c-pro-to: oklch(0.9 0.14 95); /* yellow-300 */
+  --c-pro-compact-from: oklch(0.65 0.22 350); /* pink-500 — list avatars */
+  --c-pro-compact-via: oklch(0.72 0.19 150);
+  --c-pro-compact-to: oklch(0.85 0.16 95);
+  --c-pro-shell-from: oklch(0.82 0.08 350); /* pink-300 soft — PlanBadge PRO */
+  --c-pro-shell-via: oklch(0.9 0.08 150); /* green-200 */
+  --c-pro-shell-to: oklch(0.93 0.1 95); /* yellow-200 */
+  --c-pro-plus: oklch(0.84 0.17 150); /* solid + mark (no gradient text) */
+  --c-pro-face: oklch(1 0 0); /* avatar face border / sparkle on ring */
+  --c-pro-ink: oklch(0.21 0.034 264.665); /* PRO badge text */
+  --c-plan-from: oklch(0.28 0.03 260); /* org plan chip */
+  --c-plan-to: oklch(0.21 0.034 264.665);
+  --c-plan-ink: oklch(1 0 0);
+  --c-plan-border: oklch(0.928 0.006 264.531);
   /* Signature gradients: cards left→right, buttons/tags top→bottom */
   --c-card-from: oklch(0.985 0.002 247.839);
   --c-card-to: oklch(1 0 0);
@@ -118,6 +135,23 @@
   --c-brand: oklch(0.877 0.175 92.5);
   --c-brand-ink: oklch(0.13 0.028 261.692);
   --c-brand-orange: oklch(0.779 0.173 66.5);
+  /* Hub Pro / plan ornaments — dark recipe (more saturated, face near-black) */
+  --c-pro-from: oklch(0.65 0.2 350 / 0.7);
+  --c-pro-via: oklch(0.72 0.19 150 / 0.7);
+  --c-pro-to: oklch(0.85 0.16 95 / 0.7);
+  --c-pro-compact-from: oklch(0.65 0.22 350);
+  --c-pro-compact-via: oklch(0.72 0.19 150);
+  --c-pro-compact-to: oklch(0.85 0.16 95);
+  --c-pro-shell-from: oklch(0.65 0.22 350);
+  --c-pro-shell-via: oklch(0.72 0.19 150);
+  --c-pro-shell-to: oklch(0.85 0.16 95);
+  --c-pro-plus: oklch(0.13 0.028 261.692);
+  --c-pro-face: oklch(0.13 0.028 261.692);
+  --c-pro-ink: oklch(0.13 0.028 261.692);
+  --c-plan-from: oklch(0.967 0.003 264.542);
+  --c-plan-to: oklch(0.928 0.006 264.531);
+  --c-plan-ink: oklch(0.21 0.034 264.665);
+  --c-plan-border: oklch(0.928 0.006 264.531);
   --c-card-from: oklch(0.21 0.034 264.665); /* gray-900 → */
   --c-card-to: oklch(0.17 0.022 267); /* #0b0f19 */
   --c-btn-from: oklch(0.278 0.033 256.848);
@@ -160,6 +194,22 @@
   --color-brand: var(--c-brand);
   --color-brand-ink: var(--c-brand-ink);
   --color-brand-orange: var(--c-brand-orange);
+  --color-pro-from: var(--c-pro-from);
+  --color-pro-via: var(--c-pro-via);
+  --color-pro-to: var(--c-pro-to);
+  --color-pro-compact-from: var(--c-pro-compact-from);
+  --color-pro-compact-via: var(--c-pro-compact-via);
+  --color-pro-compact-to: var(--c-pro-compact-to);
+  --color-pro-shell-from: var(--c-pro-shell-from);
+  --color-pro-shell-via: var(--c-pro-shell-via);
+  --color-pro-shell-to: var(--c-pro-shell-to);
+  --color-pro-plus: var(--c-pro-plus);
+  --color-pro-face: var(--c-pro-face);
+  --color-pro-ink: var(--c-pro-ink);
+  --color-plan-from: var(--c-plan-from);
+  --color-plan-to: var(--c-plan-to);
+  --color-plan-ink: var(--c-plan-ink);
+  --color-plan-border: var(--c-plan-border);
   --color-card-from: var(--c-card-from);
   --color-card-to: var(--c-card-to);
   --color-btn-from: var(--c-btn-from);

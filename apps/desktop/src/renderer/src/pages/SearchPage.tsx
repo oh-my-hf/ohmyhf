@@ -179,7 +179,7 @@ function AccountResultRow({
       className="flex w-full items-center gap-3 rounded-lg border border-border-card bg-card-gradient p-3 text-left transition-colors duration-150 outline-none hover:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
     >
       {account.avatarUrl ? (
-        <img src={account.avatarUrl} alt="" className="size-9 shrink-0 rounded-full border" />
+        <img src={account.avatarUrl} alt="" loading="lazy" decoding="async" className="size-9 shrink-0 rounded-full border" />
       ) : (
         <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-panel-2 ring-1 ring-border-card">
           <Icon className="size-4 text-ink-muted" aria-hidden />

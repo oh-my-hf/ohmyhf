@@ -5,17 +5,18 @@ import { cn } from '@/lib/utils'
 /**
  * Hugging Face–style plan marks: skewed PRO pastel gradient for individuals,
  * dark Team / Enterprise / Enterprise+ chips for orgs.
+ * Colors come from `--c-pro-*` / `--c-plan-*` tokens (see main.css).
  */
 export type PlanBadgeKind = 'pro' | HubOrgPlan
 
 const ORG_SHELL =
-  'bg-linear-to-br inline-flex items-center -skew-x-12 whitespace-nowrap border border-gray-200 from-gray-800 to-gray-900 font-sans font-semibold leading-none text-white will-change-transform dark:from-gray-50 dark:to-gray-100 dark:text-gray-900 rounded-lg px-2 py-1 text-[12px]'
+  'bg-linear-to-br inline-flex items-center -skew-x-12 whitespace-nowrap border border-plan-border from-plan-from to-plan-to font-sans font-semibold leading-none text-plan-ink rounded-lg px-2 py-1 text-[12px]'
 
 const PRO_SHELL =
-  'bg-linear-to-br shadow-green-500/10 dark:shadow-green-500/20 inline-block -skew-x-12 border border-gray-200 from-pink-300 via-green-200 to-yellow-200 text-[12px] font-bold text-black shadow-lg dark:from-pink-500 dark:via-green-500 dark:to-yellow-500 dark:text-black rounded-md px-1.5 py-0'
+  'bg-linear-to-br inline-block -skew-x-12 border border-plan-border from-pro-shell-from via-pro-shell-via to-pro-shell-to text-[12px] font-bold text-pro-ink rounded-md px-1.5 py-0'
 
 const PLUS_MARK =
-  'bg-linear-to-b inline-block translate-y-px from-white to-green-400 bg-clip-text font-extrabold text-transparent dark:from-black text-[1.05rem] leading-[0.6]'
+  'inline-block translate-y-px font-extrabold text-pro-plus text-[1.05rem] leading-[0.6]'
 
 export interface PlanBadgeProps {
   kind: PlanBadgeKind

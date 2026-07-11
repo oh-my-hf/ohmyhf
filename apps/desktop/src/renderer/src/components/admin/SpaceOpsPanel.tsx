@@ -35,7 +35,7 @@ function SectionHeading({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <h3 className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-ink-faint uppercase">
+    <h3 className="flex items-center gap-2 text-[12px] font-semibold text-ink-faint">
       <Icon className="size-3.5 text-ink-faint" aria-hidden />
       {children}
     </h3>

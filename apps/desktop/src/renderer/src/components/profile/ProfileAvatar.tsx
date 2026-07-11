@@ -12,31 +12,37 @@ export type ProfileAvatarFrame = 'profile' | 'compact'
  * Round user/org avatar with an initial-letter fallback.
  * Size and (for the fallback) text size come from the caller via className.
  * When `isPro`, wraps the avatar in the Hub Pro gradient ring + sparkle.
+ * Ring colors use `--c-pro-*` tokens (see main.css).
  */
 export function ProfileAvatar({
   name,
   url,
   className,
   isPro,
-  frame = 'compact'
+  frame = 'compact',
+  eager
 }: {
   name: string
   url?: string
   className?: string
   isPro?: boolean
   frame?: ProfileAvatarFrame
+  /** Skip lazy-loading (e.g. TopBar account chip). */
+  eager?: boolean
 }): React.JSX.Element {
   const face =
     url !== undefined && url !== '' ? (
       <img
         src={absoluteAvatarUrl(url)}
         alt=""
+        loading={eager === true ? 'eager' : 'lazy'}
+        decoding="async"
         className={cn(
           'shrink-0 rounded-full object-cover',
           isPro === true
             ? frame === 'profile'
-              ? 'border-[3px] border-white dark:border-gray-950'
-              : 'bg-white dark:bg-gray-950'
+              ? 'border-[3px] border-pro-face'
+              : 'bg-pro-face'
             : 'border',
           className
         )}
@@ -48,7 +54,7 @@ export function ProfileAvatar({
           'bg-aurora flex shrink-0 items-center justify-center rounded-full font-semibold text-ink-strong uppercase',
           isPro === true
             ? frame === 'profile'
-              ? 'border-[3px] border-white dark:border-gray-950'
+              ? 'border-[3px] border-pro-face'
               : undefined
             : 'ring-1 ring-border-card',
           className
@@ -65,13 +71,13 @@ export function ProfileAvatar({
 
   const ringClass =
     frame === 'profile'
-      ? 'bg-linear-to-br from-pink-300 via-green-400 to-yellow-300 p-[3px] dark:from-pink-500/70 dark:via-green-500/70 dark:to-yellow-500/70'
-      : 'bg-linear-to-br from-pink-500 via-green-500 to-yellow-500 p-px'
+      ? 'bg-linear-to-br from-pro-from via-pro-via to-pro-to p-[3px]'
+      : 'bg-linear-to-br from-pro-compact-from via-pro-compact-via to-pro-compact-to p-px'
 
   const sparkleClass =
     frame === 'profile'
-      ? 'absolute top-[8%] left-0 text-[1.2em] text-white dark:text-gray-950'
-      : 'absolute -right-0.5 -bottom-0.5 text-[0.7em] text-white dark:text-gray-950'
+      ? 'absolute top-[8%] left-0 text-[1.2em] text-pro-face'
+      : 'absolute -right-0.5 -bottom-0.5 text-[0.7em] text-pro-face'
 
   return (
     <div className="relative inline-flex shrink-0">

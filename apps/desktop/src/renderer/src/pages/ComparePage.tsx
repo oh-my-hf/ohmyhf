@@ -193,7 +193,7 @@ export function ComparePage(): React.JSX.Element {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-5"
+                            className="size-6"
                             aria-label={t('compare:remove')}
                             onClick={() => setIds(ids.filter((x) => x !== id))}
                           >

@@ -425,6 +425,8 @@ export function MarkdownEditor({
                     <img
                       src={user.avatarUrl}
                       alt=""
+                      loading="lazy"
+                      decoding="async"
                       className="size-5 shrink-0 rounded-full border"
                     />
                   ) : (

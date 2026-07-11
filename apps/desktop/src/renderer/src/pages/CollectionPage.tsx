@@ -20,6 +20,8 @@ import {
 } from 'lucide-react'
 import type { CollectionItem } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
+import { hubThemeColor } from '@/lib/theme-colors'
 import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,23 +34,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { pushUndo, useToasts } from '@/components/ui/toaster'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
-import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
-
-/** Hub collection theme names → OKLCH accents (mirrors SpaceCard's color map). */
-const THEME_COLORS: Record<string, string> = {
-  orange: 'oklch(0.7 0.17 55)',
-  blue: 'oklch(0.56 0.17 255)',
-  green: 'oklch(0.64 0.16 150)',
-  purple: 'oklch(0.54 0.2 300)',
-  red: 'oklch(0.62 0.2 25)',
-  indigo: 'oklch(0.51 0.19 275)',
-  pink: 'oklch(0.63 0.19 350)'
-}
-const FALLBACK_THEME_COLOR = 'oklch(0.5 0.02 260)'
-
-function themeColorOf(theme: string | undefined): string {
-  return (theme && THEME_COLORS[theme.toLowerCase()]) || FALLBACK_THEME_COLOR
-}
 
 const ITEM_ICON: Record<CollectionItem['type'], React.ComponentType<{ className?: string }>> = {
   model: Boxes,
@@ -254,7 +239,7 @@ export function CollectionPage(): React.JSX.Element {
               <div className="flex items-center gap-2.5">
                 <span
                   className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: themeColorOf(data.theme) }}
+                  style={{ backgroundColor: hubThemeColor(data.theme) }}
                   aria-hidden
                 />
                 <h1 className="min-w-0 truncate text-smd font-semibold text-ink-strong">
