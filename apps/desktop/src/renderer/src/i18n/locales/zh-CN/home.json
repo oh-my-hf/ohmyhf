@@ -4,7 +4,9 @@
     "new": "发新帖",
     "placeholder": "向社区分享动态… 支持 Markdown。",
     "posted": "帖子已发布",
-    "submit": "发布"
+    "submit": "发布",
+    "unavailable": "发帖暂不可用：{{reason}}",
+    "unavailableFallback": "你的账号尚未加入发帖 beta。"
   },
   "feed": {
     "acted": {

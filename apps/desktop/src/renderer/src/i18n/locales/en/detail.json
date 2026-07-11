@@ -22,6 +22,18 @@
   },
   "discussions": {
     "comments": "{{count}} comments",
+    "create": {
+      "bodyPlaceholder": "Describe your discussion or change… Markdown is supported.",
+      "created": "Thread created.",
+      "discussion": "Discussion",
+      "error": "Couldn't create the thread: {{error}}",
+      "new": "New",
+      "prHint": "Opens an empty draft pull request with your description as its first comment — push commits to its refs/pr branch afterwards.",
+      "pullRequest": "Pull request",
+      "submit": "Create",
+      "title": "New thread in {{repoId}}",
+      "titlePlaceholder": "Title"
+    },
     "empty": "No discussions yet.",
     "filter": {
       "all": "All",

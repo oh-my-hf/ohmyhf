@@ -4,7 +4,9 @@
     "new": "New post",
     "placeholder": "Share an update with the community… Markdown is supported.",
     "posted": "Post published",
-    "submit": "Publish"
+    "submit": "Publish",
+    "unavailable": "Posting unavailable: {{reason}}",
+    "unavailableFallback": "your account is not in the posting beta yet."
   },
   "feed": {
     "acted": {

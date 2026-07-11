@@ -22,6 +22,18 @@
   },
   "discussions": {
     "comments": "{{count}} 条评论",
+    "create": {
+      "bodyPlaceholder": "描述你的讨论或改动… 支持 Markdown。",
+      "created": "已创建。",
+      "discussion": "讨论",
+      "error": "创建失败：{{error}}",
+      "new": "新建",
+      "prHint": "将创建一个空的草稿 PR，你的描述会成为它的第一条评论——之后向其 refs/pr 分支推送提交即可。",
+      "pullRequest": "Pull Request",
+      "submit": "创建",
+      "title": "在 {{repoId}} 新建",
+      "titlePlaceholder": "标题"
+    },
     "empty": "暂无讨论。",
     "filter": {
       "all": "全部",

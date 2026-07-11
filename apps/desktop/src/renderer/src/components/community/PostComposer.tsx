@@ -43,7 +43,19 @@ export function PostComposer(): React.JSX.Element | null {
     onError: (err) => push(t('home:compose.error', { error: err.message }), 'error')
   })
 
-  if (!hubSession || canPost.data?.canPost !== true) return null
+  if (!hubSession || canPost.isPending || canPost.isError) return null
+
+  // The Hub gates posting behind a beta; surface its reason instead of
+  // silently hiding the feature (the official UI just omits the box).
+  if (canPost.data.canPost !== true) {
+    return (
+      <p className="self-start text-[12px] text-ink-faint">
+        {t('home:compose.unavailable', {
+          reason: canPost.data.reason ?? t('home:compose.unavailableFallback')
+        })}
+      </p>
+    )
+  }
 
   const send = (): void => {
     const content = draft.trim()

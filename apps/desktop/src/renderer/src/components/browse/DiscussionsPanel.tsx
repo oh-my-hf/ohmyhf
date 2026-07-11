@@ -8,6 +8,7 @@ import {
   GitPullRequest,
   MessageSquare,
   Pencil,
+  Plus,
   Reply
 } from 'lucide-react'
 import type {
@@ -700,6 +701,15 @@ export function DiscussionsPanel({
               {t(`detail:discussions.filter.${filter}`)}
             </button>
           ))}
+          <NewDiscussionButton
+            kind={kind}
+            repoId={repoId}
+            defaultPullRequest={segment === 'pull_request'}
+            onCreated={(num) => {
+              void list.refetch()
+              select(num)
+            }}
+          />
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
@@ -749,5 +759,136 @@ export function DiscussionsPanel({
         ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * "New" button + dialog for opening a discussion or draft PR on the repo
+ * (the same API huggingface_hub's create_discussion/create_pull_request use;
+ * bearer-token authenticated). The description editor supports attachment
+ * upload whenever a Hub web session is connected.
+ */
+function NewDiscussionButton({
+  kind,
+  repoId,
+  defaultPullRequest,
+  onCreated
+}: {
+  kind: RepoKind
+  repoId: string
+  /** Preselect the PR flavor when the panel is on the Pull requests segment. */
+  defaultPullRequest: boolean
+  onCreated: (num: number) => void
+}): React.JSX.Element | null {
+  const { t } = useTranslation(['detail', 'common', 'auth'])
+  const auth = useAppStore((s) => s.auth)
+  const push = useToasts((s) => s.push)
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [asPr, setAsPr] = useState(defaultPullRequest)
+
+  const create = useMutation({
+    mutationFn: () =>
+      invoke('hub:discussionCreate', {
+        kind,
+        repoId,
+        title: title.trim(),
+        description: description.trim(),
+        pullRequest: asPr
+      }),
+    onSuccess: ({ num }) => {
+      setOpen(false)
+      setTitle('')
+      setDescription('')
+      push(t('detail:discussions.create.created'), 'success')
+      onCreated(num)
+    },
+    onError: (err) => push(t('detail:discussions.create.error', { error: err.message }), 'error')
+  })
+
+  if (auth.status !== 'signedIn') return null
+  const missingScope = scopeMissing(auth, WRITE_DISCUSSIONS_SCOPE)
+
+  return (
+    <>
+      <Button
+        variant="cta"
+        size="sm"
+        className="ml-1 h-6 px-2 text-[11.5px]"
+        onClick={() => {
+          setAsPr(defaultPullRequest)
+          setOpen(true)
+        }}
+      >
+        <Plus className="size-3.5" aria-hidden />
+        {t('detail:discussions.create.new')}
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-[34rem]">
+          <DialogTitle className="flex items-center gap-2 text-[14px] font-semibold">
+            {asPr ? (
+              <GitPullRequest className="size-4" aria-hidden />
+            ) : (
+              <MessageSquare className="size-4" aria-hidden />
+            )}
+            {t('detail:discussions.create.title', { repoId })}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t('detail:discussions.create.title', { repoId })}
+          </DialogDescription>
+
+          {missingScope ? (
+            <p className="mt-3 text-[12.5px] text-ink-faint">{t('auth:missingWriteScope')}</p>
+          ) : (
+            <div className="mt-3 flex flex-col gap-3">
+              <div className="flex items-center gap-0.5 self-start rounded-md border bg-panel p-0.5">
+                <SegmentButton
+                  active={!asPr}
+                  onClick={() => setAsPr(false)}
+                  label={t('detail:discussions.create.discussion')}
+                />
+                <SegmentButton
+                  active={asPr}
+                  onClick={() => setAsPr(true)}
+                  label={t('detail:discussions.create.pullRequest')}
+                />
+              </div>
+              {asPr && (
+                <p className="text-[12px] text-ink-faint">{t('detail:discussions.create.prHint')}</p>
+              )}
+              <Input
+                value={title}
+                maxLength={200}
+                placeholder={t('detail:discussions.create.titlePlaceholder')}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <MarkdownEditor
+                value={description}
+                onChange={setDescription}
+                kind={kind}
+                repoId={repoId}
+                placeholder={t('detail:discussions.create.bodyPlaceholder')}
+              />
+              <div className="flex justify-end gap-2 border-t pt-3">
+                <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
+                  {t('common:cancel')}
+                </Button>
+                <Button
+                  variant="cta"
+                  size="sm"
+                  loading={create.isPending}
+                  disabled={title.trim() === '' || description.trim() === ''}
+                  onClick={() => create.mutate()}
+                >
+                  {t('detail:discussions.create.submit')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
