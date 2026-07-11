@@ -126,6 +126,8 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'system:showItemInFolder': z.object({ path: absolutePath }),
   'settings:set': z.object({ patch: settingsPatch }),
   'privacy:clearLocalData': z.object({ signOut: z.boolean().optional() }),
+  // No hf_ prefix check: fine-grained/org tokens and mirror deployments vary.
+  'auth:signInWithToken': z.object({ token: z.string().trim().min(1).max(512) }),
   'hub:search': z.object({ query: searchQuery }),
   'hub:papers': z.object({ cursor: z.string().max(4096).optional() }).optional(),
   'hub:paper': z.object({ paperId: z.string().min(1).max(128) }),

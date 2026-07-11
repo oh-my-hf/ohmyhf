@@ -38,5 +38,6 @@
   },
   "unfollow": "Unfollow",
   "viewProfile": "View profile",
-  "watchSyncFailed": "Saved locally, but syncing your follow to the Hub failed: {{error}}"
+  "watchOnHub": "Open on the Hub",
+  "watchSyncNotApplied": "Followed locally. The Hub ignores watch requests from apps — to also get Hub notifications for this account, use the Watch button on its Hub page."
 }

@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { pushUndo, useToasts } from '@/components/ui/toaster'
 import { HubNotificationsPanel } from '@/components/inbox/HubNotificationsPanel'
+import { useWatchSync } from '@/hooks/use-watch-sync'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const FOLLOW_ICON: Record<FollowTargetType, React.ComponentType<{ className?: string }>> = {
@@ -110,11 +111,18 @@ function LocalFollowsFeed(): React.JSX.Element {
       void queryClient.invalidateQueries({ queryKey: ['inbox'] })
     }
   })
+  // Users and orgs get the Hub watch write-through (same as UserPage); repo
+  // and papers follows stay local-only — the watch endpoint wants 24-hex ids
+  // the app only resolves for accounts.
+  const syncWatch = useWatchSync()
+  const syncable = (type: FollowTargetType): boolean => type === 'user' || type === 'org'
+
   const addFollow = useMutation({
     mutationFn: (args: { type: FollowTargetType; target: string }) => invoke('follows:add', args),
-    onSuccess: (list) => {
+    onSuccess: (list, args) => {
       queryClient.setQueryData(['follows'], list)
       setTarget('')
+      if (syncable(args.type)) syncWatch('add', [{ username: args.target }])
     }
   })
   const removeFollow = useMutation({
@@ -122,13 +130,17 @@ function LocalFollowsFeed(): React.JSX.Element {
       invoke('follows:remove', { id: follow.id }),
     onSuccess: (list, follow) => {
       queryClient.setQueryData(['follows'], list)
+      if (syncable(follow.type)) syncWatch('delete', [{ username: follow.target }])
       // The papers toggle is its own undo affordance; only rows get the toast.
       if (follow.type === 'papers') return
       pushUndo(t('inbox:follows.removed', { target: follow.target }), {
         label: t('common:undo'),
         onClick: () => {
           void invoke('follows:add', { type: follow.type, target: follow.target })
-            .then((restored) => queryClient.setQueryData(['follows'], restored))
+            .then((restored) => {
+              queryClient.setQueryData(['follows'], restored)
+              if (syncable(follow.type)) syncWatch('add', [{ username: follow.target }])
+            })
             .catch((err: Error) => push(err.message, 'error'))
         }
       })
@@ -137,6 +149,9 @@ function LocalFollowsFeed(): React.JSX.Element {
 
   // Pull the REAL Hugging Face following list of the signed-in account into the
   // local follow store so the notification poller tracks those authors too.
+  // Deliberately NOT watch-synced: bulk-adding every social follow to the Hub
+  // watch list would flood the user's Hub notifications; only explicit
+  // per-account follow actions write through.
   const auth = useAppStore((s) => s.auth)
   const me = auth.status === 'signedIn' ? auth.user.name : undefined
   const importFromHub = useMutation({

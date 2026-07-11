@@ -38,5 +38,6 @@
   },
   "unfollow": "取消关注",
   "viewProfile": "查看主页",
-  "watchSyncFailed": "已保存到本地，但同步关注状态到 Hub 失败：{{error}}"
+  "watchOnHub": "在 Hub 中打开",
+  "watchSyncNotApplied": "已在本地关注。Hub 会忽略应用发起的 watch 请求——如需该账号的 Hub 通知，请到其 Hub 页面上点 Watch。"
 }

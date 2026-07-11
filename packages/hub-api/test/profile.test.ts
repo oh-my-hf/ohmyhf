@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { HubApiError, HubClient, mapUserOverview } from '../src'
+import { HubApiError, HubClient, mapUserOverview, mapWhoAmIAuth } from '../src'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -57,6 +57,55 @@ describe('HubClient.getPostDetail', () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ socialPosts: [] }))
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
     await expect(client.getPostDetail('razaali10', 'missing')).rejects.toBeInstanceOf(HubApiError)
+  })
+})
+
+describe('HubClient.whoAmIWithToken / mapWhoAmIAuth', () => {
+  it('sends the candidate token, a deadline, and maps the token identity block', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        name: 'me',
+        fullname: 'Me',
+        orgs: [],
+        auth: { type: 'access_token', accessToken: { displayName: 'my-laptop', role: 'write' } }
+      })
+    )
+    // getAccessToken returns the CURRENT session token; validation must ignore it.
+    const client = new HubClient({
+      fetchImpl,
+      cacheTtlMs: 0,
+      minRequestGapMs: 0,
+      getAccessToken: () => 'hf_current_session'
+    })
+    const detailed = await client.whoAmIWithToken('hf_candidate')
+    const [url, init] = fetchImpl.mock.calls[0]!
+    expect(url).toBe('https://huggingface.co/api/whoami-v2')
+    expect(init.headers.Authorization).toBe('Bearer hf_candidate')
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+    expect(detailed).toEqual({
+      user: { name: 'me', fullname: 'Me', email: undefined, avatarUrl: undefined, isPro: undefined, orgs: [] },
+      tokenDisplayName: 'my-laptop',
+      tokenRole: 'write'
+    })
+  })
+
+  it('rejects with a status-carrying HubApiError on 401', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ error: 'nope' }, 401))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    await expect(client.whoAmIWithToken('hf_bad')).rejects.toMatchObject({
+      name: 'HubApiError',
+      status: 401
+    })
+  })
+
+  it('tolerates a payload with no auth block (mirror endpoints omit it)', () => {
+    expect(mapWhoAmIAuth({ name: 'me' })).toEqual({
+      user: { name: 'me', fullname: undefined, email: undefined, avatarUrl: undefined, isPro: undefined, orgs: [] },
+      tokenDisplayName: undefined,
+      tokenRole: undefined
+    })
+    expect(mapWhoAmIAuth({ name: 'me', auth: {} }).tokenRole).toBeUndefined()
+    expect(mapWhoAmIAuth({ name: 'me', auth: { accessToken: {} } }).tokenDisplayName).toBeUndefined()
   })
 })
 

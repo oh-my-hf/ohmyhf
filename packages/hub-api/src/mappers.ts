@@ -355,6 +355,14 @@ interface RawWhoAmI {
   avatarUrl?: string
   isPro?: boolean
   orgs?: Array<{ name?: string; fullname?: string; avatarUrl?: string; plan?: string }>
+  /**
+   * Present when authenticating with a User Access Token; mirrors and proxy
+   * endpoints may omit it entirely, so every field is optional.
+   */
+  auth?: {
+    type?: string
+    accessToken?: { displayName?: string; role?: string }
+  }
 }
 
 export function mapWhoAmI(raw: RawWhoAmI): UserProfile {
@@ -370,6 +378,22 @@ export function mapWhoAmI(raw: RawWhoAmI): UserProfile {
       avatarUrl: o.avatarUrl,
       plan: mapHubOrgPlan(o.plan)
     }))
+  }
+}
+
+export interface WhoAmIDetailed {
+  user: UserProfile
+  tokenDisplayName?: string
+  tokenRole?: string
+}
+
+/** Like mapWhoAmI, plus the token identity block when the Hub reports one. */
+export function mapWhoAmIAuth(raw: RawWhoAmI): WhoAmIDetailed {
+  const accessToken = raw.auth?.accessToken
+  return {
+    user: mapWhoAmI(raw),
+    tokenDisplayName: accessToken?.displayName || undefined,
+    tokenRole: accessToken?.role || undefined
   }
 }
 

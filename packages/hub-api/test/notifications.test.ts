@@ -170,6 +170,33 @@ describe('HubClient.updateWatch', () => {
     expect(init.method).toBe('PATCH')
     expect(jsonBodyOf(init)).toEqual({ add: [{ id: HEX, type: 'org' }], delete: [] })
   })
+
+  it('returns the resulting watch list so callers can verify adds took effect', async () => {
+    // The Hub answers 200 but silently ignores token-based org adds, so the
+    // response list — not the status — is the source of truth.
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        watched: [
+          { _id: 'a'.repeat(24), id: 'alice', name: 'alice', type: 'user' },
+          { _id: 'b'.repeat(24), id: 'acme', name: 'Acme', type: 'org' },
+          { id: 'legacy-no-hex' }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, ...FAST })
+    const watched = await client.updateWatch({ add: [{ id: HEX, type: 'org' }] })
+    expect(watched).toEqual([
+      { internalId: 'a'.repeat(24), name: 'alice', type: 'user' },
+      { internalId: 'b'.repeat(24), name: 'Acme', type: 'org' },
+      { internalId: undefined, name: 'legacy-no-hex', type: 'user' }
+    ])
+  })
+
+  it('tolerates an empty response body', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response('', { status: 200 }))
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await expect(client.updateWatch({ add: [{ id: HEX, type: 'user' }] })).resolves.toEqual([])
+  })
 })
 
 describe('HubClient.listMyRepos', () => {

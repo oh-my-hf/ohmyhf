@@ -26,10 +26,10 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useToasts } from '@/components/ui/toaster'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { PlanBadge, planBadgeKind } from '@/components/profile/PlanBadge'
+import { useWatchSync } from '@/hooks/use-watch-sync'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
@@ -186,11 +186,9 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
   const { t } = useTranslation(['profile', 'common', 'auth'])
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
-  const push = useToasts((s) => s.push)
   const [tabChoice, setTabChoice] = useState<RepoKind | null>(null)
 
   const overview = useQuery({
@@ -220,33 +218,23 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
       (f.type === 'user' || f.type === 'org') && f.target.toLowerCase() === username.toLowerCase()
   )
 
-  /**
-   * Write-through to the Hub's watch list. The local follow is the offline
-   * mirror and always wins; a failed Hub sync only surfaces a toast.
-   */
-  const syncWatch = (action: 'add' | 'delete'): void => {
-    const internalId = overview.data?.internalId
-    if (auth.status !== 'signedIn' || internalId === undefined || internalId === '') return
-    const targets: Array<{ id: string; type: 'user' | 'org' }> = [
-      { id: internalId, type: overview.data?.isOrg === true ? 'org' : 'user' }
-    ]
-    invoke('hub:watchUpdate', action === 'add' ? { add: targets } : { delete: targets }).catch(
-      (err: Error) => push(t('profile:watchSyncFailed', { error: err.message }), 'error')
-    )
-  }
+  const syncWatch = useWatchSync()
+  const watchTarget = (): Array<{ username: string; internalId?: string; isOrg?: boolean }> => [
+    { username, internalId: overview.data?.internalId, isOrg }
+  ]
 
   const addFollow = useMutation({
     mutationFn: () => invoke('follows:add', { type: isOrg ? 'org' : 'user', target: username }),
     onSuccess: (list) => {
       queryClient.setQueryData(['follows'], list)
-      syncWatch('add')
+      syncWatch('add', watchTarget())
     }
   })
   const removeFollow = useMutation({
     mutationFn: (id: string) => invoke('follows:remove', { id }),
     onSuccess: (list) => {
       queryClient.setQueryData(['follows'], list)
-      syncWatch('delete')
+      syncWatch('delete', watchTarget())
     }
   })
 

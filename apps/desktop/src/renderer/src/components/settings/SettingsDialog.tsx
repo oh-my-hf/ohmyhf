@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -6,6 +7,7 @@ import {
   Bell,
   ExternalLink,
   Info,
+  KeyRound,
   LogIn,
   LogOut,
   Minus,
@@ -27,6 +29,7 @@ import { cn, formatBytes, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { PlanBadge } from '@/components/profile/PlanBadge'
 import {
   Select,
@@ -143,6 +146,7 @@ function AccountSection(): React.JSX.Element {
   const closeSettings = useAppStore((s) => s.closeSettings)
   const push = useToasts((s) => s.push)
   const navigate = useNavigate()
+  const [tokenFormOpen, setTokenFormOpen] = useState(false)
 
   const signIn = useMutation({
     mutationFn: () => invoke('auth:signIn', undefined),
@@ -159,6 +163,7 @@ function AccountSection(): React.JSX.Element {
     onSuccess: setAuth
   })
   const signingIn = auth.status === 'signingIn' || signIn.isPending
+  const isTokenSession = auth.status === 'signedIn' && auth.method === 'token'
 
   return (
     <SectionShell title={t('settings:account.title')}>
@@ -202,11 +207,34 @@ function AccountSection(): React.JSX.Element {
               {t('auth:signOut')}
             </Button>
           </div>
-          <HubAccountBlock
-            scopes={auth.scopes}
-            reauthorizing={signIn.isPending}
-            onReauthorize={() => signIn.mutate()}
-          />
+          {isTokenSession ? (
+            <TokenAccountBlock
+              displayName={auth.tokenDisplayName}
+              role={auth.tokenRole}
+              signingIn={signingIn}
+              onSignInWithHub={() => signIn.mutate()}
+            />
+          ) : (
+            <>
+              <HubAccountBlock
+                scopes={auth.scopes}
+                reauthorizing={signIn.isPending}
+                onReauthorize={() => signIn.mutate()}
+              />
+              <div className="flex flex-col gap-2 border-t pt-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="self-start"
+                  onClick={() => setTokenFormOpen((open) => !open)}
+                >
+                  <KeyRound className="size-3.5" aria-hidden />
+                  {t('auth:tokenSignIn.switchToggle')}
+                </Button>
+                {tokenFormOpen && <TokenSignInForm onDone={() => setTokenFormOpen(false)} />}
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -229,9 +257,160 @@ function AccountSection(): React.JSX.Element {
           <p className="text-[12px] text-ink-faint">
             {signingIn ? t('auth:signingInHint') : t('auth:hint')}
           </p>
+          {!signingIn && (
+            <div className="mt-1 flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="self-start"
+                onClick={() => setTokenFormOpen((open) => !open)}
+              >
+                <KeyRound className="size-3.5" aria-hidden />
+                {t('auth:tokenSignIn.toggle')}
+              </Button>
+              {tokenFormOpen && <TokenSignInForm />}
+            </div>
+          )}
         </div>
       )}
     </SectionShell>
+  )
+}
+
+/**
+ * Paste-a-token sign-in. The token is a secret: password field, no
+ * autocomplete, never echoed anywhere. Failures surface inline (invalid vs
+ * network) — a failed paste never disturbs the current session.
+ */
+function TokenSignInForm({ onDone }: { onDone?: () => void }): React.JSX.Element {
+  const { t } = useTranslation(['auth'])
+  const setAuth = useAppStore((s) => s.setAuth)
+  const [token, setToken] = useState('')
+  const [error, setError] = useState<'invalid' | 'network' | null>(null)
+
+  const submit = useMutation({
+    mutationFn: (value: string) => invoke('auth:signInWithToken', { token: value }),
+    onSuccess: (result) => {
+      if (result.ok) {
+        setAuth(result.state)
+        setToken('')
+        onDone?.()
+      } else {
+        setError(result.error)
+      }
+    },
+    onError: () => setError('network')
+  })
+
+  return (
+    <form
+      className="flex max-w-96 flex-col gap-2"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const value = token.trim()
+        if (value === '' || submit.isPending) return
+        setError(null)
+        submit.mutate(value)
+      }}
+    >
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[12.5px] font-medium text-ink-strong">
+          {t('auth:tokenSignIn.label')}
+        </span>
+        <Input
+          type="password"
+          value={token}
+          placeholder={t('auth:tokenSignIn.placeholder')}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={error !== null}
+          onChange={(event) => {
+            setToken(event.target.value)
+            setError(null)
+          }}
+        />
+        {error !== null && (
+          <span className="text-[12px] text-error">{t(`auth:tokenSignIn.${error}`)}</span>
+        )}
+      </label>
+      <p className="max-w-[65ch] text-[12px] text-ink-faint">{t('auth:tokenSignIn.hint')}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="submit"
+          variant="secondary"
+          size="sm"
+          loading={submit.isPending}
+          disabled={token.trim() === ''}
+        >
+          <KeyRound className="size-3.5" aria-hidden />
+          {t('auth:tokenSignIn.submit')}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => openExternal('https://huggingface.co/settings/tokens')}
+        >
+          <ExternalLink className="size-3.5" aria-hidden />
+          {t('auth:tokenSignIn.createLink')}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+const TOKEN_ROLE_KEYS: Record<string, string> = {
+  read: 'settings:account.hub.roleLabels.read',
+  write: 'settings:account.hub.roleLabels.write',
+  fineGrained: 'settings:account.hub.roleLabels.fineGrained'
+}
+
+/**
+ * Signed in with a manual User Access Token: no OAuth scopes to show — the
+ * token's own permissions decide what works, and the API is the referee.
+ */
+function TokenAccountBlock({
+  displayName,
+  role,
+  signingIn,
+  onSignInWithHub
+}: {
+  displayName?: string
+  role?: string
+  signingIn: boolean
+  onSignInWithHub: () => void
+}): React.JSX.Element {
+  const { t } = useTranslation(['settings', 'auth'])
+
+  return (
+    <div className="flex flex-col gap-3 border-t pt-4">
+      <h3 className="text-[13px] font-semibold text-ink-strong">
+        {t('settings:account.hub.title')}
+      </h3>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant="neutral">{t('settings:account.hub.tokenSession')}</Badge>
+        {displayName !== undefined && displayName !== '' && (
+          <Badge variant="outline" className="font-mono text-[11px]">
+            {displayName}
+          </Badge>
+        )}
+        {role !== undefined && role !== '' && (
+          <Badge variant="outline">
+            {TOKEN_ROLE_KEYS[role] !== undefined ? t(TOKEN_ROLE_KEYS[role]) : role}
+          </Badge>
+        )}
+      </div>
+      <p className="max-w-[65ch] text-[12px] text-ink-faint">
+        {t('settings:account.hub.tokenHint')}
+      </p>
+      <div>
+        <Button variant="secondary" size="sm" loading={signingIn} onClick={onSignInWithHub}>
+          <LogIn className="size-3.5" aria-hidden />
+          {t('auth:tokenSignIn.switchToOauth')}
+        </Button>
+      </div>
+      <BillingUsageCard />
+    </div>
   )
 }
 

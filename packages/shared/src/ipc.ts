@@ -10,6 +10,7 @@ import type {
   AppSettings,
   AuthState,
   BillingUsage,
+  TokenSignInResult,
   CacheReport,
   CollectionDetail,
   CollectionSummary,
@@ -50,6 +51,7 @@ import type {
   UploadProgress,
   UploadRequest,
   UploadResult,
+  WatchedEntry,
   AppUpdateState,
   UserOverview,
   UserSearchResult,
@@ -129,13 +131,17 @@ export interface IpcInvokeContract {
   /** Empty discussionIds = mark everything as read/unread. */
   'hub:notificationsMarkRead': { req: { discussionIds: string[]; read: boolean }; res: void }
   'hub:notificationsClear': { req: void; res: void }
-  /** Watch/unwatch users and orgs by their 24-hex internal id. */
+  /**
+   * Watch/unwatch users and orgs by their 24-hex internal id. Returns the
+   * resulting watch list so callers can VERIFY an add took effect — the Hub
+   * silently ignores token-based org adds (HTTP 200, not applied).
+   */
   'hub:watchUpdate': {
     req: {
       add?: { id: string; type: 'user' | 'org' }[]
       delete?: { id: string; type: 'user' | 'org' }[]
     }
-    res: void
+    res: WatchedEntry[]
   }
   'hub:fileText': {
     req: { kind: RepoKind; repoId: string; path: string; revision?: string; maxBytes?: number }
@@ -293,6 +299,8 @@ export interface IpcInvokeContract {
   'auth:getState': { req: void; res: AuthState }
   'auth:signIn': { req: void; res: AuthState }
   'auth:cancelSignIn': { req: void; res: AuthState }
+  /** Validate + install a pasted User Access Token; replaces any OAuth session. */
+  'auth:signInWithToken': { req: { token: string }; res: TokenSignInResult }
   'auth:signOut': { req: void; res: AuthState }
 
   'favorites:list': { req: void; res: FavoriteItem[] }
@@ -439,6 +447,7 @@ export const IPC_INVOKE_CHANNELS = [
   'auth:getState',
   'auth:signIn',
   'auth:cancelSignIn',
+  'auth:signInWithToken',
   'auth:signOut',
   'favorites:list',
   'favorites:add',

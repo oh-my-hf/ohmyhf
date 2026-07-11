@@ -50,9 +50,16 @@
     "hub": {
       "missingScopes": "缺少权限：{{scopes}}。请重新授权以获取。",
       "reauthorize": "重新授权",
+      "roleLabels": {
+        "fineGrained": "细粒度",
+        "read": "只读",
+        "write": "读写"
+      },
       "scopes": "已授予的权限",
       "scopesUnknown": "当前会话已授予的权限未知，请重新授权以刷新。",
-      "title": "Hub 账号"
+      "title": "Hub 账号",
+      "tokenHint": "当前通过 User Access Token 登录。应用能做什么由令牌在 Hub 上的权限决定——包括浏览器登录无法访问的 Hub 通知收件箱。",
+      "tokenSession": "访问令牌"
     },
     "scopeLabels": {
       "inference-api": "推理 API",

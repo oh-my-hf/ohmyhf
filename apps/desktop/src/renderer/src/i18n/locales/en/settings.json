@@ -50,9 +50,16 @@
     "hub": {
       "missingScopes": "Missing permissions: {{scopes}}. Re-authorize to grant them.",
       "reauthorize": "Re-authorize",
+      "roleLabels": {
+        "fineGrained": "Fine-grained",
+        "read": "Read",
+        "write": "Write"
+      },
       "scopes": "Granted permissions",
       "scopesUnknown": "The permissions granted to this session are unknown. Re-authorize to refresh them.",
-      "title": "Hub account"
+      "title": "Hub account",
+      "tokenHint": "Signed in with a User Access Token. What this app can do is decided by the token's own permissions on the Hub — including the Hub notification inbox, which browser sign-in can't reach.",
+      "tokenSession": "Access token"
     },
     "scopeLabels": {
       "inference-api": "Inference API",

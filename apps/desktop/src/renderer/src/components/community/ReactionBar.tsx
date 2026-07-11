@@ -8,10 +8,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 /**
  * Read-only post reactions. Only Hugging Face's first-party web session can
- * react to community posts — no OAuth scope covers POST /api/posts/.../reaction
- * (it 401s even with write-discussions), so the app shows the per-emoji counts
- * and sends the user to the Hub to actually react. `stopPropagation` keeps the
- * Hub link from also triggering a clickable parent card.
+ * react to community posts — POST /api/posts/.../reaction 401s for EVERY
+ * obtainable token kind: OAuth even with write-discussions (live-verified
+ * 2026-07-10), fine-grained tokens even with global `post.write`, and classic
+ * write-role tokens (both live-verified 2026-07-11). Cookie-session only,
+ * definitively. So the app shows the per-emoji counts and sends the user to
+ * the Hub to actually react. `stopPropagation` keeps the Hub link from also
+ * triggering a clickable parent card.
  */
 export function ReactionBar({
   reactions,

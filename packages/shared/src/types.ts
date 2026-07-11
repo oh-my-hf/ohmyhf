@@ -119,8 +119,26 @@ export interface UserProfile {
 export type AuthState =
   | { status: 'signedOut' }
   | { status: 'signingIn' }
-  /** scopes = OAuth scopes granted to the stored token; UI gates features on them. */
-  | { status: 'signedIn'; user: UserProfile; scopes?: string[] }
+  /**
+   * scopes = OAuth scopes granted to the stored token; UI gates features on them.
+   * method absent = 'oauth'. Manual-token sessions ('token') carry no scopes —
+   * the UI lets every attempt through and the API is the referee.
+   */
+  | {
+      status: 'signedIn'
+      user: UserProfile
+      scopes?: string[]
+      method?: 'oauth' | 'token'
+      /** User-chosen token name from whoami-v2, when the Hub reports it. */
+      tokenDisplayName?: string
+      /** 'read' | 'write' | 'fineGrained' when the Hub reports it. */
+      tokenRole?: string
+    }
+
+/** Result of a manual-token sign-in attempt; failures never throw across IPC. */
+export type TokenSignInResult =
+  | { ok: true; state: AuthState }
+  | { ok: false; error: 'invalid' | 'network' }
 
 export interface HubNotification {
   /** discussion id used by mark-as-read, when the notification is discussion-backed */
@@ -333,6 +351,14 @@ export interface FollowedAccount {
   fullname?: string
   avatarUrl?: string
   isOrg?: boolean
+}
+
+/** One entry of the Hub watch list, as returned by PATCH /api/settings/watch. */
+export interface WatchedEntry {
+  /** 24-hex internal id, when the Hub reports it. */
+  internalId?: string
+  name: string
+  type: 'user' | 'org'
 }
 
 /** A discussion/PR surfaced in the activity feed. */

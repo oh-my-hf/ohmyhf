@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:http'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { safeStorage, shell } from 'electron'
-import type { AuthState, UserProfile } from '@oh-my-huggingface/shared'
+import type { AuthState, TokenSignInResult, UserProfile } from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import {
   DEFAULT_SCOPES,
@@ -60,6 +60,16 @@ interface StoredToken {
   expiresAt?: number
   /** OAuth scopes granted to this token; the UI gates features on them. */
   scopes?: string[]
+  /**
+   * How the token was obtained. Absent = 'oauth' (files written before this
+   * field existed are always OAuth grants). Manual tokens ('token') have no
+   * refresh token and no known expiry, so the refresh machinery skips them.
+   */
+  mode?: 'oauth' | 'token'
+  /** User-chosen token name from whoami-v2, for the Account UI. */
+  tokenDisplayName?: string
+  /** 'read' | 'write' | 'fineGrained' from whoami-v2, when reported. */
+  tokenRole?: string
 }
 
 /** Retry cadence after a transient (network/5xx) refresh failure. */
@@ -119,8 +129,28 @@ export class AuthManager {
       accessToken: res.access_token,
       refreshToken: res.refresh_token,
       expiresAt: res.expires_in ? Date.now() + res.expires_in * 1000 : undefined,
-      scopes: res.scope ? res.scope.split(/\s+/).filter(Boolean) : fallbackScopes
+      scopes: res.scope ? res.scope.split(/\s+/).filter(Boolean) : fallbackScopes,
+      mode: 'oauth'
     }
+  }
+
+  /**
+   * The signed-in AuthState for the CURRENT token. Every signed-in broadcast
+   * must derive `method` from `this.token.mode` — doRefresh's shared-file
+   * adoption can install a sibling session's manual token, and the UI has to
+   * reflect the real mode, not the mode of whatever flow noticed first.
+   */
+  private signedInState(user: UserProfile): AuthState {
+    if (this.token?.mode === 'token') {
+      return {
+        status: 'signedIn',
+        user,
+        method: 'token',
+        tokenDisplayName: this.token.tokenDisplayName,
+        tokenRole: this.token.tokenRole
+      }
+    }
+    return { status: 'signedIn', user, scopes: this.token?.scopes, method: 'oauth' }
   }
 
   private persistToken(): void {
@@ -294,7 +324,7 @@ export class AuthManager {
           const user = await this.client.whoAmI()
           if (epoch !== this.epoch) return false
           if (this.state.status !== 'signedIn') {
-            this.setState({ status: 'signedIn', user, scopes: this.token?.scopes })
+            this.setState(this.signedInState(user))
           }
           console.warn('[auth] refresh rejected but access token still valid; keeping session', err)
           this.scheduleRetry()
@@ -331,7 +361,7 @@ export class AuthManager {
       const user = await this.client.whoAmI()
       if (epoch !== this.epoch) return 'stale'
       if (this.token) {
-        this.setState({ status: 'signedIn', user, scopes: this.token.scopes })
+        this.setState(this.signedInState(user))
       }
       return (this.lastRestoreOutcome = 'signedIn')
     } catch (err) {
@@ -363,10 +393,17 @@ export class AuthManager {
     }
     try {
       const user = await this.client.whoAmI()
-      this.setState({ status: 'signedIn', user, scopes: this.token.scopes })
+      this.setState(this.signedInState(user))
       this.scheduleRefresh()
     } catch (err) {
       if (isUnauthorized(err)) {
+        if (this.token.mode === 'token') {
+          // A manual token has no refresh path: a definitive 401/403 at startup
+          // means it was revoked on the Hub — clear the stale credentials.
+          // Transient failures take the branch below and keep the token.
+          await this.signOut()
+          return
+        }
         const ok = await this.refresh()
         // Only a definitive 401/403 on a freshly rotated token means the grant
         // is dead; transient whoAmI failures already scheduled their own retry.
@@ -418,7 +455,7 @@ export class AuthManager {
       this.scheduleRefresh()
       this.client.invalidateCache()
       const user: UserProfile = await this.client.whoAmI()
-      this.setState({ status: 'signedIn', user, scopes: this.token.scopes })
+      this.setState(this.signedInState(user))
     } catch (err) {
       if (acquired) {
         // The new token is stored and scheduled; only the profile fetch failed.
@@ -467,6 +504,48 @@ export class AuthManager {
     if (this.state.status !== 'signingIn') return this.state
     this.cancelPending?.(new SignInCanceledError())
     return this.state
+  }
+
+  /**
+   * Sign in with a pasted User Access Token. The candidate is validated with
+   * an out-of-band, deadline-bounded whoAmI (its own token header, its own
+   * timeout, no shared request queue — see HubClient.whoAmIWithToken) and
+   * NOTHING is touched until it proves valid: a failed, slow, or hung paste
+   * leaves the current session, the refresh machinery, and the shared
+   * credentials file exactly as they were (dev + packaged sessions read that
+   * file; destroying it signs both out). On success the token REPLACES any
+   * OAuth session; the dropped OAuth grant is simply abandoned (it stays
+   * revocable at hf.co/settings/applications).
+   */
+  async signInWithToken(raw: string): Promise<TokenSignInResult> {
+    const accessToken = raw.trim()
+    // The UI hides the form while an OAuth flow is pending; belt-and-braces.
+    if (!accessToken || this.state.status === 'signingIn') return { ok: false, error: 'invalid' }
+    const startEpoch = this.epoch
+    let validated: { user: UserProfile; tokenDisplayName?: string; tokenRole?: string }
+    try {
+      validated = await this.client.whoAmIWithToken(accessToken)
+    } catch (err) {
+      return { ok: false, error: isUnauthorized(err) ? 'invalid' : 'network' }
+    }
+    if (this.epoch !== startEpoch) {
+      // The user signed out (or in) mid-validation; that newer intent owns
+      // the session — discard the candidate without touching anything.
+      return { ok: false, error: 'network' }
+    }
+    this.epoch += 1 // an in-flight refresh of the old grant must not resurrect it
+    if (this.refreshTimer) clearTimeout(this.refreshTimer)
+    this.refreshTimer = null
+    this.token = {
+      accessToken,
+      mode: 'token',
+      tokenDisplayName: validated.tokenDisplayName,
+      tokenRole: validated.tokenRole
+    }
+    this.persistToken()
+    this.client.invalidateCache()
+    this.setState(this.signedInState(validated.user))
+    return { ok: true, state: this.state }
   }
 
   private runAuthorizationFlow(): Promise<{ code: string; verifier: string }> {

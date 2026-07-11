@@ -31,8 +31,9 @@ const PAGE_SIZE = 20
 
 /**
  * The notification inbox has no OAuth scope (see HF's supported-scopes list), so
- * an OAuth token can never read /api/notifications — re-login cannot fix it. Send
- * the user to the web UI, where their browser session can show notifications.
+ * an OAuth token can never read /api/notifications — re-login cannot fix it. A
+ * manual User Access Token CAN read it, so the unauthorized state points at
+ * Settings → Account (paste a token) and at the web UI as the fallback.
  */
 const HUB_NOTIFICATIONS_URL = 'https://huggingface.co/notifications'
 
@@ -126,13 +127,18 @@ export function HubNotificationsPanel(): React.JSX.Element {
           title={t('inbox:hub.unauthorized.title')}
           body={t('inbox:hub.unauthorized.body')}
           action={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => openExternal(HUB_NOTIFICATIONS_URL)}
-            >
-              {t('inbox:hub.unauthorized.action')}
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button variant="cta" size="sm" onClick={() => openSettings('account')}>
+                {t('inbox:hub.unauthorized.tokenAction')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => openExternal(HUB_NOTIFICATIONS_URL)}
+              >
+                {t('inbox:hub.unauthorized.action')}
+              </Button>
+            </div>
           }
         />
       )

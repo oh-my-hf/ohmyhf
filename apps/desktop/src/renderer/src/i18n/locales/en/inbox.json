@@ -55,8 +55,9 @@
     },
     "unauthorized": {
       "action": "Open on the Hub",
-      "body": "Hugging Face doesn't grant third-party apps access to the notification inbox, so it can't be shown here — signing out and back in won't change that. View your notifications on the Hub instead.",
-      "title": "Hub notifications unavailable"
+      "body": "Browser sign-in can't read the notification inbox — Hugging Face grants no OAuth permission for it, so signing out and back in won't change that. Sign in with a User Access Token to see notifications here, or view them on the Hub.",
+      "title": "Hub notifications unavailable",
+      "tokenAction": "Use an access token"
     }
   },
   "kind": {

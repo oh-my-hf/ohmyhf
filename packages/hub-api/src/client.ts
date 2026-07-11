@@ -29,6 +29,7 @@ import type {
   UserOverview,
   UserProfile,
   UserSearchResult,
+  WatchedEntry,
   OrgSearchResult,
   PaperSearchResult,
   CollectionSearchResult
@@ -53,7 +54,9 @@ import {
   mapSpaceSecrets,
   mapSpaceVariables,
   mapUserOverview,
-  mapWhoAmI
+  mapWhoAmI,
+  mapWhoAmIAuth,
+  type WhoAmIDetailed
 } from './mappers'
 
 export const DEFAULT_ENDPOINT = 'https://huggingface.co'
@@ -646,6 +649,31 @@ export class HubClient {
     return mapWhoAmI(body as never)
   }
 
+  /**
+   * whoAmI with an explicit bearer token, for validating a pasted User Access
+   * Token before it becomes the session. Deliberately OUT OF BAND: it skips
+   * the response cache and the in-flight dedup (which key on URL, so a regular
+   * whoAmI here could join the CURRENT session token's request and "validate"
+   * the candidate against someone else's response), skips the request-slot
+   * queue (validation must not starve behind stalled browsing requests), and
+   * carries its own deadline — a Hub that never answers must fail the sign-in,
+   * not spin it forever.
+   */
+  async whoAmIWithToken(token: string, opts: { timeoutMs?: number } = {}): Promise<WhoAmIDetailed> {
+    const url = `${this.endpoint}/api/whoami-v2`
+    const headers: Record<string, string> = { 'User-Agent': this.userAgent }
+    if (this.allowsAuth(url)) headers.Authorization = `Bearer ${token}`
+    const res = await this.fetchImpl(url, {
+      headers,
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000)
+    })
+    if (!res.ok) {
+      void res.body?.cancel().catch(() => undefined)
+      this.throwHttpError(res, url)
+    }
+    return mapWhoAmIAuth((await res.json()) as never)
+  }
+
   /** Paged notification inbox (20/page on the Hub; `p` is zero-based). */
   async getNotifications(page = 0): Promise<NotificationsPage> {
     const url = new URL(`${this.endpoint}/api/notifications`)
@@ -1043,12 +1071,30 @@ export class HubClient {
     )
   }
 
-  /** Watch/unwatch users and orgs by their 24-hex internal id. */
-  async updateWatch(changes: { add?: WatchTarget[]; delete?: WatchTarget[] }): Promise<void> {
-    await this.sendJson('PATCH', `${this.endpoint}/api/settings/watch`, {
+  /**
+   * Watch/unwatch users and orgs by their 24-hex internal id. Returns the
+   * resulting watch list from the response body — the Hub answers 200 but
+   * SILENTLY ignores token-based org adds (live-verified 2026-07-11), so
+   * callers must check the returned list to know whether an add took effect.
+   * Do not send add and delete in the same call: the endpoint 400s when both
+   * are non-empty.
+   */
+  async updateWatch(changes: {
+    add?: WatchTarget[]
+    delete?: WatchTarget[]
+  }): Promise<WatchedEntry[]> {
+    const res = await this.sendJson('PATCH', `${this.endpoint}/api/settings/watch`, {
       add: changes.add ?? [],
       delete: changes.delete ?? []
     })
+    const body = (await res.json().catch(() => ({}))) as {
+      watched?: Array<{ _id?: string; id?: string; name?: string; type?: string }>
+    }
+    return (body.watched ?? []).map((w) => ({
+      internalId: w._id,
+      name: w.name ?? w.id ?? '',
+      type: w.type === 'org' ? ('org' as const) : ('user' as const)
+    }))
   }
 
   /** Repos the signed-in user administers, with storage usage. */
