@@ -48,11 +48,6 @@ export function CommentComposer({
   const [draft, setDraft] = useState('')
   const [focusSignal, setFocusSignal] = useState(0)
 
-  // Bump the signal after mount (the editor ignores its initial prop value).
-  useEffect(() => {
-    if (focusOnMount) setFocusSignal((n) => n + 1)
-  }, [focusOnMount])
-
   // Consume a quote-reply request: append the blockquote to the draft and
   // focus the editor. Keyed on nonce so re-quoting the same comment re-fires.
   const lastQuoteNonce = useRef(quote?.nonce)
@@ -94,6 +89,7 @@ export function CommentComposer({
         placeholder={placeholder}
         onSubmit={sendNow}
         focusSignal={focusSignal}
+        autoFocus={focusOnMount}
       />
       <div className="flex justify-end">
         <Button

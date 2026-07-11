@@ -248,7 +248,7 @@ function sseDataText(raw: string): string {
 
 /** Pull a short Hub error string out of a failed response body for toast/log detail. */
 async function hubErrorDetail(res: Response): Promise<string> {
-  let text = ''
+  let text: string
   try {
     text = (await res.text()).trim()
   } catch {

@@ -218,6 +218,7 @@
     "fullname": "Full name",
     "github": "GitHub username",
     "homepage": "Homepage",
+    "homepagePlaceholder": "https://",
     "linkedin": "LinkedIn profile",
     "loadError": "Couldn't load your profile: {{error}}",
     "needsSession": "Editing your public profile needs a Hub web session — connect one under Account.",

@@ -271,7 +271,7 @@ function ProfileForm({ initial }: { initial: HubProfileSettings }): React.JSX.El
         <Input
           type="url"
           value={form.homepage}
-          placeholder="https://"
+          placeholder={t('settings:profile.homepagePlaceholder')}
           onChange={(e) => set({ homepage: e.target.value })}
         />
       </Field>

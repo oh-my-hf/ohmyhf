@@ -39,6 +39,8 @@ export interface MarkdownEditorProps {
    * "quote reply" injects text, so the user can type right below the quote.
    */
   focusSignal?: number
+  /** Focus the editor (caret at end) as soon as it mounts — inline reply boxes. */
+  autoFocus?: boolean
   /**
    * Attachment upload (click / drag / paste). Uploads are cookie-session only,
    * so this defaults to the connected-web-session flag; pass `false` to force
@@ -190,6 +192,7 @@ export function MarkdownEditor({
   kind,
   repoId,
   focusSignal,
+  autoFocus,
   enableUpload: enableUploadProp
 }: MarkdownEditorProps): React.JSX.Element {
   const { t } = useTranslation('detail')
@@ -262,6 +265,24 @@ export function MarkdownEditor({
     syncEditorDom(root)
   }, [value])
 
+  // A focus request flips to the Write tab during render, so the pane is
+  // already visible when the focus effect below runs. Skips the initial mount
+  // (state seeded to the same value).
+  const [seenFocusSignal, setSeenFocusSignal] = useState(focusSignal)
+  if (focusSignal !== seenFocusSignal) {
+    setSeenFocusSignal(focusSignal)
+    if (tab !== 'write') setTab('write')
+  }
+
+  // Inline reply boxes want the caret ready the moment they appear.
+  useEffect(() => {
+    if (!autoFocus) return
+    const root = editorRef.current
+    if (!root) return
+    root.focus()
+    setCaret(root, serialize(root).length)
+  }, [autoFocus])
+
   // Focus + caret-to-end after a quote injection. Declared AFTER the value
   // effect so, on the commit where both change, the DOM is already repainted
   // when this runs. Skips the initial mount (ref seeded to the same value).
@@ -269,12 +290,11 @@ export function MarkdownEditor({
   useEffect(() => {
     if (focusSignal === undefined || focusSignal === lastFocusSignal.current) return
     lastFocusSignal.current = focusSignal
-    if (tab !== 'write') setTab('write')
     const root = editorRef.current
     if (!root) return
     root.focus()
     setCaret(root, serialize(root).length)
-  }, [focusSignal, tab])
+  }, [focusSignal])
 
   const onInput = (): void => {
     emit()

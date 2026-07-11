@@ -217,6 +217,7 @@
     "fullname": "姓名",
     "github": "GitHub 用户名",
     "homepage": "主页",
+    "homepagePlaceholder": "https://",
     "linkedin": "LinkedIn 主页",
     "loadError": "无法加载资料：{{error}}",
     "needsSession": "编辑公开资料需要 Hub 网页会话——请先在“账户”中连接。",
