@@ -20,7 +20,7 @@ import {
   ipcRequestSchemas,
   settingsExportFileSchema
 } from '@oh-my-huggingface/shared'
-import { defaultCacheDir, isUnauthorized } from '@oh-my-huggingface/hub-api'
+import { defaultCacheDir, HubApiError } from '@oh-my-huggingface/hub-api'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import type { AuthManager } from './auth'
 import { captureHubSessionCookie } from './hub-session'
@@ -113,15 +113,22 @@ export function registerIpcHandlers(ctx: AppContext): void {
    * A 401 from a cookie-backed social write means the captured web session
    * expired or was revoked: auto-disconnect it (broadcasts evt:auth so the
    * UI reverts to the open-on-Hub fallbacks) and rethrow for the caller's
-   * toast. Token-auth 401s can't reach this — cookie requests carry no
-   * Authorization header — and CookieRequiredError carries no status.
+   * toast. 403s are NOT session death (CSRF/WAF/permission) — disconnecting
+   * on them falsely drops a still-valid Hub web session. Token-auth 401s
+   * can't reach this — cookie requests carry no Authorization header — and
+   * CookieRequiredError carries no status.
    */
   const cookieBacked = async <T>(fn: () => Promise<T>): Promise<T> => {
     try {
       return await fn()
     } catch (err) {
       const state = ctx.auth.getState()
-      if (isUnauthorized(err) && state.status === 'signedIn' && state.hubSession) {
+      if (
+        err instanceof HubApiError &&
+        err.status === 401 &&
+        state.status === 'signedIn' &&
+        state.hubSession
+      ) {
         await ctx.auth.disconnectHubSession()
       }
       throw err
@@ -395,7 +402,12 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:postCanCreate', () => ctx.hub.canCreatePost())
   handle('hub:postCreate', ({ content }) => cookieBacked(() => ctx.hub.createPost(content)))
   handle('hub:profileGet', () => cookieBacked(() => ctx.hub.getProfileSettings()))
-  handle('hub:profileUpdate', (update) => cookieBacked(() => ctx.hub.updateProfileSettings(update)))
+  handle('hub:profileUpdate', async (update) => {
+    await cookieBacked(() => ctx.hub.updateProfileSettings(update))
+    // Avatar/fullname live on auth.user (TopBar/Sidebar); refresh before return
+    // so the renderer can pick them up without an app restart.
+    await ctx.auth.refreshUser()
+  })
   handle('hub:datasetSampleRows', async ({ repoId }) => {
     return (await ctx.hub.getDatasetSampleRows(repoId)) ?? null
   })
@@ -446,6 +458,7 @@ export function registerIpcHandlers(ctx: AppContext): void {
     return ctx.auth.connectHubSession(captured.cookie)
   })
   handle('auth:disconnectHubSession', () => ctx.auth.disconnectHubSession())
+  handle('auth:refreshUser', () => ctx.auth.refreshUser())
 
   // --- local library --------------------------------------------------------------
   handle('favorites:list', () => ctx.library.listFavorites())

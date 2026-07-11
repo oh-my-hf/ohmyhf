@@ -416,6 +416,8 @@ export interface IpcInvokeContract {
   'auth:connectHubSession': { req: void; res: HubSessionConnectResult }
   /** Drop the web-session cookie; the token session stays signed in. */
   'auth:disconnectHubSession': { req: void; res: AuthState }
+  /** Re-fetch whoami so avatar/fullname changes land without an app restart. */
+  'auth:refreshUser': { req: void; res: AuthState }
 
   'favorites:list': { req: void; res: FavoriteItem[] }
   'favorites:add': { req: { summary: RepoSummary }; res: FavoriteItem[] }
@@ -587,6 +589,7 @@ export const IPC_INVOKE_CHANNELS = [
   'auth:signOut',
   'auth:connectHubSession',
   'auth:disconnectHubSession',
+  'auth:refreshUser',
   'favorites:list',
   'favorites:add',
   'favorites:remove',

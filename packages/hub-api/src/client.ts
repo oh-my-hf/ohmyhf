@@ -255,6 +255,10 @@ async function hubErrorDetail(res: Response): Promise<string> {
     return ''
   }
   if (!text) return ''
+  // HTML error pages (CSRF/WAF 403s) are useless in toasts — keep statusText only.
+  if (/^<!doctype\b/i.test(text) || /^<html[\s>]/i.test(text) || /<html[\s>]/i.test(text.slice(0, 200))) {
+    return ''
+  }
   try {
     const parsed = JSON.parse(text) as { error?: unknown; message?: unknown }
     const msg =
@@ -272,6 +276,46 @@ async function hubErrorDetail(res: Response): Promise<string> {
   }
   const snippet = text.replace(/\s+/g, ' ').trim().slice(0, 240)
   return snippet ? `: ${snippet}` : ''
+}
+
+/** Name=value pairs from Set-Cookie response headers (attributes stripped). */
+function cookiePairsFromResponse(res: Response): string[] {
+  const headers = res.headers as Headers & { getSetCookie?: () => string[] }
+  const lines =
+    typeof headers.getSetCookie === 'function'
+      ? headers.getSetCookie()
+      : (() => {
+          const one = res.headers.get('set-cookie')
+          return one ? [one] : []
+        })()
+  const pairs: string[] = []
+  for (const line of lines) {
+    const pair = line.split(';', 1)[0]?.trim()
+    if (pair && pair.includes('=')) pairs.push(pair)
+  }
+  return pairs
+}
+
+/**
+ * Build a Cookie request header from a stored Hub web session.
+ * Accepts legacy raw token values (`abc`) or a full jar (`token=abc; csrf=…`).
+ */
+export function formatSessionCookie(session: string, extras: string[] = []): string {
+  const base = /\btoken=/i.test(session) ? session : `token=${session}`
+  const seen = new Set(
+    base
+      .split(';')
+      .map((p) => p.trim().split('=', 1)[0]?.toLowerCase())
+      .filter((n): n is string => Boolean(n))
+  )
+  const extraParts: string[] = []
+  for (const pair of extras) {
+    const name = pair.split('=', 1)[0]?.trim().toLowerCase()
+    if (!name || name === 'token' || seen.has(name)) continue
+    seen.add(name)
+    extraParts.push(pair)
+  }
+  return extraParts.length === 0 ? base : `${base}; ${extraParts.join('; ')}`
 }
 
 /**
@@ -344,14 +388,18 @@ export class HubClient {
    * Origin/Referer like the first-party web app. Throws CookieRequiredError
    * before any I/O when no web session is connected.
    */
-  private headers(url: string, auth: 'token' | 'cookie' = 'token'): Record<string, string> {
+  private headers(
+    url: string,
+    auth: 'token' | 'cookie' = 'token',
+    opts: { referer?: string; extraCookies?: string[] } = {}
+  ): Record<string, string> {
     const h: Record<string, string> = { 'User-Agent': this.userAgent }
     if (auth === 'cookie') {
       const cookie = this.getSessionCookie()
       if (!cookie || !this.allowsAuth(url)) throw new CookieRequiredError(url)
-      h.Cookie = `token=${cookie}`
+      h.Cookie = formatSessionCookie(cookie, opts.extraCookies)
       h.Origin = this.endpoint
-      h.Referer = `${this.endpoint}/`
+      h.Referer = opts.referer ?? `${this.endpoint}/`
       return h
     }
     const token = this.getAccessToken()
@@ -412,7 +460,18 @@ export class HubClient {
 
   private async throwHttpError(res: Response, method: string, url: string): Promise<never> {
     const rate = res.status === 429 ? ' (rate limited)' : ''
-    const hubDetail = await hubErrorDetail(res)
+    // Hub often puts the real reason on HTML error pages in this header
+    // (e.g. profile primaryOrg → "This organization is not a paid organization").
+    const headerMsg = (
+      res.headers.get('x-error-message') ??
+      res.headers.get('X-Error-Message') ??
+      ''
+    )
+      .replace(/\s+/g, ' ')
+      .trim()
+    const hubDetail = headerMsg
+      ? `: ${headerMsg.slice(0, 240)}`
+      : await hubErrorDetail(res)
     throw new HubApiError(
       `${method} ${url} failed: ${res.status} ${res.statusText}${rate}${hubDetail}`,
       res.status,
@@ -768,7 +827,7 @@ export class HubClient {
   ): Promise<WhoAmIDetailed> {
     const url = `${this.endpoint}/api/whoami-v2`
     const headers: Record<string, string> = { 'User-Agent': this.userAgent }
-    if (this.allowsAuth(url)) headers.Cookie = `token=${cookie}`
+    if (this.allowsAuth(url)) headers.Cookie = formatSessionCookie(cookie)
     const res = await this.fetchImpl(url, {
       headers,
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000)
@@ -1687,19 +1746,25 @@ export class HubClient {
    * The Settings → Profile page, fetched with the web session and parsed for
    * the form values + csrf token. A signed-out (or rejected) session gets the
    * login page instead of the form, which surfaces as a 401 so the caller can
-   * drop the stale cookie.
+   * drop the stale cookie. Also returns any Set-Cookie pairs from the GET so
+   * a follow-up form POST can forward CSRF companion cookies Node fetch
+   * would otherwise drop.
    */
   private async fetchProfileSettingsPage(): Promise<{
     csrf: string
     settings: HubProfileSettings
+    responseCookies: string[]
   }> {
     const url = `${this.endpoint}/settings/profile`
     if (!this.getSessionCookie() || !this.allowsAuth(url)) throw new CookieRequiredError(url)
-    const res = await this.fetchWithPolicy(url, { headers: this.headers(url, 'cookie') })
+    const res = await this.fetchWithPolicy(url, {
+      headers: this.headers(url, 'cookie', { referer: url })
+    })
     if (!res.ok) await this.throwHttpError(res, 'GET', url)
+    const responseCookies = cookiePairsFromResponse(res)
     const page = parseProfileSettingsPage(await res.text())
     if (!page) throw new HubApiError('Hub web session was rejected (401)', 401, url)
-    return page
+    return { ...page, responseCookies }
   }
 
   /** Editable public-profile fields as currently saved on the Hub. */
@@ -1711,11 +1776,24 @@ export class HubClient {
    * Save the public profile. Mirrors the Hub form exactly (live-captured
    * 2026-07-11): urlencoded POST to /settings/profile with the page's csrf
    * token and every field, where an empty `avatar` means "keep the current
-   * one" and a freshly uploaded /uploads URL replaces it.
+   * one" and a freshly uploaded /uploads URL replaces it. Forwards Set-Cookie
+   * pairs from the preceding GET and uses redirect:manual so a success 302
+   * is not followed into an unrelated failure.
    */
   async updateProfileSettings(update: HubProfileUpdate): Promise<void> {
-    const { csrf } = await this.fetchProfileSettingsPage()
+    const { csrf, responseCookies } = await this.fetchProfileSettingsPage()
     const url = `${this.endpoint}/settings/profile`
+    // Double-submit CSRF: if the GET did not Set-Cookie a csrf companion but
+    // the form carries one, mirror it as a cookie (common Hub pattern). Skip
+    // when the stored jar or response already has a csrf* cookie.
+    const session = this.getSessionCookie() ?? ''
+    const hasCsrfCookie =
+      /\bcsrf[^=]*=/i.test(session) ||
+      responseCookies.some((p) => /^csrf/i.test(p.split('=', 1)[0] ?? ''))
+    const extras =
+      !hasCsrfCookie && csrf !== ''
+        ? [...responseCookies, `csrf=${csrf}`]
+        : responseCookies
     const body = new URLSearchParams({
       csrf,
       fullname: update.fullname,
@@ -1730,13 +1808,28 @@ export class HubClient {
     })
     const res = await this.fetchWithPolicy(url, {
       method: 'POST',
+      redirect: 'manual',
       headers: {
-        ...this.headers(url, 'cookie'),
+        ...this.headers(url, 'cookie', { referer: url, extraCookies: extras }),
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: body.toString()
     })
-    if (!res.ok) await this.throwHttpError(res, 'POST', url)
+    if (res.status >= 200 && res.status < 300) {
+      this.invalidateCache()
+      return
+    }
+    // Hub form saves typically 302/303 back to the profile page.
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get('Location') ?? ''
+      if (/\/login(?:\?|$)/i.test(loc)) {
+        throw new HubApiError('Hub web session was rejected (401)', 401, url)
+      }
+      // Any other redirect (including relative /settings/profile) counts as saved.
+      this.invalidateCache()
+      return
+    }
+    await this.throwHttpError(res, 'POST', url)
   }
 
   /**

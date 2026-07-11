@@ -78,6 +78,7 @@ export function ProfileSection(): React.JSX.Element {
 function ProfileForm({ initial }: { initial: HubProfileSettings }): React.JSX.Element {
   const { t } = useTranslation(['settings', 'common'])
   const auth = useAppStore((s) => s.auth)
+  const setAuth = useAppStore((s) => s.setAuth)
   const push = useToasts((s) => s.push)
   const queryClient = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -88,9 +89,38 @@ function ProfileForm({ initial }: { initial: HubProfileSettings }): React.JSX.El
 
   const set = (patch: Partial<HubProfileSettings>): void => setForm((f) => ({ ...f, ...patch }))
 
+  // Hub lists every membership in the <select>, but only Team/Enterprise/Plus
+  // may be set as primaryOrg — unpaid picks 403. Show all options; disable the
+  // ones Hub will reject so the rule is visible before save.
+  const orgPlanByName = new Map(
+    auth.status === 'signedIn'
+      ? auth.user.orgs.map((o) => [o.name.toLowerCase(), o.plan] as const)
+      : []
+  )
+  const isPaidPrimaryOrg = (name: string): boolean => {
+    const plan = orgPlanByName.get(name.toLowerCase())
+    return plan === 'team' || plan === 'enterprise' || plan === 'plus'
+  }
+  const primaryOrgRows = initial.primaryOrgOptions.map((org) => ({
+    ...org,
+    selectable: isPaidPrimaryOrg(org.value),
+    plan: orgPlanByName.get(org.value.toLowerCase())
+  }))
+  const availableOrgs = primaryOrgRows.filter((o) => o.selectable)
+  const unavailableOrgs = primaryOrgRows.filter((o) => !o.selectable)
+  const selectableCount = availableOrgs.length
+  const primaryOrgValue =
+    form.primaryOrg !== '' && !isPaidPrimaryOrg(form.primaryOrg)
+      ? NO_ORG
+      : form.primaryOrg === ''
+        ? NO_ORG
+        : form.primaryOrg
+
   const save = useMutation({
-    mutationFn: () =>
-      invoke('hub:profileUpdate', {
+    mutationFn: () => {
+      const primaryOrg =
+        form.primaryOrg !== '' && !isPaidPrimaryOrg(form.primaryOrg) ? '' : form.primaryOrg
+      return invoke('hub:profileUpdate', {
         fullname: form.fullname,
         homepage: form.homepage,
         details: form.details,
@@ -98,12 +128,20 @@ function ProfileForm({ initial }: { initial: HubProfileSettings }): React.JSX.El
         twitter: form.twitter,
         linkedin: form.linkedin,
         bluesky: form.bluesky,
-        primaryOrg: form.primaryOrg,
+        primaryOrg,
         ...(avatar !== undefined ? { avatar } : {})
-      }),
-    onSuccess: () => {
+      })
+    },
+    onSuccess: async () => {
       push(t('settings:profile.saved'), 'success')
-      // Profile data feeds many surfaces (own user page, avatars in threads).
+      // Main already refreshed whoami; sync auth before remounting the form
+      // so TopBar/Sidebar and the preview see the new avatar immediately.
+      try {
+        setAuth(await invoke('auth:getState', undefined))
+      } catch {
+        // evt:auth will catch up; still invalidate profile queries below.
+      }
+      setAvatar(undefined)
       void queryClient.invalidateQueries()
     },
     onError: (err) => push(t('settings:profile.error', { error: err.message }), 'error')
@@ -169,27 +207,64 @@ function ProfileForm({ initial }: { initial: HubProfileSettings }): React.JSX.El
         />
       </Field>
 
-      <Field
-        label={t('settings:profile.primaryOrg')}
-        hint={initial.primaryOrgOptions.length === 0 ? t('settings:profile.primaryOrgHint') : undefined}
-      >
+      <Field label={t('settings:profile.primaryOrg')}>
+        <div className="flex flex-col gap-2 rounded-lg border border-border-card bg-panel-2 px-3 py-2.5">
+          <p className="text-[12.5px] leading-snug text-ink-muted">
+            {t('settings:profile.primaryOrgHint')}
+          </p>
+          {initial.primaryOrgOptions.length > 0 ? (
+            <p className="text-[12.5px] font-medium text-ink">
+              {t('settings:profile.primaryOrgSummary', {
+                available: selectableCount,
+                unavailable: unavailableOrgs.length
+              })}
+            </p>
+          ) : null}
+        </div>
         <Select
-          value={form.primaryOrg === '' ? NO_ORG : form.primaryOrg}
+          value={primaryOrgValue}
           onValueChange={(v) => set({ primaryOrg: v === NO_ORG ? '' : v })}
           disabled={initial.primaryOrgOptions.length === 0}
         >
-          <SelectTrigger className="w-56">
-            <SelectValue />
+          <SelectTrigger className="min-w-56 w-full max-w-md">
+            <SelectValue placeholder={t('settings:profile.primaryOrgNone')} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="min-w-[var(--radix-select-trigger-width)] max-w-md">
             <SelectItem value={NO_ORG}>{t('settings:profile.primaryOrgNone')}</SelectItem>
-            {initial.primaryOrgOptions.map((org) => (
-              <SelectItem key={org.value} value={org.value}>
-                {org.label}
-              </SelectItem>
-            ))}
+            {availableOrgs.length > 0 ? (
+              <>
+                <div className="text-ink-faint px-2 pt-2 pb-1 text-[11px] font-semibold tracking-wide uppercase">
+                  {t('settings:profile.primaryOrgGroupAvailable')}
+                </div>
+                {availableOrgs.map((org) => (
+                  <SelectItem key={org.value} value={org.value}>
+                    {t('settings:profile.primaryOrgOptionAvailable', {
+                      name: org.label,
+                      plan: org.plan ?? 'team'
+                    })}
+                  </SelectItem>
+                ))}
+              </>
+            ) : null}
+            {unavailableOrgs.length > 0 ? (
+              <>
+                <div className="text-ink-faint px-2 pt-2 pb-1 text-[11px] font-semibold tracking-wide uppercase">
+                  {t('settings:profile.primaryOrgGroupUnavailable')}
+                </div>
+                {unavailableOrgs.map((org) => (
+                  <SelectItem key={org.value} value={org.value} disabled>
+                    {t('settings:profile.primaryOrgOptionUnavailable', { name: org.label })}
+                  </SelectItem>
+                ))}
+              </>
+            ) : null}
           </SelectContent>
         </Select>
+        {initial.primaryOrgOptions.length > 0 && selectableCount === 0 ? (
+          <p className="rounded-md border border-border-card bg-panel-2 px-2.5 py-2 text-[12.5px] text-ink-muted">
+            {t('settings:profile.primaryOrgNonePaid')}
+          </p>
+        ) : null}
       </Field>
 
       <Field label={t('settings:profile.homepage')}>

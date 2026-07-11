@@ -35,9 +35,10 @@ interface StoredToken {
   /** 'read' | 'write' | 'fineGrained' from whoami-v2, when reported. */
   tokenRole?: string
   /**
-   * Supplemental Hub web-session cookie (the huggingface.co `token` cookie),
-   * captured via the login window. Unlocks the social writes the Hub blocks
-   * for Bearer tokens. Extra fields inside the same encrypted envelope keep
+   * Supplemental Hub web-session credentials: a full Cookie header
+   * (`token=…; csrf=…`) from login capture, or a legacy raw `token` value.
+   * Unlocks the social writes / settings form POSTs the Hub blocks for Bearer
+   * tokens. Extra fields inside the same encrypted envelope keep
    * the version-1 file forward/backward compatible.
    */
   sessionCookie?: string
@@ -322,6 +323,27 @@ export class AuthManager {
     return this.state
   }
 
+  /**
+   * Re-fetch whoami and broadcast the updated profile (avatar, fullname, …).
+   * Soft-fails on transient errors so a successful profile save still returns
+   * to the caller. Busts Chromium's HTTP cache for stable `/avatars/` URLs.
+   */
+  async refreshUser(): Promise<AuthState> {
+    if (this.state.status !== 'signedIn' || !this.token) return this.state
+    try {
+      const user = await this.client.whoAmI()
+      this.setState(
+        this.signedInState({
+          ...user,
+          avatarUrl: bustAvatarCache(user.avatarUrl)
+        })
+      )
+    } catch (err) {
+      console.warn('[auth] refreshUser failed', err)
+    }
+    return this.state
+  }
+
   async signOut(): Promise<AuthState> {
     this.epoch += 1
     if (this.retryTimer) clearTimeout(this.retryTimer)
@@ -331,5 +353,19 @@ export class AuthManager {
     this.client.invalidateCache()
     this.setState({ status: 'signedOut' })
     return this.state
+  }
+}
+
+/** Append ?v= so Chromium does not keep a stale Hub /avatars/… image. */
+function bustAvatarCache(url: string | undefined): string | undefined {
+  if (!url) return undefined
+  try {
+    const abs = url.startsWith('/') ? `https://huggingface.co${url}` : url
+    const parsed = new URL(abs)
+    if (!parsed.pathname.includes('/avatars/')) return abs
+    parsed.searchParams.set('v', String(Date.now()))
+    return parsed.toString()
+  } catch {
+    return url
   }
 }

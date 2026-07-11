@@ -439,7 +439,14 @@ describe('HubClient profile settings', () => {
   it('saves via a urlencoded POST carrying the freshly fetched csrf token', async () => {
     const fetchImpl = vi
       .fn()
-      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(PROFILE_PAGE, {
+          status: 200,
+          headers: {
+            'Set-Cookie': 'csrf=csrf_cookie_abc; Path=/; HttpOnly; SameSite=Lax'
+          }
+        })
+      )
       .mockResolvedValueOnce(new Response('', { status: 200 }))
     await cookieClient(fetchImpl).updateProfileSettings({
       fullname: 'New Name',
@@ -455,9 +462,11 @@ describe('HubClient profile settings', () => {
     const { url, init } = requestOf(fetchImpl, 1)
     expect(url).toBe('https://huggingface.co/settings/profile')
     expect(init.method).toBe('POST')
+    expect(init.redirect).toBe('manual')
     const headers = headersOf(init)
     expect(headers['Content-Type']).toBe('application/x-www-form-urlencoded')
-    expect(headers.Cookie).toBe('token=session_cookie')
+    expect(headers.Referer).toBe('https://huggingface.co/settings/profile')
+    expect(headers.Cookie).toBe('token=session_cookie; csrf=csrf_cookie_abc')
     const body = new URLSearchParams(init.body as string)
     // The profile form's own csrf — not the logout form's.
     expect(body.get('csrf')).toBe('csrf_token_123')
@@ -465,6 +474,139 @@ describe('HubClient profile settings', () => {
     expect(body.get('avatar')).toBe('https://cdn-uploads.huggingface.co/production/uploads/x/y.png')
     expect(body.get('primaryOrg')).toBe('')
     expect(body.get('bluesky')).toBe('')
+  })
+
+  it('mirrors the form csrf into a cookie when the GET set none', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(new Response('', { status: 200 }))
+    await cookieClient(fetchImpl).updateProfileSettings({
+      fullname: 'n',
+      homepage: '',
+      details: '',
+      github: '',
+      twitter: '',
+      linkedin: '',
+      bluesky: '',
+      primaryOrg: ''
+    })
+    expect(headersOf(requestOf(fetchImpl, 1).init).Cookie).toBe(
+      'token=session_cookie; csrf=csrf_token_123'
+    )
+  })
+
+  it('accepts a full cookie jar from login capture without double-wrapping token', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
+    const client = new HubClient({
+      fetchImpl,
+      ...FAST,
+      getSessionCookie: () => 'token=session_cookie; foo=bar'
+    })
+    await client.setLike('model', 'a/b', true)
+    expect(headersOf(requestOf(fetchImpl).init).Cookie).toBe('token=session_cookie; foo=bar')
+  })
+
+  it('treats a 302 back to the profile page as a successful save', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response('', {
+          status: 302,
+          headers: { Location: '/settings/profile' }
+        })
+      )
+    await expect(
+      cookieClient(fetchImpl).updateProfileSettings({
+        fullname: 'n',
+        homepage: '',
+        details: '',
+        github: '',
+        twitter: '',
+        linkedin: '',
+        bluesky: '',
+        primaryOrg: 'acme'
+      })
+    ).resolves.toBeUndefined()
+  })
+
+  it('a 302 to /login surfaces as a 401 (stale cookie)', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response('', { status: 302, headers: { Location: '/login' } })
+      )
+    await expect(
+      cookieClient(fetchImpl).updateProfileSettings({
+        fullname: 'n',
+        homepage: '',
+        details: '',
+        github: '',
+        twitter: '',
+        linkedin: '',
+        bluesky: '',
+        primaryOrg: ''
+      })
+    ).rejects.toSatisfy(isUnauthorized)
+  })
+
+  it('omits HTML error bodies from HubApiError messages', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response('<!doctype html><html class="light"><head><meta charset="utf-8" /></head>', {
+          status: 403,
+          statusText: 'Forbidden'
+        })
+      )
+    await expect(
+      cookieClient(fetchImpl).updateProfileSettings({
+        fullname: 'n',
+        homepage: '',
+        details: '',
+        github: '',
+        twitter: '',
+        linkedin: '',
+        bluesky: '',
+        primaryOrg: ''
+      })
+    ).rejects.toMatchObject({
+      name: 'HubApiError',
+      status: 403,
+      message: 'POST https://huggingface.co/settings/profile failed: 403 Forbidden'
+    })
+  })
+
+  it('surfaces Hub x-error-message on HTML 403 responses', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response('<!doctype html><html></html>', {
+          status: 403,
+          statusText: 'Forbidden',
+          headers: { 'x-error-message': 'This organization is not a paid organization' }
+        })
+      )
+    await expect(
+      cookieClient(fetchImpl).updateProfileSettings({
+        fullname: 'n',
+        homepage: '',
+        details: '',
+        github: '',
+        twitter: '',
+        linkedin: '',
+        bluesky: '',
+        primaryOrg: 'free-org'
+      })
+    ).rejects.toMatchObject({
+      status: 403,
+      message:
+        'POST https://huggingface.co/settings/profile failed: 403 Forbidden: This organization is not a paid organization'
+    })
   })
 
   it('an omitted avatar posts the empty keep-current sentinel', async () => {

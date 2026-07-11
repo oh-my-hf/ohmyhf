@@ -6,9 +6,14 @@ export interface HubHolder {
   current: HubClient
 }
 
-/** Node's global fetch ignores Electron session.setProxy; wire undici when set. */
+/** Node's global/Electron fetch strips Set-Cookie from response headers, so
+ * cookie-backed form POSTs (CSRF companion cookies from the GET) would fail.
+ * Always use undici so getSetCookie() works; attach a ProxyAgent when set. */
 export function createProxiedFetch(proxyUrl: string | null): typeof fetch {
-  if (!proxyUrl) return fetch
+  if (!proxyUrl) {
+    return ((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+      undiciFetch(input as never, init as never)) as unknown as typeof fetch
+  }
   const agent = new ProxyAgent(proxyUrl)
   return ((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
     undiciFetch(input as never, {

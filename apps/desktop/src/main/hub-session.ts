@@ -1,7 +1,9 @@
 /**
  * Hub web-session capture: opens a real browser window on the Hub login page
- * and waits for the session cookie (named `token`) to appear. The cookie value
- * is a secret — it never reaches the renderer and is never logged.
+ * and waits for the session cookie (named `token`) to appear. Captures the
+ * full cookie jar for the Hub host (CSRF companion cookies included) — form
+ * POSTs need more than `token=` alone. The values are secrets — they never
+ * reach the renderer and are never logged.
  */
 import { BrowserWindow, session } from 'electron'
 
@@ -87,6 +89,24 @@ function start(opts: {
       return endpointHost === domain || endpointHost.endsWith(`.${domain}`)
     }
 
+    /** Full Cookie header for the Hub host once `token` is present. */
+    const captureJar = async (): Promise<string | null> => {
+      const cookies = await ses.cookies.get({})
+      const forHost = cookies.filter((c) => Boolean(c.value) && matchesEndpoint(c.domain))
+      const token = forHost.find((c) => c.name === 'token')
+      if (!token?.value) return null
+      const rest = forHost.filter((c) => c.name !== 'token')
+      return [`token=${token.value}`, ...rest.map((c) => `${c.name}=${c.value}`)].join('; ')
+    }
+
+    const tryFinishWithJar = (): void => {
+      void captureJar()
+        .then((jar) => {
+          if (jar) finish({ ok: true, cookie: jar })
+        })
+        .catch(() => undefined)
+    }
+
     const onCookieChanged = (
       _event: unknown,
       cookie: Electron.Cookie,
@@ -95,19 +115,15 @@ function start(opts: {
     ): void => {
       if (removed || cookie.name !== 'token' || !cookie.value) return
       if (!matchesEndpoint(cookie.domain)) return
-      finish({ ok: true, cookie: cookie.value })
+      // Defer a tick so any CSRF companion cookies set in the same response
+      // land before we snapshot the jar.
+      setTimeout(tryFinishWithJar, 50)
     }
 
     // Fallback sweep: if the cookie landed before our listener attached (or
     // the partition somehow kept one), catch it after each navigation.
     const sweep = (): void => {
-      void ses.cookies
-        .get({ name: 'token' })
-        .then((cookies) => {
-          const hit = cookies.find((c) => c.value && matchesEndpoint(c.domain))
-          if (hit) finish({ ok: true, cookie: hit.value })
-        })
-        .catch(() => undefined)
+      tryFinishWithJar()
     }
 
     ses.cookies.on('changed', onCookieChanged)
