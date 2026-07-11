@@ -8,7 +8,8 @@ one yellow wink."
 
 We speak huggingface.co's dialect: cool-gray surfaces with faint left-to-right card gradients,
 border-heavy depth (shadows near-invisible), 8px radius everywhere with full-round pills, mono
-repo names that recolor on hover (indigo in light, yellow in dark), and brand yellow/orange used
+repo names that recolor on hover (follows the accent setting; stock: indigo in light, yellow in
+dark), and brand yellow/orange used
 only as accents — never as CTAs. Primary actions are near-black pills that invert on hover.
 Focus and selection speak blue/indigo, not brand color. We borrow the design language, not the
 identity: our own name, logo, and disclaimers; no 🤗 or HF logo in our chrome.
@@ -37,7 +38,7 @@ cool-gray ramp; dark mode uses HF's near-black blues, not plain grays.
 | decor       | gray-400             | gray-600             | decorative glyphs/dots only, never words     |
 | cta / -ink  | gray-900 / white     | gray-100 / gray-950  | black-pill CTA; inverts on hover             |
 | link        | gray-900             | gray-200             | inline links, hover underline                |
-| hover-title | indigo-600           | yellow-500           | mono-title hover recolor (signature)         |
+| hover-title | = select             | yellow-500 / acc-400 | mono-title hover recolor; follows accent     |
 | focus       | blue-500             | blue-500             | focus rings (at /25–/50), `::selection`      |
 | select      | indigo-600           | indigo-400           | selection tint (/10), progress, switch       |
 | brand       | `#FFD21E` (+ orange) | same                 | count badges, unread dots, star fills ONLY   |

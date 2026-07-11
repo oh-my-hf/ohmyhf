@@ -65,7 +65,7 @@
   --c-cta: oklch(0.21 0.034 264.665); /* black-pill CTA, inverts on hover */
   --c-cta-ink: oklch(1 0 0);
   --c-link: oklch(0.21 0.034 264.665); /* inline links: near-black */
-  --c-hover-title: oklch(0.511 0.262 276.966); /* indigo-600: mono title hover recolor */
+  --c-hover-title: var(--c-select); /* mono title hover recolor — follows accent (indigo-600 stock) */
   --c-focus: oklch(0.623 0.214 259.815); /* blue-500: focus rings, ::selection */
   --c-select: oklch(0.511 0.262 276.966); /* indigo-600: selection tint, progress, switch */
   /* Brand accents — badges, star fills, small marks. Never CTAs. */
@@ -142,7 +142,10 @@
   --c-cta: oklch(0.967 0.003 264.542); /* inverts in dark: near-white pill */
   --c-cta-ink: oklch(0.13 0.028 261.692);
   --c-link: oklch(0.928 0.006 264.531);
-  --c-hover-title: oklch(0.795 0.184 86.047); /* yellow-500 — the signature dark recolor */
+  --c-hover-title: var(
+    --c-hover-title-dark,
+    oklch(0.795 0.184 86.047)
+  ); /* stock yellow-500 signature; accents swap in their 400 shade (see appearance.ts) */
   --c-focus: oklch(0.623 0.214 259.815);
   --c-select: oklch(0.673 0.182 276.935); /* indigo-400 */
   --c-brand: oklch(0.877 0.175 92.5);
