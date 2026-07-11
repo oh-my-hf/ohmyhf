@@ -16,9 +16,9 @@ export interface WatchSyncTarget {
  *
  * Live-verified 2026-07-11 against PATCH /api/settings/watch: token-based
  * ADD and DELETE of real user/org targets are SILENTLY IGNORED — HTTP 200,
- * but the list never changes (write-role token; fine-grained and OAuth get
- * 403). Only the browser cookie session can mutate watches. So we don't fire
- * a request we know is a no-op: we tell the user where the working Watch
+ * but the list never changes (write-role and fine-grained tokens alike).
+ * Only the browser cookie session can mutate watches. So we don't fire a
+ * request we know is a no-op: we tell the user where the working Watch
  * button lives.
  */
 export function useWatchSync(): (action: 'add' | 'delete', targets: WatchSyncTarget[]) => void {

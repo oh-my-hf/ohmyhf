@@ -81,7 +81,7 @@ test('manual access-token sign-in validates against the Hub', async () => {
       }
     })
 
-    // Settings → Account shows the token session, not the OAuth scopes block.
+    // Settings → Account shows the token session badge.
     await window
       .getByRole('button', { name: /^(Settings|设置)$/ })
       .first()

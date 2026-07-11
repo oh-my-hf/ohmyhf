@@ -118,11 +118,10 @@ export interface UserProfile {
 
 export type AuthState =
   | { status: 'signedOut' }
-  | { status: 'signingIn' }
   /**
-   * scopes = OAuth scopes granted to the stored token; UI gates features on them.
-   * method absent = 'oauth'. Manual-token sessions ('token') carry no scopes —
-   * the UI lets every attempt through and the API is the referee.
+   * Access-token session. `scopes` is unused (token permissions are decided by
+   * the Hub token itself; the UI lets attempts through and the API is the
+   * referee). `method` is always `'token'`.
    */
   | {
       status: 'signedIn'

@@ -1,47 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, type Server } from 'node:http'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { safeStorage, shell } from 'electron'
+import { safeStorage } from 'electron'
 import type { AuthState, TokenSignInResult, UserProfile } from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
-import {
-  DEFAULT_SCOPES,
-  buildAuthorizeUrl,
-  exchangeCode,
-  generatePkce,
-  generateState,
-  isTokenRejection,
-  isUnauthorized,
-  refreshAccessToken,
-  type TokenResponse
-} from '@oh-my-huggingface/hub-api'
+import { isUnauthorized } from '@oh-my-huggingface/hub-api'
 import type { AppDatabase } from './db'
-import type { MainI18n } from './i18n'
-
-/**
- * The redirect URL is fixed by the OAuth app registration on the Hub, so the
- * loopback server must bind exactly this port.
- */
-const REDIRECT_PORT = 51789
-const REDIRECT_PATH = '/callback'
-const REDIRECT_URI = `http://127.0.0.1:${REDIRECT_PORT}${REDIRECT_PATH}`
-const SIGN_IN_TIMEOUT_MS = 5 * 60 * 1000
-
-/**
- * The one OAuth client id for this app. Hard-pinned and intentionally NOT
- * configurable at runtime: every build — dev, packaged, and any profile —
- * authenticates against the same registered "Oh My HuggingFace" OAuth app, so
- * the consent screen name and the loopback redirect allowlist always match.
- *
- * This is a PUBLIC client id (PKCE, no secret). It necessarily travels in the
- * authorize URL and can be read by anyone; it is not sensitive and hiding it
- * would buy no security. Misuse is prevented on the Hugging Face side — by the
- * OAuth app's redirect-URI allowlist (locked to REDIRECT_URI below) and by the
- * app name shown on the consent screen — never by keeping this string secret.
- * See the "Security" section of the README.
- */
-const CLIENT_ID = '91ed1d9e-c0b8-4dab-a81d-a44a26c11373'
 
 /**
  * Credentials live OUTSIDE the per-profile userData so every session — packaged,
@@ -55,15 +19,10 @@ function credentialsFile(): string {
 
 interface StoredToken {
   accessToken: string
-  refreshToken?: string
-  /** Epoch ms; undefined = no known expiry. */
-  expiresAt?: number
-  /** OAuth scopes granted to this token; the UI gates features on them. */
-  scopes?: string[]
   /**
-   * How the token was obtained. Absent = 'oauth' (files written before this
-   * field existed are always OAuth grants). Manual tokens ('token') have no
-   * refresh token and no known expiry, so the refresh machinery skips them.
+   * How the token was obtained. Only `'token'` (pasted User Access Token) is
+   * supported. Legacy OAuth grants (`mode` absent or `'oauth'`) are discarded
+   * on restore so the user re-signs in with an access token.
    */
   mode?: 'oauth' | 'token'
   /** User-chosen token name from whoami-v2, for the Account UI. */
@@ -72,37 +31,23 @@ interface StoredToken {
   tokenRole?: string
 }
 
-/** Retry cadence after a transient (network/5xx) refresh failure. */
-const REFRESH_RETRY_MS = 60_000
-
-/** Thrown to abort an in-flight sign-in the user chose to cancel. */
-class SignInCanceledError extends Error {
-  constructor() {
-    super('sign-in canceled')
-    this.name = 'SignInCanceledError'
-  }
-}
+/** Retry cadence after a transient (network/5xx) whoAmI failure at startup. */
+const RETRY_MS = 60_000
 
 export class AuthManager {
   private state: AuthState = { status: 'signedOut' }
   private token: StoredToken | null = null
-  private refreshTimer: NodeJS.Timeout | null = null
-  private refreshing: Promise<boolean> | null = null
+  private retryTimer: NodeJS.Timeout | null = null
   /**
    * Bumped whenever the session owner changes intent (sign-out, new sign-in).
-   * An in-flight refresh from a previous epoch must discard its result instead
+   * An in-flight whoAmI from a previous epoch must discard its result instead
    * of resurrecting a token the user just discarded.
    */
   private epoch = 0
-  /** Outcome of the last post-refresh session restore; init() keys off it. */
-  private lastRestoreOutcome: 'signedIn' | 'unauthorized' | 'transient' = 'signedIn'
-  /** Aborts the in-flight loopback wait so the user can cancel a stuck sign-in. */
-  private cancelPending: ((err: Error) => void) | null = null
   private client!: HubClient
 
   constructor(
     private readonly db: AppDatabase,
-    private readonly i18n: MainI18n,
     private readonly onChange: (state: AuthState) => void
   ) {}
 
@@ -124,33 +69,14 @@ export class AuthManager {
     this.onChange(state)
   }
 
-  private tokenFromResponse(res: TokenResponse, fallbackScopes?: string[]): StoredToken {
-    return {
-      accessToken: res.access_token,
-      refreshToken: res.refresh_token,
-      expiresAt: res.expires_in ? Date.now() + res.expires_in * 1000 : undefined,
-      scopes: res.scope ? res.scope.split(/\s+/).filter(Boolean) : fallbackScopes,
-      mode: 'oauth'
-    }
-  }
-
-  /**
-   * The signed-in AuthState for the CURRENT token. Every signed-in broadcast
-   * must derive `method` from `this.token.mode` — doRefresh's shared-file
-   * adoption can install a sibling session's manual token, and the UI has to
-   * reflect the real mode, not the mode of whatever flow noticed first.
-   */
   private signedInState(user: UserProfile): AuthState {
-    if (this.token?.mode === 'token') {
-      return {
-        status: 'signedIn',
-        user,
-        method: 'token',
-        tokenDisplayName: this.token.tokenDisplayName,
-        tokenRole: this.token.tokenRole
-      }
+    return {
+      status: 'signedIn',
+      user,
+      method: 'token',
+      tokenDisplayName: this.token?.tokenDisplayName,
+      tokenRole: this.token?.tokenRole
     }
-    return { status: 'signedIn', user, scopes: this.token?.scopes, method: 'oauth' }
   }
 
   private persistToken(): void {
@@ -179,8 +105,7 @@ export class AuthManager {
 
   /**
    * Decrypt the shared credentials file without side effects. Used to adopt a
-   * token another session already rotated before (or after) trying our own
-   * refresh token, so concurrent sessions never sign each other out.
+   * token another session already installed, so concurrent sessions stay in sync.
    */
   private readSharedToken(): StoredToken | null {
     if (!safeStorage.isEncryptionAvailable()) return null
@@ -223,8 +148,6 @@ export class AuthManager {
     }
     this.token = token
     try {
-      // Best-effort migration to the shared file; a failed write (full/read-only
-      // disk) must not reject init() — the in-memory token still works this run.
       this.persistToken()
     } catch (err) {
       console.warn('[auth] migrating legacy token to the shared file failed; keeping it in memory', err)
@@ -232,295 +155,68 @@ export class AuthManager {
     return token
   }
 
-  private scheduleRefresh(): void {
-    if (this.refreshTimer) clearTimeout(this.refreshTimer)
-    this.refreshTimer = null
-    const expiresAt = this.token?.expiresAt
-    if (!expiresAt || !this.token?.refreshToken) return
-    const delay = Math.max(10_000, expiresAt - Date.now() - 2 * 60 * 1000)
-    this.refreshTimer = setTimeout(() => void this.refresh(), delay)
-    this.refreshTimer.unref?.()
-  }
-
   /** Retry later WITHOUT touching stored credentials — transient failures only. */
   private scheduleRetry(): void {
-    if (this.refreshTimer) clearTimeout(this.refreshTimer)
-    this.refreshTimer = setTimeout(() => {
-      if (this.state.status === 'signedIn') void this.refresh()
-      else void this.init()
-    }, REFRESH_RETRY_MS)
-    this.refreshTimer.unref?.()
-  }
-
-  private refresh(): Promise<boolean> {
-    // Single-flight: the expiry timer and 401-triggered refreshes must not race.
-    this.refreshing ??= this.doRefresh().finally(() => {
-      this.refreshing = null
-    })
-    return this.refreshing
-  }
-
-  private async doRefresh(): Promise<boolean> {
-    const epoch = this.epoch
-    // A concurrent session (dev + packaged share ~/.oh_my_hf) may already have
-    // rotated the token: adopt the shared file's version instead of spending a
-    // refresh token that would be rejected as already-used.
-    const shared = this.readSharedToken()
-    if (
-      shared &&
-      shared.accessToken !== this.token?.accessToken &&
-      (!shared.expiresAt || shared.expiresAt > Date.now() + 60_000)
-    ) {
-      this.token = shared
-      this.scheduleRefresh()
-      this.client.invalidateCache()
-      await this.restoreStateIfNeeded(epoch)
-      return true
-    }
-    const current = this.token
-    const refreshToken = current?.refreshToken
-    if (!refreshToken) return false
-    try {
-      const res = await refreshAccessToken({ clientId: CLIENT_ID, refreshToken })
-      if (epoch !== this.epoch) return false // signed out (or re-signed-in) mid-flight
-      this.token = this.tokenFromResponse(res, current?.scopes)
-      // The token endpoint may omit refresh_token when it does not rotate.
-      this.token.refreshToken ??= refreshToken
-      this.persistToken()
-      this.scheduleRefresh()
-      this.client.invalidateCache()
-      await this.restoreStateIfNeeded(epoch)
-      return true
-    } catch (err) {
-      if (epoch !== this.epoch) return false // stale outcome either way
-      if (!isTokenRejection(err)) {
-        // Offline, 5xx, 429: keep the credentials and try again later. Deleting
-        // them here is how a sleeping laptop used to sign the whole app out.
-        console.warn('[auth] token refresh failed transiently; retrying later', err)
-        this.scheduleRetry()
-        return false
-      }
-      // Definitively rejected. One last chance: a concurrent session may have
-      // rotated the token while our request was in flight — adopt its result.
-      const latest = this.readSharedToken()
-      if (latest && latest.refreshToken && latest.refreshToken !== refreshToken) {
-        this.token = latest
-        this.scheduleRefresh()
-        this.client.invalidateCache()
-        await this.restoreStateIfNeeded(epoch)
-        return true
-      }
-      // The refresh token is dead, but the ACCESS token usually still works: a
-      // lost refresh response (network drop mid-rotation) or a sibling instance
-      // rotating the shared token invalidates the refresh token server-side while
-      // our access token keeps authenticating. signOut() here also deletes the
-      // shared credentials every instance reads, so a transient glitch used to
-      // drop the login mid-use. Keep the session while the access token lives;
-      // retry later (a sibling may re-auth), and sign out only once whoAmI itself
-      // is rejected — probed each attempt, so an expired access token still ends
-      // the session cleanly (no zombie signed-in state).
-      if (current?.accessToken) {
-        try {
-          const user = await this.client.whoAmI()
-          if (epoch !== this.epoch) return false
-          if (this.state.status !== 'signedIn') {
-            this.setState(this.signedInState(user))
-          }
-          console.warn('[auth] refresh rejected but access token still valid; keeping session', err)
-          this.scheduleRetry()
-          return true
-        } catch (probeErr) {
-          if (epoch !== this.epoch) return false
-          if (!isUnauthorized(probeErr)) {
-            // Couldn't even reach the Hub to probe — treat as transient.
-            this.scheduleRetry()
-            return false
-          }
-          // Access token is dead too: fall through to a genuine sign-out.
-        }
-      }
-      console.warn('[auth] refresh token rejected; signing out', err)
-      await this.signOut()
-      return false
-    }
+    if (this.retryTimer) clearTimeout(this.retryTimer)
+    this.retryTimer = setTimeout(() => {
+      void this.init()
+    }, RETRY_MS)
+    this.retryTimer.unref?.()
   }
 
   /**
-   * After a background refresh succeeds while the UI shows signed-out, restore
-   * the session. The outcome distinguishes a dead grant (whoAmI 401 on a fresh
-   * token) from transient trouble — only the former may destroy credentials.
-   * `epoch` is the caller's session generation: if it changed across the
-   * whoAmI await (the user signed out or signed in elsewhere), we neither touch
-   * state nor arm a retry — the newer intent owns the session now.
+   * Only pasted User Access Tokens are accepted. Legacy OAuth grants (no mode,
+   * or mode === 'oauth') are cleared so the user signs in with a token.
    */
-  private async restoreStateIfNeeded(
-    epoch: number
-  ): Promise<'signedIn' | 'unauthorized' | 'transient' | 'stale'> {
-    if (this.state.status === 'signedIn') return (this.lastRestoreOutcome = 'signedIn')
-    try {
-      const user = await this.client.whoAmI()
-      if (epoch !== this.epoch) return 'stale'
-      if (this.token) {
-        this.setState(this.signedInState(user))
-      }
-      return (this.lastRestoreOutcome = 'signedIn')
-    } catch (err) {
-      if (epoch !== this.epoch) return 'stale'
-      if (isUnauthorized(err)) return (this.lastRestoreOutcome = 'unauthorized')
-      // Network trouble: stay signed out for now, retry recovers.
-      console.warn('[auth] whoAmI failed after refresh; will retry', err)
-      this.scheduleRetry()
-      return (this.lastRestoreOutcome = 'transient')
-    }
+  private acceptToken(token: StoredToken | null): StoredToken | null {
+    if (!token) return null
+    if (token.mode === 'token' && token.accessToken) return token
+    console.warn('[auth] discarding legacy OAuth session; sign in with an access token')
+    return null
   }
 
   /** Restore the session at startup (also the retry entry point after transient failures). */
   async init(): Promise<void> {
     if (this.state.status !== 'signedOut') return
-    // The file is the source of truth; fall back to a memory-only token when
-    // OS encryption is unavailable and nothing was ever persisted.
-    this.token = this.loadPersistedToken() ?? this.token
-    if (!this.token) return
-    if (this.token.expiresAt && this.token.expiresAt < Date.now()) {
-      // refresh() restores the session on success and schedules a retry on
-      // transient failure. A rotated token that still can't whoAmI (401) is a
-      // dead grant — sign out to clear the stale credentials, same as below.
-      const ok = await this.refresh()
-      if (ok && this.getState().status !== 'signedIn' && this.lastRestoreOutcome === 'unauthorized') {
-        await this.signOut()
-      }
+    // Prefer a sibling session's shared file (dev + packaged share ~/.oh_my_hf).
+    const rawShared = this.readSharedToken()
+    const rawLoaded = this.loadPersistedToken() ?? this.token
+    const accepted = this.acceptToken(rawShared) ?? this.acceptToken(rawLoaded)
+    if ((rawShared !== null || rawLoaded !== null) && accepted === null) {
+      // Legacy OAuth grant on disk — wipe it so the user pastes an access token.
+      this.token = null
+      this.persistToken()
       return
+    }
+    this.token = accepted
+    if (!this.token) return
+    try {
+      this.persistToken()
+    } catch {
+      // Memory-only is fine for this run.
     }
     try {
       const user = await this.client.whoAmI()
       this.setState(this.signedInState(user))
-      this.scheduleRefresh()
     } catch (err) {
       if (isUnauthorized(err)) {
-        if (this.token.mode === 'token') {
-          // A manual token has no refresh path: a definitive 401/403 at startup
-          // means it was revoked on the Hub — clear the stale credentials.
-          // Transient failures take the branch below and keep the token.
-          await this.signOut()
-          return
-        }
-        const ok = await this.refresh()
-        // Only a definitive 401/403 on a freshly rotated token means the grant
-        // is dead; transient whoAmI failures already scheduled their own retry.
-        if (ok && this.getState().status !== 'signedIn') {
-          if (this.lastRestoreOutcome === 'unauthorized') await this.signOut()
-        }
-      } else {
-        // Network trouble: keep the token, stay signed out in the UI, retry soon.
-        console.warn('[auth] whoAmI failed at startup', err)
-        this.scheduleRetry()
+        await this.signOut()
+        return
       }
+      console.warn('[auth] whoAmI failed at startup', err)
+      this.scheduleRetry()
     }
-  }
-
-  /**
-   * Full desktop OAuth 2.0 + PKCE flow: loopback server for the redirect,
-   * system browser for the authorize page.
-   */
-  async signIn(): Promise<AuthState> {
-    if (this.state.status === 'signingIn') return this.state
-    // Re-authorization (e.g. to pick up new scopes) starts from a valid session;
-    // an abandoned or failed attempt must restore it, never destroy it.
-    const previousToken = this.token
-    const previousState = this.state
-    const startEpoch = this.epoch
-    this.setState({ status: 'signingIn' })
-    let acquired = false
-    try {
-      const code = await this.runAuthorizationFlow()
-      const tokenRes = await exchangeCode({
-        clientId: CLIENT_ID,
-        redirectUri: REDIRECT_URI,
-        code: code.code,
-        codeVerifier: code.verifier
-      })
-      if (this.epoch !== startEpoch) {
-        // The user signed out mid-flow; discard the new grant.
-        this.setState({ status: 'signedOut' })
-        return this.state
-      }
-      this.epoch += 1 // discard any in-flight refresh of the old token
-      // Fall back to the requested scopes when the token response omits `scope`.
-      this.token = this.tokenFromResponse(tokenRes, DEFAULT_SCOPES)
-      // The grant is live in memory now; anything past this point that throws
-      // (persist to a full/read-only disk, whoAmI) must recover via the retry
-      // loop, never strand the session in 'signingIn' or drop a valid token.
-      acquired = true
-      this.persistToken()
-      this.scheduleRefresh()
-      this.client.invalidateCache()
-      const user: UserProfile = await this.client.whoAmI()
-      this.setState(this.signedInState(user))
-    } catch (err) {
-      if (acquired) {
-        // The new token is stored and scheduled; only the profile fetch failed.
-        // Stay signed out in the UI and let the retry loop finish the job.
-        console.warn('[auth] whoAmI failed right after sign-in; retrying shortly', err)
-        this.setState({ status: 'signedOut' })
-        this.scheduleRetry()
-        throw err
-      }
-      if (err instanceof SignInCanceledError) {
-        // User aborted before a token was acquired. Never throw (no error toast)
-        // and never leave the UI stuck in 'signingIn'. If a concurrent refresh
-        // already restored a signed-in session, leave it; otherwise put the
-        // prior session (signed-in for a re-auth, signed-out otherwise) back.
-        if (this.getState().status === 'signingIn') {
-          // this.token is already correct: previousToken if untouched, or the
-          // fresher token a concurrent refresh installed — keep either.
-          this.setState(
-            previousState.status === 'signedIn' ? previousState : { status: 'signedOut' }
-          )
-          if (this.token) this.scheduleRefresh()
-        }
-        return this.state
-      }
-      if (this.epoch === startEpoch && this.token === previousToken) {
-        // Failed before acquiring anything AND nothing rotated the token while
-        // the OAuth flow was open (doRefresh does not bump the epoch): put the
-        // previous session back. If a background refresh replaced this.token,
-        // leave its fresher value in place — restoring the stale snapshot would
-        // spend an already-rotated refresh token.
-        console.warn('[auth] sign-in failed; restoring the previous session', err)
-        this.setState(previousState.status === 'signedIn' ? previousState : { status: 'signedOut' })
-        if (previousToken) this.scheduleRefresh()
-      }
-      throw err
-    }
-    return this.state
-  }
-
-  /**
-   * Abort an in-flight sign-in (e.g. the user closed the browser without
-   * authorizing). Closes the loopback server immediately; signIn() then
-   * restores the previous session state, which broadcasts to the UI.
-   */
-  async cancelSignIn(): Promise<AuthState> {
-    if (this.state.status !== 'signingIn') return this.state
-    this.cancelPending?.(new SignInCanceledError())
-    return this.state
   }
 
   /**
    * Sign in with a pasted User Access Token. The candidate is validated with
-   * an out-of-band, deadline-bounded whoAmI (its own token header, its own
-   * timeout, no shared request queue — see HubClient.whoAmIWithToken) and
-   * NOTHING is touched until it proves valid: a failed, slow, or hung paste
-   * leaves the current session, the refresh machinery, and the shared
-   * credentials file exactly as they were (dev + packaged sessions read that
-   * file; destroying it signs both out). On success the token REPLACES any
-   * OAuth session; the dropped OAuth grant is simply abandoned (it stays
-   * revocable at hf.co/settings/applications).
+   * an out-of-band, deadline-bounded whoAmI and NOTHING is touched until it
+   * proves valid: a failed, slow, or hung paste leaves the current session
+   * and the shared credentials file exactly as they were.
    */
   async signInWithToken(raw: string): Promise<TokenSignInResult> {
     const accessToken = raw.trim()
-    // The UI hides the form while an OAuth flow is pending; belt-and-braces.
-    if (!accessToken || this.state.status === 'signingIn') return { ok: false, error: 'invalid' }
+    if (!accessToken) return { ok: false, error: 'invalid' }
     const startEpoch = this.epoch
     let validated: { user: UserProfile; tokenDisplayName?: string; tokenRole?: string }
     try {
@@ -533,9 +229,9 @@ export class AuthManager {
       // the session — discard the candidate without touching anything.
       return { ok: false, error: 'network' }
     }
-    this.epoch += 1 // an in-flight refresh of the old grant must not resurrect it
-    if (this.refreshTimer) clearTimeout(this.refreshTimer)
-    this.refreshTimer = null
+    this.epoch += 1
+    if (this.retryTimer) clearTimeout(this.retryTimer)
+    this.retryTimer = null
     this.token = {
       accessToken,
       mode: 'token',
@@ -548,84 +244,10 @@ export class AuthManager {
     return { ok: true, state: this.state }
   }
 
-  private runAuthorizationFlow(): Promise<{ code: string; verifier: string }> {
-    return new Promise((resolve, reject) => {
-      let server: Server | null = null
-      let timeout: NodeJS.Timeout | null = null
-      const cleanup = (): void => {
-        if (timeout) clearTimeout(timeout)
-        server?.close()
-        server = null
-        this.cancelPending = null
-      }
-
-      // Let cancelSignIn() abort the wait immediately instead of leaving the
-      // user stuck on "waiting for browser…" until the 5-minute timeout.
-      this.cancelPending = (err: Error): void => {
-        cleanup()
-        reject(err)
-      }
-
-      void (async () => {
-        const pkce = await generatePkce()
-        const state = generateState()
-
-        const html = (title: string, body: string): string =>
-          `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head>` +
-          `<body style="font-family: system-ui; max-width: 40rem; margin: 4rem auto; line-height: 1.6">` +
-          `<h2>${title}</h2><p>${body}</p></body></html>`
-
-        server = createServer((req, res) => {
-          const url = new URL(req.url ?? '/', REDIRECT_URI)
-          if (url.pathname !== REDIRECT_PATH) {
-            res.writeHead(404).end()
-            return
-          }
-          const returnedState = url.searchParams.get('state')
-          const code = url.searchParams.get('code')
-          const error = url.searchParams.get('error')
-          if (error || !code || returnedState !== state) {
-            res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' })
-            res.end(html(this.i18n.t('oauth.failedTitle'), this.i18n.t('oauth.failedBody')))
-            cleanup()
-            reject(new Error(error ?? 'OAuth callback missing code or state mismatch'))
-            return
-          }
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-          res.end(html(this.i18n.t('oauth.successTitle'), this.i18n.t('oauth.successBody')))
-          cleanup()
-          resolve({ code, verifier: pkce.verifier })
-        })
-
-        server.on('error', (err) => {
-          cleanup()
-          reject(err)
-        })
-
-        server.listen(REDIRECT_PORT, '127.0.0.1', () => {
-          timeout = setTimeout(() => {
-            cleanup()
-            reject(new Error('Sign-in timed out'))
-          }, SIGN_IN_TIMEOUT_MS)
-          const authorizeUrl = buildAuthorizeUrl({
-            clientId: CLIENT_ID,
-            redirectUri: REDIRECT_URI,
-            state,
-            codeChallenge: pkce.challenge
-          })
-          void shell.openExternal(authorizeUrl)
-        })
-      })().catch((err) => {
-        cleanup()
-        reject(err instanceof Error ? err : new Error(String(err)))
-      })
-    })
-  }
-
   async signOut(): Promise<AuthState> {
-    this.epoch += 1 // an in-flight refresh must not resurrect the session
-    if (this.refreshTimer) clearTimeout(this.refreshTimer)
-    this.refreshTimer = null
+    this.epoch += 1
+    if (this.retryTimer) clearTimeout(this.retryTimer)
+    this.retryTimer = null
     this.token = null
     this.persistToken()
     this.client.invalidateCache()

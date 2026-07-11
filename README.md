@@ -21,8 +21,8 @@ services beyond the Hugging Face API itself. Your access token is encrypted with
   virtualized lists, instant model-card rendering (sanitized Markdown), file trees, and metadata.
 - **Search everything** — `Cmd/Ctrl+K` command palette: search, filter (task, library, license),
   and sort (trending / likes / downloads).
-- **Sign in with Hugging Face** — OAuth 2.0 + PKCE through your system browser; tokens are
-  encrypted at rest, never stored in plaintext, never in `localStorage`.
+- **Sign in** — paste a Hugging Face User Access Token; it is encrypted at rest,
+  never stored in plaintext, never in `localStorage`.
 - **Download manager** — resumable, parallel, queued downloads with speed limiting, SHA-256
   verification, and system notifications. Files land in the **standard HF cache layout**, fully
   interoperable with `transformers`, `huggingface-cli`, and friends.
@@ -82,19 +82,13 @@ pnpm --filter oh-my-huggingface-desktop build:mac     # dmg (ad-hoc signed)
 pnpm --filter oh-my-huggingface-desktop build:win     # nsis
 ```
 
-### OAuth
+### Sign-in
 
-"Sign in with Hugging Face" uses a single, hard-pinned OAuth client ID — the registered
-**Oh My HuggingFace** app. It is **not** configurable at runtime: dev and packaged builds all
-authenticate against the same app, so the consent screen and the loopback redirect always
-match. Contributors do not register their own app; the pinned public ID works for local dev
-because the redirect is loopback. (Maintainer only: rotating the app means editing the
-`CLIENT_ID` constant in `apps/desktop/src/main/auth.ts`.)
-
-The app requests these scopes: `openid profile read-repos write-repos write-discussions
-inference-api read-collections write-collections manage-repos read-billing`. Users who signed
-in before a scope was added pick it up by signing out and back in (the UI gates the affected
-features until then).
+Paste a [User Access Token](https://huggingface.co/settings/tokens) in
+**Settings → Account**. Prefer a **write** token (or a fine-grained token with the
+permissions you need) so downloads of gated repos, discussions, collections, and
+Hub notifications all work. The token is encrypted with the OS keychain and stored
+at `~/.oh_my_hf/credentials.json`.
 
 ### Security
 
@@ -103,22 +97,6 @@ features until then).
   file lives outside the per-profile `userData` directory so every session — packaged app,
   `pnpm dev`, extra profiles — shares one login. `OMH_CREDENTIALS_DIR` relocates it (tests use
   this for isolation). Deleting the file signs you out everywhere.
-- **The OAuth client ID is public, not a secret.** With PKCE there is no client secret, and the
-  ID necessarily appears in the authorize URL, so it cannot be hidden in a distributed app —
-  hiding it would buy no security. The controls that actually matter live on the Hugging Face
-  side: keep the OAuth app's **redirect-URI allowlist limited to** `http://127.0.0.1:51789/callback`
-  (no wildcards, no extra URIs). That stops a **remote** attacker from redirecting authorization
-  codes to an off-host server, and the **consent screen shows the registered app name** so a
-  copied ID cannot be rebranded. This is why obscuring the ID is pointless and a tight allowlist
-  is not.
-- **One residual risk is inherent and cannot be closed client-side.** Because the redirect is a
-  loopback URI (RFC 8252), any _other_ app already running on the same machine can reuse the
-  public ID, bind its own server to `127.0.0.1:51789`, and open the authorize URL — the user
-  then sees the legitimate "Oh My HuggingFace" consent screen and may hand a token to the
-  impostor. PKCE does not help (the impostor mints its own verifier). No pinning, obfuscation, or
-  allowlist prevents this local-impersonation case; it is the accepted trade-off of a public
-  native OAuth client, and the real defense is the user not running untrusted software. The
-  allowlist prevents _remote_ exfiltration, not _local_ reuse.
 - **No network calls forward the token cross-host**: the `Authorization` header is only sent to
   `huggingface.co` API hosts, never to the CDN/`resolve` redirect targets.
 

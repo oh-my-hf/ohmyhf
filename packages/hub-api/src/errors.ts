@@ -18,7 +18,7 @@ export function isUnauthorized(err: unknown): boolean {
 }
 
 /**
- * A definitive rejection from the OAuth token endpoint (invalid_grant is a 400).
+ * A definitive rejection from a token endpoint (invalid_grant is a 400).
  * Anything else — network failures, 429s, 5xx — is transient and must never
  * destroy stored credentials.
  */

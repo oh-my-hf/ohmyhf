@@ -7,7 +7,7 @@ export type AppDatabase = Database.Database
 /**
  * All local state lives in one SQLite file under userData:
  * favorites, history, download tasks, follows, inbox, settings, and the
- * safeStorage-encrypted OAuth token. Nothing ever leaves the machine.
+ * safeStorage-encrypted access token. Nothing ever leaves the machine.
  */
 const MIGRATIONS: string[] = [
   `

@@ -55,9 +55,9 @@
     },
     "unauthorized": {
       "action": "Open on the Hub",
-      "body": "Browser sign-in can't read the notification inbox — Hugging Face grants no OAuth permission for it, so signing out and back in won't change that. Sign in with a User Access Token to see notifications here, or view them on the Hub.",
+      "body": "This access token can't read Hub notifications (a read-only or insufficient fine-grained token). Create a write or fine-grained token with notification access, or view them on the Hub.",
       "title": "Hub notifications unavailable",
-      "tokenAction": "Use an access token"
+      "tokenAction": "Manage tokens"
     }
   },
   "kind": {

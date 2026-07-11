@@ -53,9 +53,9 @@
     },
     "unauthorized": {
       "action": "在 Hub 中打开",
-      "body": "浏览器登录无法读取通知收件箱——Hugging Face 未开放对应的 OAuth 权限，退出后重新登录也无法解决。使用 User Access Token 登录即可在此查看通知，或前往 Hub 查看。",
+      "body": "当前访问令牌无法读取 Hub 通知（只读或权限不足的 fine-grained 令牌）。请创建具备通知权限的 write / fine-grained 令牌，或前往 Hub 查看。",
       "title": "无法获取 Hub 通知",
-      "tokenAction": "使用访问令牌"
+      "tokenAction": "管理令牌"
     }
   },
   "kind": {

@@ -30,10 +30,9 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 const PAGE_SIZE = 20
 
 /**
- * The notification inbox has no OAuth scope (see HF's supported-scopes list), so
- * an OAuth token can never read /api/notifications — re-login cannot fix it. A
- * manual User Access Token CAN read it, so the unauthorized state points at
- * Settings → Account (paste a token) and at the web UI as the fallback.
+ * Hub notification inbox. Requires a User Access Token with permission to
+ * read /api/notifications; insufficient tokens surface the unauthorized empty
+ * state with a link to Hub settings and the web inbox.
  */
 const HUB_NOTIFICATIONS_URL = 'https://huggingface.co/notifications'
 

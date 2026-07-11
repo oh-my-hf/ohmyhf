@@ -79,7 +79,7 @@ if (!gotLock) {
     const configuredLocale = settings.get().locale
     i18n.setLocale(configuredLocale === 'system' ? matchLocale(app.getLocale()) : configuredLocale)
 
-    const auth = new AuthManager(db, i18n, (state) => broadcast('evt:auth', state))
+    const auth = new AuthManager(db, (state) => broadcast('evt:auth', state))
     const initial = settings.get()
     const hubHolder: HubHolder = {
       current: createHubClient(() => auth.accessToken(), {

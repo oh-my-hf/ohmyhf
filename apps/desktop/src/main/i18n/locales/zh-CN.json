@@ -66,11 +66,5 @@
     "updateInstallDetail": "应用将在安装前关闭，请先确认当前工作可以安全中断。",
     "updateInstallMessage": "现在安装版本 {{version}} 吗？",
     "updateInstallTitle": "安装更新"
-  },
-  "oauth": {
-    "successTitle": "登录成功",
-    "successBody": "你已登录。现在可以关闭此标签页并返回 Oh My HuggingFace。",
-    "failedTitle": "登录失败",
-    "failedBody": "登录失败或已取消。你可以关闭此标签页，然后在应用中重试。"
   }
 }

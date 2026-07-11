@@ -308,8 +308,6 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- auth ---------------------------------------------------------------------
   handle('auth:getState', () => ctx.auth.getState())
-  handle('auth:signIn', () => ctx.auth.signIn())
-  handle('auth:cancelSignIn', () => ctx.auth.cancelSignIn())
   // The token is a secret: never log this payload.
   handle('auth:signInWithToken', ({ token }) => ctx.auth.signInWithToken(token))
   handle('auth:signOut', () => ctx.auth.signOut())

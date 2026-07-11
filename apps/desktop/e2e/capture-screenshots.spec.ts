@@ -188,7 +188,7 @@ test('capture docs screenshots', async () => {
 
     // --- settings-modal ---
     await page.getByRole('button', { name: /^Settings$/i }).click()
-    await page.waitForSelector('text=Sign in with Hugging Face', { timeout: 15_000 })
+    await page.waitForSelector('text=User Access Token', { timeout: 15_000 })
     await settle(page, 800)
     await shot(page, 'settings-modal.png')
   } finally {

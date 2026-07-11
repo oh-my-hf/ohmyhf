@@ -66,11 +66,5 @@
     "updateInstallDetail": "The app will close before installing. Make sure any active work is ready to be interrupted.",
     "updateInstallMessage": "Install version {{version}} now?",
     "updateInstallTitle": "Install Update"
-  },
-  "oauth": {
-    "successTitle": "Signed in",
-    "successBody": "You are signed in. You can close this tab and return to Oh My HuggingFace.",
-    "failedTitle": "Sign-in failed",
-    "failedBody": "The sign-in attempt failed or was cancelled. You can close this tab and try again from the app."
   }
 }

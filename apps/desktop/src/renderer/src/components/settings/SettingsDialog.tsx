@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Info,
   KeyRound,
-  LogIn,
   LogOut,
   Minus,
   Monitor,
@@ -17,14 +16,12 @@ import {
   RefreshCw,
   Shield,
   UserCircle2,
-  Wifi,
-  X
+  Wifi
 } from 'lucide-react'
 import type { AppUpdateState, DefaultHome, Locale, RepoSort } from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { changeLanguage } from '@/i18n'
-import { HUB_DEFAULT_SCOPES, SCOPE_LABEL_KEYS } from '@/lib/scopes'
 import { cn, formatBytes, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -144,26 +141,12 @@ function AccountSection(): React.JSX.Element {
   const auth = useAppStore((s) => s.auth)
   const setAuth = useAppStore((s) => s.setAuth)
   const closeSettings = useAppStore((s) => s.closeSettings)
-  const push = useToasts((s) => s.push)
   const navigate = useNavigate()
-  const [tokenFormOpen, setTokenFormOpen] = useState(false)
 
-  const signIn = useMutation({
-    mutationFn: () => invoke('auth:signIn', undefined),
-    onSuccess: setAuth,
-    onError: () => push(t('auth:error'), 'error')
-  })
-  // Aborts a stuck "waiting for browser…"; the resulting state arrives via the
-  // evt:auth broadcast and the signIn mutation resolving, so we don't setAuth here.
-  const cancelSignIn = useMutation({
-    mutationFn: () => invoke('auth:cancelSignIn', undefined)
-  })
   const signOut = useMutation({
     mutationFn: () => invoke('auth:signOut', undefined),
     onSuccess: setAuth
   })
-  const signingIn = auth.status === 'signingIn' || signIn.isPending
-  const isTokenSession = auth.status === 'signedIn' && auth.method === 'token'
 
   return (
     <SectionShell title={t('settings:account.title')}>
@@ -207,70 +190,15 @@ function AccountSection(): React.JSX.Element {
               {t('auth:signOut')}
             </Button>
           </div>
-          {isTokenSession ? (
-            <TokenAccountBlock
-              displayName={auth.tokenDisplayName}
-              role={auth.tokenRole}
-              signingIn={signingIn}
-              onSignInWithHub={() => signIn.mutate()}
-            />
-          ) : (
-            <>
-              <HubAccountBlock
-                scopes={auth.scopes}
-                reauthorizing={signIn.isPending}
-                onReauthorize={() => signIn.mutate()}
-              />
-              <div className="flex flex-col gap-2 border-t pt-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="self-start"
-                  onClick={() => setTokenFormOpen((open) => !open)}
-                >
-                  <KeyRound className="size-3.5" aria-hidden />
-                  {t('auth:tokenSignIn.switchToggle')}
-                </Button>
-                {tokenFormOpen && <TokenSignInForm onDone={() => setTokenFormOpen(false)} />}
-              </div>
-            </>
-          )}
+          <TokenAccountBlock
+            displayName={auth.tokenDisplayName}
+            role={auth.tokenRole}
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Button variant="cta" loading={signingIn} onClick={() => signIn.mutate()}>
-              <LogIn className="size-3.5" aria-hidden />
-              {signingIn ? t('auth:signingIn') : t('auth:signIn')}
-            </Button>
-            {signingIn && (
-              <Button
-                variant="secondary"
-                loading={cancelSignIn.isPending}
-                onClick={() => cancelSignIn.mutate()}
-              >
-                <X className="size-3.5" aria-hidden />
-                {t('auth:cancelSignIn')}
-              </Button>
-            )}
-          </div>
-          <p className="text-[12px] text-ink-faint">
-            {signingIn ? t('auth:signingInHint') : t('auth:hint')}
-          </p>
-          {!signingIn && (
-            <div className="mt-1 flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="self-start"
-                onClick={() => setTokenFormOpen((open) => !open)}
-              >
-                <KeyRound className="size-3.5" aria-hidden />
-                {t('auth:tokenSignIn.toggle')}
-              </Button>
-              {tokenFormOpen && <TokenSignInForm />}
-            </div>
-          )}
+          <p className="text-[12px] text-ink-faint">{t('auth:hint')}</p>
+          <TokenSignInForm />
         </div>
       )}
     </SectionShell>
@@ -337,7 +265,7 @@ function TokenSignInForm({ onDone }: { onDone?: () => void }): React.JSX.Element
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="submit"
-          variant="secondary"
+          variant="cta"
           size="sm"
           loading={submit.isPending}
           disabled={token.trim() === ''}
@@ -366,19 +294,15 @@ const TOKEN_ROLE_KEYS: Record<string, string> = {
 }
 
 /**
- * Signed in with a manual User Access Token: no OAuth scopes to show — the
- * token's own permissions decide what works, and the API is the referee.
+ * Signed in with a User Access Token: the token's own permissions decide what
+ * works, and the API is the referee.
  */
 function TokenAccountBlock({
   displayName,
-  role,
-  signingIn,
-  onSignInWithHub
+  role
 }: {
   displayName?: string
   role?: string
-  signingIn: boolean
-  onSignInWithHub: () => void
 }): React.JSX.Element {
   const { t } = useTranslation(['settings', 'auth'])
 
@@ -403,76 +327,18 @@ function TokenAccountBlock({
       <p className="max-w-[65ch] text-[12px] text-ink-faint">
         {t('settings:account.hub.tokenHint')}
       </p>
-      <div>
-        <Button variant="secondary" size="sm" loading={signingIn} onClick={onSignInWithHub}>
-          <LogIn className="size-3.5" aria-hidden />
-          {t('auth:tokenSignIn.switchToOauth')}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => openExternal('https://huggingface.co/settings/tokens')}
+        >
+          <ExternalLink className="size-3.5" aria-hidden />
+          {t('auth:tokenSignIn.createLink')}
         </Button>
       </div>
       <BillingUsageCard />
-    </div>
-  )
-}
-
-function HubAccountBlock({
-  scopes,
-  reauthorizing,
-  onReauthorize
-}: {
-  /** OAuth scopes granted to the stored token; undefined for pre-scopes sessions. */
-  scopes?: string[]
-  reauthorizing: boolean
-  onReauthorize: () => void
-}): React.JSX.Element {
-  const { t } = useTranslation(['settings'])
-  const missingScopes =
-    scopes === undefined ? [] : HUB_DEFAULT_SCOPES.filter((scope) => !scopes.includes(scope))
-  // Unknown scopes (old session) → allow the attempt; only a definitive miss gates.
-  const billingGranted = scopes === undefined || scopes.includes('read-billing')
-
-  return (
-    <div className="flex flex-col gap-3 border-t pt-4">
-      <h3 className="text-[13px] font-semibold text-ink-strong">
-        {t('settings:account.hub.title')}
-      </h3>
-      <div className="flex flex-col gap-1.5">
-        <span className="text-[12px] text-ink-muted">{t('settings:account.hub.scopes')}</span>
-        {scopes === undefined ? (
-          <p className="text-[12px] text-ink-faint">{t('settings:account.hub.scopesUnknown')}</p>
-        ) : (
-          <div className="flex flex-wrap gap-1">
-            {scopes.map((scope) =>
-              SCOPE_LABEL_KEYS[scope] !== undefined ? (
-                <Badge key={scope} variant="neutral" title={scope}>
-                  {t(SCOPE_LABEL_KEYS[scope])}
-                </Badge>
-              ) : (
-                <Badge key={scope} variant="outline" className="font-mono text-[11px]">
-                  {scope}
-                </Badge>
-              )
-            )}
-          </div>
-        )}
-        {missingScopes.length > 0 && (
-          <p className="max-w-[65ch] text-[12px] text-warning">
-            {t('settings:account.hub.missingScopes', { scopes: missingScopes.join(', ') })}
-          </p>
-        )}
-      </div>
-      <div>
-        <Button variant="secondary" size="sm" loading={reauthorizing} onClick={onReauthorize}>
-          <RefreshCw className="size-3.5" aria-hidden />
-          {t('settings:account.hub.reauthorize')}
-        </Button>
-      </div>
-      {billingGranted ? (
-        <BillingUsageCard />
-      ) : (
-        <p className="max-w-[65ch] text-[12px] text-ink-faint">
-          {t('settings:account.billing.gated')}
-        </p>
-      )}
     </div>
   )
 }

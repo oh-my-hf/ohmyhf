@@ -313,9 +313,7 @@ export interface IpcInvokeContract {
   'hub:billingUsage': { req: void; res: BillingUsage }
 
   'auth:getState': { req: void; res: AuthState }
-  'auth:signIn': { req: void; res: AuthState }
-  'auth:cancelSignIn': { req: void; res: AuthState }
-  /** Validate + install a pasted User Access Token; replaces any OAuth session. */
+  /** Validate + install a pasted User Access Token. */
   'auth:signInWithToken': { req: { token: string }; res: TokenSignInResult }
   'auth:signOut': { req: void; res: AuthState }
 
@@ -464,8 +462,6 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:discussionTitleSet',
   'hub:billingUsage',
   'auth:getState',
-  'auth:signIn',
-  'auth:cancelSignIn',
   'auth:signInWithToken',
   'auth:signOut',
   'favorites:list',
