@@ -8,6 +8,8 @@ import type {
   DatasetRows,
   DatasetSplit,
   FollowedAccount,
+  HubProfileSettings,
+  HubProfileUpdate,
   DiscussionDetail,
   DiscussionStatusFilter,
   DiscussionSummary,
@@ -59,6 +61,7 @@ import {
   mapWhoAmI,
   mapWhoAmIAuth,
   parsePostComments,
+  parseProfileSettingsPage,
   type WhoAmIDetailed
 } from './mappers'
 
@@ -703,7 +706,7 @@ export class HubClient {
 
   async whoAmI(): Promise<UserProfile> {
     const { body } = await this.getJson<unknown>(`${this.endpoint}/api/whoami-v2`, { ttl: 0 })
-    return mapWhoAmI(body as never)
+    return mapWhoAmI(body as never, this.endpoint)
   }
 
   /**
@@ -727,7 +730,7 @@ export class HubClient {
     if (!res.ok) {
       await this.throwHttpError(res, 'GET', url)
     }
-    return mapWhoAmIAuth((await res.json()) as never)
+    return mapWhoAmIAuth((await res.json()) as never, this.endpoint)
   }
 
   /**
@@ -749,7 +752,7 @@ export class HubClient {
     if (!res.ok) {
       await this.throwHttpError(res, 'GET', url)
     }
-    return mapWhoAmIAuth((await res.json()) as never)
+    return mapWhoAmIAuth((await res.json()) as never, this.endpoint)
   }
 
   /** Paged notification inbox (20/page on the Hub; `p` is zero-based). */
@@ -1594,6 +1597,62 @@ export class HubClient {
     )
     if (!res.ok) await this.throwHttpError(res, 'POST', url)
     return (await res.text()).trim()
+  }
+
+  /**
+   * The Settings → Profile page, fetched with the web session and parsed for
+   * the form values + csrf token. A signed-out (or rejected) session gets the
+   * login page instead of the form, which surfaces as a 401 so the caller can
+   * drop the stale cookie.
+   */
+  private async fetchProfileSettingsPage(): Promise<{
+    csrf: string
+    settings: HubProfileSettings
+  }> {
+    const url = `${this.endpoint}/settings/profile`
+    if (!this.getSessionCookie() || !this.allowsAuth(url)) throw new CookieRequiredError(url)
+    const res = await this.fetchWithPolicy(url, { headers: this.headers(url, 'cookie') })
+    if (!res.ok) await this.throwHttpError(res, 'GET', url)
+    const page = parseProfileSettingsPage(await res.text())
+    if (!page) throw new HubApiError('Hub web session was rejected (401)', 401, url)
+    return page
+  }
+
+  /** Editable public-profile fields as currently saved on the Hub. */
+  async getProfileSettings(): Promise<HubProfileSettings> {
+    return (await this.fetchProfileSettingsPage()).settings
+  }
+
+  /**
+   * Save the public profile. Mirrors the Hub form exactly (live-captured
+   * 2026-07-11): urlencoded POST to /settings/profile with the page's csrf
+   * token and every field, where an empty `avatar` means "keep the current
+   * one" and a freshly uploaded /uploads URL replaces it.
+   */
+  async updateProfileSettings(update: HubProfileUpdate): Promise<void> {
+    const { csrf } = await this.fetchProfileSettingsPage()
+    const url = `${this.endpoint}/settings/profile`
+    const body = new URLSearchParams({
+      csrf,
+      fullname: update.fullname,
+      avatar: update.avatar ?? '',
+      primaryOrg: update.primaryOrg,
+      homepage: update.homepage,
+      details: update.details,
+      github: update.github,
+      twitter: update.twitter,
+      linkedin: update.linkedin,
+      bluesky: update.bluesky
+    })
+    const res = await this.fetchWithPolicy(url, {
+      method: 'POST',
+      headers: {
+        ...this.headers(url, 'cookie'),
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body.toString()
+    })
+    if (!res.ok) await this.throwHttpError(res, 'POST', url)
   }
 
   /**

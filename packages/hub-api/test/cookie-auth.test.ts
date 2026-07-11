@@ -391,3 +391,113 @@ describe('HubClient.uploadCommentAsset', () => {
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 })
+
+/** SSR settings/profile page: SocialPost-style form with csrf + current values. */
+const PROFILE_PAGE = `<!doctype html>
+<form action="/logout" method="POST"><input type="hidden" name="csrf" value="logout_csrf"></form>
+<form method="post">
+  <input type="hidden" name="csrf" value="csrf_token_123">
+  <input type="text" name="fullname" maxlength="50" value="Morax &amp; Co">
+  <input type="file" accept="image/png, image/jpeg, image/webp">
+  <input type="hidden" name="avatar" value="">
+  <select name="primaryOrg">
+    <option value="">None</option>
+    <option value="acme" selected>Acme Corp</option>
+  </select>
+  <input type="url" name="homepage" value="https://example.com">
+  <textarea name="details">
+LLMs &amp; agents</textarea>
+  <input type="text" name="github" value="octocat">
+  <input type="text" name="twitter" value="">
+  <input type="text" name="linkedin" value="">
+  <input type="text" name="bluesky" value="">
+  <button type="submit">Save changes</button>
+</form>`
+
+describe('HubClient profile settings', () => {
+  it('parses the Settings → Profile form from the SSR page', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response(PROFILE_PAGE, { status: 200 }))
+    const settings = await cookieClient(fetchImpl).getProfileSettings()
+    expect(settings).toEqual({
+      fullname: 'Morax & Co',
+      homepage: 'https://example.com',
+      details: 'LLMs & agents',
+      github: 'octocat',
+      twitter: '',
+      linkedin: '',
+      bluesky: '',
+      primaryOrg: 'acme',
+      primaryOrgOptions: [{ value: 'acme', label: 'Acme Corp' }]
+    })
+    const { url, init } = requestOf(fetchImpl)
+    expect(url).toBe('https://huggingface.co/settings/profile')
+    expect(headersOf(init).Cookie).toBe('token=session_cookie')
+  })
+
+  it('saves via a urlencoded POST carrying the freshly fetched csrf token', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(new Response('', { status: 200 }))
+    await cookieClient(fetchImpl).updateProfileSettings({
+      fullname: 'New Name',
+      homepage: 'https://new.example',
+      details: 'RL',
+      github: 'octocat',
+      twitter: 'tw',
+      linkedin: '',
+      bluesky: '',
+      primaryOrg: '',
+      avatar: 'https://cdn-uploads.huggingface.co/production/uploads/x/y.png'
+    })
+    const { url, init } = requestOf(fetchImpl, 1)
+    expect(url).toBe('https://huggingface.co/settings/profile')
+    expect(init.method).toBe('POST')
+    const headers = headersOf(init)
+    expect(headers['Content-Type']).toBe('application/x-www-form-urlencoded')
+    expect(headers.Cookie).toBe('token=session_cookie')
+    const body = new URLSearchParams(init.body as string)
+    // The profile form's own csrf — not the logout form's.
+    expect(body.get('csrf')).toBe('csrf_token_123')
+    expect(body.get('fullname')).toBe('New Name')
+    expect(body.get('avatar')).toBe('https://cdn-uploads.huggingface.co/production/uploads/x/y.png')
+    expect(body.get('primaryOrg')).toBe('')
+    expect(body.get('bluesky')).toBe('')
+  })
+
+  it('an omitted avatar posts the empty keep-current sentinel', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
+      .mockResolvedValueOnce(new Response('', { status: 200 }))
+    await cookieClient(fetchImpl).updateProfileSettings({
+      fullname: 'n',
+      homepage: '',
+      details: '',
+      github: '',
+      twitter: '',
+      linkedin: '',
+      bluesky: '',
+      primaryOrg: ''
+    })
+    const body = new URLSearchParams(requestOf(fetchImpl, 1).init.body as string)
+    expect(body.get('avatar')).toBe('')
+  })
+
+  it('a login page instead of the form surfaces as a 401 (stale cookie)', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response('<!doctype html><form><input name="username"></form>', { status: 200 }))
+    const attempt = cookieClient(fetchImpl).getProfileSettings()
+    await expect(attempt).rejects.toSatisfy(isUnauthorized)
+  })
+
+  it('requires a web session before any I/O', async () => {
+    const fetchImpl = vi.fn<typeof fetch>()
+    const client = new HubClient({ fetchImpl, ...FAST, getAccessToken: () => 'hf_token' })
+    await expect(client.getProfileSettings()).rejects.toBeInstanceOf(CookieRequiredError)
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+})

@@ -13,6 +13,7 @@ import type {
   FileTreeEntry,
   HubNotification,
   HubOrgPlan,
+  HubProfileSettings,
   MyRepoEntry,
   NotificationsPage,
   PaperSummary,
@@ -373,6 +374,58 @@ export function parsePostComments(html: string, endpoint: string): PostComment[]
   return comments.flatMap(mapOne)
 }
 
+/**
+ * The Settings → Profile form, parsed from its SSR HTML (live-captured
+ * 2026-07-11: saving is a urlencoded POST back to /settings/profile carrying
+ * the page's csrf token; there is no JSON endpoint). Returns undefined when
+ * the form is absent — the Hub serves the login page to signed-out sessions.
+ */
+export function parseProfileSettingsPage(
+  html: string
+): { csrf: string; settings: HubProfileSettings } | undefined {
+  // Scope to the form carrying the profile fields; other forms on the page
+  // (logout) have their own csrf inputs.
+  const form = html.split('<form').find((chunk) => chunk.includes('name="fullname"'))
+  if (form === undefined) return undefined
+
+  const input = (name: string): string => {
+    const tag = new RegExp(`<input[^>]*\\bname="${name}"[^>]*>`).exec(form)?.[0] ?? ''
+    return decodeHtmlAttribute(/\bvalue="([^"]*)"/.exec(tag)?.[1] ?? '')
+  }
+  const textarea = (name: string): string => {
+    const m = new RegExp(`<textarea[^>]*\\bname="${name}"[^>]*>([\\s\\S]*?)</textarea>`).exec(form)
+    // Browsers drop a single leading newline after <textarea>; mirror that.
+    return decodeHtmlAttribute((m?.[1] ?? '').replace(/^\n/, ''))
+  }
+
+  const csrf = input('csrf')
+  if (csrf === '') return undefined
+
+  const selectHtml = /<select[^>]*\bname="primaryOrg"[\s\S]*?<\/select>/.exec(form)?.[0] ?? ''
+  let primaryOrg = ''
+  const primaryOrgOptions: Array<{ value: string; label: string }> = []
+  for (const m of selectHtml.matchAll(/<option([^>]*)>([\s\S]*?)<\/option>/g)) {
+    const value = decodeHtmlAttribute(/\bvalue="([^"]*)"/.exec(m[1]!)?.[1] ?? '')
+    if (/\bselected\b/.test(m[1]!)) primaryOrg = value
+    if (value !== '') primaryOrgOptions.push({ value, label: decodeHtmlAttribute(m[2]!.trim()) })
+  }
+
+  return {
+    csrf,
+    settings: {
+      fullname: input('fullname'),
+      homepage: input('homepage'),
+      details: textarea('details'),
+      github: input('github'),
+      twitter: input('twitter'),
+      linkedin: input('linkedin'),
+      bluesky: input('bluesky'),
+      primaryOrg,
+      primaryOrgOptions
+    }
+  }
+}
+
 interface RawUserOverview {
   _id?: string
   name?: string
@@ -466,17 +519,22 @@ interface RawWhoAmI {
   }
 }
 
-export function mapWhoAmI(raw: RawWhoAmI): UserProfile {
+export function mapWhoAmI(raw: RawWhoAmI, endpoint: string): UserProfile {
+  // The Hub returns avatar paths relative to the site root (e.g. /avatars/x.svg);
+  // absolutize so consumers can render them directly (the renderer has its own
+  // origin, so a relative src would 404).
+  const absolutize = (u: string | undefined): string | undefined =>
+    u ? new URL(u, endpoint).toString() : undefined
   return {
     name: raw.name ?? '',
     fullname: raw.fullname,
     email: raw.email,
-    avatarUrl: raw.avatarUrl,
+    avatarUrl: absolutize(raw.avatarUrl),
     isPro: raw.isPro,
     orgs: (raw.orgs ?? []).map((o) => ({
       name: o.name ?? '',
       fullname: o.fullname,
-      avatarUrl: o.avatarUrl,
+      avatarUrl: absolutize(o.avatarUrl),
       plan: mapHubOrgPlan(o.plan)
     }))
   }
@@ -489,10 +547,10 @@ export interface WhoAmIDetailed {
 }
 
 /** Like mapWhoAmI, plus the token identity block when the Hub reports one. */
-export function mapWhoAmIAuth(raw: RawWhoAmI): WhoAmIDetailed {
+export function mapWhoAmIAuth(raw: RawWhoAmI, endpoint: string): WhoAmIDetailed {
   const accessToken = raw.auth?.accessToken
   return {
-    user: mapWhoAmI(raw),
+    user: mapWhoAmI(raw, endpoint),
     tokenDisplayName: accessToken?.displayName || undefined,
     tokenRole: accessToken?.role || undefined
   }
