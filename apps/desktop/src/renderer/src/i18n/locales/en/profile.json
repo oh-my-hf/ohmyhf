@@ -21,13 +21,11 @@
     "team": "Team"
   },
   "post": {
-    "commentPlaceholder": "Write a comment (Markdown supported)…",
-    "commentPosted": "Comment posted",
-    "commentsOnHub": "Replies and comments happen on the Hub.",
+    "commentOnHub": "Comment on the Hub",
+    "commentsOnHub": "Post comments need a Hub web session — access tokens can't post here. Open the post on the Hub to reply.",
     "error": {
       "title": "Couldn't load this post"
-    },
-    "signInToComment": "Sign in to comment."
+    }
   },
   "selfBadge": "Your profile",
   "stats": {

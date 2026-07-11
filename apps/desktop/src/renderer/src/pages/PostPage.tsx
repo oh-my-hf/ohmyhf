@@ -1,33 +1,35 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, FileWarning, MessageSquare } from 'lucide-react'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useToasts } from '@/components/ui/toaster'
 import { MarkdownView } from '@/components/browse/MarkdownView'
-import { CommentComposer } from '@/components/community/CommentComposer'
 import { ReactionBar } from '@/components/community/ReactionBar'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
-/** Full view of a single community post (/posts/:author/:slug). */
+/**
+ * Full view of a single community post (/posts/:author/:slug).
+ *
+ * Commenting is Hub-web only: POST /api/posts/.../comment 401s for every
+ * obtainable token kind — classic write-role and fine-grained alike
+ * (live-verified 2026-07-11, same constraint as post reactions). The page
+ * links out instead of offering a composer that cannot succeed.
+ */
 export function PostPage(): React.JSX.Element {
   const { t } = useTranslation(['profile', 'common'])
   const navigate = useNavigate()
   const params = useParams()
   const author = params.author ?? ''
   const slug = params.slug ?? ''
-  const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
-  const queryClient = useQueryClient()
-  const push = useToasts((s) => s.push)
 
   const post = useQuery({
     queryKey: ['post', author, slug],
@@ -113,35 +115,14 @@ export function PostPage(): React.JSX.Element {
                 </span>
                 <ReactionBar reactions={data.reactions} postUrl={data.url} locale={locale} />
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button variant="secondary" size="sm" onClick={() => openExternal(data.url)}>
+              <p className="text-[12px] text-ink-faint">{t('profile:post.commentsOnHub')}</p>
+              <div>
+                <Button variant="cta" size="sm" onClick={() => openExternal(data.url)}>
                   <ExternalLink className="size-3.5" aria-hidden />
-                  {t('common:openOnHub')}
+                  {t('profile:post.commentOnHub')}
                 </Button>
-                {/* The post payload carries no comment bodies, so reading stays on the Hub. */}
-                <p className="text-[12px] text-ink-faint">{t('profile:post.commentsOnHub')}</p>
               </div>
             </footer>
-
-            <section className="flex flex-col gap-2">
-              {auth.status === 'signedIn' ? (
-                <CommentComposer
-                  key={`${author}/${slug}`}
-                  kind="model"
-                  repoId={`${author}/${slug}`}
-                  placeholder={t('profile:post.commentPlaceholder')}
-                  submit={(comment) => invoke('hub:postComment', { author, slug, comment })}
-                  onSubmitted={() => {
-                    push(t('profile:post.commentPosted'), 'success')
-                    void queryClient.invalidateQueries({ queryKey: ['post', author, slug] })
-                  }}
-                />
-              ) : (
-                <p className="text-center text-[12.5px] text-ink-muted">
-                  {t('profile:post.signInToComment')}
-                </p>
-              )}
-            </section>
           </>
         )}
       </article>

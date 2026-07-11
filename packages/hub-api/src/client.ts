@@ -1382,6 +1382,12 @@ export class HubClient {
     return items
   }
 
+  /**
+   * Community post comment. Live-verified 2026-07-11: Bearer access tokens
+   * (classic write-role and fine-grained) get 401 "Invalid username or password"
+   * — only a browser cookie session can post. Prefer linking out to the Hub UI;
+   * this method remains for callers that somehow hold a cookie-backed client.
+   */
   async commentOnPost(
     author: string,
     slug: string,
