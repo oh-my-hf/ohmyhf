@@ -5,6 +5,7 @@ import logo from '@/assets/logo.png'
 import { Kbd } from '@/components/ui/kbd'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { NotificationBell } from '@/components/layout/NotificationBell'
+import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { useNavHistory } from '@/lib/nav-history'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
@@ -125,13 +126,14 @@ export function TopBar(): React.JSX.Element {
           onClick={() => openSettings('account')}
           className="app-no-drag flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
         >
-          {auth.status === 'signedIn' && auth.user.avatarUrl ? (
-            <img
-              src={auth.user.avatarUrl}
-              alt=""
-              loading="eager"
-              decoding="async"
-              className="size-5 rounded-full border"
+          {auth.status === 'signedIn' ? (
+            <ProfileAvatar
+              name={auth.user.name}
+              url={auth.user.avatarUrl}
+              isPro={auth.user.isPro === true}
+              frame="compact"
+              eager
+              className="size-5 text-[10px]"
             />
           ) : (
             <UserCircle2 className="size-[18px]" aria-hidden />

@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 
 interface NavItem {
   to: string
@@ -201,14 +202,14 @@ export function Sidebar(): React.JSX.Element {
               : 'justify-start border bg-linear-to-b from-btn-from to-btn-to px-2 hover:shadow-btn-inset'
           )}
         >
-          {auth.status === 'signedIn' && auth.user.avatarUrl ? (
-            <img
-              src={auth.user.avatarUrl}
-              alt=""
-              className={cn(
-                'shrink-0 rounded-full border object-cover',
-                collapsed ? 'size-6' : 'size-5'
-              )}
+          {auth.status === 'signedIn' ? (
+            <ProfileAvatar
+              name={auth.user.name}
+              url={auth.user.avatarUrl}
+              isPro={auth.user.isPro === true}
+              frame="compact"
+              eager
+              className={cn(collapsed ? 'size-6 text-[11px]' : 'size-5 text-[10px]')}
             />
           ) : (
             <UserCircle2 className={cn('shrink-0', collapsed ? 'size-5' : 'size-4')} aria-hidden />
