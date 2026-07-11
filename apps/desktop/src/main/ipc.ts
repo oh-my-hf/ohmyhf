@@ -393,6 +393,13 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:postCreate', ({ content }) => cookieBacked(() => ctx.hub.createPost(content)))
   handle('hub:profileGet', () => cookieBacked(() => ctx.hub.getProfileSettings()))
   handle('hub:profileUpdate', (update) => cookieBacked(() => ctx.hub.updateProfileSettings(update)))
+  handle('hub:datasetSampleRows', async ({ repoId }) => {
+    return (await ctx.hub.getDatasetSampleRows(repoId)) ?? null
+  })
+  handle('hub:repoAccessGate', ({ kind, repoId }) => ctx.hub.getRepoAccessGate(kind, repoId))
+  handle('hub:repoAccessAsk', ({ kind, repoId, fields }) =>
+    cookieBacked(() => ctx.hub.askRepoAccess(kind, repoId, fields))
+  )
   handle('hub:paperUpvoteSet', ({ paperId, upvoted }) =>
     cookieBacked(() => ctx.hub.setPaperUpvote(paperId, upvoted))
   )
