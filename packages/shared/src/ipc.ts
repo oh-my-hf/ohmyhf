@@ -24,6 +24,8 @@ import type {
   DownloadRequest,
   DownloadTask,
   ExportResult,
+  HubProfileSettings,
+  HubProfileUpdate,
   HubSessionConnectResult,
   PostComment,
   ExportTarget,
@@ -342,6 +344,10 @@ export interface IpcInvokeContract {
   }
   /** Whether the connected web session may create posts (Hub beta gate). */
   'hub:postCanCreate': { req: void; res: CanPostResult }
+  /** Current editable profile fields from Settings → Profile (needs a Hub web session). */
+  'hub:profileGet': { req: void; res: HubProfileSettings }
+  /** Save the public profile on the Hub (needs a Hub web session). */
+  'hub:profileUpdate': { req: HubProfileUpdate; res: void }
   /** Create a community post (needs a Hub web session with posting access). */
   'hub:postCreate': { req: { content: string }; res: { slug?: string } }
   /** Toggle a Daily Papers upvote (needs a Hub web session). */
@@ -543,6 +549,8 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:postCommentReactionSet',
   'hub:postCanCreate',
   'hub:postCreate',
+  'hub:profileGet',
+  'hub:profileUpdate',
   'hub:postReactionSet',
   'hub:paperUpvoteSet',
   'hub:collectionUpvoteSet',

@@ -361,6 +361,18 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     // Verbatim reason label; kept as a length-capped string (see HUB_HIDE_REASONS).
     reason: z.string().min(1).max(64).optional()
   }),
+  // Field caps mirror the Hub's profile form (fullname maxlength=50; the rest generous).
+  'hub:profileUpdate': z.object({
+    fullname: z.string().max(50),
+    homepage: z.string().max(300),
+    details: z.string().max(2000),
+    github: z.string().max(64),
+    twitter: z.string().max(64),
+    linkedin: z.string().max(128),
+    bluesky: z.string().max(128),
+    primaryOrg: z.string().max(128),
+    avatar: z.string().max(500).optional()
+  }),
   // 64 MB cap: comfortably covers image/audio/short-video attachments.
   'hub:commentAssetUpload': z.object({
     filename: z.string().min(1).max(256),

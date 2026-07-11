@@ -399,6 +399,38 @@ export interface CanPostResult {
   reason?: string
 }
 
+/**
+ * Editable public-profile fields, mirroring the Hub's Settings → Profile form
+ * (no JSON endpoint — scraped from the SSR page; needs a Hub web session).
+ */
+export interface HubProfileSettings {
+  fullname: string
+  homepage: string
+  /** The "AI & ML interests" textarea (the form's `details` field). */
+  details: string
+  github: string
+  twitter: string
+  linkedin: string
+  bluesky: string
+  /** Primary organization name; '' when none is set. */
+  primaryOrg: string
+  /** Orgs the Hub offers for primaryOrg (Team/Enterprise plans only). */
+  primaryOrgOptions: Array<{ value: string; label: string }>
+}
+
+/** Profile fields posted back to the Hub. `avatar` is a freshly uploaded image URL; omit to keep the current one. */
+export interface HubProfileUpdate {
+  fullname: string
+  homepage: string
+  details: string
+  github: string
+  twitter: string
+  linkedin: string
+  bluesky: string
+  primaryOrg: string
+  avatar?: string
+}
+
 export interface UserOverview {
   /** 24-hex `_id` from the overview response — required for watch updates. */
   internalId?: string
