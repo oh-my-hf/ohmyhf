@@ -330,6 +330,38 @@ describe('mapDiscussionDetail PR fields', () => {
       'https://huggingface.co/openai-community/gpt2/discussions/159/files.diff'
     )
   })
+
+  it('normalizes comment reactions and drops emoji-less rows', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        num: 1,
+        title: 't',
+        status: 'open',
+        events: [
+          {
+            id: '678de6cec15b184e48c89ae6',
+            type: 'comment',
+            data: {
+              latest: { raw: 'hello' },
+              reactions: [
+                { reaction: '🚀', users: ['a', 'b'], count: 2 },
+                { reaction: '👍', users: ['c'] },
+                { users: ['ghost'] }
+              ]
+            }
+          },
+          { id: 'e2', type: 'status-change', data: { status: 'closed' } }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const detail = await client.getDiscussion('model', 'a/b', 1)
+    expect(detail.events[0]!.reactions).toEqual([
+      { emoji: '🚀', count: 2, users: ['a', 'b'] },
+      { emoji: '👍', count: 1, users: ['c'] }
+    ])
+    expect(detail.events[1]!.reactions).toEqual([])
+  })
 })
 
 describe('HubClient.isInferenceAvailable', () => {

@@ -16,6 +16,8 @@ import type {
   MyRepoEntry,
   NotificationsPage,
   PaperSummary,
+  PostComment,
+  PostReaction,
   PostSummary,
   RepoDetail,
   RepoKind,
@@ -197,7 +199,14 @@ interface RawDiscussion {
     type?: string
     author?: { name?: string }
     createdAt?: string
-    data?: { latest?: { raw?: string }; status?: string; oid?: string; subject?: string }
+    data?: {
+      latest?: { raw?: string }
+      status?: string
+      oid?: string
+      subject?: string
+      /** Same {reaction, users, count} rows as posts (live-verified 2026-07-11). */
+      reactions?: RawReaction[]
+    }
   }>
 }
 
@@ -227,9 +236,32 @@ export function mapDiscussionDetail(raw: RawDiscussion): DiscussionDetail {
       content: e.data?.latest?.raw,
       status: e.data?.status,
       oid: e.data?.oid,
-      subject: e.data?.subject
+      subject: e.data?.subject,
+      reactions: normalizeReactions(e.data?.reactions)
     }))
   }
+}
+
+interface RawReaction {
+  reaction?: string
+  count?: number
+  users?: string[]
+}
+
+/**
+ * Normalize Hub reaction rows to {emoji, count, users}; keep only entries with
+ * an emoji so a malformed row can't produce an unclickable ghost pill.
+ */
+function normalizeReactions(raw: RawReaction[] | undefined): PostReaction[] {
+  return (raw ?? []).flatMap((r) => {
+    const emoji = r?.reaction
+    if (!emoji) return []
+    const users = Array.isArray(r?.users)
+      ? r.users.filter((u): u is string => typeof u === 'string')
+      : []
+    const count = typeof r?.count === 'number' ? r.count : users.length
+    return [{ emoji, count, users }]
+  })
 }
 
 interface RawPost {
@@ -248,15 +280,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     u ? new URL(u, endpoint).toString() : undefined
   const author = raw.author?.name ?? ''
   const slug = raw.slug ?? ''
-  // Normalize each reaction to {emoji, count, users}; keep only entries with an
-  // emoji so a malformed row can't produce an unclickable ghost pill.
-  const reactions = (raw.reactions ?? []).flatMap((r) => {
-    const emoji = r?.reaction
-    if (!emoji) return []
-    const users = Array.isArray(r?.users) ? r.users.filter((u): u is string => typeof u === 'string') : []
-    const count = typeof r?.count === 'number' ? r.count : users.length
-    return [{ emoji, count, users }]
-  })
+  const reactions = normalizeReactions(raw.reactions)
   const numReactions = reactions.reduce((acc, r) => acc + (r.count || 1), 0)
   return {
     slug,
@@ -271,6 +295,82 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     reactions,
     url: absolutize(raw.url) ?? `${endpoint}/posts/${author}/${slug}`
   }
+}
+
+interface RawPostComment {
+  id?: string
+  type?: string
+  author?: { name?: string; fullname?: string; avatarUrl?: string; isPro?: boolean }
+  createdAt?: string
+  data?: {
+    hidden?: boolean
+    hiddenReason?: string
+    hiddenBy?: string
+    latest?: { raw?: string }
+    reactions?: RawReaction[]
+  }
+  /** The Hub threads replies one level deep, nested on the parent comment. */
+  replies?: RawPostComment[]
+}
+
+/** Decode the HTML-attribute escaping the Hub applies to embedded JSON islands. */
+function decodeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+}
+
+/**
+ * Comments on a community post, parsed from the post page HTML. The Hub has
+ * no JSON endpoint for post comments — the thread ships inside the
+ * SocialPost component's data-props attribute (live-verified 2026-07-11:
+ * socialPost.comments carries the same event shape as discussion comments).
+ * Returns [] when the island is missing (page shape drift degrades to an
+ * empty thread, never a crash).
+ */
+export function parsePostComments(html: string, endpoint: string): PostComment[] {
+  const match =
+    /data-target="SocialPost"[^>]*data-props="([^"]*)"/.exec(html) ??
+    /data-props="([^"]*)"[^>]*data-target="SocialPost"/.exec(html)
+  if (!match) return []
+  let comments: RawPostComment[]
+  try {
+    const props = JSON.parse(decodeHtmlAttribute(match[1]!)) as {
+      socialPost?: { comments?: RawPostComment[] }
+    }
+    comments = props.socialPost?.comments ?? []
+  } catch {
+    return []
+  }
+  const absolutize = (u: string | undefined): string | undefined =>
+    u ? new URL(u, endpoint).toString() : undefined
+  const mapOne = (c: RawPostComment): PostComment[] => {
+    if (c.type !== 'comment' || !c.id) return []
+    const hidden = c.data?.hidden === true
+    const replies = (c.replies ?? []).flatMap(mapOne)
+    return [
+      {
+        id: c.id,
+        author: c.author?.name ?? '',
+        authorFullname: c.author?.fullname,
+        authorAvatarUrl: absolutize(c.author?.avatarUrl),
+        authorIsPro: c.author?.isPro,
+        createdAt: c.createdAt,
+        // The Hub withholds hidden content; keep the row so the UI can show
+        // the "this comment has been hidden" placeholder.
+        content: hidden ? '' : (c.data?.latest?.raw ?? ''),
+        reactions: normalizeReactions(c.data?.reactions),
+        ...(replies.length > 0 ? { replies } : {}),
+        ...(hidden
+          ? { hidden: true, hiddenReason: c.data?.hiddenReason, hiddenBy: c.data?.hiddenBy }
+          : {})
+      }
+    ]
+  }
+  return comments.flatMap(mapOne)
 }
 
 interface RawUserOverview {
@@ -428,6 +528,8 @@ interface RawCollection {
   private?: boolean
   theme?: string
   upvotes?: number
+  /** Detail responses only; reflects the authenticated caller. */
+  isUpvotedByUser?: boolean
   lastUpdated?: string
   numberItems?: number
   items?: RawCollectionItem[]
@@ -445,6 +547,7 @@ export function mapCollectionSummary(raw: RawCollection): CollectionSummary {
     // List payloads embed a (possibly truncated) items array instead of a count.
     itemCount: raw.numberItems ?? raw.items?.length,
     upvotes: raw.upvotes,
+    isUpvoted: raw.isUpvotedByUser,
     updatedAt: raw.lastUpdated
   }
 }

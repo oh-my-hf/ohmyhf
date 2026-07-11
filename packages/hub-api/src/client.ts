@@ -2,6 +2,7 @@ import type {
   AccessRequest,
   ActivityFeed,
   BillingUsage,
+  CanPostResult,
   CollectionDetail,
   CollectionSummary,
   DatasetRows,
@@ -17,6 +18,7 @@ import type {
   NotificationsPage,
   Page,
   PaperSummary,
+  PostComment,
   PostSummary,
   RepoDetail,
   RepoKind,
@@ -34,7 +36,7 @@ import type {
   PaperSearchResult,
   CollectionSearchResult
 } from '@oh-my-huggingface/shared'
-import { HubApiError, isNotFound } from './errors'
+import { CookieRequiredError, HubApiError, isNotFound } from './errors'
 import {
   mapAccessRequest,
   mapActivityFeed,
@@ -56,6 +58,7 @@ import {
   mapUserOverview,
   mapWhoAmI,
   mapWhoAmIAuth,
+  parsePostComments,
   type WhoAmIDetailed
 } from './mappers'
 
@@ -135,6 +138,12 @@ export interface HubClientOptions {
   maxRetries?: number
   /** Called on every request; return undefined when signed out. */
   getAccessToken?: () => string | undefined
+  /**
+   * Hub web-session cookie (the huggingface.co `token` cookie value), for the
+   * social writes the Hub blocks for Bearer tokens. Return undefined when no
+   * web session is connected.
+   */
+  getSessionCookie?: () => string | undefined
 }
 
 interface CacheEntry {
@@ -211,6 +220,11 @@ type GatedRepoKind = Extract<RepoKind, 'model' | 'dataset'>
 
 /** Watch targets are addressed by their 24-hex internal id. */
 interface WatchTarget {
+  /**
+   * The account HANDLE — username or org name — NOT the 24-hex internal id.
+   * Live-verified 2026-07-11: /api/settings/watch keys add/delete on the
+   * handle (`{id: "Juanxi"}`); sending the internal id is silently ignored.
+   */
   id: string
   type: 'user' | 'org'
 }
@@ -270,6 +284,7 @@ export class HubClient {
   private readonly minRequestGapMs: number
   private readonly maxRetries: number
   private readonly getAccessToken: () => string | undefined
+  private readonly getSessionCookie: () => string | undefined
   private readonly cache = new Map<string, CacheEntry>()
   private readonly inflight = new Map<string, Promise<unknown>>()
   private active = 0
@@ -292,6 +307,7 @@ export class HubClient {
     this.minRequestGapMs = Math.max(0, options.minRequestGapMs ?? 120)
     this.maxRetries = Math.max(0, options.maxRetries ?? 2)
     this.getAccessToken = options.getAccessToken ?? (() => undefined)
+    this.getSessionCookie = options.getSessionCookie ?? (() => undefined)
   }
 
   get baseUrl(): string {
@@ -313,15 +329,33 @@ export class HubClient {
     )
   }
 
-  private headers(url: string): Record<string, string> {
+  /**
+   * `auth: 'cookie'` authenticates as the Hub web session instead of the
+   * Bearer token — required for the social writes the Hub blocks for tokens
+   * (like, post reactions/comments, watch, discussion reactions; all
+   * live-verified 2026-07-11). Cookie requests deliberately omit
+   * Authorization (the Hub would prefer the header and 401), and carry
+   * Origin/Referer like the first-party web app. Throws CookieRequiredError
+   * before any I/O when no web session is connected.
+   */
+  private headers(url: string, auth: 'token' | 'cookie' = 'token'): Record<string, string> {
     const h: Record<string, string> = { 'User-Agent': this.userAgent }
+    if (auth === 'cookie') {
+      const cookie = this.getSessionCookie()
+      if (!cookie || !this.allowsAuth(url)) throw new CookieRequiredError(url)
+      h.Cookie = `token=${cookie}`
+      h.Origin = this.endpoint
+      h.Referer = `${this.endpoint}/`
+      return h
+    }
     const token = this.getAccessToken()
     if (token && this.allowsAuth(url)) h.Authorization = `Bearer ${token}`
     return h
   }
 
   private cacheKey(url: string): string {
-    // Token presence changes responses (private/gated repos), so partition the cache.
+    // Token presence changes responses (private/gated repos), so partition the
+    // cache. The web-session cookie is mutation-only and never affects GETs.
     return `${this.getAccessToken() ? 'auth' : 'anon'}:${url}`
   }
 
@@ -388,14 +422,15 @@ export class HubClient {
   private async sendJson(
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
-    body?: unknown
+    body?: unknown,
+    opts: { auth?: 'token' | 'cookie' } = {}
   ): Promise<Response> {
     const res = await this.fetchWithPolicy(
       url,
       {
         method,
         headers: {
-          ...this.headers(url),
+          ...this.headers(url, opts.auth),
           ...(body === undefined ? {} : { 'Content-Type': 'application/json' })
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) })
@@ -685,6 +720,28 @@ export class HubClient {
     const url = `${this.endpoint}/api/whoami-v2`
     const headers: Record<string, string> = { 'User-Agent': this.userAgent }
     if (this.allowsAuth(url)) headers.Authorization = `Bearer ${token}`
+    const res = await this.fetchImpl(url, {
+      headers,
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000)
+    })
+    if (!res.ok) {
+      await this.throwHttpError(res, 'GET', url)
+    }
+    return mapWhoAmIAuth((await res.json()) as never)
+  }
+
+  /**
+   * whoAmI with an explicit web-session cookie, for validating a captured
+   * Hub login before it becomes the supplemental credential. Same out-of-band
+   * rules as whoAmIWithToken: no cache, no dedup, no slot queue, own deadline.
+   */
+  async whoAmIWithCookie(
+    cookie: string,
+    opts: { timeoutMs?: number } = {}
+  ): Promise<WhoAmIDetailed> {
+    const url = `${this.endpoint}/api/whoami-v2`
+    const headers: Record<string, string> = { 'User-Agent': this.userAgent }
+    if (this.allowsAuth(url)) headers.Cookie = `token=${cookie}`
     const res = await this.fetchImpl(url, {
       headers,
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000)
@@ -1102,23 +1159,32 @@ export class HubClient {
   }
 
   /**
-   * Watch/unwatch users and orgs by their 24-hex internal id. Returns the
-   * resulting watch list from the response body.
+   * Watch/unwatch users and orgs by their account HANDLE (username/org name).
+   * Returns the resulting watch list from the response body — which reflects
+   * the mutation immediately (an add appears in its own response).
    *
-   * Live-verified 2026-07-11: token-based ADD and DELETE of real user/org
-   * targets both return HTTP 200 but are SILENTLY IGNORED (list unchanged).
-   * Only a browser cookie session can mutate watches. Callers must check the
-   * returned list. Do not send add and delete in the same call: the endpoint
-   * 400s when both are non-empty. An empty add+delete also 400s.
+   * Live-verified 2026-07-11: the endpoint keys on the handle, not the 24-hex
+   * internal id — an add with the internal id returns HTTP 200 but is silently
+   * ignored. Watch mutations need the web session, so this authenticates with
+   * the cookie when connected and falls back to the token otherwise (reads via
+   * listWatched must keep working token-only). Do not send add and delete in
+   * the same call: the endpoint 400s when both are non-empty. An empty
+   * add+delete also 400s.
    */
   async updateWatch(changes: {
     add?: WatchTarget[]
     delete?: WatchTarget[]
   }): Promise<WatchedEntry[]> {
-    const res = await this.sendJson('PATCH', `${this.endpoint}/api/settings/watch`, {
-      add: changes.add ?? [],
-      delete: changes.delete ?? []
-    })
+    const auth = this.getSessionCookie() ? ('cookie' as const) : ('token' as const)
+    const res = await this.sendJson(
+      'PATCH',
+      `${this.endpoint}/api/settings/watch`,
+      {
+        add: changes.add ?? [],
+        delete: changes.delete ?? []
+      },
+      { auth }
+    )
     const body = (await res.json().catch(() => ({}))) as {
       watched?: Array<{ _id?: string; id?: string; name?: string; type?: string }>
     }
@@ -1131,16 +1197,19 @@ export class HubClient {
 
   /**
    * Current Hub watch list. There is no GET endpoint; a no-op DELETE of a
-   * nonexistent id returns 200 with the full list (live-verified 2026-07-11).
+   * nonexistent handle returns 200 with the full list (live-verified
+   * 2026-07-11).
    */
   async listWatched(): Promise<WatchedEntry[]> {
-    return this.updateWatch({ delete: [{ id: '0'.repeat(24), type: 'user' }] })
+    return this.updateWatch({ delete: [{ id: '\0no-such-account\0', type: 'user' }] })
   }
 
   /**
    * Attempt to watch/unwatch and report whether the Hub actually applied it.
-   * Token sessions typically get `applied: false` — callers should fall back
-   * to the website Watch control.
+   * The response reflects the change, so `applied` is decided by whether the
+   * target handle is present afterward. Without a web session the Hub ignores
+   * the mutation (applied: false) and callers fall back to the website Watch
+   * control.
    */
   async setWatch(
     target: WatchTarget,
@@ -1149,7 +1218,8 @@ export class HubClient {
     const watched = await this.updateWatch(
       watching ? { add: [target] } : { delete: [target] }
     )
-    const present = watched.some((w) => w.internalId === target.id)
+    const handle = target.id.toLowerCase()
+    const present = watched.some((w) => w.name.toLowerCase() === handle)
     return { applied: present === watching, watched }
   }
 
@@ -1382,14 +1452,17 @@ export class HubClient {
    *
    * Live-verified 2026-07-11: POST (like) with Bearer access tokens returns
    * 401 "Invalid username or password" — Hugging Face blocks programmatic
-   * likes to prevent spam (huggingface_hub only exposes `unlike`). DELETE
-   * (unlike) works with write-role tokens. Prefer linking out to the Hub UI
-   * for like; this method remains for unlike and cookie-backed clients.
+   * likes to prevent spam (huggingface_hub only exposes `unlike`), so the
+   * like path authenticates as the Hub web session (CookieRequiredError when
+   * none is connected). DELETE (unlike) works with write-role tokens and
+   * stays on Bearer auth.
    */
   async setLike(kind: RepoKind, repoId: string, liked: boolean): Promise<void> {
     await this.sendJson(
       liked ? 'POST' : 'DELETE',
-      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/like`
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/like`,
+      undefined,
+      { auth: liked ? 'cookie' : 'token' }
     )
   }
 
@@ -1423,8 +1496,8 @@ export class HubClient {
   /**
    * Community post comment. Live-verified 2026-07-11: Bearer access tokens
    * (classic write-role and fine-grained) get 401 "Invalid username or password"
-   * — only a browser cookie session can post. Prefer linking out to the Hub UI;
-   * this method remains for callers that somehow hold a cookie-backed client.
+   * — only a browser cookie session can post, so this authenticates as the Hub
+   * web session (CookieRequiredError when none is connected).
    */
   async commentOnPost(
     author: string,
@@ -1436,7 +1509,190 @@ export class HubClient {
     const url = replyToCommentId
       ? `${base}/comment/${encodeURIComponent(replyToCommentId)}/reply`
       : `${base}/comment`
-    await this.sendJson('POST', url, { comment })
+    await this.sendJson('POST', url, { comment }, { auth: 'cookie' })
+  }
+
+  /**
+   * Toggle an emoji reaction on a community post. Cookie-session only.
+   * Live-captured 2026-07-11 from the web UI: add and remove are both POSTs
+   * to .../reaction with {reaction, action: 'add' | 'remove'}.
+   */
+  async setPostReaction(
+    author: string,
+    slug: string,
+    reaction: string,
+    active: boolean
+  ): Promise<void> {
+    const url = `${this.endpoint}/api/posts/${encodeURIComponent(author)}/${encodeURIComponent(slug)}/reaction`
+    await this.sendJson(
+      'POST',
+      url,
+      { reaction, action: active ? 'add' : 'remove' },
+      { auth: 'cookie' }
+    )
+  }
+
+  /**
+   * Toggle an emoji reaction on a post comment. Cookie-session only.
+   * Live-captured 2026-07-11: POST .../posts/{author}/{slug}/comment/{id}/reaction
+   * with {reaction, action: 'add' | 'remove'} — same body as post and
+   * discussion reactions.
+   */
+  async setPostCommentReaction(
+    author: string,
+    slug: string,
+    commentId: string,
+    reaction: string,
+    active: boolean
+  ): Promise<void> {
+    const base = `${this.endpoint}/api/posts/${encodeURIComponent(author)}/${encodeURIComponent(slug)}`
+    await this.sendJson(
+      'POST',
+      `${base}/comment/${encodeURIComponent(commentId)}/reaction`,
+      { reaction, action: active ? 'add' : 'remove' },
+      { auth: 'cookie' }
+    )
+  }
+
+  /**
+   * Hide a comment on a community post — IRREVERSIBLE. Cookie-session only,
+   * and the account needs moderation rights (post owner or the comment's
+   * author). Live-verified 2026-07-11: POST .../comment/{id}/hide with
+   * {reason}, where reason is a verbatim label from HUB_HIDE_REASONS
+   * (optional; the Hub stores the display string, not a code).
+   */
+  async hidePostComment(
+    author: string,
+    slug: string,
+    commentId: string,
+    reason?: string
+  ): Promise<void> {
+    const url = `${this.endpoint}/api/posts/${encodeURIComponent(author)}/${encodeURIComponent(slug)}/comment/${encodeURIComponent(commentId)}/hide`
+    await this.sendJson('POST', url, reason ? { reason } : {}, { auth: 'cookie' })
+  }
+
+  /**
+   * Upload a comment attachment to the Hub CDN and return its URL, to embed in
+   * comment markdown. Cookie-session only. Live-captured 2026-07-11: POST
+   * /uploads (NOT under /api/) with the raw file bytes as the body and the
+   * file's Content-Type; the response body is the plain-text CDN URL.
+   */
+  async uploadCommentAsset(
+    data: Uint8Array,
+    contentType: string
+  ): Promise<string> {
+    const url = `${this.endpoint}/uploads`
+    if (!this.getSessionCookie() || !this.allowsAuth(url)) throw new CookieRequiredError(url)
+    const res = await this.fetchWithPolicy(
+      url,
+      {
+        method: 'POST',
+        headers: { ...this.headers(url, 'cookie'), 'Content-Type': contentType },
+        body: data as unknown as RequestInit['body']
+      },
+      { retryStatuses: [429] }
+    )
+    if (!res.ok) await this.throwHttpError(res, 'POST', url)
+    return (await res.text()).trim()
+  }
+
+  /**
+   * Comments on a community post. There is no JSON endpoint — the Hub embeds
+   * the thread in the post page's SocialPost component props, so this fetches
+   * the HTML page and parses that JSON island. Live-verified 2026-07-11: the
+   * island (with socialPost.comments) is present in the anonymous/token SSR
+   * HTML, not just cookie'd requests, so this works signed out.
+   */
+  async getPostComments(author: string, slug: string): Promise<PostComment[]> {
+    const url = `${this.endpoint}/posts/${encodeURIComponent(author)}/${encodeURIComponent(slug)}`
+    const html = await this.getText(url)
+    return parsePostComments(html, this.endpoint)
+  }
+
+  /**
+   * Whether the web session may create community posts. The Hub gates posting
+   * behind a beta (/api/posts/can-post returns {canPost, reason};
+   * live-verified 2026-07-11). Posting is cookie-only, so without a web
+   * session this reports canPost: false locally.
+   */
+  async canCreatePost(): Promise<CanPostResult> {
+    const url = `${this.endpoint}/api/posts/can-post`
+    if (!this.getSessionCookie()) return { canPost: false }
+    const res = await this.fetchWithPolicy(url, { headers: this.headers(url, 'cookie') })
+    if (!res.ok) await this.throwHttpError(res, 'GET', url)
+    const body = (await res.json()) as { canPost?: boolean; reason?: string }
+    return { canPost: body.canPost === true, reason: body.reason }
+  }
+
+  /**
+   * Create a community post. Cookie-session only, and additionally gated by
+   * the Hub's posting beta (check canCreatePost first). Endpoint shape from
+   * community usage of the web app — could not be live-verified on a
+   * non-beta account; errors surface verbatim to the caller.
+   */
+  async createPost(content: string): Promise<{ slug?: string }> {
+    const res = await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/posts`,
+      { rawContent: content },
+      { auth: 'cookie' }
+    )
+    const body = (await res.json().catch(() => ({}))) as {
+      slug?: string
+      socialPost?: { slug?: string }
+    }
+    return { slug: body.slug ?? body.socialPost?.slug }
+  }
+
+  /**
+   * Toggle a Daily Papers upvote. Cookie-session only (social action).
+   * Live-captured 2026-07-11: POST /api/papers/{id}/upvote to upvote,
+   * DELETE to remove. The papers APIs expose no per-user upvote state, so
+   * callers track their own toggle optimistically.
+   */
+  async setPaperUpvote(paperId: string, upvoted: boolean): Promise<void> {
+    await this.sendJson(
+      upvoted ? 'POST' : 'DELETE',
+      `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}/upvote`,
+      {},
+      { auth: 'cookie' }
+    )
+  }
+
+  /**
+   * Toggle a collection upvote. Cookie-session only (social action).
+   * Live-captured 2026-07-11: POST/DELETE /api/collections/{slug}/upvote.
+   * Collection detail responses carry isUpvotedByUser for the initial state.
+   */
+  async setCollectionUpvote(slug: string, upvoted: boolean): Promise<void> {
+    await this.sendJson(
+      upvoted ? 'POST' : 'DELETE',
+      `${this.endpoint}/api/collections/${slug}/upvote`,
+      {},
+      { auth: 'cookie' }
+    )
+  }
+
+  /**
+   * Toggle an emoji reaction on a discussion comment. Cookie-session only.
+   * Live-captured 2026-07-11: POST .../discussions/{num}/comment/{commentId}/reaction
+   * with {reaction, action: 'add' | 'remove'} — same body shape as posts.
+   */
+  async setDiscussionCommentReaction(
+    kind: RepoKind,
+    repoId: string,
+    num: number,
+    commentId: string,
+    reaction: string,
+    active: boolean
+  ): Promise<void> {
+    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}/comment/${encodeURIComponent(commentId)}/reaction`
+    await this.sendJson(
+      'POST',
+      url,
+      { reaction, action: active ? 'add' : 'remove' },
+      { auth: 'cookie' }
+    )
   }
 
   async commentOnPaper(
@@ -1448,7 +1704,11 @@ export class HubClient {
     const url = replyToCommentId
       ? `${base}/comment/${encodeURIComponent(replyToCommentId)}/reply`
       : `${base}/comment`
-    await this.sendJson('POST', url, { comment })
+    // Prefer the web session when connected (paper comments share the post
+    // comment machinery, which is cookie-gated for some token kinds); token
+    // stays the fallback so token-only sessions keep their current behavior.
+    const auth = this.getSessionCookie() ? ('cookie' as const) : ('token' as const)
+    await this.sendJson('POST', url, { comment }, { auth })
   }
 
   async mergePullRequest(

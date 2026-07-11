@@ -48,9 +48,14 @@ describe('HubClient.commentOnDiscussion', () => {
 })
 
 describe('HubClient.commentOnPost', () => {
+  // Post comments are cookie-session only (Bearer tokens 401); the client is
+  // built with a session cookie here. Cookie-required behavior is covered in
+  // cookie-auth.test.ts.
+  const COOKIE = { getSessionCookie: () => 'hf_session' } as const
+
   it('POSTs a top-level comment', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
-    const client = new HubClient({ fetchImpl, ...FAST })
+    const client = new HubClient({ fetchImpl, ...FAST, ...COOKIE })
     await client.commentOnPost('julien', '12345', 'nice work')
     const { url, init } = requestOf(fetchImpl)
     expect(url).toBe('https://huggingface.co/api/posts/julien/12345/comment')
@@ -60,7 +65,7 @@ describe('HubClient.commentOnPost', () => {
 
   it('POSTs a reply to an existing comment', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
-    const client = new HubClient({ fetchImpl, ...FAST })
+    const client = new HubClient({ fetchImpl, ...FAST, ...COOKIE })
     await client.commentOnPost('julien', '12345', 'agreed', '6608ca7bbc8b7a1e30ba53e1')
     expect(requestOf(fetchImpl).url).toBe(
       'https://huggingface.co/api/posts/julien/12345/comment/6608ca7bbc8b7a1e30ba53e1/reply'

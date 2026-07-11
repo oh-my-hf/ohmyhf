@@ -161,19 +161,19 @@ describe('HubClient.clearNotifications', () => {
 })
 
 describe('HubClient.updateWatch', () => {
-  it('PATCHes add/delete watch targets, defaulting missing sides to []', async () => {
+  it('PATCHes add/delete watch targets by handle, defaulting missing sides to []', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
     const client = new HubClient({ fetchImpl, ...FAST })
-    await client.updateWatch({ add: [{ id: HEX, type: 'org' }] })
+    await client.updateWatch({ add: [{ id: 'acme', type: 'org' }] })
     const { url, init } = requestOf(fetchImpl)
     expect(url).toBe('https://huggingface.co/api/settings/watch')
     expect(init.method).toBe('PATCH')
-    expect(jsonBodyOf(init)).toEqual({ add: [{ id: HEX, type: 'org' }], delete: [] })
+    expect(jsonBodyOf(init)).toEqual({ add: [{ id: 'acme', type: 'org' }], delete: [] })
   })
 
   it('returns the resulting watch list so callers can verify adds took effect', async () => {
-    // The Hub answers 200 but silently ignores token-based org adds, so the
-    // response list — not the status — is the source of truth.
+    // The Hub answers 200 but silently ignores mutations without a web session,
+    // so the response list — not the status — is the source of truth.
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({
         watched: [
@@ -184,7 +184,7 @@ describe('HubClient.updateWatch', () => {
       })
     )
     const client = new HubClient({ fetchImpl, ...FAST })
-    const watched = await client.updateWatch({ add: [{ id: HEX, type: 'org' }] })
+    const watched = await client.updateWatch({ add: [{ id: 'acme', type: 'org' }] })
     expect(watched).toEqual([
       { internalId: 'a'.repeat(24), name: 'alice', type: 'user' },
       { internalId: 'b'.repeat(24), name: 'Acme', type: 'org' },
@@ -195,15 +195,15 @@ describe('HubClient.updateWatch', () => {
   it('tolerates an empty response body', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response('', { status: 200 }))
     const client = new HubClient({ fetchImpl, ...FAST })
-    await expect(client.updateWatch({ add: [{ id: HEX, type: 'user' }] })).resolves.toEqual([])
+    await expect(client.updateWatch({ add: [{ id: 'alice', type: 'user' }] })).resolves.toEqual([])
   })
 })
 
 describe('HubClient.listWatched', () => {
-  it('reads the watch list via a no-op delete of a nonexistent id', async () => {
+  it('reads the watch list via a no-op delete of a nonexistent handle', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({
-        watched: [{ _id: HEX, name: 'alice', type: 'user' }]
+        watched: [{ _id: HEX, id: 'alice', name: 'alice', type: 'user' }]
       })
     )
     const client = new HubClient({ fetchImpl, ...FAST })
@@ -212,10 +212,11 @@ describe('HubClient.listWatched', () => {
     ])
     const { url, init } = requestOf(fetchImpl)
     expect(url).toBe('https://huggingface.co/api/settings/watch')
-    expect(jsonBodyOf(init)).toEqual({
-      add: [],
-      delete: [{ id: '0'.repeat(24), type: 'user' }]
-    })
+    const body = jsonBodyOf(init) as { add: unknown[]; delete: Array<{ type: string }> }
+    expect(body.add).toEqual([])
+    // A sentinel handle that cannot be a real account, so the delete is a no-op.
+    expect(body.delete).toHaveLength(1)
+    expect(body.delete[0]!.type).toBe('user')
   })
 })
 
@@ -223,20 +224,21 @@ describe('HubClient.setWatch', () => {
   it('reports applied=false when the Hub silently ignores the mutation', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ watched: [] }))
     const client = new HubClient({ fetchImpl, ...FAST })
-    await expect(client.setWatch({ id: HEX, type: 'user' }, true)).resolves.toEqual({
+    await expect(client.setWatch({ id: 'alice', type: 'user' }, true)).resolves.toEqual({
       applied: false,
       watched: []
     })
   })
 
-  it('reports applied=true when the target appears after an add', async () => {
+  it('reports applied=true when the target handle appears after an add', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      jsonResponse({ watched: [{ _id: HEX, name: 'alice', type: 'user' }] })
+      jsonResponse({ watched: [{ _id: HEX, id: 'Alice', name: 'Alice', type: 'user' }] })
     )
     const client = new HubClient({ fetchImpl, ...FAST })
-    await expect(client.setWatch({ id: HEX, type: 'user' }, true)).resolves.toEqual({
+    // Handle match is case-insensitive.
+    await expect(client.setWatch({ id: 'alice', type: 'user' }, true)).resolves.toEqual({
       applied: true,
-      watched: [{ internalId: HEX, name: 'alice', type: 'user' }]
+      watched: [{ internalId: HEX, name: 'Alice', type: 'user' }]
     })
   })
 })

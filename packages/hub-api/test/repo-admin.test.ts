@@ -213,7 +213,8 @@ describe('HubClient access requests', () => {
 describe('HubClient.setLike', () => {
   it('POSTs to like and DELETEs to unlike', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
-    const client = new HubClient({ fetchImpl, ...FAST })
+    // Like (POST) is cookie-session only; unlike (DELETE) rides the token.
+    const client = new HubClient({ fetchImpl, ...FAST, getSessionCookie: () => 'hf_session' })
     await client.setLike('model', 'a/b', true)
     expect(requestOf(fetchImpl, 0).url).toBe('https://huggingface.co/api/models/a/b/like')
     expect(requestOf(fetchImpl, 0).init.method).toBe('POST')
