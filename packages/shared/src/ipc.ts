@@ -20,9 +20,12 @@ import type {
   DiscussionStatusFilter,
   DiscussionSummary,
   DiscussionType,
+  CanPostResult,
   DownloadRequest,
   DownloadTask,
   ExportResult,
+  HubSessionConnectResult,
+  PostComment,
   ExportTarget,
   ExportTool,
   FavoriteItem,
@@ -152,9 +155,10 @@ export interface IpcInvokeContract {
   'hub:notificationsMarkRead': { req: { discussionIds: string[]; read: boolean }; res: void }
   'hub:notificationsClear': { req: void; res: void }
   /**
-   * Watch/unwatch users and orgs by their 24-hex internal id. Returns the
-   * resulting watch list so callers can VERIFY an add took effect — the Hub
-   * silently ignores token-based mutations (HTTP 200, list unchanged).
+   * Watch/unwatch users and orgs by their account HANDLE (username/org name).
+   * Returns the resulting watch list so callers can VERIFY an add took effect
+   * — the Hub silently ignores mutations that lack a web session (and any that
+   * pass the internal id instead of the handle).
    */
   'hub:watchUpdate': {
     req: {
@@ -166,9 +170,9 @@ export interface IpcInvokeContract {
   /** Current Hub watch list (read via a no-op watch PATCH). */
   'hub:watchList': { req: void; res: WatchedEntry[] }
   /**
-   * Attempt watch/unwatch and report whether the Hub applied it. Token
-   * sessions usually get applied=false — UI should open the website Watch
-   * control as a fallback.
+   * Attempt watch/unwatch (by account handle) and report whether the Hub
+   * applied it. Sessions without a web cookie get applied=false — UI should
+   * open the website Watch control as a fallback.
    */
   'hub:watchSet': {
     req: { id: string; type: 'user' | 'org'; watching: boolean }
@@ -308,6 +312,54 @@ export interface IpcInvokeContract {
     req: { author: string; slug: string; comment: string; replyToCommentId?: string }
     res: void
   }
+  /** Toggle an emoji reaction on a community post (needs a Hub web session). */
+  'hub:postReactionSet': {
+    req: { author: string; slug: string; reaction: string; active: boolean }
+    res: void
+  }
+  /** Comments on a community post (parsed from the Hub post page; public read). */
+  'hub:postComments': { req: { author: string; slug: string }; res: PostComment[] }
+  /**
+   * Hide a comment on a post — irreversible. `reason` is a verbatim label from
+   * HUB_HIDE_REASONS (optional). Needs a Hub web session and moderation rights.
+   */
+  'hub:postCommentHide': {
+    req: { author: string; slug: string; commentId: string; reason?: string }
+    res: void
+  }
+  /**
+   * Upload a comment attachment (image/audio/video) to the Hub CDN; returns its
+   * URL to embed in the comment markdown. Needs a Hub web session.
+   */
+  'hub:commentAssetUpload': {
+    req: { filename: string; contentType: string; data: Uint8Array }
+    res: { url: string }
+  }
+  /** Toggle an emoji reaction on a post comment (needs a Hub web session). */
+  'hub:postCommentReactionSet': {
+    req: { author: string; slug: string; commentId: string; reaction: string; active: boolean }
+    res: void
+  }
+  /** Whether the connected web session may create posts (Hub beta gate). */
+  'hub:postCanCreate': { req: void; res: CanPostResult }
+  /** Create a community post (needs a Hub web session with posting access). */
+  'hub:postCreate': { req: { content: string }; res: { slug?: string } }
+  /** Toggle a Daily Papers upvote (needs a Hub web session). */
+  'hub:paperUpvoteSet': { req: { paperId: string; upvoted: boolean }; res: void }
+  /** Toggle a collection upvote (needs a Hub web session). */
+  'hub:collectionUpvoteSet': { req: { slug: string; upvoted: boolean }; res: void }
+  /** Toggle an emoji reaction on a discussion comment (needs a Hub web session). */
+  'hub:discussionReactionSet': {
+    req: {
+      kind: RepoKind
+      repoId: string
+      num: number
+      commentId: string
+      reaction: string
+      active: boolean
+    }
+    res: void
+  }
   'hub:paperComment': {
     req: { paperId: string; comment: string; replyToCommentId?: string }
     res: void
@@ -336,6 +388,10 @@ export interface IpcInvokeContract {
   /** Validate + install a pasted User Access Token. */
   'auth:signInWithToken': { req: { token: string }; res: TokenSignInResult }
   'auth:signOut': { req: void; res: AuthState }
+  /** Open the Hub login window and capture a web-session cookie (supplemental credential). */
+  'auth:connectHubSession': { req: void; res: HubSessionConnectResult }
+  /** Drop the web-session cookie; the token session stays signed in. */
+  'auth:disconnectHubSession': { req: void; res: AuthState }
 
   'favorites:list': { req: void; res: FavoriteItem[] }
   'favorites:add': { req: { summary: RepoSummary }; res: FavoriteItem[] }
@@ -481,6 +537,16 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:followSet',
   'hub:userLikes',
   'hub:postComment',
+  'hub:postComments',
+  'hub:postCommentHide',
+  'hub:commentAssetUpload',
+  'hub:postCommentReactionSet',
+  'hub:postCanCreate',
+  'hub:postCreate',
+  'hub:postReactionSet',
+  'hub:paperUpvoteSet',
+  'hub:collectionUpvoteSet',
+  'hub:discussionReactionSet',
   'hub:paperComment',
   'hub:prMerge',
   'hub:discussionStatusSet',
@@ -489,6 +555,8 @@ export const IPC_INVOKE_CHANNELS = [
   'auth:getState',
   'auth:signInWithToken',
   'auth:signOut',
+  'auth:connectHubSession',
+  'auth:disconnectHubSession',
   'favorites:list',
   'favorites:add',
   'favorites:remove',

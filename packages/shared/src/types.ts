@@ -132,12 +132,35 @@ export type AuthState =
       tokenDisplayName?: string
       /** 'read' | 'write' | 'fineGrained' when the Hub reports it. */
       tokenRole?: string
+      /**
+       * True when a supplemental Hub web-session cookie is connected. The
+       * cookie itself never crosses IPC — this flag is all the renderer sees.
+       * It unlocks the social writes the Hub blocks for Bearer tokens (like,
+       * post reactions/comments, watch, discussion reactions).
+       */
+      hubSession?: boolean
     }
 
 /** Result of a manual-token sign-in attempt; failures never throw across IPC. */
 export type TokenSignInResult =
   | { ok: true; state: AuthState }
   | { ok: false; error: 'invalid' | 'network' }
+
+/**
+ * Result of connecting a Hub web session (cookie) via the login window.
+ * `mismatch` = the browser login belongs to a different account than the
+ * token session; `canceled` = the user closed the login window.
+ */
+export type HubSessionConnectResult =
+  | { ok: true; state: AuthState }
+  | { ok: false; error: 'canceled' | 'timeout' | 'mismatch' | 'invalid' | 'network' }
+
+/**
+ * Sentinel embedded in CookieRequiredError messages. Electron flattens errors
+ * thrown across IPC to their message string, so the renderer matches on this
+ * (see renderer lib/errors.ts).
+ */
+export const HUB_SESSION_REQUIRED_CODE = 'HUB_WEB_SESSION_REQUIRED'
 
 export interface HubNotification {
   /** discussion id used by mark-as-read, when the notification is discussion-backed */
@@ -282,6 +305,8 @@ export interface DiscussionEvent {
   /** commit events. */
   oid?: string
   subject?: string
+  /** Per-emoji reactions on comment events (empty/absent otherwise). */
+  reactions?: PostReaction[]
 }
 
 export interface DiscussionDetail extends DiscussionSummary {
@@ -302,6 +327,16 @@ export interface PostReaction {
   users: string[]
 }
 
+/**
+ * The fixed reaction set the Hub web UI offers on posts and discussion
+ * comments. Live-captured from the huggingface.co picker 2026-07-11.
+ */
+export const HUB_REACTION_EMOJIS = [
+  '🔥', '🚀', '👀', '❤️',
+  '🤗', '😎', '➕', '🧠',
+  '👍', '🤝', '😔', '🤯'
+] as const
+
 export interface PostSummary {
   slug: string
   author: string
@@ -318,6 +353,50 @@ export interface PostSummary {
   reactions: PostReaction[]
   /** Absolute huggingface.co URL. */
   url: string
+}
+
+/** One comment on a community post (parsed from the Hub post page's embedded data). */
+export interface PostComment {
+  /** 24-hex comment id; addressable for replies and reactions. */
+  id: string
+  author: string
+  authorFullname?: string
+  authorAvatarUrl?: string
+  authorIsPro?: boolean
+  createdAt?: string
+  /** Raw markdown of the latest revision. */
+  content: string
+  reactions: PostReaction[]
+  /** Nested replies to this comment (the Hub threads them one level deep). */
+  replies?: PostComment[]
+  /** Hidden comments keep their metadata but the content is withheld by the Hub. */
+  hidden?: boolean
+  /** Verbatim reason label the moderator picked (e.g. "Off-Topic"), when hidden. */
+  hiddenReason?: string
+  /** Username that hid the comment, when reported. */
+  hiddenBy?: string
+}
+
+/**
+ * The fixed reasons the Hub offers when hiding a comment. Sent VERBATIM as the
+ * `reason` field (the API stores the display label, not a code). Live-captured
+ * 2026-07-11. Hiding is optional-reason and irreversible.
+ */
+export const HUB_HIDE_REASONS = [
+  'Spam',
+  'Abuse',
+  'Graphic Content',
+  'Resolved',
+  'Off-Topic',
+  'Low Quality'
+] as const
+export type HubHideReason = (typeof HUB_HIDE_REASONS)[number]
+
+/** Whether the signed-in account may create community posts (Hub gates this behind a beta). */
+export interface CanPostResult {
+  canPost: boolean
+  /** Hub-provided explanation when posting is unavailable. */
+  reason?: string
 }
 
 export interface UserOverview {
@@ -654,6 +733,8 @@ export interface CollectionSummary {
   theme?: string
   itemCount?: number
   upvotes?: number
+  /** Whether the signed-in account upvoted this collection (detail responses only). */
+  isUpvoted?: boolean
   updatedAt?: string
 }
 

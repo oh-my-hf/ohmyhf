@@ -131,8 +131,10 @@ const spaceEnvKey = z
 /** Gated access requests only exist for models and datasets. */
 const gatedRepoKind = z.enum(['model', 'dataset'])
 
+// Watch targets are keyed by account handle (username/org name), not the
+// 24-hex internal id — the Hub silently ignores id-based watch mutations.
 const watchTargets = z
-  .array(z.object({ id: hexId, type: z.enum(['user', 'org']) }))
+  .array(z.object({ id: username, type: z.enum(['user', 'org']) }))
   .min(1)
   .max(100)
 
@@ -217,7 +219,8 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     delete: watchTargets.optional()
   }),
   'hub:watchSet': z.object({
-    id: hexId,
+    // Account handle (username/org name), not the internal id.
+    id: username,
     type: z.enum(['user', 'org']),
     watching: z.boolean()
   }),
@@ -339,6 +342,51 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
     comment: z.string().min(1).max(65536),
     replyToCommentId: hexId.optional()
+  }),
+  // 32-char cap: an emoji cluster with variation selectors/ZWJ stays well under it.
+  'hub:postReactionSet': z.object({
+    author: username,
+    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    reaction: z.string().min(1).max(32),
+    active: z.boolean()
+  }),
+  'hub:postComments': z.object({
+    author: username,
+    slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
+  }),
+  'hub:postCommentHide': z.object({
+    author: username,
+    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    commentId: hexId,
+    // Verbatim reason label; kept as a length-capped string (see HUB_HIDE_REASONS).
+    reason: z.string().min(1).max(64).optional()
+  }),
+  // 64 MB cap: comfortably covers image/audio/short-video attachments.
+  'hub:commentAssetUpload': z.object({
+    filename: z.string().min(1).max(256),
+    contentType: z.string().min(1).max(128),
+    data: z.instanceof(Uint8Array).refine((d) => d.byteLength <= 64 * 1024 * 1024, 'file too large')
+  }),
+  'hub:postCommentReactionSet': z.object({
+    author: username,
+    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    commentId: hexId,
+    reaction: z.string().min(1).max(32),
+    active: z.boolean()
+  }),
+  'hub:postCreate': z.object({ content: z.string().min(1).max(65536) }),
+  'hub:paperUpvoteSet': z.object({
+    paperId: z.string().min(1).max(64).regex(/^[\w.-]+$/, 'invalid paper id'),
+    upvoted: z.boolean()
+  }),
+  'hub:collectionUpvoteSet': z.object({ slug: collectionSlug, upvoted: z.boolean() }),
+  'hub:discussionReactionSet': z.object({
+    kind: repoKind,
+    repoId,
+    num: discussionNum,
+    commentId: hexId,
+    reaction: z.string().min(1).max(32),
+    active: z.boolean()
   }),
   'hub:paperComment': z.object({
     paperId: z.string().min(1).max(64).regex(/^[\w.-]+$/, 'invalid paper id'),
