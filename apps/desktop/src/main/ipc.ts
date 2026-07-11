@@ -271,6 +271,9 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:discussionDetail', ({ kind, repoId, num }) =>
     ctx.hub.getDiscussion(kind, repoId, num)
   )
+  handle('hub:discussionCreate', ({ kind, repoId, title, description, pullRequest }) =>
+    ctx.hub.createDiscussion(kind, repoId, title, description, pullRequest ?? false)
+  )
   handle('hub:discussionComment', ({ kind, repoId, num, comment }) =>
     ctx.hub.commentOnDiscussion(kind, repoId, num, comment)
   )

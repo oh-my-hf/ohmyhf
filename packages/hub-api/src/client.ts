@@ -707,6 +707,27 @@ export class HubClient {
     )
   }
 
+  /**
+   * Open a new discussion (or draft PR, like huggingface_hub's
+   * create_discussion/create_pull_request — same endpoint, `pullRequest`
+   * flag). Bearer-token authenticated; returns the new thread number.
+   */
+  async createDiscussion(
+    kind: RepoKind,
+    repoId: string,
+    title: string,
+    description: string,
+    pullRequest = false
+  ): Promise<{ num: number }> {
+    const res = await this.sendJson(
+      'POST',
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions`,
+      { title, description, pullRequest }
+    )
+    const body = (await res.json().catch(() => ({}))) as { num?: number }
+    return { num: body.num ?? 0 }
+  }
+
   async whoAmI(): Promise<UserProfile> {
     const { body } = await this.getJson<unknown>(`${this.endpoint}/api/whoami-v2`, { ttl: 0 })
     return mapWhoAmI(body as never, this.endpoint)

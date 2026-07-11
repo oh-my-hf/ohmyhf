@@ -194,6 +194,13 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     num: z.number().int().min(1),
     comment: z.string().min(1).max(65536)
   }),
+  'hub:discussionCreate': z.object({
+    kind: repoKind,
+    repoId,
+    title: z.string().min(1).max(200),
+    description: z.string().min(1).max(65536),
+    pullRequest: z.boolean().optional()
+  }),
   'hub:fileText': z.object({
     kind: repoKind,
     repoId,

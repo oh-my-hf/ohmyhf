@@ -412,3 +412,42 @@ describe('HubClient.isInferenceAvailable', () => {
     await expect(client.isInferenceAvailable('a/b')).resolves.toBe(false)
   })
 })
+
+describe('HubClient.createDiscussion', () => {
+  it('POSTs title/description/pullRequest with bearer auth and returns the number', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ num: 42, title: 'Add eval results' }, 201))
+    const client = new HubClient({
+      fetchImpl,
+      cacheTtlMs: 0,
+      minRequestGapMs: 0,
+      getAccessToken: () => 'hf_token'
+    })
+    const created = await client.createDiscussion(
+      'dataset',
+      'org/data',
+      'Add eval results',
+      'Numbers attached below.'
+    )
+    expect(created).toEqual({ num: 42 })
+    const [url, init] = fetchImpl.mock.calls[0]! as [string, RequestInit]
+    expect(url).toBe('https://huggingface.co/api/datasets/org/data/discussions')
+    expect(init.method).toBe('POST')
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer hf_token')
+    expect(JSON.parse(init.body as string)).toEqual({
+      title: 'Add eval results',
+      description: 'Numbers attached below.',
+      pullRequest: false
+    })
+  })
+
+  it('sets pullRequest for draft PRs', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ num: 7 }, 201))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    await client.createDiscussion('model', 'org/m', 'Fix config', 'See patch.', true)
+    expect(JSON.parse((fetchImpl.mock.calls[0]![1] as RequestInit).body as string)).toMatchObject({
+      pullRequest: true
+    })
+  })
+})

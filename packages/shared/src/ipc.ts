@@ -153,6 +153,11 @@ export interface IpcInvokeContract {
     req: { kind: RepoKind; repoId: string; num: number; comment: string }
     res: void
   }
+  /** Open a new discussion (or draft PR when pullRequest is true); returns the thread number. */
+  'hub:discussionCreate': {
+    req: { kind: RepoKind; repoId: string; title: string; description: string; pullRequest?: boolean }
+    res: { num: number }
+  }
   'hub:notifications': { req: { page?: number }; res: NotificationsPage }
   /** Empty discussionIds = mark everything as read/unread. */
   'hub:notificationsMarkRead': { req: { discussionIds: string[]; read: boolean }; res: void }
@@ -509,6 +514,7 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:orgMembers',
   'hub:discussionDetail',
   'hub:discussionComment',
+  'hub:discussionCreate',
   'hub:notifications',
   'hub:notificationsMarkRead',
   'hub:notificationsClear',
