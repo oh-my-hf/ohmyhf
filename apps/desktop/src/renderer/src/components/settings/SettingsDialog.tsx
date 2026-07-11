@@ -31,6 +31,7 @@ import type {
 } from '@oh-my-huggingface/shared'
 import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
+import { ACCENT_SWATCH } from '@/lib/appearance'
 import { changeLanguage } from '@/i18n'
 import { cn, formatBytes, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -67,13 +68,6 @@ const FONT_SCALE_MIN = 90
 const FONT_SCALE_MAX = 120
 const FONT_SCALE_STEP = 5
 const ACCENT_OPTIONS: AccentPreset[] = ['default', 'blue', 'green', 'orange', 'violet']
-const ACCENT_SWATCH: Record<AccentPreset, string> = {
-  default: 'oklch(0.623 0.214 259.815)',
-  blue: 'oklch(0.623 0.214 259.815)',
-  green: 'oklch(0.723 0.192 149.579)',
-  orange: 'oklch(0.705 0.197 46)',
-  violet: 'oklch(0.606 0.25 292.717)'
-}
 const PAGE_SIZE_OPTIONS: BrowsePageSize[] = [20, 30, 50]
 const HISTORY_LIMIT_OPTIONS: HistoryLimit[] = [50, 100, 200, 500]
 
@@ -574,25 +568,34 @@ function AppearanceSection(): React.JSX.Element {
         </Select>
       </Row>
       <Row label={t('settings:appearance.accent')}>
-        <div className="flex items-center gap-1.5" role="radiogroup" aria-label={t('settings:appearance.accent')}>
-          {ACCENT_OPTIONS.map((accent) => (
-            <button
-              key={accent}
-              type="button"
-              role="radio"
-              aria-checked={settings.accent === accent}
-              aria-label={t(`settings:appearance.accentOptions.${accent}`)}
-              title={t(`settings:appearance.accentOptions.${accent}`)}
-              className={cn(
-                'size-6 rounded-full border-2 transition-shadow',
-                settings.accent === accent
-                  ? 'border-ink-strong ring-2 ring-focus/40'
-                  : 'border-border hover:border-ink-muted'
-              )}
-              style={{ background: ACCENT_SWATCH[accent] }}
-              onClick={() => void updateSettings({ accent })}
-            />
-          ))}
+        <div
+          className="flex items-center gap-1.5"
+          role="radiogroup"
+          aria-label={t('settings:appearance.accent')}
+        >
+          {ACCENT_OPTIONS.map((accent) => {
+            const selected = settings.accent === accent
+            const color = ACCENT_SWATCH[accent]
+            return (
+              <button
+                key={accent}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={t(`settings:appearance.accentOptions.${accent}`)}
+                title={t(`settings:appearance.accentOptions.${accent}`)}
+                className={cn(
+                  'size-6 rounded-full border-2 transition-[box-shadow,border-color]',
+                  selected ? 'border-bg' : 'border-border hover:border-ink-muted'
+                )}
+                style={{
+                  background: color,
+                  boxShadow: selected ? `0 0 0 2px ${color}` : undefined
+                }}
+                onClick={() => void updateSettings({ accent })}
+              />
+            )
+          })}
         </div>
       </Row>
       <Row label={t('settings:appearance.sidebarCollapsed')}>
