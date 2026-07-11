@@ -28,6 +28,8 @@
       "open": "开放"
     },
     "pullRequest": "PR",
+    "quoteReply": "引用回复",
+    "reactionError": "回应更新失败：{{error}}",
     "reply": "回复",
     "replyPlaceholder": "写下回复（支持 Markdown）…",
     "segment": {
@@ -47,6 +49,7 @@
   "downloadFailed": "无法开始下载：{{error}}",
   "downloadStarted": "已加入下载队列",
   "editor": {
+    "attach": "添加附件",
     "bold": "加粗",
     "bulletList": "无序列表",
     "charCount": "字符数",
@@ -58,6 +61,11 @@
     "preview": "预览",
     "previewEmpty": "暂无可预览的内容，请先输入。",
     "quote": "引用",
+    "uploadBrowse": "点击上传",
+    "uploadError": "上传失败：{{error}}",
+    "uploadHint": "拖拽、粘贴，或",
+    "uploadTooLarge": "{{name}} 太大了（上限 64 MB）",
+    "uploading": "上传中…",
     "write": "编写"
   },
   "favoriteRemoved": "已从收藏中移除",
@@ -90,7 +98,9 @@
   "like": {
     "error": "点赞更新失败：{{error}}",
     "like": "点赞",
-    "onHub": "点赞需要 Hub 网页会话——访问令牌无法在应用内点赞。请到 Hub 上打开该仓库再点赞。",
+    "onHub": "点赞需要 Hub 网页会话——可在 设置 → 账户 中连接，或到 Hub 上打开该仓库再点赞。",
+    "reconnect": "打开设置",
+    "sessionExpired": "Hub 网页会话已过期。请在 设置 → 账户 中重新连接后再在应用内点赞。",
     "unlike": "取消点赞"
   },
   "maintainer": {

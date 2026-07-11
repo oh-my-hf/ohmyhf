@@ -32,6 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { pushUndo, useToasts } from '@/components/ui/toaster'
+import { UpvoteButton } from '@/components/community/UpvoteButton'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -252,6 +253,17 @@ export function CollectionPage(): React.JSX.Element {
                   </Badge>
                 )}
                 <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                  {auth.status === 'signedIn' && (
+                    <UpvoteButton
+                      upvotes={data.upvotes ?? 0}
+                      initialUpvoted={data.isUpvoted}
+                      hubUrl={`https://huggingface.co/collections/${slug}`}
+                      size="sm"
+                      onToggle={(next) =>
+                        invoke('hub:collectionUpvoteSet', { slug, upvoted: next })
+                      }
+                    />
+                  )}
                   {isOwner && writeGated && (
                     <p className="text-[11.5px] text-ink-faint">{t('collections:scopeHint')}</p>
                   )}

@@ -8,6 +8,7 @@ import {
   Italic,
   Link as LinkIcon,
   List,
+  Paperclip,
   TextQuote,
   type LucideIcon
 } from 'lucide-react'
@@ -17,8 +18,12 @@ import { cn } from '@/lib/utils'
 import { useDebounced } from '@/hooks/use-debounced'
 import { applyFormat, continueLine, mentionAtCaret, type Format } from '@/lib/editor'
 import { Button } from '@/components/ui/button'
+import { useToasts } from '@/components/ui/toaster'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+
+/** Comment attachments cap out at 64 MB (see the hub:commentAssetUpload schema). */
+const MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 
 export interface MarkdownEditorProps {
   value: string
@@ -28,6 +33,16 @@ export interface MarkdownEditorProps {
   placeholder?: string
   kind: RepoKind
   repoId: string
+  /**
+   * Bump to focus the editor and drop the caret at the end — used after a
+   * "quote reply" injects text, so the user can type right below the quote.
+   */
+  focusSignal?: number
+  /**
+   * Enable attachment upload (click / drag / paste). Off by default — uploads
+   * are cookie-session only, so callers pass the connected-web-session flag.
+   */
+  enableUpload?: boolean
 }
 
 /** Avatar/name for a mentioned user, remembered so chips can re-render with the avatar. */
@@ -171,9 +186,14 @@ export function MarkdownEditor({
   onSubmit,
   placeholder,
   kind,
-  repoId
+  repoId,
+  focusSignal,
+  enableUpload
 }: MarkdownEditorProps): React.JSX.Element {
   const { t } = useTranslation('detail')
+  const push = useToasts((s) => s.push)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [uploading, setUploading] = useState(0)
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const [mention, setMention] = useState<{ start: number; query: string } | null>(null)
   const [mentionIndex, setMentionIndex] = useState(0)
@@ -237,6 +257,20 @@ export function MarkdownEditor({
     syncEditorDom(root)
   }, [value])
 
+  // Focus + caret-to-end after a quote injection. Declared AFTER the value
+  // effect so, on the commit where both change, the DOM is already repainted
+  // when this runs. Skips the initial mount (ref seeded to the same value).
+  const lastFocusSignal = useRef(focusSignal)
+  useEffect(() => {
+    if (focusSignal === undefined || focusSignal === lastFocusSignal.current) return
+    lastFocusSignal.current = focusSignal
+    if (tab !== 'write') setTab('write')
+    const root = editorRef.current
+    if (!root) return
+    root.focus()
+    setCaret(root, serialize(root).length)
+  }, [focusSignal, tab])
+
   const onInput = (): void => {
     emit()
     syncMention()
@@ -273,6 +307,63 @@ export function MarkdownEditor({
     const caret = caretOffset(root) ?? md.length
     const { next, selectStart } = applyFormat(md, caret, caret, fmt)
     applyEdit(next, selectStart)
+  }
+
+  /** Insert a markdown snippet at the caret (on its own line). */
+  const insertAtCaret = (snippet: string): void => {
+    const root = editorRef.current
+    if (!root) return
+    const md = serialize(root)
+    const caret = caretOffset(root) ?? md.length
+    const before = md.slice(0, caret)
+    const lead = before === '' || before.endsWith('\n') ? '' : '\n'
+    const insert = `${lead}${snippet}\n`
+    applyEdit(`${before}${insert}${md.slice(caret)}`, caret + insert.length)
+  }
+
+  /** Upload dropped/pasted/picked files and embed each at the caret. */
+  const uploadFiles = async (files: File[]): Promise<void> => {
+    if (!enableUpload || files.length === 0) return
+    for (const file of files) {
+      if (file.size > MAX_UPLOAD_BYTES) {
+        push(t('editor.uploadTooLarge', { name: file.name }), 'error')
+        continue
+      }
+      setUploading((n) => n + 1)
+      try {
+        const data = new Uint8Array(await file.arrayBuffer())
+        const name = file.name || 'file'
+        const { url } = await invoke('hub:commentAssetUpload', {
+          filename: name,
+          contentType: file.type || 'application/octet-stream',
+          data
+        })
+        const isImage = file.type.startsWith('image/')
+        insertAtCaret(`${isImage ? '!' : ''}[${name}](${url})`)
+      } catch (err) {
+        push(t('editor.uploadError', { error: err instanceof Error ? err.message : String(err) }), 'error')
+      } finally {
+        setUploading((n) => n - 1)
+      }
+    }
+  }
+
+  const onPaste = (e: React.ClipboardEvent<HTMLDivElement>): void => {
+    if (!enableUpload) return
+    const files = Array.from(e.clipboardData.files)
+    if (files.length > 0) {
+      e.preventDefault()
+      void uploadFiles(files)
+    }
+  }
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>): void => {
+    if (!enableUpload) return
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length > 0) {
+      e.preventDefault()
+      void uploadFiles(files)
+    }
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
@@ -356,6 +447,21 @@ export function MarkdownEditor({
                 <Icon className="size-3.5" aria-hidden />
               </Button>
             ))}
+            {enableUpload && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={t('editor.attach')}
+                title={t('editor.attach')}
+                loading={uploading > 0}
+                disabled={tab !== 'write'}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="size-3.5" aria-hidden />
+              </Button>
+            )}
           </div>
         </div>
         {/* forceMount keeps the contenteditable alive across Preview round-trips;
@@ -380,14 +486,44 @@ export function MarkdownEditor({
             onClick={syncMention}
             onBlur={() => setMention(null)}
             onKeyDown={onKeyDown}
+            onPaste={onPaste}
+            onDrop={onDrop}
+            onDragOver={enableUpload ? (e) => e.preventDefault() : undefined}
             className="max-h-80 min-h-20 overflow-y-auto px-3 py-2.5 pb-6 text-[13px] whitespace-pre-wrap outline-none empty:before:text-ink-faint empty:before:content-[attr(data-placeholder)]"
           />
+          {enableUpload && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                void uploadFiles(Array.from(e.target.files ?? []))
+                e.target.value = ''
+              }}
+            />
+          )}
           <span
             className="pointer-events-none absolute right-2.5 bottom-1.5 font-mono text-[10.5px] text-ink-faint"
             title={t('editor.charCount')}
           >
             {value.length}
           </span>
+          {enableUpload && (
+            <div className="flex items-center gap-1.5 border-t px-3 py-1.5 text-[11.5px] text-ink-faint">
+              <Paperclip className="size-3 shrink-0" aria-hidden />
+              <span className="min-w-0 truncate">
+                {uploading > 0 ? t('editor.uploading') : t('editor.uploadHint')}
+              </span>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="shrink-0 underline underline-offset-2 outline-none hover:text-ink focus-visible:text-ink"
+              >
+                {t('editor.uploadBrowse')}
+              </button>
+            </div>
+          )}
 
           {mention !== null && (
             <div

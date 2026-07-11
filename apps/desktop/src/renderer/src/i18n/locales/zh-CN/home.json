@@ -1,4 +1,11 @@
 {
+  "compose": {
+    "error": "发布失败：{{error}}",
+    "new": "发新帖",
+    "placeholder": "向社区分享动态… 支持 Markdown。",
+    "posted": "帖子已发布",
+    "submit": "发布"
+  },
   "feed": {
     "acted": {
       "discussion": "<author>{{actor}}</author> 在 <repo>{{repo}}</repo>",
@@ -18,7 +25,9 @@
     "post": "帖子"
   },
   "reactions": {
-    "onHub": "在 Hub 上回应"
+    "onHub": "在 Hub 上回应",
+    "react": "添加回应",
+    "toggle": "用 {{emoji}} 回应"
   },
   "title": "首页",
   "trending": {

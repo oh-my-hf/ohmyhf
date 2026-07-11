@@ -28,6 +28,8 @@
       "open": "Open"
     },
     "pullRequest": "PR",
+    "quoteReply": "Quote reply",
+    "reactionError": "Couldn't update the reaction: {{error}}",
     "reply": "Reply",
     "replyPlaceholder": "Write a reply (Markdown supported)…",
     "segment": {
@@ -47,6 +49,7 @@
   "downloadFailed": "Could not start the download: {{error}}",
   "downloadStarted": "Added to downloads",
   "editor": {
+    "attach": "Attach a file",
     "bold": "Bold",
     "bulletList": "Bullet list",
     "charCount": "Character count",
@@ -58,6 +61,11 @@
     "preview": "Preview",
     "previewEmpty": "Nothing to preview yet — write something first.",
     "quote": "Quote",
+    "uploadBrowse": "browse",
+    "uploadError": "Upload failed: {{error}}",
+    "uploadHint": "Attach images, audio, or video by dragging, pasting, or",
+    "uploadTooLarge": "{{name}} is too large (max 64 MB)",
+    "uploading": "Uploading…",
     "write": "Write"
   },
   "favoriteRemoved": "Removed from favorites",
@@ -90,7 +98,9 @@
   "like": {
     "error": "Couldn't update the like: {{error}}",
     "like": "Like",
-    "onHub": "Likes need a Hub web session — access tokens can't like from the app. Open the repo on the Hub to like it.",
+    "onHub": "Likes need a Hub web session — connect one in Settings → Account, or open the repo on the Hub to like it.",
+    "reconnect": "Open settings",
+    "sessionExpired": "Your Hub web session expired. Reconnect it in Settings → Account to like from the app.",
     "unlike": "Unlike"
   },
   "maintainer": {

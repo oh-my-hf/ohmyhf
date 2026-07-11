@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -7,7 +7,8 @@ import {
   GitMerge,
   GitPullRequest,
   MessageSquare,
-  Pencil
+  Pencil,
+  Reply
 } from 'lucide-react'
 import type {
   AuthState,
@@ -19,6 +20,8 @@ import type {
 } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { diffTotals, isDiffTruncated, parseUnifiedDiff } from '@/lib/diff'
+import { appendQuote } from '@/lib/quote'
+import { repoHubUrl } from '@/lib/repo-open'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -31,8 +34,10 @@ import { useToasts } from '@/components/ui/toaster'
 import { DiffStat, DiffView } from '@/components/browse/DiffView'
 import { MarkdownEditor } from '@/components/browse/MarkdownEditor'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { ReactionBar } from '@/components/community/ReactionBar'
 import { WRITE_DISCUSSIONS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { UserLink } from '@/components/profile/UserLink'
+import { useHubSession } from '@/hooks/use-hub-session'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STATUS_VARIANT = {
@@ -75,21 +80,38 @@ function isRepoMaintainer(auth: AuthState, repoId: string): boolean {
   return namespace === auth.user.name || auth.user.orgs.some((org) => org.name === namespace)
 }
 
+/** Real Hub comment ids are 24-hex; the mapper synthesizes String(i) for id-less events. */
+const HEX_ID_RE = /^[0-9a-f]{24}$/
+
 /**
  * One entry of the thread timeline. Comments (and unknown event types that carry
  * markdown) render as cards; commits and status changes render as lighter rows.
- * Unknown event types with no content render nothing.
+ * Unknown event types with no content render nothing. Comment cards surface
+ * emoji reactions — actionable when a Hub web session is connected and the
+ * event has a real comment id, read-only counts otherwise.
  */
 function ThreadEvent({
   event,
   kind,
   repoId,
-  locale
+  locale,
+  hubUrl,
+  currentUser,
+  onReact,
+  reactPending,
+  onQuote
 }: {
   event: DiscussionEvent
   kind: RepoKind
   repoId: string
   locale: string
+  /** Hub discussion URL for the read-only fallback affordance. */
+  hubUrl: string
+  currentUser?: string
+  onReact?: (commentId: string, emoji: string, active: boolean) => void
+  reactPending?: boolean
+  /** Quote this comment into the reply box (only when replying is available). */
+  onQuote?: (content: string) => void
 }): React.JSX.Element | null {
   const { t } = useTranslation(['detail'])
 
@@ -143,6 +165,8 @@ function ThreadEvent({
   // Comments always render (empty ones get a placeholder); other event types
   // only when they carry markdown content.
   if (event.type !== 'comment' && !hasBody(event)) return null
+  const reactions = event.reactions ?? []
+  const canReact = onReact !== undefined && HEX_ID_RE.test(event.id)
   return (
     <div className="rounded-lg border border-border-card bg-card-gradient p-3">
       <div className="mb-2 flex items-center gap-2 text-[12px] text-ink-muted">
@@ -150,11 +174,36 @@ function ThreadEvent({
           <UserLink username={event.author} className="font-medium text-ink-strong" />
         )}
         <span className="text-ink-faint">{formatRelativeTime(event.createdAt, locale)}</span>
+        {onQuote !== undefined && hasBody(event) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto h-6 px-1.5 text-ink-faint"
+            onClick={() => onQuote(event.content ?? '')}
+          >
+            <Reply className="size-3.5" aria-hidden />
+            {t('detail:discussions.quoteReply')}
+          </Button>
+        )}
       </div>
       {hasBody(event) ? (
         <MarkdownView markdown={event.content ?? ''} kind={kind} repoId={repoId} />
       ) : (
         <p className="text-[12.5px] text-ink-faint italic">{t('detail:pr.noDescription')}</p>
+      )}
+      {(reactions.length > 0 || canReact) && (
+        <div className="mt-2.5">
+          <ReactionBar
+            reactions={reactions}
+            postUrl={hubUrl}
+            locale={locale}
+            currentUser={currentUser}
+            onToggle={
+              canReact ? (emoji, active) => onReact(event.id, emoji, active) : undefined
+            }
+            pending={reactPending}
+          />
+        </div>
       )}
     </div>
   )
@@ -177,6 +226,8 @@ function Thread({
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
   const [reply, setReply] = useState('')
+  // Bumped by a comment's "quote reply" to focus the editor after prefilling.
+  const [quoteNonce, setQuoteNonce] = useState(0)
   const [tab, setTab] = useState('discussion')
   // Fetch the diff lazily: only once the Files-changed tab was activated.
   const [filesTabVisited, setFilesTabVisited] = useState(false)
@@ -211,6 +262,19 @@ function Thread({
     },
     onError: (err) => push(err.message, 'error')
   })
+
+  // Emoji reactions on comments need the Hub web session (cookie); the thread
+  // refetch after settle is authoritative (server TTL is short).
+  const hubSession = useHubSession()
+  const currentUser = auth.status === 'signedIn' ? auth.user.name : undefined
+  const react = useMutation({
+    mutationFn: ({ commentId, emoji, active }: { commentId: string; emoji: string; active: boolean }) =>
+      invoke('hub:discussionReactionSet', { kind, repoId, num, commentId, reaction: emoji, active }),
+    onError: (err) => push(t('detail:discussions.reactionError', { error: err.message }), 'error'),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: ['discussion', kind, repoId, num] })
+  })
+  const discussionHubUrl = `${repoHubUrl(kind, repoId, settings.hubEndpoint)}/discussions/${num}`
 
   // Maintainer actions (owner of the repo namespace only).
   const isMaintainer = isRepoMaintainer(auth, repoId)
@@ -377,7 +441,29 @@ function Thread({
       {thread.isLoading && <Skeleton className="h-24" />}
       <div className="flex flex-col gap-3">
         {thread.data?.events.map((event) => (
-          <ThreadEvent key={event.id} event={event} kind={kind} repoId={repoId} locale={locale} />
+          <ThreadEvent
+            key={event.id}
+            event={event}
+            kind={kind}
+            repoId={repoId}
+            locale={locale}
+            hubUrl={discussionHubUrl}
+            currentUser={currentUser}
+            onReact={
+              hubSession
+                ? (commentId, emoji, active) => react.mutate({ commentId, emoji, active })
+                : undefined
+            }
+            reactPending={react.isPending}
+            onQuote={
+              auth.status === 'signedIn'
+                ? (content) => {
+                    setReply((prev) => appendQuote(prev, content))
+                    setQuoteNonce((n) => n + 1)
+                  }
+                : undefined
+            }
+          />
         ))}
       </div>
     </div>
@@ -393,6 +479,7 @@ function Thread({
             kind={kind}
             repoId={repoId}
             placeholder={t('detail:discussions.replyPlaceholder')}
+            focusSignal={quoteNonce}
             onSubmit={() => {
               if (reply.trim() !== '' && !send.isPending) send.mutate()
             }}
@@ -538,10 +625,13 @@ function SegmentButton({
 
 export function DiscussionsPanel({
   kind,
-  repoId
+  repoId,
+  onActiveDiscussion
 }: {
   kind: RepoKind
   repoId: string
+  /** Mirrors the currently open discussion number to the parent (deep-link target). */
+  onActiveDiscussion?: (num: number | null) => void
 }): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
   const settings = useAppStore((s) => s.settings)
@@ -550,6 +640,14 @@ export function DiscussionsPanel({
   const [selected, setSelected] = useState<number | null>(null)
   const [segment, setSegment] = useState<DiscussionType>('discussion')
   const [status, setStatus] = useState<StatusFilter>('open')
+
+  const select = (num: number | null): void => {
+    setSelected(num)
+    onActiveDiscussion?.(num)
+  }
+  // Clear the parent's deep-link target when the panel unmounts (tab switch /
+  // repo change) so the open-on-Hub button falls back to the repo home page.
+  useEffect(() => () => onActiveDiscussion?.(null), [onActiveDiscussion])
 
   const list = useQuery({
     queryKey: ['discussions', kind, repoId, segment, status],
@@ -563,7 +661,7 @@ export function DiscussionsPanel({
   })
 
   if (selected !== null) {
-    return <Thread kind={kind} repoId={repoId} num={selected} onBack={() => setSelected(null)} />
+    return <Thread kind={kind} repoId={repoId} num={selected} onBack={() => select(null)} />
   }
 
   const count = list.data?.items.length
@@ -629,7 +727,7 @@ export function DiscussionsPanel({
           <button
             key={discussion.num}
             type="button"
-            onClick={() => setSelected(discussion.num)}
+            onClick={() => select(discussion.num)}
             className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
           >
             {discussion.isPullRequest ? (

@@ -10,5 +10,12 @@
   "readOnArxiv": "在 arXiv 阅读",
   "readOnHub": "在 Hub 打开",
   "title": "每日论文",
+  "upvote": {
+    "add": "赞同",
+    "error": "赞同更新失败：{{error}}",
+    "onHub": "赞同需要 Hub 网页会话——可在 设置 → 账户 中连接，或到 Hub 上操作。",
+    "remove": "取消赞同",
+    "sessionExpired": "Hub 网页会话已过期。请在 设置 → 账户 中重新连接后再在应用内赞同。"
+  },
   "upvotes": "赞同"
 }

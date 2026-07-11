@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import { Button } from '@/components/ui/button'
 import { useToasts } from '@/components/ui/toaster'
 import { MarkdownEditor } from '@/components/browse/MarkdownEditor'
+import { appendQuote } from '@/lib/quote'
 import { WRITE_DISCUSSIONS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { useAppStore } from '@/stores/app'
 
@@ -17,6 +18,16 @@ export interface CommentComposerProps {
   submit: (comment: string) => Promise<void>
   /** Runs after a successful submission (toast, refetch, …). */
   onSubmitted?: () => void
+  /**
+   * Quote-reply request from a comment's "quote" button; bump `nonce` to inject
+   * `text` as a blockquote and focus the editor (re-quoting the same text works
+   * because the nonce changes).
+   */
+  quote?: { text: string; nonce: number }
+  /** Enable attachment upload in the editor (cookie-session only). */
+  enableUpload?: boolean
+  /** Focus the editor as soon as the composer mounts (inline reply boxes). */
+  focusOnMount?: boolean
 }
 
 /**
@@ -29,12 +40,31 @@ export function CommentComposer({
   repoId,
   placeholder,
   submit,
-  onSubmitted
+  onSubmitted,
+  quote,
+  enableUpload,
+  focusOnMount
 }: CommentComposerProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'auth'])
   const auth = useAppStore((s) => s.auth)
   const push = useToasts((s) => s.push)
   const [draft, setDraft] = useState('')
+  const [focusSignal, setFocusSignal] = useState(0)
+
+  // Bump the signal after mount (the editor ignores its initial prop value).
+  useEffect(() => {
+    if (focusOnMount) setFocusSignal((n) => n + 1)
+  }, [focusOnMount])
+
+  // Consume a quote-reply request: append the blockquote to the draft and
+  // focus the editor. Keyed on nonce so re-quoting the same comment re-fires.
+  const lastQuoteNonce = useRef(quote?.nonce)
+  useEffect(() => {
+    if (quote === undefined || quote.nonce === lastQuoteNonce.current) return
+    lastQuoteNonce.current = quote.nonce
+    setDraft((prev) => appendQuote(prev, quote.text))
+    setFocusSignal((n) => n + 1)
+  }, [quote])
 
   const send = useMutation({
     mutationFn: submit,
@@ -66,6 +96,8 @@ export function CommentComposer({
         repoId={repoId}
         placeholder={placeholder}
         onSubmit={sendNow}
+        focusSignal={focusSignal}
+        enableUpload={enableUpload}
       />
       <div className="flex justify-end">
         <Button

@@ -10,5 +10,12 @@
   "readOnArxiv": "Read on arXiv",
   "readOnHub": "Open on the Hub",
   "title": "Daily Papers",
+  "upvote": {
+    "add": "Upvote",
+    "error": "Couldn't update the upvote: {{error}}",
+    "onHub": "Upvoting needs a Hub web session — connect one in Settings → Account, or open it on the Hub.",
+    "remove": "Remove upvote",
+    "sessionExpired": "Your Hub web session expired. Reconnect it in Settings → Account to upvote from the app."
+  },
   "upvotes": "Upvotes"
 }

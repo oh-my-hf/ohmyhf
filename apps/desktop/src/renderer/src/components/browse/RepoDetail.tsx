@@ -146,6 +146,9 @@ export function RepoDetail({
   const tabKey = `${kind}:${repoId}`
   const [tabState, setTabState] = useState({ key: tabKey, value: 'card' })
   if (tabState.key !== tabKey) setTabState({ key: tabKey, value: 'card' })
+  // The discussion/PR currently open inside the Discussions tab, mirrored up
+  // by the panel (cleared when it unmounts on tab switch or repo change).
+  const [activeDiscussion, setActiveDiscussion] = useState<number | null>(null)
   const tabRendered: Record<string, boolean> = {
     run: kind === 'space',
     preview: kind === 'dataset',
@@ -153,6 +156,12 @@ export function RepoDetail({
     manage: isOwner
   }
   const tab = (tabRendered[tabState.value] ?? true) ? tabState.value : 'card'
+
+  // With a specific discussion/PR open, the open-on-Hub button deep-links to it.
+  const openOnHubUrl =
+    tab === 'discussions' && activeDiscussion !== null
+      ? `${hubUrl}/discussions/${activeDiscussion}`
+      : hubUrl
 
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -228,7 +237,7 @@ export function RepoDetail({
                 variant="ghost"
                 size="icon"
                 aria-label={t('common:openOnHub')}
-                onClick={() => openExternal(hubUrl)}
+                onClick={() => openExternal(openOnHubUrl)}
               >
                 <ExternalLink className="size-4" aria-hidden />
               </Button>
@@ -323,7 +332,7 @@ export function RepoDetail({
           )}
         </TabsContent>
         <TabsContent value="discussions" className="min-h-0 flex-1">
-          <DiscussionsPanel kind={kind} repoId={repoId} />
+          <DiscussionsPanel kind={kind} repoId={repoId} onActiveDiscussion={setActiveDiscussion} />
         </TabsContent>
         {showPlayground && (
           <TabsContent value="playground" className="min-h-0 flex-1">

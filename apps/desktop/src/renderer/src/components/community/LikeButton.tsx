@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { Heart } from 'lucide-react'
 import type { RepoKind } from '@oh-my-huggingface/shared'
+import { classifyError, isHubSessionRequired } from '@/lib/errors'
 import { invoke, openExternal } from '@/lib/ipc'
 import { repoHubUrl } from '@/lib/repo-open'
 import { cn, formatCount } from '@/lib/utils'
 import { useToasts } from '@/components/ui/toaster'
+import { useHubSession } from '@/hooks/use-hub-session'
 import { useUserLikes } from '@/hooks/use-user-likes'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -24,17 +26,20 @@ export interface LikeButtonProps {
  *
  * Live-verified 2026-07-11: Bearer access tokens get 401 on POST /like
  * ("Invalid username or password") — Hugging Face blocks programmatic likes to
- * prevent spam. DELETE /like (unlike) works with write tokens. So liking opens
- * the Hub; unliking still goes through the API with optimistic UI.
- * Hidden entirely when signed out.
+ * prevent spam. With a connected Hub web session the POST authenticates as the
+ * cookie and the full optimistic toggle works in-app; without one, liking
+ * falls back to opening the Hub. DELETE /like (unlike) works with write
+ * tokens either way. Hidden entirely when signed out.
  */
 export function LikeButton({ kind, repoId, likes }: LikeButtonProps): React.JSX.Element | null {
   const { t } = useTranslation(['detail', 'common'])
   const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
+  const openSettings = useAppStore((s) => s.openSettings)
   const locale = resolveLocale(settings, appInfo)
   const push = useToasts((s) => s.push)
+  const hubSession = useHubSession()
   const userLikes = useUserLikes()
   const serverLiked = userLikes.isPending ? undefined : userLikes.isLiked(kind, repoId)
   const hubUrl = repoHubUrl(kind, repoId, settings.hubEndpoint)
@@ -57,14 +62,22 @@ export function LikeButton({ kind, repoId, likes }: LikeButtonProps): React.JSX.
 
   const liked = state.liked ?? state.base ?? false
 
-  const unlike = useMutation({
-    mutationFn: () => invoke('hub:likeSet', { kind, repoId, liked: false }),
+  const toggle = useMutation({
+    mutationFn: (next: boolean) => invoke('hub:likeSet', { kind, repoId, liked: next }),
     // Snapshot the pre-toggle state (onMutate runs before onClick's setState lands).
     onMutate: () => state,
-    onSuccess: () => userLikes.setLiked(kind, repoId, false),
-    onError: (err, _vars, prev) => {
+    onSuccess: (_res, next) => userLikes.setLiked(kind, repoId, next),
+    onError: (err, next, prev) => {
       // Revert the optimistic bump — unless the user moved to another repo.
       if (prev && prev.key === key) setState(prev)
+      // A 401 on the like path means the web session expired (main already
+      // auto-disconnected it); point the user at Settings instead of a raw error.
+      if (next && (isHubSessionRequired(err) || classifyError(err).status === 401)) {
+        push(t('detail:like.sessionExpired'), 'error', {
+          action: { label: t('detail:like.reconnect'), onClick: () => openSettings('account') }
+        })
+        return
+      }
       push(t('detail:like.error', { error: err.message }), 'error')
     }
   })
@@ -79,9 +92,9 @@ export function LikeButton({ kind, repoId, likes }: LikeButtonProps): React.JSX.
   const count = likes + adjust
 
   const onClick = (): void => {
-    if (unlike.isPending) return
-    if (!liked) {
-      // Token-based POST /like always 401s; send the user to the Hub instead.
+    if (toggle.isPending) return
+    if (!liked && !hubSession) {
+      // Without a web session the POST would 401; send the user to the Hub.
       push(t('detail:like.onHub'), 'info', {
         action: {
           label: t('common:openOnHub'),
@@ -91,8 +104,9 @@ export function LikeButton({ kind, repoId, likes }: LikeButtonProps): React.JSX.
       openExternal(hubUrl)
       return
     }
-    setState({ ...state, liked: false, likesAt: likes })
-    unlike.mutate()
+    const next = !liked
+    setState({ ...state, liked: next, likesAt: likes })
+    toggle.mutate(next)
   }
 
   return (

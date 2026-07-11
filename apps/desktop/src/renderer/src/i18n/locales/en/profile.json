@@ -21,11 +21,35 @@
     "team": "Team"
   },
   "post": {
+    "actions": "Comment actions",
+    "comment": {
+      "heading": "Add a comment",
+      "placeholder": "Write a comment… Markdown is supported.",
+      "posted": "Comment posted"
+    },
     "commentOnHub": "Comment on the Hub",
-    "commentsOnHub": "Post comments need a Hub web session — access tokens can't post here. Open the post on the Hub to reply.",
+    "commentsOnHub": "Post comments need a Hub web session — connect one in Settings → Account, or open the post on the Hub to reply.",
     "error": {
       "title": "Couldn't load this post"
-    }
+    },
+    "hide": {
+      "action": "Hide",
+      "confirm": "Hide comment",
+      "done": "Comment hidden",
+      "error": "Couldn't hide the comment: {{error}}",
+      "hidden": "This comment has been hidden.",
+      "hiddenWithReason": "This comment has been hidden (marked as {{reason}}).",
+      "reason": "Reason",
+      "selectReason": "Select a reason to hide this comment (optional):",
+      "title": "Hide comment",
+      "warning": "Hiding a comment cannot be undone. No one will be able to see its content anymore."
+    },
+    "reply": "Reply",
+    "replyInThread": "Reply in thread",
+    "replyPlaceholder": "Reply to {{user}}… Markdown is supported."
+  },
+  "reactions": {
+    "error": "Couldn't update the reaction: {{error}}"
   },
   "selfBadge": "Your profile",
   "stats": {
@@ -43,6 +67,10 @@
   "watch": "Watch",
   "watchError": "Couldn't update watch: {{error}}",
   "watchOnHub": "Open on the Hub",
+  "watchReconnect": "Open settings",
+  "watchSessionExpired": "The Hub ignored this watch change — your Hub web session may have expired. Reconnect it in Settings → Account.",
+  "watchSuccess": "Watching — you'll get Hub notifications for this account.",
+  "unwatchSuccess": "Stopped watching this account.",
   "watchOpenHub": "The Hub ignores Watch from apps — use Watch repositories on their Hub page.",
   "watchSyncNotApplied": "Followed locally. The Hub ignores watch requests from apps — to also get Hub notifications for this account, use the Watch button on its Hub page."
 }

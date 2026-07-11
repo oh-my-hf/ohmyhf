@@ -1,25 +1,54 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, FileWarning, MessageSquare } from 'lucide-react'
+import type { PostSummary } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useToasts } from '@/components/ui/toaster'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { CommentComposer } from '@/components/community/CommentComposer'
+import { PostComments } from '@/components/community/PostComments'
 import { ReactionBar } from '@/components/community/ReactionBar'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
+import { useHubSession } from '@/hooks/use-hub-session'
 import { resolveLocale, useAppStore } from '@/stores/app'
+
+/** Apply one reaction toggle to cached post data (optimistic layer). */
+function withReaction(post: PostSummary, emoji: string, active: boolean, user: string): PostSummary {
+  const rows = post.reactions.map((r) => ({ ...r, users: [...r.users] }))
+  const row = rows.find((r) => r.emoji === emoji)
+  if (active) {
+    if (row && !row.users.includes(user)) {
+      row.users.push(user)
+      row.count += 1
+    } else if (!row) {
+      rows.push({ emoji, count: 1, users: [user] })
+    }
+  } else if (row && row.users.includes(user)) {
+    row.users = row.users.filter((u) => u !== user)
+    row.count = Math.max(0, row.count - 1)
+  }
+  const reactions = rows.filter((r) => r.count > 0)
+  return {
+    ...post,
+    reactions,
+    numReactions: reactions.reduce((acc, r) => acc + (r.count || 1), 0)
+  }
+}
 
 /**
  * Full view of a single community post (/posts/:author/:slug).
  *
- * Commenting is Hub-web only: POST /api/posts/.../comment 401s for every
- * obtainable token kind — classic write-role and fine-grained alike
- * (live-verified 2026-07-11, same constraint as post reactions). The page
- * links out instead of offering a composer that cannot succeed.
+ * Reacting and commenting are Hub-web only — both 401 for every obtainable
+ * token kind (live-verified 2026-07-11) — so they light up when a Hub web
+ * session is connected and fall back to open-on-Hub links otherwise.
  */
 export function PostPage(): React.JSX.Element {
   const { t } = useTranslation(['profile', 'common'])
@@ -27,16 +56,42 @@ export function PostPage(): React.JSX.Element {
   const params = useParams()
   const author = params.author ?? ''
   const slug = params.slug ?? ''
+  const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const hubSession = useHubSession()
+  const push = useToasts((s) => s.push)
+  const queryClient = useQueryClient()
+  const currentUser = auth.status === 'signedIn' ? auth.user.name : undefined
+  // Quote-reply request threaded from a comment's button into the composer.
+  const [quote, setQuote] = useState<{ text: string; nonce: number }>()
 
+  const queryKey = ['post', author, slug]
   const post = useQuery({
-    queryKey: ['post', author, slug],
+    queryKey,
     queryFn: () => invoke('hub:postDetail', { author, slug }),
     enabled: author !== '' && slug !== ''
   })
   const data = post.data
+
+  const react = useMutation({
+    mutationFn: ({ emoji, active }: { emoji: string; active: boolean }) =>
+      invoke('hub:postReactionSet', { author, slug, reaction: emoji, active }),
+    onMutate: async ({ emoji, active }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const prev = queryClient.getQueryData<PostSummary>(queryKey)
+      if (prev && currentUser !== undefined) {
+        queryClient.setQueryData<PostSummary>(queryKey, withReaction(prev, emoji, active, currentUser))
+      }
+      return { prev }
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(queryKey, ctx.prev)
+      push(t('profile:reactions.error', { error: err.message }), 'error')
+    },
+    onSettled: () => void queryClient.invalidateQueries({ queryKey })
+  })
 
   return (
     <div className="h-full overflow-y-auto">
@@ -103,6 +158,19 @@ export function PostPage(): React.JSX.Element {
                   {formatRelativeTime(data.publishedAt, locale)}
                 </div>
               </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t('common:openOnHub')}
+                    onClick={() => openExternal(data.url)}
+                  >
+                    <ExternalLink className="size-4" aria-hidden />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('common:openOnHub')}</TooltipContent>
+              </Tooltip>
             </header>
 
             <MarkdownView markdown={data.content} kind="model" repoId={`${author}/${slug}`} />
@@ -113,15 +181,60 @@ export function PostPage(): React.JSX.Element {
                   <MessageSquare className="size-3.5" aria-hidden />
                   {formatCount(data.numComments ?? 0, locale)}
                 </span>
-                <ReactionBar reactions={data.reactions} postUrl={data.url} locale={locale} />
+                <ReactionBar
+                  reactions={data.reactions}
+                  postUrl={data.url}
+                  locale={locale}
+                  currentUser={currentUser}
+                  onToggle={
+                    hubSession
+                      ? (emoji, active) => react.mutate({ emoji, active })
+                      : undefined
+                  }
+                  pending={react.isPending}
+                />
               </div>
-              <p className="text-[12px] text-ink-faint">{t('profile:post.commentsOnHub')}</p>
-              <div>
-                <Button variant="cta" size="sm" onClick={() => openExternal(data.url)}>
-                  <ExternalLink className="size-3.5" aria-hidden />
-                  {t('profile:post.commentOnHub')}
-                </Button>
-              </div>
+              <PostComments
+                author={author}
+                slug={slug}
+                postUrl={data.url}
+                onQuote={
+                  hubSession
+                    ? (content) => setQuote({ text: content, nonce: Date.now() })
+                    : undefined
+                }
+              />
+              {hubSession ? (
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-[13px] font-semibold">{t('profile:post.comment.heading')}</h2>
+                  <CommentComposer
+                    key={`${author}/${slug}`}
+                    kind="model"
+                    repoId={`${author}/${slug}`}
+                    placeholder={t('profile:post.comment.placeholder')}
+                    quote={quote}
+                    enableUpload
+                    submit={(comment) => invoke('hub:postComment', { author, slug, comment })}
+                    onSubmitted={() => {
+                      push(t('profile:post.comment.posted'), 'success')
+                      void queryClient.invalidateQueries({ queryKey })
+                      void queryClient.invalidateQueries({
+                        queryKey: ['post-comments', author, slug]
+                      })
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="text-[12px] text-ink-faint">{t('profile:post.commentsOnHub')}</p>
+                  <div>
+                    <Button variant="cta" size="sm" onClick={() => openExternal(data.url)}>
+                      <ExternalLink className="size-3.5" aria-hidden />
+                      {t('profile:post.commentOnHub')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </footer>
           </>
         )}

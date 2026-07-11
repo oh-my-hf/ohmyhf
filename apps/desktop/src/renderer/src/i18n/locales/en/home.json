@@ -1,4 +1,11 @@
 {
+  "compose": {
+    "error": "Couldn't publish the post: {{error}}",
+    "new": "New post",
+    "placeholder": "Share an update with the community… Markdown is supported.",
+    "posted": "Post published",
+    "submit": "Publish"
+  },
   "feed": {
     "acted": {
       "discussion": "<author>{{actor}}</author> in <repo>{{repo}}</repo>",
@@ -18,7 +25,9 @@
     "post": "Post"
   },
   "reactions": {
-    "onHub": "React on the Hub"
+    "onHub": "React on the Hub",
+    "react": "Add a reaction",
+    "toggle": "React with {{emoji}}"
   },
   "title": "Home",
   "trending": {

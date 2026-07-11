@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { PaperRow, PostCard, RepoEventRow } from '@/components/home/FeedItems'
 import { ActivityCard } from '@/components/home/ActivityFeedItems'
 import { TrendingRail } from '@/components/home/TrendingRail'
+import { PostComposer } from '@/components/community/PostComposer'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
@@ -187,6 +188,8 @@ export function HomePage(): React.JSX.Element {
       <section className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-6 py-5">
           <h1 className="text-smd font-semibold text-ink-strong">{t('home:title')}</h1>
+
+          <PostComposer />
 
           {showEmptyFollowing ? (
             <div className="rounded-lg border border-border-card bg-card-gradient">

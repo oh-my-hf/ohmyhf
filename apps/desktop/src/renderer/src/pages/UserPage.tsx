@@ -34,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { PlanBadge, planBadgeKind } from '@/components/profile/PlanBadge'
 import { useToasts } from '@/components/ui/toaster'
+import { useHubSession } from '@/hooks/use-hub-session'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const STALE_TIME = 5 * 60_000
@@ -194,7 +195,9 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
   const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
+  const openSettings = useAppStore((s) => s.openSettings)
   const locale = resolveLocale(settings, appInfo)
+  const hubSession = useHubSession()
   const [tabChoice, setTabChoice] = useState<RepoKind | null>(null)
   const signedIn = auth.status === 'signedIn'
 
@@ -296,21 +299,31 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
   })
 
   const setWatch = useMutation({
-    mutationFn: async (next: boolean) => {
-      const id = overview.data?.internalId
-      if (id === undefined || id === '') {
-        return { applied: false as const, watched: watched.data ?? [] }
-      }
-      return invoke('hub:watchSet', {
-        id,
+    // Watches are keyed by account handle, not the internal id.
+    mutationFn: (next: boolean) =>
+      invoke('hub:watchSet', {
+        id: username,
         type: isOrg ? 'org' : 'user',
         watching: next
-      })
-    },
+      }),
     onSuccess: (result, next) => {
       queryClient.setQueryData(['hub-watched'], result.watched)
-      if (result.applied) return
-      // Token sessions cannot mutate watches — open the website control.
+      if (result.applied) {
+        push(t(next ? 'profile:watchSuccess' : 'profile:unwatchSuccess'), 'success')
+        return
+      }
+      if (hubSession) {
+        // A connected web session that still didn't apply the change means the
+        // cookie went stale — point at Settings to reconnect.
+        push(t('profile:watchSessionExpired'), 'error', {
+          action: {
+            label: t('profile:watchReconnect'),
+            onClick: () => openSettings('account')
+          }
+        })
+        return
+      }
+      // No web session: watch mutations need one — open the website control.
       openExternal(`https://huggingface.co/${username}`)
       push(t(next ? 'profile:watchOpenHub' : 'profile:unwatchOpenHub'), 'info', {
         action: {

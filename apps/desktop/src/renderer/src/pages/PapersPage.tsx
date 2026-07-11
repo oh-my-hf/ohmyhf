@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
 import { CommentComposer } from '@/components/community/CommentComposer'
+import { UpvoteButton } from '@/components/community/UpvoteButton'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const ROW_HEIGHT = 64
@@ -129,9 +130,20 @@ export function PapersPage(): React.JSX.Element {
       <section className="min-w-0 flex-1 overflow-y-auto">
         {selected ? (
           <article className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
-            <h1 className="text-xl leading-snug font-semibold text-balance text-ink-strong">
-              {selected.title}
-            </h1>
+            <div className="flex items-start gap-3">
+              {auth.status === 'signedIn' && (
+                <UpvoteButton
+                  upvotes={selected.upvotes}
+                  hubUrl={`https://huggingface.co/papers/${selected.id}`}
+                  onToggle={(next) =>
+                    invoke('hub:paperUpvoteSet', { paperId: selected.id, upvoted: next })
+                  }
+                />
+              )}
+              <h1 className="min-w-0 flex-1 text-xl leading-snug font-semibold text-balance text-ink-strong">
+                {selected.title}
+              </h1>
+            </div>
             <div className="nums flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-faint">
               <span className="flex items-center gap-1">
                 <ThumbsUp className="size-3.5" aria-hidden />
