@@ -6,6 +6,7 @@ import {
   ArrowDownToLine,
   Bell,
   ExternalLink,
+  Globe,
   Info,
   KeyRound,
   LogOut,
@@ -215,6 +216,7 @@ function AccountSection(): React.JSX.Element {
           <TokenAccountBlock
             displayName={auth.tokenDisplayName}
             role={auth.tokenRole}
+            hubSession={auth.hubSession === true}
           />
         </div>
       ) : (
@@ -321,10 +323,12 @@ const TOKEN_ROLE_KEYS: Record<string, string> = {
  */
 function TokenAccountBlock({
   displayName,
-  role
+  role,
+  hubSession
 }: {
   displayName?: string
   role?: string
+  hubSession: boolean
 }): React.JSX.Element {
   const { t } = useTranslation(['settings', 'auth'])
 
@@ -360,7 +364,76 @@ function TokenAccountBlock({
           {t('auth:tokenSignIn.createLink')}
         </Button>
       </div>
+      <HubSessionBlock connected={hubSession} />
       <BillingUsageCard />
+    </div>
+  )
+}
+
+/**
+ * Supplemental Hub web session: a real login window captures the Hub cookie,
+ * unlocking the social writes tokens can't do (like, post reactions/comments,
+ * watch, discussion reactions). The cookie never reaches this process — only
+ * the connected flag does.
+ */
+function HubSessionBlock({ connected }: { connected: boolean }): React.JSX.Element {
+  const { t } = useTranslation(['auth'])
+  const setAuth = useAppStore((s) => s.setAuth)
+  const [error, setError] = useState<'mismatch' | 'timeout' | 'invalid' | 'network' | null>(null)
+
+  const connect = useMutation({
+    mutationFn: () => invoke('auth:connectHubSession', undefined),
+    onSuccess: (result) => {
+      if (result.ok) {
+        setAuth(result.state)
+      } else if (result.error !== 'canceled') {
+        // Closing the login window is a deliberate cancel — no error banner.
+        setError(result.error)
+      }
+    },
+    onError: () => setError('network')
+  })
+
+  const disconnect = useMutation({
+    mutationFn: () => invoke('auth:disconnectHubSession', undefined),
+    onSuccess: setAuth
+  })
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-border-card bg-card-gradient p-3">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <h4 className="text-[12.5px] font-medium text-ink-strong">{t('auth:hubSession.title')}</h4>
+        {connected && <Badge variant="success">{t('auth:hubSession.connected')}</Badge>}
+      </div>
+      <p className="max-w-[65ch] text-[12px] text-ink-faint">{t('auth:hubSession.hint')}</p>
+      {error !== null && (
+        <p className="text-[12px] text-error">{t(`auth:hubSession.${error}`)}</p>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {connected ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={disconnect.isPending}
+            onClick={() => disconnect.mutate()}
+          >
+            {t('auth:hubSession.disconnect')}
+          </Button>
+        ) : (
+          <Button
+            variant="cta"
+            size="sm"
+            loading={connect.isPending}
+            onClick={() => {
+              setError(null)
+              connect.mutate()
+            }}
+          >
+            <Globe className="size-3.5" aria-hidden />
+            {t('auth:hubSession.connect')}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

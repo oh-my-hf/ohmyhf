@@ -6,6 +6,7 @@
  * the raw error via console.error — describeError is for the human.
  */
 import type { TFunction } from 'i18next'
+import { HUB_SESSION_REQUIRED_CODE } from '@oh-my-huggingface/shared'
 
 export type ErrorKind = 'auth' | 'gated' | 'notFound' | 'rateLimit' | 'network' | 'unknown'
 
@@ -36,4 +37,13 @@ export function classifyError(err: unknown): ClassifiedError {
 /** Translated, plain-language message for an error (keys in the `errors` namespace). */
 export function describeError(t: TFunction, err: unknown): string {
   return t(`errors:${classifyError(err).kind}`)
+}
+
+/**
+ * A social write was attempted without a Hub web session (CookieRequiredError
+ * in the main process). The sentinel rides the message across IPC.
+ */
+export function isHubSessionRequired(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err)
+  return message.includes(HUB_SESSION_REQUIRED_CODE)
 }
