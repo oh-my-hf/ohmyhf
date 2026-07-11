@@ -17,7 +17,7 @@ export function DialogContent({
   const { t } = useTranslation('common')
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="animate-fade fixed inset-0 z-40 bg-black/40" />
+      <DialogPrimitive.Overlay className="animate-fade fixed inset-0 z-40 bg-scrim" />
       <DialogPrimitive.Content
         className={cn(
           'fixed top-1/2 left-1/2 z-50 w-[26rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2',
@@ -29,7 +29,7 @@ export function DialogContent({
         {children}
         <DialogPrimitive.Close
           aria-label={t('close')}
-          className="absolute top-3 right-3 rounded-md p-1 text-ink-muted transition-colors hover:bg-panel-2 hover:text-ink"
+          className="absolute top-3 right-3 flex size-6 items-center justify-center rounded-md text-ink-muted transition-colors duration-150 outline-none hover:bg-panel-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
         >
           <X className="size-4" aria-hidden />
         </DialogPrimitive.Close>

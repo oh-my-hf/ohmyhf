@@ -85,7 +85,7 @@ export function FavoritesPage(): React.JSX.Element {
             <button
               type="button"
               onClick={() => navigate(`/${KIND_PATH[fav.kind]}/${fav.repoId}`)}
-              className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
             >
               <Badge variant="outline">{t(`common:kind.${fav.kind}`)}</Badge>
               <span className="min-w-0 truncate font-mono text-[13px] font-medium text-ink-strong transition-colors duration-150 group-hover:text-hover-title">

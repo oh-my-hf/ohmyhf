@@ -89,6 +89,19 @@
   --c-plan-to: oklch(0.21 0.034 264.665);
   --c-plan-ink: oklch(1 0 0);
   --c-plan-border: oklch(0.928 0.006 264.531);
+  /* Hub Pro sparkle fill (IconProSparkle) — fixed Hub rainbow, not theme-inverted */
+  --c-pro-sparkle-from: #ff0789;
+  --c-pro-sparkle-via: #21de75;
+  --c-pro-sparkle-to: #ff8d00;
+  /* HF aurora wash stops at ~10% alpha — avatar fallbacks / banners only */
+  --c-aurora-1: rgb(247 0 89 / 0.1);
+  --c-aurora-2: rgb(82 255 0 / 0.1);
+  --c-aurora-3: rgb(20 0 255 / 0.1);
+  --c-aurora-4: rgb(255 0 0 / 0.1);
+  --c-aurora-5: rgb(255 230 0 / 0.1);
+  /* Modal / palette scrim */
+  --c-scrim: rgb(0 0 0 / 0.4);
+  --c-scrim-soft: rgb(0 0 0 / 0.3);
   /* Signature gradients: cards left→right, buttons/tags top→bottom */
   --c-card-from: oklch(0.985 0.002 247.839);
   --c-card-to: oklch(1 0 0);
@@ -152,6 +165,16 @@
   --c-plan-to: oklch(0.928 0.006 264.531);
   --c-plan-ink: oklch(0.21 0.034 264.665);
   --c-plan-border: oklch(0.928 0.006 264.531);
+  --c-pro-sparkle-from: #ff0789;
+  --c-pro-sparkle-via: #21de75;
+  --c-pro-sparkle-to: #ff8d00;
+  --c-aurora-1: rgb(247 0 89 / 0.1);
+  --c-aurora-2: rgb(82 255 0 / 0.1);
+  --c-aurora-3: rgb(20 0 255 / 0.1);
+  --c-aurora-4: rgb(255 0 0 / 0.1);
+  --c-aurora-5: rgb(255 230 0 / 0.1);
+  --c-scrim: rgb(0 0 0 / 0.55);
+  --c-scrim-soft: rgb(0 0 0 / 0.4);
   --c-card-from: oklch(0.21 0.034 264.665); /* gray-900 → */
   --c-card-to: oklch(0.17 0.022 267); /* #0b0f19 */
   --c-btn-from: oklch(0.278 0.033 256.848);
@@ -210,6 +233,11 @@
   --color-plan-to: var(--c-plan-to);
   --color-plan-ink: var(--c-plan-ink);
   --color-plan-border: var(--c-plan-border);
+  --color-pro-sparkle-from: var(--c-pro-sparkle-from);
+  --color-pro-sparkle-via: var(--c-pro-sparkle-via);
+  --color-pro-sparkle-to: var(--c-pro-sparkle-to);
+  --color-scrim: var(--c-scrim);
+  --color-scrim-soft: var(--c-scrim-soft);
   --color-card-from: var(--c-card-from);
   --color-card-to: var(--c-card-to);
   --color-btn-from: var(--c-btn-from);
@@ -260,11 +288,11 @@
 @utility bg-aurora {
   background-image: linear-gradient(
     45deg,
-    rgb(247 0 89 / 0.1),
-    rgb(82 255 0 / 0.1),
-    rgb(20 0 255 / 0.1),
-    rgb(255 0 0 / 0.1),
-    rgb(255 230 0 / 0.1)
+    var(--c-aurora-1),
+    var(--c-aurora-2),
+    var(--c-aurora-3),
+    var(--c-aurora-4),
+    var(--c-aurora-5)
   );
 }
 

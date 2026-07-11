@@ -327,7 +327,7 @@ export function CollectionPage(): React.JSX.Element {
                     <button
                       type="button"
                       onClick={() => navigate(itemHref(item))}
-                      className="group flex min-w-0 flex-1 items-start gap-2.5 text-left"
+                      className="group flex min-w-0 flex-1 items-start gap-2.5 rounded-sm text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
                     >
                       <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-panel">
                         {item.emoji ? (

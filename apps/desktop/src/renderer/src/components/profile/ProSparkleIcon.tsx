@@ -34,9 +34,9 @@ export function ProSparkleIcon({ className }: { className?: string }): React.JSX
           y2="8.60076"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#FF0789" />
-          <stop offset="0.63" stopColor="#21DE75" />
-          <stop offset="1" stopColor="#FF8D00" />
+          <stop stopColor="var(--c-pro-sparkle-from)" />
+          <stop offset="0.63" stopColor="var(--c-pro-sparkle-via)" />
+          <stop offset="1" stopColor="var(--c-pro-sparkle-to)" />
         </linearGradient>
       </defs>
     </svg>

@@ -189,7 +189,7 @@ export function MyReposPage(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => navigate(`/${KIND_PATH[repo.kind]}/${repo.id}`)}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
                 >
                   <Icon className="size-3.5 shrink-0 text-ink-faint" aria-hidden />
                   <span className="min-w-0 truncate font-mono text-[13px] font-medium tracking-tight text-ink-strong transition-colors duration-150 group-hover:text-hover-title">

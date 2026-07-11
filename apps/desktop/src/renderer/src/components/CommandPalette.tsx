@@ -220,7 +220,7 @@ export function CommandPalette(): React.JSX.Element {
       label={t('nav:commandPalette')}
       shouldFilter={false}
       className="animate-fade-rise fixed top-[18%] left-1/2 z-50 w-[36rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-lg border bg-elevated shadow-overlay"
-      overlayClassName="animate-fade fixed inset-0 z-40 bg-black/30"
+      overlayClassName="animate-fade fixed inset-0 z-40 bg-scrim-soft"
     >
       <div className="flex items-center gap-2 border-b px-3">
         <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />

@@ -630,7 +630,7 @@ export function DiscussionsPanel({
             key={discussion.num}
             type="button"
             onClick={() => setSelected(discussion.num)}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-panel"
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
           >
             {discussion.isPullRequest ? (
               <GitPullRequest
