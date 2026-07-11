@@ -12,7 +12,7 @@ export interface ToastAction {
 }
 
 export interface ToastOptions {
-  /** ms; `null` keeps the toast until dismissed. Defaults: error 8s, others 4s. */
+  /** ms; `null` keeps the toast until dismissed. Defaults: error 5s, others 2.5s. */
   duration?: number | null
   action?: ToastAction
   /** Reuse an id to replace an existing toast (dedupe) and restart its timer. */
@@ -43,7 +43,7 @@ export const useToasts = create<ToastState>((set) => ({
   push: (message, variant = 'info', options = {}) => {
     const id = options.id ?? nextId++
     const duration =
-      options.duration !== undefined ? options.duration : variant === 'error' ? 8000 : 4000
+      options.duration !== undefined ? options.duration : variant === 'error' ? 5000 : 2500
     const toast: Toast = { id, message, variant, duration, action: options.action, nonce: nextId++ }
     set((s) => ({ toasts: [...s.toasts.filter((t) => t.id !== id), toast].slice(-MAX_STACK) }))
     return id
@@ -51,9 +51,9 @@ export const useToasts = create<ToastState>((set) => ({
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
 }))
 
-/** Undo toast: 6s window, action reverses the operation just performed. */
+/** Undo toast: 5s window, action reverses the operation just performed. */
 export function pushUndo(message: string, action: ToastAction): number {
-  return useToasts.getState().push(message, 'info', { duration: 6000, action })
+  return useToasts.getState().push(message, 'info', { duration: 5000, action })
 }
 
 const ICONS = {
@@ -98,6 +98,10 @@ function ToastCard({ toast }: { toast: Toast }): React.JSX.Element {
       onMouseLeave={resume}
       onFocusCapture={pause}
       onBlurCapture={resume}
+      // Toasts float above modals. Keep their pointer interactions from bubbling
+      // to a Radix DismissableLayer (dialog/dropdown/popover), which would
+      // otherwise treat a toast click as an outside click and close the layer.
+      onPointerDown={(e) => e.stopPropagation()}
       className="animate-toast-in pointer-events-auto flex items-start gap-2 rounded-lg border bg-elevated p-3 text-[13px] text-ink shadow-overlay"
     >
       <Icon
