@@ -139,6 +139,26 @@ describe('HubClient errors and readme', () => {
     })
   })
 
+  it('includes the Hub error JSON in mutation HubApiError messages', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'expected string, received null → at description' }), {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const err = await client
+      .createCollection({ namespace: 'julien', title: 'x', private: false })
+      .catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(HubApiError)
+    expect(err).toMatchObject({ status: 400 })
+    expect((err as HubApiError).message).toContain('400 Bad Request')
+    expect((err as HubApiError).message).toContain(
+      'expected string, received null → at description'
+    )
+  })
+
   it('returns empty string for repos without a README', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response('not found', { status: 404 }))
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0 })

@@ -226,6 +226,34 @@ function sseDataText(raw: string): string {
   return lines.join('\n')
 }
 
+/** Pull a short Hub error string out of a failed response body for toast/log detail. */
+async function hubErrorDetail(res: Response): Promise<string> {
+  let text = ''
+  try {
+    text = (await res.text()).trim()
+  } catch {
+    return ''
+  }
+  if (!text) return ''
+  try {
+    const parsed = JSON.parse(text) as { error?: unknown; message?: unknown }
+    const msg =
+      typeof parsed.error === 'string'
+        ? parsed.error
+        : typeof parsed.message === 'string'
+          ? parsed.message
+          : undefined
+    if (msg) {
+      const oneLine = msg.replace(/\s+/g, ' ').trim()
+      return oneLine ? `: ${oneLine.slice(0, 240)}` : ''
+    }
+  } catch {
+    // not JSON — fall through to a raw snippet
+  }
+  const snippet = text.replace(/\s+/g, ' ').trim().slice(0, 240)
+  return snippet ? `: ${snippet}` : ''
+}
+
 /**
  * Thin, cached client over the Hub REST API. All requests carry a descriptive
  * User-Agent and are centrally cached so UI-driven refetches never hammer the API.
@@ -342,10 +370,11 @@ export class HubClient {
     }
   }
 
-  private throwHttpError(res: Response, url: string): never {
-    const detail = res.status === 429 ? ' (rate limited)' : ''
+  private async throwHttpError(res: Response, method: string, url: string): Promise<never> {
+    const rate = res.status === 429 ? ' (rate limited)' : ''
+    const hubDetail = await hubErrorDetail(res)
     throw new HubApiError(
-      `GET ${url} failed: ${res.status} ${res.statusText}${detail}`,
+      `${method} ${url} failed: ${res.status} ${res.statusText}${rate}${hubDetail}`,
       res.status,
       url
     )
@@ -373,14 +402,7 @@ export class HubClient {
       },
       { retryStatuses: [429] }
     )
-    if (!res.ok) {
-      const detail = res.status === 429 ? ' (rate limited)' : ''
-      throw new HubApiError(
-        `${method} ${url} failed: ${res.status} ${res.statusText}${detail}`,
-        res.status,
-        url
-      )
-    }
+    if (!res.ok) await this.throwHttpError(res, method, url)
     this.invalidateCache()
     return res
   }
@@ -416,7 +438,7 @@ export class HubClient {
   ): Promise<{ body: T; nextUrl?: string }> {
     try {
       const res = await this.fetchWithPolicy(url, { headers: this.headers(url) })
-      if (!res.ok) this.throwHttpError(res, url)
+      if (!res.ok) await this.throwHttpError(res, 'GET', url)
       const body = (await res.json()) as T
       const nextUrl = parseLinkNext(res.headers.get('Link'))
       if (ttl > 0) this.cache.set(key, { at: Date.now(), status: res.status, body, nextUrl })
@@ -446,7 +468,7 @@ export class HubClient {
   private async fetchText(url: string, key: string): Promise<string> {
     try {
       const res = await this.fetchWithPolicy(url, { headers: this.headers(url) })
-      if (!res.ok) this.throwHttpError(res, url)
+      if (!res.ok) await this.throwHttpError(res, 'GET', url)
       const body = await res.text()
       if (this.cacheTtlMs > 0) this.cache.set(key, { at: Date.now(), status: res.status, body })
       return body
@@ -466,7 +488,7 @@ export class HubClient {
         'Accept-Encoding': 'identity'
       }
     })
-    if (res.status !== 200 && res.status !== 206) this.throwHttpError(res, url)
+    if (res.status !== 200 && res.status !== 206) await this.throwHttpError(res, 'GET', url)
     const bytes = new Uint8Array(await res.arrayBuffer())
     const want = end - start + 1
     return res.status === 200 && bytes.byteLength > want ? bytes.slice(start, end + 1) : bytes
@@ -668,8 +690,7 @@ export class HubClient {
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000)
     })
     if (!res.ok) {
-      void res.body?.cancel().catch(() => undefined)
-      this.throwHttpError(res, url)
+      await this.throwHttpError(res, 'GET', url)
     }
     return mapWhoAmIAuth((await res.json()) as never)
   }
@@ -717,7 +738,7 @@ export class HubClient {
         'Accept-Encoding': 'identity'
       }
     })
-    if (res.status !== 200 && res.status !== 206) this.throwHttpError(res, url)
+    if (res.status !== 200 && res.status !== 206) await this.throwHttpError(res, 'GET', url)
     const bytes = new Uint8Array(await res.arrayBuffer())
     if (bytes.includes(0)) throw new HubApiError('binary file', undefined, url)
     const size = totalSizeFrom(res, bytes.byteLength)
@@ -1018,12 +1039,21 @@ export class HubClient {
     description?: string
     private: boolean
   }): Promise<CollectionDetail> {
-    const res = await this.sendJson('POST', `${this.endpoint}/api/collections`, {
+    // HF returns 400 if description is null; omit empty/undefined entirely.
+    const payload: {
+      title: string
+      namespace: string
+      private: boolean
+      description?: string
+    } = {
       title: input.title,
       namespace: input.namespace,
-      description: input.description,
       private: input.private
-    })
+    }
+    if (input.description != null && input.description !== '') {
+      payload.description = input.description
+    }
+    const res = await this.sendJson('POST', `${this.endpoint}/api/collections`, payload)
     return mapCollectionDetail((await res.json()) as never)
   }
 
@@ -1314,7 +1344,7 @@ export class HubClient {
         headers: { ...this.headers(url), Accept: 'text/event-stream' },
         signal: controller.signal
       })
-      if (!res.ok) this.throwHttpError(res, url)
+      if (!res.ok) await this.throwHttpError(res, 'GET', url)
       const reader = res.body?.getReader()
       if (!reader) return { text: '' }
       const decoder = new TextDecoder()
@@ -1347,7 +1377,15 @@ export class HubClient {
     await this.sendJson('POST', `${this.endpoint}/api/spaces/${repoId}/restart${suffix}`)
   }
 
-  /** Not in the public OpenAPI spec; runtime-verified (used by huggingface_hub's like/unlike). */
+  /**
+   * Like/unlike a repo. Not in the public OpenAPI spec.
+   *
+   * Live-verified 2026-07-11: POST (like) with Bearer access tokens returns
+   * 401 "Invalid username or password" — Hugging Face blocks programmatic
+   * likes to prevent spam (huggingface_hub only exposes `unlike`). DELETE
+   * (unlike) works with write-role tokens. Prefer linking out to the Hub UI
+   * for like; this method remains for unlike and cookie-backed clients.
+   */
   async setLike(kind: RepoKind, repoId: string, liked: boolean): Promise<void> {
     await this.sendJson(
       liked ? 'POST' : 'DELETE',

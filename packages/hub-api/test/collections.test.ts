@@ -161,6 +161,35 @@ describe('HubClient.createCollection', () => {
     expect(created.private).toBe(true)
     expect(created.items).toEqual([])
   })
+
+  it('omits empty or undefined description from the POST body', async () => {
+    const fetchImpl = vi.fn().mockImplementation(() =>
+      Promise.resolve(jsonResponse({ ...rawCollection, items: [], private: false }))
+    )
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await client.createCollection({
+      namespace: 'julien',
+      title: 'No desc',
+      description: undefined,
+      private: false
+    })
+    expect(jsonBodyOf(requestOf(fetchImpl).init)).toEqual({
+      title: 'No desc',
+      namespace: 'julien',
+      private: false
+    })
+    await client.createCollection({
+      namespace: 'julien',
+      title: 'Empty desc',
+      description: '',
+      private: false
+    })
+    expect(jsonBodyOf(requestOf(fetchImpl, 1).init)).toEqual({
+      title: 'Empty desc',
+      namespace: 'julien',
+      private: false
+    })
+  })
 })
 
 describe('HubClient collection mutations', () => {

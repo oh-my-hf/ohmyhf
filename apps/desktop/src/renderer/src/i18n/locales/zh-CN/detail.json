@@ -90,6 +90,7 @@
   "like": {
     "error": "点赞更新失败：{{error}}",
     "like": "点赞",
+    "onHub": "点赞需要 Hub 网页会话——访问令牌无法在应用内点赞。请到 Hub 上打开该仓库再点赞。",
     "unlike": "取消点赞"
   },
   "maintainer": {

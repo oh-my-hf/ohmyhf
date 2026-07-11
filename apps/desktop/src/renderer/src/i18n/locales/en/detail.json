@@ -90,6 +90,7 @@
   "like": {
     "error": "Couldn't update the like: {{error}}",
     "like": "Like",
+    "onHub": "Likes need a Hub web session — access tokens can't like from the app. Open the repo on the Hub to like it.",
     "unlike": "Unlike"
   },
   "maintainer": {
