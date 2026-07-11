@@ -16,6 +16,7 @@
     "prev": "Previous page",
     "range": "Rows {{from}}–{{to}} of {{total}}",
     "rangeNoTotal": "Rows {{from}}–{{to}}",
+    "sampleNote": "Full viewer unavailable — showing the Hub's sample preview ({{count}} rows).",
     "split": "Split",
     "unavailable": "The dataset viewer isn't available for this dataset. You can still browse its files, or open it on the Hub."
   },
@@ -81,6 +82,19 @@
     "lfs": "LFS",
     "noTargets": "No local tools detected",
     "root": "root"
+  },
+  "gate": {
+    "ask": "This repository is gated — request access to download and preview it.",
+    "error": "Couldn't submit the access request: {{error}}",
+    "granted": "You have been granted access to this repository.",
+    "needsSession": "Submitting an access request needs a Hub web session — connect one in Settings → Account.",
+    "openSettings": "Open Settings",
+    "pending": "Your access request is pending the authors' review.",
+    "request": "Request access",
+    "requestBody": "Fill in the conditions the authors of {{repoId}} require. Your username and email address will be shared with them.",
+    "requestTitle": "Request access",
+    "submit": "Agree and send request",
+    "submitted": "Access request sent."
   },
   "info": {
     "created": "Created",

@@ -18,6 +18,7 @@ import { RepoManagePanel } from '@/components/admin/RepoManagePanel'
 import { SpaceOpsPanel } from '@/components/admin/SpaceOpsPanel'
 import { DatasetPreview } from '@/components/browse/DatasetPreview'
 import { DiscussionsPanel } from '@/components/browse/DiscussionsPanel'
+import { GatedAccessBar } from '@/components/browse/GatedAccessBar'
 import { FileTreeView } from '@/components/browse/FileTreeView'
 import { InfoPanel } from '@/components/browse/InfoPanel'
 import { MarkdownView } from '@/components/browse/MarkdownView'
@@ -255,6 +256,10 @@ export function RepoDetail({
           </Button>
         </div>
       </header>
+
+      {detailData?.gated !== undefined && detailData.gated !== false && (
+        <GatedAccessBar kind={kind} repoId={repoId} />
+      )}
 
       <Tabs
         value={tab}

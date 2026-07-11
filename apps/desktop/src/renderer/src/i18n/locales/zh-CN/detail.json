@@ -16,6 +16,7 @@
     "prev": "上一页",
     "range": "第 {{from}}–{{to}} 行，共 {{total}} 行",
     "rangeNoTotal": "第 {{from}}–{{to}} 行",
+    "sampleNote": "完整查看器不可用——以下为 Hub 提供的样本预览（{{count}} 行）。",
     "split": "切分",
     "unavailable": "该数据集暂不支持在线预览。你仍可浏览其文件，或在 Hub 上打开。"
   },
@@ -81,6 +82,19 @@
     "lfs": "LFS",
     "noTargets": "未检测到本地工具",
     "root": "根目录"
+  },
+  "gate": {
+    "ask": "该仓库需要申请访问——申请通过后才能下载和预览。",
+    "error": "提交申请失败：{{error}}",
+    "granted": "你已获得该仓库的访问权限。",
+    "needsSession": "提交访问申请需要 Hub 网页会话——请在 设置 → 账户 中连接。",
+    "openSettings": "打开设置",
+    "pending": "你的访问申请正在等待作者审核。",
+    "request": "申请访问",
+    "requestBody": "请填写 {{repoId}} 作者要求的条件。你的用户名和邮箱将共享给仓库作者。",
+    "requestTitle": "申请访问",
+    "submit": "同意并提交申请",
+    "submitted": "访问申请已提交。"
   },
   "info": {
     "created": "创建时间",

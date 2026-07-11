@@ -47,6 +47,81 @@ function TableSkeleton(): React.JSX.Element {
   )
 }
 
+function RowsTable({
+  columns,
+  rows,
+  dim
+}: {
+  columns: string[]
+  rows: string[][]
+  dim?: boolean
+}): React.JSX.Element {
+  return (
+    <table
+      className={cn(
+        'w-full border-collapse font-mono text-[12px] transition-opacity duration-150',
+        dim && 'opacity-60'
+      )}
+    >
+      <thead>
+        <tr>
+          {columns.map((col) => (
+            <th
+              key={col}
+              className="sticky top-0 z-10 border-b border-border-card bg-panel px-3 py-2 text-left text-[11px] font-medium whitespace-nowrap text-ink-muted"
+            >
+              {col}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, i) => (
+          <tr key={i} className="border-b border-border-card align-top last:border-b-0 hover:bg-panel/60">
+            {row.map((cell, j) => (
+              <td key={j} className="px-3 py-1.5">
+                <div className="max-w-80 truncate" title={cell}>
+                  {cell}
+                </div>
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+/**
+ * When the datasets-server viewer is unavailable (huge datasets, failed
+ * builds, some gated repos), fall back to the SSR sample rows the Hub itself
+ * shows on the dataset page. Only when the page carries no sample either do
+ * we declare the preview unavailable.
+ */
+function SampleFallback({ repoId }: { repoId: string }): React.JSX.Element {
+  const { t } = useTranslation(['detail', 'common'])
+  const sample = useQuery({
+    queryKey: ['datasetSampleRows', repoId],
+    queryFn: () => invoke('hub:datasetSampleRows', { repoId }),
+    retry: false
+  })
+
+  if (sample.isPending) return <TableSkeleton />
+  if (sample.isError || sample.data === null || sample.data === undefined) {
+    return <Unavailable repoId={repoId} />
+  }
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="border-b bg-panel/60 px-3 py-1.5 text-[12px] text-ink-muted">
+        {t('detail:datasetPreview.sampleNote', { count: sample.data.rows.length })}
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto">
+        <RowsTable columns={sample.data.columns} rows={sample.data.rows} />
+      </div>
+    </div>
+  )
+}
+
 export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Element {
   const { t } = useTranslation('detail')
   const [config, setConfig] = useState<string | null>(null)
@@ -85,9 +160,9 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
     retry: false
   })
 
-  if (splits.isError || rows.isError) return <Unavailable repoId={repoId} />
+  if (splits.isError || rows.isError) return <SampleFallback repoId={repoId} />
   if (splits.isPending) return <TableSkeleton />
-  if (splits.data.length === 0) return <Unavailable repoId={repoId} />
+  if (splits.data.length === 0) return <SampleFallback repoId={repoId} />
 
   const from = page * PAGE_SIZE + 1
   const to = page * PAGE_SIZE + (rows.data?.rows.length ?? 0)
@@ -139,38 +214,11 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
       <div className="min-h-0 flex-1 overflow-auto">
         {rows.isPending && <TableSkeleton />}
         {rows.data && (
-          <table
-            className={cn(
-              'w-full border-collapse font-mono text-[12px] transition-opacity duration-150',
-              rows.isPlaceholderData && 'opacity-60'
-            )}
-          >
-            <thead>
-              <tr>
-                {rows.data.columns.map((col) => (
-                  <th
-                    key={col}
-                    className="sticky top-0 z-10 border-b border-border-card bg-panel px-3 py-2 text-left text-[11px] font-medium whitespace-nowrap text-ink-muted"
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.data.rows.map((row, i) => (
-                <tr key={i} className="border-b border-border-card align-top last:border-b-0 hover:bg-panel/60">
-                  {row.map((cell, j) => (
-                    <td key={j} className="px-3 py-1.5">
-                      <div className="max-w-80 truncate" title={cell}>
-                        {cell}
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <RowsTable
+            columns={rows.data.columns}
+            rows={rows.data.rows}
+            dim={rows.isPlaceholderData}
+          />
         )}
       </div>
 
