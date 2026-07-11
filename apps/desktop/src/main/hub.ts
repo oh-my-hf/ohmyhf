@@ -19,6 +19,7 @@ export function createProxiedFetch(proxyUrl: string | null): typeof fetch {
 
 export function createHubClient(
   getAccessToken: () => string | undefined,
+  getSessionCookie: () => string | undefined,
   options?: { endpoint?: string | null; proxyUrl?: string | null }
 ): HubClient {
   return new HubClient({
@@ -31,7 +32,8 @@ export function createHubClient(
     maxConcurrent: 4,
     minRequestGapMs: 120,
     maxRetries: 2,
-    getAccessToken
+    getAccessToken,
+    getSessionCookie
   })
 }
 
@@ -54,7 +56,8 @@ export function createHubProxy(holder: HubHolder): HubClient {
 export function rebuildHubClient(
   holder: HubHolder,
   getAccessToken: () => string | undefined,
+  getSessionCookie: () => string | undefined,
   options: { endpoint: string | null; proxyUrl: string | null }
 ): void {
-  holder.current = createHubClient(getAccessToken, options)
+  holder.current = createHubClient(getAccessToken, getSessionCookie, options)
 }

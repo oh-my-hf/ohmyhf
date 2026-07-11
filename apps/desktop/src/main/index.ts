@@ -82,10 +82,14 @@ if (!gotLock) {
     const auth = new AuthManager(db, (state) => broadcast('evt:auth', state))
     const initial = settings.get()
     const hubHolder: HubHolder = {
-      current: createHubClient(() => auth.accessToken(), {
-        endpoint: initial.hubEndpoint,
-        proxyUrl: initial.proxyUrl
-      })
+      current: createHubClient(
+        () => auth.accessToken(),
+        () => auth.sessionCookie(),
+        {
+          endpoint: initial.hubEndpoint,
+          proxyUrl: initial.proxyUrl
+        }
+      )
     }
     const hub = createHubProxy(hubHolder)
     auth.attachClient(hubHolder.current)
@@ -144,11 +148,19 @@ if (!gotLock) {
       const proxyChanged = next.proxyUrl !== prev.proxyUrl
       if (!endpointChanged && !proxyChanged) return
       if (proxyChanged) await applyAppProxy(next.proxyUrl)
+      // A web-session cookie is bound to the host it was captured on; it must
+      // never ride along to a different (mirror) endpoint.
+      if (endpointChanged) await auth.disconnectHubSession()
       if (endpointChanged || proxyChanged) {
-        rebuildHubClient(hubHolder, () => auth.accessToken(), {
-          endpoint: next.hubEndpoint,
-          proxyUrl: next.proxyUrl
-        })
+        rebuildHubClient(
+          hubHolder,
+          () => auth.accessToken(),
+          () => auth.sessionCookie(),
+          {
+            endpoint: next.hubEndpoint,
+            proxyUrl: next.proxyUrl
+          }
+        )
         auth.attachClient(hubHolder.current)
       }
     }

@@ -2,7 +2,12 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { safeStorage } from 'electron'
-import type { AuthState, TokenSignInResult, UserProfile } from '@oh-my-huggingface/shared'
+import type {
+  AuthState,
+  HubSessionConnectResult,
+  TokenSignInResult,
+  UserProfile
+} from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import { isUnauthorized } from '@oh-my-huggingface/hub-api'
 import type { AppDatabase } from './db'
@@ -29,6 +34,15 @@ interface StoredToken {
   tokenDisplayName?: string
   /** 'read' | 'write' | 'fineGrained' from whoami-v2, when reported. */
   tokenRole?: string
+  /**
+   * Supplemental Hub web-session cookie (the huggingface.co `token` cookie),
+   * captured via the login window. Unlocks the social writes the Hub blocks
+   * for Bearer tokens. Extra fields inside the same encrypted envelope keep
+   * the version-1 file forward/backward compatible.
+   */
+  sessionCookie?: string
+  /** Whoami name the cookie validated as, for the Account UI. */
+  sessionUsername?: string
 }
 
 /** Retry cadence after a transient (network/5xx) whoAmI failure at startup. */
@@ -64,6 +78,11 @@ export class AuthManager {
     return this.token?.accessToken
   }
 
+  /** Called by HubClient on cookie-authenticated (social write) requests. */
+  sessionCookie(): string | undefined {
+    return this.token?.sessionCookie
+  }
+
   private setState(state: AuthState): void {
     this.state = state
     this.onChange(state)
@@ -75,7 +94,8 @@ export class AuthManager {
       user,
       method: 'token',
       tokenDisplayName: this.token?.tokenDisplayName,
-      tokenRole: this.token?.tokenRole
+      tokenRole: this.token?.tokenRole,
+      hubSession: Boolean(this.token?.sessionCookie)
     }
   }
 
@@ -242,6 +262,64 @@ export class AuthManager {
     this.client.invalidateCache()
     this.setState(this.signedInState(validated.user))
     return { ok: true, state: this.state }
+  }
+
+  /**
+   * Install a captured Hub web-session cookie as the supplemental credential.
+   * Requires an existing token session (the cookie augments it, never replaces
+   * it) and validates out of band with the same epoch discipline as
+   * signInWithToken: nothing is touched until the cookie proves valid, and a
+   * cookie that belongs to a different account than the token session is
+   * rejected before persistence.
+   */
+  async connectHubSession(cookie: string): Promise<HubSessionConnectResult> {
+    const trimmed = cookie.trim()
+    if (!trimmed || this.state.status !== 'signedIn' || !this.token) {
+      return { ok: false, error: 'invalid' }
+    }
+    const sessionUser = this.state.user
+    const startEpoch = this.epoch
+    let validated: { user: UserProfile }
+    try {
+      validated = await this.client.whoAmIWithCookie(trimmed)
+    } catch (err) {
+      return { ok: false, error: isUnauthorized(err) ? 'invalid' : 'network' }
+    }
+    if (this.epoch !== startEpoch || this.state.status !== 'signedIn' || !this.token) {
+      // The user signed out (or re-signed-in) mid-validation; newer intent wins.
+      return { ok: false, error: 'network' }
+    }
+    if (validated.user.name.toLowerCase() !== sessionUser.name.toLowerCase()) {
+      return { ok: false, error: 'mismatch' }
+    }
+    this.token = { ...this.token, sessionCookie: trimmed, sessionUsername: validated.user.name }
+    try {
+      this.persistToken()
+    } catch {
+      // Memory-only is fine for this run (mirrors init()).
+    }
+    this.setState(this.signedInState(sessionUser))
+    return { ok: true, state: this.state }
+  }
+
+  /**
+   * Drop the web-session cookie, keeping the token session signed in. Also the
+   * landing point when a cookie-backed call comes back 401 (cookie expired).
+   */
+  async disconnectHubSession(): Promise<AuthState> {
+    if (this.token?.sessionCookie) {
+      const { sessionCookie: _cookie, sessionUsername: _name, ...rest } = this.token
+      this.token = rest
+      try {
+        this.persistToken()
+      } catch {
+        // Memory-only is fine for this run.
+      }
+      if (this.state.status === 'signedIn') {
+        this.setState(this.signedInState(this.state.user))
+      }
+    }
+    return this.state
   }
 
   async signOut(): Promise<AuthState> {

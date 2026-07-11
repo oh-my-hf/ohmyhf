@@ -3,7 +3,7 @@
  * Each payload is validated (zod) before any work happens; channels that accept no
  * payload reject anything non-null. No string channels appear outside the contract.
  */
-import { app, dialog, ipcMain, shell } from 'electron'
+import { BrowserWindow, app, dialog, ipcMain, shell } from 'electron'
 import { readFile, writeFile } from 'node:fs/promises'
 import type {
   AppInfo,
@@ -20,9 +20,10 @@ import {
   ipcRequestSchemas,
   settingsExportFileSchema
 } from '@oh-my-huggingface/shared'
-import { defaultCacheDir } from '@oh-my-huggingface/hub-api'
+import { defaultCacheDir, isUnauthorized } from '@oh-my-huggingface/hub-api'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import type { AuthManager } from './auth'
+import { captureHubSessionCookie } from './hub-session'
 import type { CacheManager } from './cache'
 import type { AppDatabase } from './db'
 import type { DownloadManager } from './downloads'
@@ -108,6 +109,25 @@ async function applySettingsPatch(
 }
 
 export function registerIpcHandlers(ctx: AppContext): void {
+  /**
+   * A 401 from a cookie-backed social write means the captured web session
+   * expired or was revoked: auto-disconnect it (broadcasts evt:auth so the
+   * UI reverts to the open-on-Hub fallbacks) and rethrow for the caller's
+   * toast. Token-auth 401s can't reach this — cookie requests carry no
+   * Authorization header — and CookieRequiredError carries no status.
+   */
+  const cookieBacked = async <T>(fn: () => Promise<T>): Promise<T> => {
+    try {
+      return await fn()
+    } catch (err) {
+      const state = ctx.auth.getState()
+      if (isUnauthorized(err) && state.status === 'signedIn' && state.hubSession) {
+        await ctx.auth.disconnectHubSession()
+      }
+      throw err
+    }
+  }
+
   // --- system ---------------------------------------------------------------
   handle('system:getAppInfo', (): AppInfo => {
     return {
@@ -292,9 +312,11 @@ export function registerIpcHandlers(ctx: AppContext): void {
   )
 
   // --- hub: repo administration ---------------------------------------------------
-  handle('hub:watchUpdate', (changes) => ctx.hub.updateWatch(changes))
+  handle('hub:watchUpdate', (changes) => cookieBacked(() => ctx.hub.updateWatch(changes)))
   handle('hub:watchList', () => ctx.hub.listWatched())
-  handle('hub:watchSet', ({ id, type, watching }) => ctx.hub.setWatch({ id, type }, watching))
+  handle('hub:watchSet', ({ id, type, watching }) =>
+    cookieBacked(() => ctx.hub.setWatch({ id, type }, watching))
+  )
   handle('hub:myRepos', () => ctx.hub.listMyRepos())
   handle('hub:repoSettingsUpdate', ({ kind, repoId, patch }) =>
     ctx.hub.updateRepoSettings(kind, repoId, patch)
@@ -339,13 +361,46 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:spaceRestart', ({ repoId, factory }) => ctx.hub.restartSpace(repoId, factory))
 
   // --- hub: community & billing --------------------------------------------------------
-  handle('hub:likeSet', ({ kind, repoId, liked }) => ctx.hub.setLike(kind, repoId, liked))
+  // Like (POST) rides the web session; unlike (DELETE) rides the token, so a
+  // token 401 there must not tear down the web session.
+  handle('hub:likeSet', ({ kind, repoId, liked }) =>
+    liked
+      ? cookieBacked(() => ctx.hub.setLike(kind, repoId, true))
+      : ctx.hub.setLike(kind, repoId, false)
+  )
   handle('hub:followSet', ({ username, following, isOrg }) =>
     ctx.hub.setFollow(username, following, isOrg === true)
   )
   handle('hub:userLikes', ({ username }) => ctx.hub.getUserLikes(username))
   handle('hub:postComment', ({ author, slug, comment, replyToCommentId }) =>
-    ctx.hub.commentOnPost(author, slug, comment, replyToCommentId)
+    cookieBacked(() => ctx.hub.commentOnPost(author, slug, comment, replyToCommentId))
+  )
+  handle('hub:postReactionSet', ({ author, slug, reaction, active }) =>
+    cookieBacked(() => ctx.hub.setPostReaction(author, slug, reaction, active))
+  )
+  handle('hub:postComments', ({ author, slug }) => ctx.hub.getPostComments(author, slug))
+  handle('hub:postCommentHide', ({ author, slug, commentId, reason }) =>
+    cookieBacked(() => ctx.hub.hidePostComment(author, slug, commentId, reason))
+  )
+  handle('hub:commentAssetUpload', async ({ filename: _filename, contentType, data }) => {
+    const url = await cookieBacked(() => ctx.hub.uploadCommentAsset(data, contentType))
+    return { url }
+  })
+  handle('hub:postCommentReactionSet', ({ author, slug, commentId, reaction, active }) =>
+    cookieBacked(() => ctx.hub.setPostCommentReaction(author, slug, commentId, reaction, active))
+  )
+  handle('hub:postCanCreate', () => ctx.hub.canCreatePost())
+  handle('hub:postCreate', ({ content }) => cookieBacked(() => ctx.hub.createPost(content)))
+  handle('hub:paperUpvoteSet', ({ paperId, upvoted }) =>
+    cookieBacked(() => ctx.hub.setPaperUpvote(paperId, upvoted))
+  )
+  handle('hub:collectionUpvoteSet', ({ slug, upvoted }) =>
+    cookieBacked(() => ctx.hub.setCollectionUpvote(slug, upvoted))
+  )
+  handle('hub:discussionReactionSet', ({ kind, repoId, num, commentId, reaction, active }) =>
+    cookieBacked(() =>
+      ctx.hub.setDiscussionCommentReaction(kind, repoId, num, commentId, reaction, active)
+    )
   )
   handle('hub:paperComment', ({ paperId, comment, replyToCommentId }) =>
     ctx.hub.commentOnPaper(paperId, comment, replyToCommentId)
@@ -366,6 +421,19 @@ export function registerIpcHandlers(ctx: AppContext): void {
   // The token is a secret: never log this payload.
   handle('auth:signInWithToken', ({ token }) => ctx.auth.signInWithToken(token))
   handle('auth:signOut', () => ctx.auth.signOut())
+  // The captured cookie is a secret: it stays in the main process, never logged.
+  handle('auth:connectHubSession', async () => {
+    if (ctx.auth.getState().status !== 'signedIn') return { ok: false as const, error: 'invalid' as const }
+    const settings = ctx.settings.get()
+    const captured = await captureHubSessionCookie({
+      endpoint: ctx.hub.baseUrl,
+      proxyUrl: settings.proxyUrl,
+      parent: BrowserWindow.getAllWindows()[0]
+    })
+    if (!captured.ok) return { ok: false as const, error: captured.error }
+    return ctx.auth.connectHubSession(captured.cookie)
+  })
+  handle('auth:disconnectHubSession', () => ctx.auth.disconnectHubSession())
 
   // --- local library --------------------------------------------------------------
   handle('favorites:list', () => ctx.library.listFavorites())
