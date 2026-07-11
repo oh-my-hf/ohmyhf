@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { PlanBadge } from '@/components/profile/PlanBadge'
+import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import {
   Select,
   SelectContent,
@@ -153,9 +154,13 @@ function AccountSection(): React.JSX.Element {
       {auth.status === 'signedIn' ? (
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            {auth.user.avatarUrl && (
-              <img src={auth.user.avatarUrl} alt="" className="size-9 rounded-full border" />
-            )}
+            <ProfileAvatar
+              name={auth.user.name}
+              url={auth.user.avatarUrl}
+              className="size-9 text-[12px]"
+              isPro={auth.user.isPro === true}
+              frame="compact"
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-[13.5px] font-medium text-ink-strong">

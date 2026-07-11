@@ -83,6 +83,8 @@ export function PostCard({
             name={post.author}
             url={post.authorAvatarUrl}
             className="size-8 text-[12px]"
+            isPro={post.authorIsPro === true}
+            frame="compact"
           />
         </UserLink>
         <div className="min-w-0 flex-1">

@@ -49,7 +49,7 @@ export function ProfileAvatar({
           isPro === true
             ? frame === 'profile'
               ? 'border-[3px] border-white dark:border-gray-950'
-              : 'bg-white ring-0 dark:bg-gray-950'
+              : undefined
             : 'ring-1 ring-border-card',
           className
         )}

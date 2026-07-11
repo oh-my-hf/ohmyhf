@@ -377,6 +377,8 @@ function UserProfile({ username }: { username: string }): React.JSX.Element {
                 name={data.name}
                 url={data.avatarUrl}
                 className="size-16 text-[20px]"
+                isPro={data.isPro === true}
+                frame="profile"
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

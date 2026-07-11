@@ -82,6 +82,8 @@ export function PostPage(): React.JSX.Element {
                 name={data.author}
                 url={data.authorAvatarUrl}
                 className="size-10 text-[14px]"
+                isPro={data.authorIsPro === true}
+                frame="compact"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-baseline gap-1.5">
