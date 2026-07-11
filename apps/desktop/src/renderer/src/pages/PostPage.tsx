@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useToasts } from '@/components/ui/toaster'
 import { MarkdownView } from '@/components/browse/MarkdownView'
 import { CommentComposer } from '@/components/community/CommentComposer'
+import { PostAttachments } from '@/components/community/PostAttachments'
 import { PostComments } from '@/components/community/PostComments'
 import { ReactionBar } from '@/components/community/ReactionBar'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
@@ -174,6 +175,8 @@ export function PostPage(): React.JSX.Element {
             </header>
 
             <MarkdownView markdown={data.content} kind="model" repoId={`${author}/${slug}`} />
+
+            {data.attachments.length > 0 && <PostAttachments attachments={data.attachments} />}
 
             <footer className="flex flex-col gap-3 border-t pt-3">
               <div className="flex flex-wrap items-center gap-3">

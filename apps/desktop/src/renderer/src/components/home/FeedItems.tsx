@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { PostAttachments } from '@/components/community/PostAttachments'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
 
@@ -115,6 +116,9 @@ export function PostCard({
       >
         <MarkdownView markdown={post.content} />
       </div>
+      {post.attachments.length > 0 && (
+        <PostAttachments attachments={post.attachments.slice(0, 2)} compact />
+      )}
       <footer className="nums flex items-center gap-3 text-[11.5px] text-ink-faint">
         <span className="flex items-center gap-1">
           <MessageSquare className="size-3.5" aria-hidden />
