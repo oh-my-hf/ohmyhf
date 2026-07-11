@@ -234,7 +234,7 @@ export function mapDiscussionDetail(raw: RawDiscussion): DiscussionDetail {
 
 interface RawPost {
   slug?: string
-  author?: { name?: string; fullname?: string; avatarUrl?: string }
+  author?: { name?: string; fullname?: string; avatarUrl?: string; isPro?: boolean }
   rawContent?: string
   publishedAt?: string
   numComments?: number
@@ -263,6 +263,7 @@ export function mapPost(raw: RawPost, endpoint: string): PostSummary {
     author,
     authorFullname: raw.author?.fullname,
     authorAvatarUrl: absolutize(raw.author?.avatarUrl),
+    authorIsPro: raw.author?.isPro,
     content: raw.rawContent ?? '',
     publishedAt: raw.publishedAt,
     numComments: raw.numComments,
@@ -719,6 +720,7 @@ interface RawActivityItem {
   user?: string
   userAvatarUrl?: string
   orgAvatarUrl?: string
+  isPro?: boolean
   type?: string
   repoData?: RawActivityRepo
   repoId?: string
@@ -765,11 +767,26 @@ export function mapActivityFeed(
   for (const a of raw.recentActivity ?? []) {
     const actor = a.user ?? ''
     const actorAvatarUrl = abs(a.userAvatarUrl ?? a.orgAvatarUrl)
+    const actorIsPro = a.isPro
     const repoType = a.repoType ?? 'model'
     if ((a.type === 'like' || a.type === 'update' || a.type === 'publish') && a.repoData?.id) {
-      items.push({ kind: a.type, time: a.time, actor, actorAvatarUrl, repo: mapActivityRepo(a.repoData, repoType) })
+      items.push({
+        kind: a.type,
+        time: a.time,
+        actor,
+        actorAvatarUrl,
+        actorIsPro,
+        repo: mapActivityRepo(a.repoData, repoType)
+      })
     } else if (a.type === 'social-post' && a.socialPost) {
-      items.push({ kind: 'social-post', time: a.time, actor, actorAvatarUrl, post: mapPost(a.socialPost as never, endpoint) })
+      items.push({
+        kind: 'social-post',
+        time: a.time,
+        actor,
+        actorAvatarUrl,
+        actorIsPro,
+        post: mapPost(a.socialPost as never, endpoint)
+      })
     } else if (a.type === 'discussion' && a.discussionData && a.repoId && typeof a.discussionData.num === 'number') {
       const d: ActivityDiscussion = {
         repoId: a.repoId,
@@ -780,7 +797,7 @@ export function mapActivityFeed(
         status: a.discussionData.status,
         numComments: a.discussionData.numComments
       }
-      items.push({ kind: 'discussion', time: a.time, actor, actorAvatarUrl, discussion: d })
+      items.push({ kind: 'discussion', time: a.time, actor, actorAvatarUrl, actorIsPro, discussion: d })
     }
   }
   return { items, cursor: raw.cursor }

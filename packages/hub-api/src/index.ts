@@ -8,6 +8,7 @@ export {
   mapPaper,
   mapPaperDetail,
   mapPost,
+  mapActivityFeed,
   mapDiscussionSummary,
   mapDiscussionDetail,
   mapUserOverview,

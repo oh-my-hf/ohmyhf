@@ -307,6 +307,8 @@ export interface PostSummary {
   author: string
   authorFullname?: string
   authorAvatarUrl?: string
+  /** Hub `author.isPro` — drives compact Pro avatar frame when true. */
+  authorIsPro?: boolean
   /** Raw markdown-ish text of the post. */
   content: string
   publishedAt?: string
@@ -378,9 +380,31 @@ export interface ActivityDiscussion {
  * paper-daily) are dropped by the mapper.
  */
 export type ActivityItem =
-  | { kind: 'like' | 'update' | 'publish' | 'new-repo'; time?: string; actor: string; actorAvatarUrl?: string; repo: RepoSummary }
-  | { kind: 'social-post'; time?: string; actor: string; actorAvatarUrl?: string; post: PostSummary }
-  | { kind: 'discussion'; time?: string; actor: string; actorAvatarUrl?: string; discussion: ActivityDiscussion }
+  | {
+      kind: 'like' | 'update' | 'publish' | 'new-repo'
+      time?: string
+      actor: string
+      actorAvatarUrl?: string
+      /** Hub activity `isPro` when present. */
+      actorIsPro?: boolean
+      repo: RepoSummary
+    }
+  | {
+      kind: 'social-post'
+      time?: string
+      actor: string
+      actorAvatarUrl?: string
+      actorIsPro?: boolean
+      post: PostSummary
+    }
+  | {
+      kind: 'discussion'
+      time?: string
+      actor: string
+      actorAvatarUrl?: string
+      actorIsPro?: boolean
+      discussion: ActivityDiscussion
+    }
 
 export interface ActivityFeed {
   items: ActivityItem[]

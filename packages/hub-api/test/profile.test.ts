@@ -35,6 +35,7 @@ describe('HubClient.getPostDetail', () => {
       author: 'RazaAli10',
       authorFullname: 'RAZA ALI',
       authorAvatarUrl: 'https://huggingface.co/avatars/4b62671f5096c688c5f8d4ee0d12f42d.svg',
+      authorIsPro: undefined,
       content: 'I built a free, browser-based hydraulic simulation tool.',
       publishedAt: '2026-07-10T01:53:20.000Z',
       numComments: 3,
