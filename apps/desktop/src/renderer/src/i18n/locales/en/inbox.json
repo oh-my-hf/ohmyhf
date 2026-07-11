@@ -1,4 +1,9 @@
 {
+  "bell": {
+    "empty": "No new notifications",
+    "title": "Notifications",
+    "viewAll": "View all notifications"
+  },
   "checked": "{{count}} new item(s)",
   "checked_one": "{{count}} new item",
   "checked_other": "{{count}} new items",

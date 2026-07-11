@@ -1,4 +1,9 @@
 {
+  "bell": {
+    "empty": "暂无新通知",
+    "title": "通知",
+    "viewAll": "查看全部通知"
+  },
   "checked": "{{count}} 条新动态",
   "checked_other": "{{count}} 条新动态",
   "checking": "检查中…",

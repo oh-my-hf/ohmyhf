@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, PanelLeft, Search, UserCircle2 } from 'lucide-re
 import logo from '@/assets/logo.png'
 import { Kbd } from '@/components/ui/kbd'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 import { useNavHistory } from '@/lib/nav-history'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
@@ -116,24 +117,27 @@ export function TopBar(): React.JSX.Element {
         </span>
       </button>
 
-      <button
-        type="button"
-        aria-label={t('nav:account')}
-        onClick={() => openSettings('account')}
-        className="app-no-drag flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
-      >
-        {auth.status === 'signedIn' && auth.user.avatarUrl ? (
-          <img
-            src={auth.user.avatarUrl}
-            alt=""
-            loading="eager"
-            decoding="async"
-            className="size-5 rounded-full border"
-          />
-        ) : (
-          <UserCircle2 className="size-[18px]" aria-hidden />
-        )}
-      </button>
+      <div className="flex shrink-0 items-center gap-0.5">
+        <NotificationBell />
+        <button
+          type="button"
+          aria-label={t('nav:account')}
+          onClick={() => openSettings('account')}
+          className="app-no-drag flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
+        >
+          {auth.status === 'signedIn' && auth.user.avatarUrl ? (
+            <img
+              src={auth.user.avatarUrl}
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="size-5 rounded-full border"
+            />
+          ) : (
+            <UserCircle2 className="size-[18px]" aria-hidden />
+          )}
+        </button>
+      </div>
     </header>
   )
 }
