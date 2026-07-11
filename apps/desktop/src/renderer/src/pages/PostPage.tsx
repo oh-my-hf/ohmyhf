@@ -216,7 +216,6 @@ export function PostPage(): React.JSX.Element {
                     repoId={`${author}/${slug}`}
                     placeholder={t('profile:post.comment.placeholder')}
                     quote={quote}
-                    enableUpload
                     submit={(comment) => invoke('hub:postComment', { author, slug, comment })}
                     onSubmitted={() => {
                       push(t('profile:post.comment.posted'), 'success')

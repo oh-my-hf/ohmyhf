@@ -24,8 +24,6 @@ export interface CommentComposerProps {
    * because the nonce changes).
    */
   quote?: { text: string; nonce: number }
-  /** Enable attachment upload in the editor (cookie-session only). */
-  enableUpload?: boolean
   /** Focus the editor as soon as the composer mounts (inline reply boxes). */
   focusOnMount?: boolean
 }
@@ -42,7 +40,6 @@ export function CommentComposer({
   submit,
   onSubmitted,
   quote,
-  enableUpload,
   focusOnMount
 }: CommentComposerProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'auth'])
@@ -97,7 +94,6 @@ export function CommentComposer({
         placeholder={placeholder}
         onSubmit={sendNow}
         focusSignal={focusSignal}
-        enableUpload={enableUpload}
       />
       <div className="flex justify-end">
         <Button

@@ -16,6 +16,7 @@ import type { RepoKind, UserSearchResult } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { useDebounced } from '@/hooks/use-debounced'
+import { useHubSession } from '@/hooks/use-hub-session'
 import { applyFormat, continueLine, mentionAtCaret, type Format } from '@/lib/editor'
 import { Button } from '@/components/ui/button'
 import { useToasts } from '@/components/ui/toaster'
@@ -39,8 +40,9 @@ export interface MarkdownEditorProps {
    */
   focusSignal?: number
   /**
-   * Enable attachment upload (click / drag / paste). Off by default — uploads
-   * are cookie-session only, so callers pass the connected-web-session flag.
+   * Attachment upload (click / drag / paste). Uploads are cookie-session only,
+   * so this defaults to the connected-web-session flag; pass `false` to force
+   * it off for a specific editor.
    */
   enableUpload?: boolean
 }
@@ -188,10 +190,13 @@ export function MarkdownEditor({
   kind,
   repoId,
   focusSignal,
-  enableUpload
+  enableUpload: enableUploadProp
 }: MarkdownEditorProps): React.JSX.Element {
   const { t } = useTranslation('detail')
   const push = useToasts((s) => s.push)
+  const hubSession = useHubSession()
+  // Upload is a default input capability wherever a web session is connected.
+  const enableUpload = enableUploadProp ?? hubSession
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = useState(0)
   const [tab, setTab] = useState<'write' | 'preview'>('write')

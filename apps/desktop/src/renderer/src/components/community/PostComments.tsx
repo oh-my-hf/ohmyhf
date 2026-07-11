@@ -284,7 +284,6 @@ function CommentCard({
             kind="model"
             repoId={`${ctx.author}/${ctx.slug}`}
             placeholder={t('profile:post.replyPlaceholder', { user: comment.author })}
-            enableUpload
             focusOnMount
             submit={(text) =>
               invoke('hub:postComment', {
