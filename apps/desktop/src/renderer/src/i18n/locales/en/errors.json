@@ -1,0 +1,8 @@
+{
+  "auth": "This requires signing in. Add your Hugging Face token in Settings, then try again.",
+  "gated": "This repository is gated. Request access on the Hub — once it's granted, try again.",
+  "network": "Could not reach the Hugging Face API. Check your connection and proxy settings, then try again.",
+  "notFound": "Not found on the Hub — it may have been moved, renamed, or made private.",
+  "rateLimit": "The Hugging Face API is rate-limiting requests. The app backs off and retries automatically — please wait a moment before trying again.",
+  "unknown": "Something went wrong. Please try again."
+}

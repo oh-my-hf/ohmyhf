@@ -382,6 +382,9 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('downloads:resume', ({ id }) => ctx.downloads.resume(id))
   handle('downloads:cancel', ({ id }) => ctx.downloads.cancel(id))
   handle('downloads:remove', ({ id }) => ctx.downloads.remove(id))
+  handle('downloads:pauseAll', () => ctx.downloads.pauseAll())
+  handle('downloads:resumeAll', () => ctx.downloads.resumeAll())
+  handle('downloads:clearCompleted', () => ctx.downloads.clearCompleted())
 
   // --- cache -------------------------------------------------------------------------
   handle('cache:scan', () => ctx.cache.scan())

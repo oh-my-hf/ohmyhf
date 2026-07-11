@@ -1,0 +1,39 @@
+/**
+ * Renderer-side error classification. HubApiError's `status` field is lost over
+ * the IPC boundary (Electron re-wraps thrown errors as plain Error), so the
+ * HTTP status is recovered from the message shape the hub client and download
+ * worker emit: "GET <url> failed: 401 Unauthorized". Callers should still log
+ * the raw error via console.error — describeError is for the human.
+ */
+import type { TFunction } from 'i18next'
+
+export type ErrorKind = 'auth' | 'gated' | 'notFound' | 'rateLimit' | 'network' | 'unknown'
+
+export interface ClassifiedError {
+  kind: ErrorKind
+  status?: number
+}
+
+const HTTP_STATUS_RE = /\bfailed: (\d{3})\b/
+
+const NETWORK_RE =
+  /fetch failed|ENOTFOUND|ECONNREFUSED|ECONNRESET|ETIMEDOUT|EAI_AGAIN|network|timed? ?out|abort/i
+
+export function classifyError(err: unknown): ClassifiedError {
+  const message = err instanceof Error ? err.message : String(err)
+  const status = Number(HTTP_STATUS_RE.exec(message)?.[1])
+  if (Number.isFinite(status)) {
+    if (status === 401) return { kind: 'auth', status }
+    if (status === 403) return { kind: 'gated', status }
+    if (status === 404) return { kind: 'notFound', status }
+    if (status === 429) return { kind: 'rateLimit', status }
+    return { kind: 'unknown', status }
+  }
+  if (NETWORK_RE.test(message)) return { kind: 'network' }
+  return { kind: 'unknown' }
+}
+
+/** Translated, plain-language message for an error (keys in the `errors` namespace). */
+export function describeError(t: TFunction, err: unknown): string {
+  return t(`errors:${classifyError(err).kind}`)
+}

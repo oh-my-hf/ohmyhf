@@ -6,6 +6,16 @@
     "remove": "Remove from list",
     "resume": "Resume"
   },
+  "bulk": {
+    "clearCompleted": "Clear completed",
+    "pauseAll": "Pause all",
+    "resumeAll": "Resume all"
+  },
+  "confirmRemove": {
+    "body": "This download is still in progress. Removing it cancels the transfer and drops it from the list.",
+    "confirm": "Cancel and remove",
+    "title": "Remove active download?"
+  },
   "count_one": "{{count}} task",
   "count_other": "{{count}} tasks",
   "empty": {

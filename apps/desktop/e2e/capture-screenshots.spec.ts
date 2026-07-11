@@ -35,7 +35,10 @@ async function shot(page: Page, name: string): Promise<void> {
 }
 
 test('capture docs screenshots', async () => {
-  test.skip(!process.env.CAPTURE_SCREENSHOTS, 'Set CAPTURE_SCREENSHOTS=1 to regenerate docs/screenshots')
+  test.skip(
+    !process.env.CAPTURE_SCREENSHOTS,
+    'Set CAPTURE_SCREENSHOTS=1 to regenerate docs/screenshots'
+  )
   test.setTimeout(10 * 60_000)
   const userDataDir = mkdtempSync(join(tmpdir(), 'omh-shots-'))
   const env = { ...process.env }
@@ -82,19 +85,34 @@ test('capture docs screenshots', async () => {
     // --- browse (model card) ---
     await go(page, '#/models/tencent/Hy3')
     await page.waitForSelector('text=tencent/Hy3', { timeout: 45_000 })
-    await page.getByRole('tab', { name: /^Card$/i }).click().catch(() => undefined)
+    await page
+      .getByRole('tab', { name: /^Card$/i })
+      .click()
+      .catch(() => undefined)
     await settle(page, 2500)
     await shot(page, 'browse.png')
 
     // --- browse-dark ---
+    // settings:set alone never restyles the running renderer (main.tsx reads settings
+    // once at startup), so persist the theme, reload, and re-navigate before shooting.
     await page.evaluate(async () => {
       await window.omh.invoke('settings:set', { patch: { theme: 'dark' } })
     })
-    await settle(page, 1000)
+    await page.evaluate(() => window.location.reload()).catch(() => undefined)
+    // Let the navigation commit so waitForMain sees the fresh document, not the old one.
+    await settle(page, 500)
+    await waitForMain(page)
+    await go(page, '#/models/tencent/Hy3')
+    await page.waitForSelector('text=tencent/Hy3', { timeout: 45_000 })
+    await settle(page, 2500)
     await shot(page, 'browse-dark.png')
+    // Restore light the same way for the remaining shots.
     await page.evaluate(async () => {
       await window.omh.invoke('settings:set', { patch: { theme: 'light' } })
     })
+    await page.evaluate(() => window.location.reload()).catch(() => undefined)
+    await settle(page, 500)
+    await waitForMain(page)
     await settle(page, 800)
 
     // --- filter-panel ---
@@ -105,7 +123,11 @@ test('capture docs screenshots', async () => {
     await settle(page, 800)
     await shot(page, 'filter-panel.png')
     // Close panel
-    await page.getByRole('button', { name: /done|filter/i }).first().click().catch(() => undefined)
+    await page
+      .getByRole('button', { name: /done|filter/i })
+      .first()
+      .click()
+      .catch(() => undefined)
     await settle(page, 400)
 
     // --- file-preview ---

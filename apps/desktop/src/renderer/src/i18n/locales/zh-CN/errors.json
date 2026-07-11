@@ -1,0 +1,8 @@
+{
+  "auth": "此操作需要登录。请在设置中填入 Hugging Face 令牌后重试。",
+  "gated": "该仓库需要申请访问权限。请先在 Hub 上提交申请，获批后再试。",
+  "network": "无法连接 Hugging Face API。请检查网络和代理设置后重试。",
+  "notFound": "在 Hub 上找不到该内容——它可能已被移动、重命名或设为私有。",
+  "rateLimit": "Hugging Face API 已限流。应用会自动退避并重试，请稍候再试。",
+  "unknown": "出错了，请重试。"
+}

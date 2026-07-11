@@ -351,6 +351,9 @@ export interface IpcInvokeContract {
   'downloads:resume': { req: { id: string }; res: DownloadTask[] }
   'downloads:cancel': { req: { id: string }; res: DownloadTask[] }
   'downloads:remove': { req: { id: string }; res: DownloadTask[] }
+  'downloads:pauseAll': { req: void; res: DownloadTask[] }
+  'downloads:resumeAll': { req: void; res: DownloadTask[] }
+  'downloads:clearCompleted': { req: void; res: DownloadTask[] }
 
   'cache:scan': { req: void; res: CacheReport }
   'cache:deleteRevisions': {
@@ -498,6 +501,9 @@ export const IPC_INVOKE_CHANNELS = [
   'downloads:resume',
   'downloads:cancel',
   'downloads:remove',
+  'downloads:pauseAll',
+  'downloads:resumeAll',
+  'downloads:clearCompleted',
   'cache:scan',
   'cache:deleteRevisions',
   'follows:list',
