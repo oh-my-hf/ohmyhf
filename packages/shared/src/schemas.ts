@@ -225,6 +225,14 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     watching: z.boolean()
   }),
   'hub:datasetSplits': z.object({ repoId }),
+  'hub:datasetSampleRows': z.object({ repoId }),
+  'hub:repoAccessGate': z.object({ kind: repoKind, repoId }),
+  'hub:repoAccessAsk': z.object({
+    kind: repoKind,
+    repoId,
+    // Field names are the verbatim gate questions (can be full sentences).
+    fields: z.record(z.string().min(1).max(300), z.string().max(2000))
+  }),
   'hub:searchUsers': z.object({ query: z.string().min(1).max(64) }),
   'hub:searchOrgs': z.object({ query: z.string().min(1).max(64) }),
   'hub:searchPapers': z.object({ query: z.string().min(1).max(64) }),

@@ -337,6 +337,17 @@ export const HUB_REACTION_EMOJIS = [
   '👍', '🤝', '😔', '🤯'
 ] as const
 
+/**
+ * A media attachment on a post. The Hub keeps these OUT of the markdown body —
+ * they live in a separate `attachments` array — so they must be rendered
+ * alongside the text, not inside it.
+ */
+export interface PostAttachment {
+  type: 'image' | 'video'
+  /** Absolute CDN URL (cdn-uploads.huggingface.co). */
+  url: string
+}
+
 export interface PostSummary {
   slug: string
   author: string
@@ -351,6 +362,8 @@ export interface PostSummary {
   numReactions?: number
   /** Per-emoji reaction breakdown (empty when the post has no reactions). */
   reactions: PostReaction[]
+  /** Image/video attachments the Hub stores separately from the markdown body. */
+  attachments: PostAttachment[]
   /** Absolute huggingface.co URL. */
   url: string
 }
@@ -391,6 +404,26 @@ export const HUB_HIDE_REASONS = [
   'Low Quality'
 ] as const
 export type HubHideReason = (typeof HUB_HIDE_REASONS)[number]
+
+/** One custom field on a gated repo's access-request form (the Hub uses the question text as the field name). */
+export interface GatedFormField {
+  name: string
+  type: 'checkbox' | 'text' | 'textarea' | 'select' | 'date'
+  required: boolean
+  /** Choices when type is 'select'. */
+  options?: string[]
+}
+
+/**
+ * The signed-in account's standing with a gated repo.
+ * granted — access already approved; ask — can submit the access form;
+ * pending — submitted, awaiting manual review (gate form no longer offered).
+ */
+export interface RepoAccessGate {
+  status: 'granted' | 'ask' | 'pending'
+  /** Fields to render when status is 'ask'. */
+  fields: GatedFormField[]
+}
 
 /** Whether the signed-in account may create community posts (Hub gates this behind a beta). */
 export interface CanPostResult {
@@ -753,6 +786,11 @@ export interface DatasetRows {
   /** Cell values pre-stringified and truncated for display. */
   rows: string[][]
   total?: number
+  /**
+   * True when these are the SSR sample rows from the dataset page — the
+   * fallback the Hub itself shows when the full viewer isn't available.
+   */
+  sample?: boolean
 }
 
 export interface CollectionSummary {

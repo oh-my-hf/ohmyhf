@@ -46,6 +46,7 @@ import type {
   Page,
   PaperSummary,
   PostSummary,
+  RepoAccessGate,
   RepoDetail,
   RepoKind,
   RepoSummary,
@@ -198,6 +199,18 @@ export interface IpcInvokeContract {
   'hub:datasetRows': {
     req: { repoId: string; config: string; split: string; offset?: number; length?: number }
     res: DatasetRows
+  }
+  /**
+   * SSR sample rows from the dataset page — the Hub's own fallback when the
+   * full viewer is unavailable. null when the page carries no sample either.
+   */
+  'hub:datasetSampleRows': { req: { repoId: string }; res: DatasetRows | null }
+  /** The signed-in account's standing with a gated repo (granted/ask/pending + form fields). */
+  'hub:repoAccessGate': { req: { kind: RepoKind; repoId: string }; res: RepoAccessGate }
+  /** Submit the gated-repo access form (needs a Hub web session). */
+  'hub:repoAccessAsk': {
+    req: { kind: RepoKind; repoId: string; fields: Record<string, string> }
+    res: void
   }
 
   'hub:collections': { req: { owner: string }; res: CollectionSummary[] }
@@ -506,6 +519,9 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:safetensorsHeader',
   'hub:datasetSplits',
   'hub:datasetRows',
+  'hub:datasetSampleRows',
+  'hub:repoAccessGate',
+  'hub:repoAccessAsk',
   'hub:searchUsers',
   'hub:searchOrgs',
   'hub:searchPapers',
