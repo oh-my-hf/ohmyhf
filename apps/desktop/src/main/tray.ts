@@ -1,13 +1,21 @@
 /**
  * System tray: Show / Quit. Created when close-to-tray is enabled (or on first hide).
  */
-import { join } from 'node:path'
 import { Menu, Tray, nativeImage } from 'electron'
-import type { BrowserWindow } from 'electron'
+import type { BrowserWindow, NativeImage } from 'electron'
 import type { MainI18n } from './i18n'
+// ?asset copies the icon into out/ and resolves the path at runtime; a plain
+// __dirname-relative path breaks in packaged builds (only out/** is bundled).
+import trayIconAsset from '../../build/icon.png?asset'
 
-function trayIconPath(): string {
-  return join(__dirname, '../../build/icon.png')
+function trayIcon(): NativeImage {
+  const source = nativeImage.createFromPath(trayIconAsset)
+  if (source.isEmpty()) return nativeImage.createEmpty()
+  // 16pt with an explicit @2x representation; a bare 16px resize is blurry on Retina.
+  const icon = nativeImage.createEmpty()
+  icon.addRepresentation({ scaleFactor: 1, buffer: source.resize({ width: 16, height: 16 }).toPNG() })
+  icon.addRepresentation({ scaleFactor: 2, buffer: source.resize({ width: 32, height: 32 }).toPNG() })
+  return icon
 }
 
 export class TrayManager {
@@ -24,9 +32,7 @@ export class TrayManager {
       this.refreshMenu()
       return
     }
-    const image = nativeImage.createFromPath(trayIconPath())
-    const icon = image.isEmpty() ? nativeImage.createEmpty() : image.resize({ width: 16, height: 16 })
-    this.tray = new Tray(icon)
+    this.tray = new Tray(trayIcon())
     this.tray.setToolTip(this.i18n.t('app.name'))
     this.refreshMenu()
     this.tray.on('click', () => this.showWindow())
