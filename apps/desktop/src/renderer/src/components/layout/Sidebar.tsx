@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
   Bookmark,
@@ -18,6 +18,7 @@ import {
   UploadCloud,
   UserCircle2
 } from 'lucide-react'
+import { isAuthError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
@@ -53,9 +54,7 @@ function SidebarLink({
             cn(
               'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
               collapsed ? 'justify-center' : 'justify-start',
-              isActive
-                ? 'text-ink-strong'
-                : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
+              isActive ? 'text-ink-strong' : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
             )
           }
         >
@@ -106,10 +105,22 @@ export function Sidebar(): React.JSX.Element {
     queryFn: () => invoke('downloads:list', undefined)
   })
   const inbox = useQuery({ queryKey: ['inbox'], queryFn: () => invoke('inbox:list', undefined) })
+  // Hub notifications are the Inbox's default tab for signed-in users, so the
+  // badge counts them too. Shares the NotificationBell's cache entry; options
+  // mirror it so the two observers agree.
+  const signedIn = auth.status === 'signedIn'
+  const hubNotifications = useQuery({
+    queryKey: ['hub-notifications', 0],
+    queryFn: () => invoke('hub:notifications', { page: 0 }),
+    enabled: signedIn,
+    placeholderData: keepPreviousData,
+    retry: (failureCount, error) => failureCount < 2 && !isAuthError(error.message)
+  })
 
   const activeDownloads =
     downloads.data?.filter((d) => d.status === 'running' || d.status === 'queued').length ?? 0
-  const unread = inbox.data?.filter((i) => !i.readAt).length ?? 0
+  const hubUnread = hubNotifications.data?.items.filter((i) => !i.read).length ?? 0
+  const unread = (inbox.data?.filter((i) => !i.readAt).length ?? 0) + hubUnread
 
   const browse: NavItem[] = [
     { to: '/', labelKey: 'home', icon: Home },
@@ -168,9 +179,7 @@ export function Sidebar(): React.JSX.Element {
               className={cn(
                 'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
                 collapsed ? 'justify-center' : 'justify-start',
-                settingsOpen
-                  ? 'text-ink-strong'
-                  : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
+                settingsOpen ? 'text-ink-strong' : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
               )}
             >
               {settingsOpen && (

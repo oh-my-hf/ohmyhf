@@ -4,5 +4,6 @@
   "network": "Could not reach the Hugging Face API. Check your connection and proxy settings, then try again.",
   "notFound": "Not found on the Hub — it may have been moved, renamed, or made private.",
   "rateLimit": "The Hugging Face API is rate-limiting requests. The app backs off and retries automatically — please wait a moment before trying again.",
-  "unknown": "Something went wrong. Please try again."
+  "unknown": "Something went wrong. Please try again.",
+  "server": "The Hugging Face API returned a server error. Please try again in a moment."
 }

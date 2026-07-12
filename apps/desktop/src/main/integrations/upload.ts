@@ -1,16 +1,20 @@
 /**
  * Real upload pipeline against @huggingface/hub: walk the folder, create the repo,
- * then stream `uploadFilesWithProgress` generator events out through `evt:upload`.
+ * then stream `commitIter` generator events out through `evt:upload`. Every SDK
+ * call gets the configured hub endpoint and proxied fetch so uploads ride the
+ * same network path as the rest of the app.
  */
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { DEFAULT_ENDPOINT } from '@oh-my-huggingface/hub-api'
 import type {
   RepoKind,
   UploadProgress,
   UploadRequest,
   UploadResult
 } from '@oh-my-huggingface/shared'
+import { createProxiedFetch, getHubNetworkOptions } from '../hub'
 import type { UploadDeps } from './types'
 import { notifyDone } from './notify'
 
@@ -59,6 +63,16 @@ function trimError(err: unknown): string {
   return (err instanceof Error ? err.message : String(err)).trim().slice(0, 200)
 }
 
+/** SDK-facing hub URL: the configured endpoint (sans trailing slash) or the default. */
+export function resolveHubUrl(endpoint: string | null): string {
+  return (endpoint ?? DEFAULT_ENDPOINT).replace(/\/$/, '')
+}
+
+/** Repo page URL on the active hub endpoint. */
+export function buildRepoUrl(hubUrl: string, kind: RepoKind, repoName: string): string {
+  return `${hubUrl}/${REPO_URL_PREFIX[kind]}${repoName}`
+}
+
 export async function createRepoAndUpload(
   request: UploadRequest,
   deps: UploadDeps
@@ -92,11 +106,16 @@ export async function createRepoAndUpload(
   }
   if (files.length === 0) return failWith('upload.emptyFolder')
 
-  const { createRepo, uploadFilesWithProgress, HubApiError } = await import('@huggingface/hub')
+  const { createRepo, commitIter, HubApiError } = await import('@huggingface/hub')
   const repo = { type: request.kind, name: repoName }
+  // Same endpoint + proxy as HubClient — the SDK's default fetch is global,
+  // unproxied, and hard-wired to huggingface.co.
+  const { endpoint, proxyUrl } = getHubNetworkOptions()
+  const hubUrl = resolveHubUrl(endpoint)
+  const fetchImpl = createProxiedFetch(proxyUrl)
 
   try {
-    await createRepo({ repo, private: request.private, accessToken })
+    await createRepo({ repo, private: request.private, accessToken, hubUrl, fetch: fetchImpl })
   } catch (err) {
     if (err instanceof HubApiError && err.statusCode === 409) {
       // Repo already exists — uploading into it is fine.
@@ -121,11 +140,20 @@ export async function createRepoAndUpload(
   let lastEmit = 0
 
   try {
-    const generator = uploadFilesWithProgress({
+    // `commitIter` is what `uploadFilesWithProgress` wraps: same progress events,
+    // but it accepts hubUrl + fetch (the XHR upload-progress wrapper the latter
+    // adds needs XMLHttpRequest, which the main process doesn't have anyway).
+    const generator = commitIter({
       repo,
-      files: files.map((f) => ({ path: f.rel, content: pathToFileURL(f.abs) })),
+      operations: files.map((f) => ({
+        operation: 'addOrUpdate' as const,
+        path: f.rel,
+        content: pathToFileURL(f.abs)
+      })),
       accessToken,
-      commitTitle: 'Upload from Oh My HuggingFace'
+      title: 'Upload from Oh My HuggingFace',
+      hubUrl,
+      fetch: fetchImpl
     })
     for await (const event of generator) {
       if (event.event === 'phase') {
@@ -158,7 +186,7 @@ export async function createRepoAndUpload(
   return {
     ok: true,
     messageKey: 'upload.done',
-    repoUrl: `https://huggingface.co/${REPO_URL_PREFIX[request.kind]}${repoName}`,
+    repoUrl: buildRepoUrl(hubUrl, request.kind, repoName),
     params: { repo: repoName }
   }
 }

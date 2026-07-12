@@ -234,7 +234,8 @@
     "save": "保存修改",
     "saved": "资料已保存",
     "title": "公开资料",
-    "twitter": "Twitter 用户名"
+    "twitter": "Twitter 用户名",
+    "avatarTooLarge": "图片过大——头像最大 10 MB。"
   },
   "title": "设置"
 }

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ArrowDownToLine, Heart, Lock, ShieldAlert } from 'lucide-react'
 import type { RepoKind, RepoSummary, SearchQuery } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { describeError } from '@/lib/errors'
 import { hardwareBucketOf } from '@/lib/catalog'
 import { TAG_HUE_VAR, taskHue } from '@/lib/tag-colors'
 import { cn, formatCount, formatParams, paramBucketOf } from '@/lib/utils'
@@ -19,6 +20,8 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 const ROW_HEIGHT = 56
 /** Spaces render as a 2-up card gallery; each virtual row holds one card pair. */
 const SPACE_ROW_HEIGHT = 118
+/** Client-side filters auto-page past filtered-out pages at most this many times per filter change. */
+const AUTO_FETCH_PAGE_LIMIT = 10
 
 /** How a row was selected — clicks push history, keyboard bursts replace. */
 export type SelectVia = 'pointer' | 'keyboard'
@@ -30,7 +33,7 @@ interface RepoListProps {
 }
 
 export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.JSX.Element {
-  const { t } = useTranslation(['browse', 'common'])
+  const { t } = useTranslation(['browse', 'common', 'errors'])
   const filters = useAppStore((s) => s.filters[kind])
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
@@ -98,6 +101,30 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
     return all
   }, [data, isSpace, filters.paramBucket, filters.runningOnly, filters.hardware])
 
+  // Client-side filters can empty out every fetched page while matches exist
+  // deeper — and with zero items the scroll container (and its infinite-scroll
+  // trigger) never renders. Auto-page past empty pages, bounded so a filter
+  // with no matches anywhere doesn't crawl the whole Hub.
+  const clientFiltered = Boolean(
+    filters.paramBucket || (isSpace && (filters.runningOnly || filters.hardware))
+  )
+  const [autoFetchedPages, setAutoFetchedPages] = useState(0)
+  useEffect(() => {
+    setAutoFetchedPages(0)
+  }, [query, filters.paramBucket, filters.runningOnly, filters.hardware])
+  const autoPaging =
+    clientFiltered &&
+    !error &&
+    items.length === 0 &&
+    hasNextPage &&
+    autoFetchedPages < AUTO_FETCH_PAGE_LIMIT
+  useEffect(() => {
+    if (autoPaging && !isFetchingNextPage) {
+      setAutoFetchedPages((n) => n + 1)
+      void fetchNextPage()
+    }
+  }, [autoPaging, isFetchingNextPage, fetchNextPage])
+
   const rowCount = Math.ceil(items.length / perRow)
   const rowHeight = isSpace ? SPACE_ROW_HEIGHT : ROW_HEIGHT
 
@@ -158,15 +185,18 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
       </div>
     )
   } else if (error) {
-    const rateLimited = /429|rate.?limit/i.test(error.message)
     content = (
       <div className="flex flex-col items-center gap-3 p-8 text-center">
-        <p className="max-w-72 text-[13px] text-ink-muted">
-          {rateLimited ? t('browse:error.rateLimited') : t('common:error.network')}
-        </p>
+        <p className="max-w-72 text-[13px] text-ink-muted">{describeError(t, error)}</p>
         <Button size="sm" onClick={() => void refetch()}>
           {t('common:retry')}
         </Button>
+      </div>
+    )
+  } else if (items.length === 0 && (autoPaging || (clientFiltered && isFetchingNextPage))) {
+    content = (
+      <div className="flex flex-col items-center gap-1 p-8 text-center">
+        <p className="text-[12.5px] text-ink-muted">{t('browse:searchingMore')}</p>
       </div>
     )
   } else if (items.length === 0) {

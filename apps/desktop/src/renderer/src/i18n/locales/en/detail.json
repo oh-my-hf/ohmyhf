@@ -18,7 +18,8 @@
     "rangeNoTotal": "Rows {{from}}–{{to}}",
     "sampleNote": "Full viewer unavailable — showing the Hub's sample preview ({{count}} rows).",
     "split": "Split",
-    "unavailable": "The dataset viewer isn't available for this dataset. You can still browse its files, or open it on the Hub."
+    "unavailable": "The dataset viewer isn't available for this dataset. You can still browse its files, or open it on the Hub.",
+    "rowsError": "Couldn't load rows."
   },
   "discussions": {
     "comments": "{{count}} comments",
@@ -40,6 +41,7 @@
       "closed": "Closed",
       "open": "Open"
     },
+    "loadMore": "Load more",
     "pullRequest": "PR",
     "quoteReply": "Quote reply",
     "reactionError": "Couldn't update the reaction: {{error}}",

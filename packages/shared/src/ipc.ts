@@ -107,9 +107,13 @@ export interface IpcInvokeContract {
     res: { canceled: true } | { canceled: false; settings: AppSettings }
   }
 
-  /** Lightweight Hub reachability check using the current endpoint/proxy. */
+  /**
+   * Lightweight Hub reachability check. Draft endpoint/proxy (null = default)
+   * are probed on a temporary client so the user can test before Apply;
+   * omitted fields fall back to the applied settings.
+   */
   'network:testConnection': {
-    req: void
+    req: { endpoint?: string | null; proxyUrl?: string | null }
     res: { ok: true } | { ok: false; error: string }
   }
 
@@ -129,6 +133,8 @@ export interface IpcInvokeContract {
       repoId: string
       type?: DiscussionType
       status?: DiscussionStatusFilter
+      /** Opaque next-page cursor from the previous response's nextCursor. */
+      cursor?: string
     }
     res: Page<DiscussionSummary>
   }
@@ -155,7 +161,13 @@ export interface IpcInvokeContract {
   }
   /** Open a new discussion (or draft PR when pullRequest is true); returns the thread number. */
   'hub:discussionCreate': {
-    req: { kind: RepoKind; repoId: string; title: string; description: string; pullRequest?: boolean }
+    req: {
+      kind: RepoKind
+      repoId: string
+      title: string
+      description: string
+      pullRequest?: boolean
+    }
     res: { num: number }
   }
   'hub:notifications': { req: { page?: number }; res: NotificationsPage }
@@ -442,6 +454,7 @@ export interface IpcInvokeContract {
     req: { repoPath: string; commitHashes: string[] }
     res: CacheReport
   }
+  'cache:cleanPartials': { req: { repoPath: string }; res: CacheReport }
 
   'follows:list': { req: void; res: Follow[] }
   'follows:add': { req: { type: FollowTargetType; target: string }; res: Follow[] }
@@ -607,6 +620,7 @@ export const IPC_INVOKE_CHANNELS = [
   'downloads:clearCompleted',
   'cache:scan',
   'cache:deleteRevisions',
+  'cache:cleanPartials',
   'follows:list',
   'follows:add',
   'follows:remove',

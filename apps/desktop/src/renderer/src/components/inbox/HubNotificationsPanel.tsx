@@ -16,6 +16,7 @@ import {
   ShieldAlert
 } from 'lucide-react'
 import type { HubNotification } from '@oh-my-huggingface/shared'
+import { isAuthError } from '@/lib/errors'
 import { invoke, openExternal } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -50,11 +51,6 @@ const STATUS_VARIANT = {
   merged: 'select',
   draft: 'neutral'
 } as const
-
-/** IPC flattens HubApiError into a message string; sniff auth failures from it. */
-function isAuthError(message: string): boolean {
-  return /\b401\b|\b403\b|unauthorized|forbidden/i.test(message)
-}
 
 export function HubNotificationsPanel(): React.JSX.Element {
   const { t } = useTranslation(['inbox', 'common', 'detail'])
@@ -97,6 +93,11 @@ export function HubNotificationsPanel(): React.JSX.Element {
   })
 
   const openItem = (item: HubNotification): void => {
+    // Items without a discussion-backed id CANNOT be marked read individually:
+    // the Hub exposes no per-notification id and mark-as-read accepts only
+    // discussion ids (openapi-verified 2026-07-12; see
+    // HubClient.markNotificationsRead). They stay unread until "mark all
+    // read", whose applyToAll form covers them.
     if (!item.read && item.discussionId !== undefined) markRead.mutate([item.discussionId])
     if (item.route !== undefined) navigate(item.route)
   }
@@ -241,18 +242,20 @@ export function HubNotificationsPanel(): React.JSX.Element {
               </span>
               {item.participants !== undefined && item.participants.length > 0 && (
                 <span className="mt-0.5 flex shrink-0 -space-x-1.5" aria-hidden>
-                  {item.participants.slice(0, 3).map((participant) =>
-                    participant.avatar !== undefined ? (
-                      <img
-                        key={participant.user}
-                        src={participant.avatar}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        className="size-4 rounded-full border bg-panel"
-                      />
-                    ) : null
-                  )}
+                  {item.participants
+                    .slice(0, 3)
+                    .map((participant) =>
+                      participant.avatar !== undefined ? (
+                        <img
+                          key={participant.user}
+                          src={participant.avatar}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="size-4 rounded-full border bg-panel"
+                        />
+                      ) : null
+                    )}
                 </span>
               )}
               <span className="nums shrink-0 text-[11px] text-ink-faint">

@@ -31,8 +31,17 @@ export function isNotFound(err: unknown): boolean {
   return err instanceof HubApiError && err.status === 404
 }
 
+/**
+ * Definitive 401 only: the credential itself was rejected. 403s come from WAF
+ * challenges, geo blocks, proxies, and gated repos — they must never be taken
+ * as proof a token was revoked (see isForbidden).
+ */
 export function isUnauthorized(err: unknown): boolean {
-  return err instanceof HubApiError && (err.status === 401 || err.status === 403)
+  return err instanceof HubApiError && err.status === 401
+}
+
+export function isForbidden(err: unknown): boolean {
+  return err instanceof HubApiError && err.status === 403
 }
 
 /**
@@ -42,7 +51,6 @@ export function isUnauthorized(err: unknown): boolean {
  */
 export function isTokenRejection(err: unknown): boolean {
   return (
-    err instanceof HubApiError &&
-    (err.status === 400 || err.status === 401 || err.status === 403)
+    err instanceof HubApiError && (err.status === 400 || err.status === 401 || err.status === 403)
   )
 }

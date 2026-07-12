@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell } from 'lucide-react'
 import type { HubNotification, InboxItem } from '@oh-my-huggingface/shared'
+import { isAuthError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -18,11 +19,6 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 
 /** Cap on rows shown in the dropdown; the full list lives on /inbox. */
 const MAX_ROWS = 8
-
-/** IPC flattens HubApiError into a message string; sniff auth failures from it. */
-function isAuthError(message: string): boolean {
-  return /\b401\b|\b403\b|unauthorized|forbidden/i.test(message)
-}
 
 /** One dropdown row, normalized from either the local inbox or a Hub notification. */
 interface BellRow {
@@ -120,6 +116,11 @@ export function NotificationBell(): React.JSX.Element {
   const unreadCount = localUnread.length + hubUnread.length
 
   const openRow = (row: BellRow): void => {
+    // Hub rows without a discussion-backed id CANNOT be marked read
+    // individually: the Hub exposes no per-notification id and mark-as-read
+    // accepts only discussion ids (openapi-verified 2026-07-12; see
+    // HubClient.markNotificationsRead). They stay unread until "mark all
+    // read", whose applyToAll form covers them.
     if (row.unread && row.markReadId !== undefined) {
       if (row.source === 'local') markLocal.mutate([row.markReadId])
       else markHub.mutate([row.markReadId])

@@ -65,6 +65,10 @@
     "updateInstallCancel": "Cancel",
     "updateInstallDetail": "The app will close before installing. Make sure any active work is ready to be interrupted.",
     "updateInstallMessage": "Install version {{version}} now?",
-    "updateInstallTitle": "Install Update"
+    "updateInstallTitle": "Install Update",
+    "renderFailureMessage": "The app window failed to load.",
+    "renderFailureDetail": "The interface crashed or failed to load repeatedly. You can reload it or quit the app.",
+    "renderFailureReload": "Reload",
+    "renderFailureQuit": "Quit"
   }
 }

@@ -54,7 +54,9 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
 
   const done = task.files.filter((f) => f.status === 'completed').length
   const progress = task.totalBytes > 0 ? task.receivedBytes / task.totalBytes : 0
-  const verified = task.status === 'completed' && task.files.some((f) => f.verified)
+  // The badge is a claim about the whole task: every file must have passed a real check.
+  const verified =
+    task.status === 'completed' && task.files.length > 0 && task.files.every((f) => f.verified)
   const active = task.status === 'running' || task.status === 'queued'
 
   const openFolder = (): void => {
@@ -102,7 +104,7 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
           {verified && (
             <span className="flex items-center gap-1 text-success">
               <CircleCheck className="size-3.5" aria-hidden />
-              {t('downloads:verified')}
+              {t('downloads:checksumsVerified')}
             </span>
           )}
           {task.error && (

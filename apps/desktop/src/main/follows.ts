@@ -20,6 +20,8 @@ const ROUTE_PREFIX: Record<RepoKind, string> = {
 export class FollowsPoller {
   private timer: NodeJS.Timeout | null = null
   private polling = false
+  /** Interval the running timer was built with, so unrelated settings changes don't reset it. */
+  private scheduledMinutes: number | null = null
 
   constructor(
     private readonly library: Library,
@@ -32,12 +34,19 @@ export class FollowsPoller {
 
   start(): void {
     this.schedule()
+    // First check fires right away; the interval only governs the cadence after it.
+    void this.poll()
     this.settings.onChange(() => this.schedule())
   }
 
   private schedule(): void {
-    if (this.timer) clearInterval(this.timer)
     const minutes = this.settings.get().pollIntervalMinutes
+    // Rebuild the timer only when the cadence changed — every settings write
+    // fires onChange, and resetting the interval each time would let unrelated
+    // tweaks starve polling indefinitely.
+    if (this.timer && minutes === this.scheduledMinutes) return
+    if (this.timer) clearInterval(this.timer)
+    this.scheduledMinutes = minutes
     this.timer = setInterval(() => void this.poll(), minutes * 60 * 1000)
     this.timer.unref?.()
   }
@@ -45,6 +54,7 @@ export class FollowsPoller {
   stop(): void {
     if (this.timer) clearInterval(this.timer)
     this.timer = null
+    this.scheduledMinutes = null
   }
 
   /** Returns the number of new inbox items. */

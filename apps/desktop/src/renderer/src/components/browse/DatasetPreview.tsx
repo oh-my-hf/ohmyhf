@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Database, ExternalLink } from 'lucide-react'
+import type { DatasetRows } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -77,7 +78,10 @@ function RowsTable({
       </thead>
       <tbody>
         {rows.map((row, i) => (
-          <tr key={i} className="border-b border-border-card align-top last:border-b-0 hover:bg-panel/60">
+          <tr
+            key={i}
+            className="border-b border-border-card align-top last:border-b-0 hover:bg-panel/60"
+          >
             {row.map((cell, j) => (
               <td key={j} className="px-3 py-1.5">
                 <div className="max-w-80 truncate" title={cell}>
@@ -123,7 +127,7 @@ function SampleFallback({ repoId }: { repoId: string }): React.JSX.Element {
 }
 
 export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Element {
-  const { t } = useTranslation('detail')
+  const { t } = useTranslation(['detail', 'common'])
   const [config, setConfig] = useState<string | null>(null)
   const [split, setSplit] = useState<string | null>(null)
   const [page, setPage] = useState(0)
@@ -157,12 +161,26 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
       }),
     enabled: Boolean(activeConfig && activeSplit),
     placeholderData: keepPreviousData,
-    retry: false
+    // One quick retry absorbs transient blips (429s, network hiccups) while paginating.
+    retry: 1
   })
 
-  if (splits.isError || rows.isError) return <SampleFallback repoId={repoId} />
+  // Last rows actually fetched for this repo (placeholders excluded so a repo
+  // switch can't leak the previous repo's rows). Kept so a failed page fetch
+  // degrades to an inline retry banner instead of tearing the viewer down.
+  const [lastGood, setLastGood] = useState<{ repoId: string; data: DatasetRows } | null>(null)
+  if (rows.data && !rows.isPlaceholderData && rows.data !== lastGood?.data) {
+    setLastGood({ repoId, data: rows.data })
+  }
+  const displayRows =
+    rows.data ?? (rows.isError && lastGood?.repoId === repoId ? lastGood.data : undefined)
+
+  if (splits.isError) return <SampleFallback repoId={repoId} />
   if (splits.isPending) return <TableSkeleton />
   if (splits.data.length === 0) return <SampleFallback repoId={repoId} />
+  // The sample fallback is reserved for initial unavailability — the viewer has
+  // never shown anything, so there is nothing to keep mounted.
+  if (rows.isError && !displayRows) return <SampleFallback repoId={repoId} />
 
   const from = page * PAGE_SIZE + 1
   const to = page * PAGE_SIZE + (rows.data?.rows.length ?? 0)
@@ -211,23 +229,39 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
         </Select>
       </div>
 
+      {rows.isError && (
+        <div className="flex items-center justify-between gap-2 border-b bg-panel/60 px-3 py-1.5">
+          <span className="text-[12px] text-ink-muted">{t('datasetPreview.rowsError')}</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={rows.isFetching}
+            onClick={() => void rows.refetch()}
+          >
+            {t('common:retry')}
+          </Button>
+        </div>
+      )}
+
       <div className="min-h-0 flex-1 overflow-auto">
         {rows.isPending && <TableSkeleton />}
-        {rows.data && (
+        {displayRows && (
           <RowsTable
-            columns={rows.data.columns}
-            rows={rows.data.rows}
-            dim={rows.isPlaceholderData}
+            columns={displayRows.columns}
+            rows={displayRows.rows}
+            dim={rows.isPlaceholderData || rows.isError}
           />
         )}
       </div>
 
-      {rows.data && (
+      {displayRows && (
         <div className="flex items-center justify-between gap-2 border-t px-3 py-1.5">
           <span className="text-[12px] text-ink-muted">
-            {total !== undefined
-              ? t('datasetPreview.range', { from, to, total })
-              : t('datasetPreview.rangeNoTotal', { from, to })}
+            {/* Range is derived from the live page; hide it while stale rows are shown. */}
+            {rows.data &&
+              (total !== undefined
+                ? t('datasetPreview.range', { from, to, total })
+                : t('datasetPreview.rangeNoTotal', { from, to }))}
           </span>
           <div className="flex items-center gap-0.5">
             <Button

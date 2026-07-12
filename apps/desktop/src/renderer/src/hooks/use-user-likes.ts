@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
@@ -29,10 +29,15 @@ export function useUserLikes(): UserLikes {
   })
 
   const data = likes.data
-  const isLiked = useCallback(
-    (kind: RepoKind, repoId: string): boolean =>
-      data?.some((r) => r.kind === kind && r.id === repoId) ?? false,
+  // Membership set: the drained like list can span many pages, so avoid an
+  // O(n) scan per heart on every render.
+  const likedKeys = useMemo(
+    () => (data ? new Set(data.map((r) => `${r.kind}:${r.id}`)) : undefined),
     [data]
+  )
+  const isLiked = useCallback(
+    (kind: RepoKind, repoId: string): boolean => likedKeys?.has(`${kind}:${repoId}`) ?? false,
+    [likedKeys]
   )
 
   const setLiked = useCallback(

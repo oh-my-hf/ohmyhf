@@ -22,7 +22,36 @@ export function createProxiedFetch(proxyUrl: string | null): typeof fetch {
     })) as unknown as typeof fetch
 }
 
+export interface HubNetworkOptions {
+  endpoint: string | null
+  proxyUrl: string | null
+}
+
+/** Endpoint + proxy last applied to the app HubClient — startup and settings
+ * rebuilds both funnel through `createHubClient`. SDK-based integrations
+ * (upload, inference playground) read this so their traffic rides the same
+ * network path instead of the SDKs' global unproxied fetch. */
+let networkOptions: HubNetworkOptions = { endpoint: null, proxyUrl: null }
+
+export function getHubNetworkOptions(): HubNetworkOptions {
+  return networkOptions
+}
+
 export function createHubClient(
+  getAccessToken: () => string | undefined,
+  getSessionCookie: () => string | undefined,
+  options?: { endpoint?: string | null; proxyUrl?: string | null }
+): HubClient {
+  networkOptions = { endpoint: options?.endpoint ?? null, proxyUrl: options?.proxyUrl ?? null }
+  return buildHubClient(getAccessToken, getSessionCookie, options)
+}
+
+/**
+ * Pure client factory: builds for the given endpoint/proxy WITHOUT recording
+ * them as the applied network options — for throwaway clients such as the
+ * Settings → Network "Test connection" probe against draft values.
+ */
+export function buildHubClient(
   getAccessToken: () => string | undefined,
   getSessionCookie: () => string | undefined,
   options?: { endpoint?: string | null; proxyUrl?: string | null }

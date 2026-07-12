@@ -143,8 +143,7 @@ export type AuthState =
 
 /** Result of a manual-token sign-in attempt; failures never throw across IPC. */
 export type TokenSignInResult =
-  | { ok: true; state: AuthState }
-  | { ok: false; error: 'invalid' | 'network' }
+  { ok: true; state: AuthState } | { ok: false; error: 'invalid' | 'forbidden' | 'network' }
 
 /**
  * Result of connecting a Hub web session (cookie) via the login window.
@@ -153,7 +152,7 @@ export type TokenSignInResult =
  */
 export type HubSessionConnectResult =
   | { ok: true; state: AuthState }
-  | { ok: false; error: 'canceled' | 'timeout' | 'mismatch' | 'invalid' | 'network' }
+  | { ok: false; error: 'canceled' | 'timeout' | 'mismatch' | 'invalid' | 'forbidden' | 'network' }
 
 /**
  * Sentinel embedded in CookieRequiredError messages. Electron flattens errors
@@ -236,6 +235,10 @@ export interface CachedRepo {
   sizeOnDisk: number
   revisions: CachedRevision[]
   lastModified?: string
+  /** Bytes of leftover `*.incomplete*` download partials in blobs/ (absent/0 when none). */
+  partialSize?: number
+  /** Number of leftover partial files in blobs/. */
+  partialCount?: number
 }
 
 export interface CacheReport {
@@ -243,6 +246,38 @@ export interface CacheReport {
   totalSize: number
   repos: CachedRepo[]
   scannedAt: string
+  /** Total bytes of leftover download partials across all repos. */
+  partialSize?: number
+}
+
+/** A fully-resolved git commit SHA — the only revisions cached with no ref file. */
+export const COMMIT_SHA_RE = /^[0-9a-f]{40}$/
+
+/**
+ * Revisions safe to offer in a one-click "clean stale" action: ref-less
+ * revisions in a repo that still has at least one ref'd revision. Repos whose
+ * revisions are ALL detached (e.g. SHA-pinned downloads) yield [] — deleting
+ * those must stay an explicit per-revision action. `pinnedCommits` (commits
+ * this app downloaded deliberately by SHA) are never considered stale.
+ */
+export function staleRevisionsOf(
+  repo: CachedRepo,
+  pinnedCommits?: ReadonlySet<string>
+): CachedRevision[] {
+  if (!repo.revisions.some((r) => r.refs.length > 0)) return []
+  return repo.revisions.filter((r) => r.refs.length === 0 && !pinnedCommits?.has(r.commitHash))
+}
+
+/**
+ * Per-worker slice of the aggregate download speed limit; null = unlimited.
+ * Floors at 1 B/s so a tiny limit still throttles instead of dividing to 0.
+ */
+export function computeSpeedShare(
+  limitBps: number | null | undefined,
+  workerCount: number
+): number | null {
+  if (!limitBps || limitBps <= 0) return null
+  return Math.max(1, Math.floor(limitBps / Math.max(1, workerCount)))
 }
 
 export interface FavoriteItem {
@@ -332,9 +367,18 @@ export interface PostReaction {
  * comments. Live-captured from the huggingface.co picker 2026-07-11.
  */
 export const HUB_REACTION_EMOJIS = [
-  '🔥', '🚀', '👀', '❤️',
-  '🤗', '😎', '➕', '🧠',
-  '👍', '🤝', '😔', '🤯'
+  '🔥',
+  '🚀',
+  '👀',
+  '❤️',
+  '🤗',
+  '😎',
+  '➕',
+  '🧠',
+  '👍',
+  '🤝',
+  '😔',
+  '🤯'
 ] as const
 
 /**

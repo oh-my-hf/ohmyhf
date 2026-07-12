@@ -116,6 +116,8 @@ export function AppShell(): React.JSX.Element {
         return
       }
       if (mod && e.key.toLowerCase() === 'b') {
+        // Cmd/Ctrl+B is bold in fields and the Markdown editor; don't hijack it.
+        if (isEditableTarget(e)) return
         e.preventDefault()
         toggleSidebar()
         return

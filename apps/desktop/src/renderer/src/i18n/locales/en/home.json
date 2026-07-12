@@ -21,7 +21,8 @@
     "emptyFollowing": "You're not following anyone yet",
     "emptyFollowingBody": "Follow users and organizations from the Inbox to see their latest models and datasets here.",
     "manageFollows": "Manage follows",
-    "updated": "<author>{{author}}</author> updated <repo>{{repo}}</repo>"
+    "updated": "<author>{{author}}</author> updated <repo>{{repo}}</repo>",
+    "error": "Couldn't load the feed"
   },
   "kind": {
     "post": "Post"

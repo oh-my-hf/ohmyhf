@@ -472,7 +472,10 @@ export function parseAskAccessForm(
     if (type === 'hidden') continue
     const required = /\brequired\b/.test(attrs)
     if (m[1] === 'select') {
-      const selectHtml = new RegExp(`<select[^>]*name="${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?</select>`).exec(body)?.[0] ?? ''
+      const selectHtml =
+        new RegExp(
+          `<select[^>]*name="${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?</select>`
+        ).exec(body)?.[0] ?? ''
       const options = [...selectHtml.matchAll(/<option[^>]*value="([^"]*)"/g)]
         .map((o) => decodeHtmlAttribute(o[1]!))
         .filter((v) => v !== '')
@@ -750,7 +753,14 @@ interface RawNotificationParticipant {
   avatar?: string
 }
 
-/** Discriminated by `type`; unknown variants degrade to kind 'other'. */
+/**
+ * Discriminated by `type`; unknown variants degrade to kind 'other'.
+ * The Hub exposes NO per-notification id (openapi-verified 2026-07-12), so the
+ * nested discussion/post/blog id — a discussion id in every case — is the only
+ * handle mark-as-read accepts. All four documented variants require one; only
+ * undocumented variants (org invites, …) can yield an id-less notification,
+ * which is clearable solely via the applyToAll "mark all read" form.
+ */
 interface RawNotification {
   type?: string
   read?: boolean
@@ -848,7 +858,10 @@ interface RawNotificationsPage {
   count?: { view?: number; unread?: number; all?: number }
 }
 
-export function mapNotificationsPage(raw: RawNotificationsPage, endpoint: string): NotificationsPage {
+export function mapNotificationsPage(
+  raw: RawNotificationsPage,
+  endpoint: string
+): NotificationsPage {
   const items = (raw.notifications ?? []).map((n) => mapNotification(n, endpoint))
   // `view` counts the entries matching the current filters; `all` is the fallback.
   return { count: raw.count?.view ?? raw.count?.all ?? items.length, items }
@@ -872,7 +885,8 @@ export function mapMyRepos(raw: RawMyRepo[]): MyRepoEntry[] {
     entries.push({
       id: r.id,
       kind,
-      visibility: r.visibility === 'private' || r.visibility === 'protected' ? r.visibility : 'public',
+      visibility:
+        r.visibility === 'private' || r.visibility === 'protected' ? r.visibility : 'public',
       updatedAt: r.updatedAt ?? '',
       storage: r.storage ?? 0,
       storagePercent: r.storagePercent ?? 0
@@ -1048,7 +1062,12 @@ export function mapActivityFeed(
         actorIsPro,
         post: mapPost(a.socialPost as never, endpoint)
       })
-    } else if (a.type === 'discussion' && a.discussionData && a.repoId && typeof a.discussionData.num === 'number') {
+    } else if (
+      a.type === 'discussion' &&
+      a.discussionData &&
+      a.repoId &&
+      typeof a.discussionData.num === 'number'
+    ) {
       const d: ActivityDiscussion = {
         repoId: a.repoId,
         repoKind: repoType,
@@ -1058,7 +1077,14 @@ export function mapActivityFeed(
         status: a.discussionData.status,
         numComments: a.discussionData.numComments
       }
-      items.push({ kind: 'discussion', time: a.time, actor, actorAvatarUrl, actorIsPro, discussion: d })
+      items.push({
+        kind: 'discussion',
+        time: a.time,
+        actor,
+        actorAvatarUrl,
+        actorIsPro,
+        discussion: d
+      })
     }
   }
   return { items, cursor: raw.cursor }

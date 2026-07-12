@@ -8,7 +8,8 @@
 import type { TFunction } from 'i18next'
 import { HUB_SESSION_REQUIRED_CODE } from '@oh-my-huggingface/shared'
 
-export type ErrorKind = 'auth' | 'gated' | 'notFound' | 'rateLimit' | 'network' | 'unknown'
+export type ErrorKind =
+  'auth' | 'gated' | 'notFound' | 'rateLimit' | 'server' | 'network' | 'unknown'
 
 export interface ClassifiedError {
   kind: ErrorKind
@@ -28,6 +29,7 @@ export function classifyError(err: unknown): ClassifiedError {
     if (status === 403) return { kind: 'gated', status }
     if (status === 404) return { kind: 'notFound', status }
     if (status === 429) return { kind: 'rateLimit', status }
+    if (status >= 500) return { kind: 'server', status }
     return { kind: 'unknown', status }
   }
   if (NETWORK_RE.test(message)) return { kind: 'network' }
@@ -37,6 +39,16 @@ export function classifyError(err: unknown): ClassifiedError {
 /** Translated, plain-language message for an error (keys in the `errors` namespace). */
 export function describeError(t: TFunction, err: unknown): string {
   return t(`errors:${classifyError(err).kind}`)
+}
+
+/**
+ * IPC flattens HubApiError into a message string; sniff auth failures from it.
+ * Deliberately broader than classifyError's 'auth' kind (403s and word-only
+ * matches count too): callers use this to treat a credential-capability gap
+ * as non-retryable instead of hammering the API.
+ */
+export function isAuthError(message: string): boolean {
+  return /\b401\b|\b403\b|unauthorized|forbidden/i.test(message)
 }
 
 /**

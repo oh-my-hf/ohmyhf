@@ -104,15 +104,17 @@ export function CollectionPage(): React.JSX.Element {
   }
 
   const update = useMutation({
-    mutationFn: () =>
-      invoke('hub:collectionUpdate', {
-        slug,
-        patch: {
-          title: editTitle.trim(),
-          description: editDescription.trim(),
-          private: editPrivate
-        }
-      }),
+    mutationFn: () => {
+      // Only changed fields ride the PATCH — like createCollection, never send
+      // an empty description the user didn't touch (the Hub rejects it).
+      const patch: { title?: string; description?: string; private?: boolean } = {}
+      const title = editTitle.trim()
+      if (title !== data?.title) patch.title = title
+      const description = editDescription.trim()
+      if (description !== (data?.description ?? '')) patch.description = description
+      if (editPrivate !== data?.private) patch.private = editPrivate
+      return invoke('hub:collectionUpdate', { slug, patch })
+    },
     onSuccess: () => {
       push(t('collections:detail.updated'), 'success')
       invalidate()

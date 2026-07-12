@@ -2,7 +2,17 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bell, CloudDownload, FileText, GitBranch, Inbox, Plus, RefreshCw, User, X } from 'lucide-react'
+import {
+  Bell,
+  CloudDownload,
+  FileText,
+  GitBranch,
+  Inbox,
+  Plus,
+  RefreshCw,
+  User,
+  X
+} from 'lucide-react'
 import type { FollowTargetType, InboxItem } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
@@ -41,7 +51,9 @@ function TabButton({
       aria-pressed={active}
       className={cn(
         'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors duration-150',
-        active ? 'border-border bg-bg text-ink-strong' : 'border-transparent text-ink-muted hover:text-ink'
+        active
+          ? 'border-border bg-bg text-ink-strong'
+          : 'border-transparent text-ink-muted hover:text-ink'
       )}
     >
       {label}
@@ -121,8 +133,8 @@ function LocalFollowsFeed(): React.JSX.Element {
     mutationFn: (args: { type: FollowTargetType; target: string }) => invoke('follows:add', args),
     onSuccess: (list, args) => {
       queryClient.setQueryData(['follows'], list)
-      setTarget('')
-      if (syncable(args.type)) syncWatch('add', [{ username: args.target }])
+      if (syncable(args.type))
+        syncWatch('add', [{ username: args.target, isOrg: args.type === 'org' }])
     }
   })
   const removeFollow = useMutation({
@@ -130,7 +142,8 @@ function LocalFollowsFeed(): React.JSX.Element {
       invoke('follows:remove', { id: follow.id }),
     onSuccess: (list, follow) => {
       queryClient.setQueryData(['follows'], list)
-      if (syncable(follow.type)) syncWatch('delete', [{ username: follow.target }])
+      if (syncable(follow.type))
+        syncWatch('delete', [{ username: follow.target, isOrg: follow.type === 'org' }])
       // The papers toggle is its own undo affordance; only rows get the toast.
       if (follow.type === 'papers') return
       pushUndo(t('inbox:follows.removed', { target: follow.target }), {
@@ -139,7 +152,8 @@ function LocalFollowsFeed(): React.JSX.Element {
           void invoke('follows:add', { type: follow.type, target: follow.target })
             .then((restored) => {
               queryClient.setQueryData(['follows'], restored)
-              if (syncable(follow.type)) syncWatch('add', [{ username: follow.target }])
+              if (syncable(follow.type))
+                syncWatch('add', [{ username: follow.target, isOrg: follow.type === 'org' }])
             })
             .catch((err: Error) => push(err.message, 'error'))
         }
@@ -183,11 +197,14 @@ function LocalFollowsFeed(): React.JSX.Element {
   const submitFollow = (): void => {
     const value = target.trim()
     if (!value) return
+    // Clearing the draft belongs to THIS submit — the papers Switch shares the
+    // mutation and must not wipe what the user is typing.
+    const clearDraft = { onSuccess: () => setTarget('') }
     if (/^(model|dataset|space):/.test(value)) {
-      addFollow.mutate({ type: 'repo', target: value })
+      addFollow.mutate({ type: 'repo', target: value }, clearDraft)
     } else {
       // Users and orgs share a namespace on the Hub; poll both the same way.
-      addFollow.mutate({ type: 'user', target: value })
+      addFollow.mutate({ type: 'user', target: value }, clearDraft)
     }
   }
 

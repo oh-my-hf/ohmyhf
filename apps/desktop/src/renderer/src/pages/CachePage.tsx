@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Trash2
 } from 'lucide-react'
+import { COMMIT_SHA_RE, staleRevisionsOf } from '@oh-my-huggingface/shared'
 import type { CachedRepo, RepoKind } from '@oh-my-huggingface/shared'
 import { describeError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
@@ -51,6 +52,25 @@ export function CachePage(): React.JSX.Element {
     staleTime: 5 * 60_000
   })
 
+  const downloads = useQuery({
+    queryKey: ['downloads'],
+    queryFn: () => invoke('downloads:list', undefined)
+  })
+
+  // Commits this app downloaded deliberately by SHA: the standard layout gives
+  // them no ref file, but they are pinned, not stale.
+  const pinnedByRepo = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const task of downloads.data ?? []) {
+      if (!COMMIT_SHA_RE.test(task.revision)) continue
+      const key = `${task.kind}:${task.repoId}`
+      let set = map.get(key)
+      if (!set) map.set(key, (set = new Set()))
+      set.add(task.revision)
+    }
+    return map
+  }, [downloads.data])
+
   const deleteRevisions = useMutation({
     mutationFn: (args: PendingDelete) =>
       invoke('cache:deleteRevisions', {
@@ -68,6 +88,15 @@ export function CachePage(): React.JSX.Element {
     }
   })
 
+  const cleanPartials = useMutation({
+    mutationFn: (repo: CachedRepo) => invoke('cache:cleanPartials', { repoPath: repo.path }),
+    onSuccess: (next, repo) => {
+      queryClient.setQueryData(['cache'], next)
+      push(t('cache:deleted', { size: formatBytes(repo.partialSize ?? 0) }), 'success')
+    },
+    onError: (err) => push(describeError(t, err), 'error')
+  })
+
   const toggle = (id: string): void => {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -78,8 +107,7 @@ export function CachePage(): React.JSX.Element {
   }
 
   const staleOf = (repo: CachedRepo): PendingDelete | null => {
-    if (repo.revisions.length <= 1) return null
-    const stale = repo.revisions.filter((r) => r.refs.length === 0)
+    const stale = staleRevisionsOf(repo, pinnedByRepo.get(`${repo.kind}:${repo.id}`))
     if (stale.length === 0) return null
     return {
       repo,
@@ -221,6 +249,13 @@ export function CachePage(): React.JSX.Element {
                                 {ref}
                               </Badge>
                             ))
+                          ) : pinnedByRepo.get(`${repo.kind}:${repo.id}`)?.has(rev.commitHash) ? (
+                            <Badge
+                              variant="outline"
+                              className="border-select/25 bg-select/10 text-select"
+                            >
+                              {t('cache:pinned')}
+                            </Badge>
                           ) : (
                             <Badge variant="outline">{t('cache:noRefs')}</Badge>
                           )}
@@ -249,6 +284,19 @@ export function CachePage(): React.JSX.Element {
                           </Button>
                         </div>
                       ))}
+                      {(repo.partialSize ?? 0) > 0 && (
+                        <div className="nums flex h-9 items-center justify-between gap-2 text-[11.5px] text-ink-faint">
+                          {t('cache:partialData', { size: formatBytes(repo.partialSize ?? 0) })}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={cleanPartials.isPending}
+                            onClick={() => cleanPartials.mutate(repo)}
+                          >
+                            {t('cache:cleanPartials')}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -265,6 +313,10 @@ export function CachePage(): React.JSX.Element {
           <DialogDescription className="mt-2 text-[13px] text-ink-muted">
             {t('cache:confirmDelete.body', { size: formatBytes(pending?.size ?? 0) })}
           </DialogDescription>
+          {/* Show exactly which snapshots go — ref-less does not always mean disposable. */}
+          <p className="mt-2 font-mono text-[11.5px] break-all text-ink-faint">
+            {pending?.commitHashes.map((h) => h.slice(0, 10)).join(' · ')}
+          </p>
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="secondary" size="sm" onClick={() => setPending(null)}>
               {t('common:cancel')}

@@ -68,7 +68,21 @@ export function NetworkSection(): React.JSX.Element {
   })
 
   const test = useMutation({
-    mutationFn: () => invoke('network:testConnection', undefined),
+    // Probe the drafts as typed (untouched drafts equal the applied config),
+    // so type endpoint → Test reflects what Apply would do.
+    mutationFn: async () => {
+      const endpoint = parseOptionalUrl(endpointDraft)
+      const proxy = parseOptionalUrl(proxyDraft)
+      setEndpointError(!endpoint.ok)
+      setProxyError(!proxy.ok)
+      if (!endpoint.ok || !proxy.ok) {
+        throw new Error(t('settings:network.invalidUrl'))
+      }
+      return invoke('network:testConnection', {
+        endpoint: endpoint.value,
+        proxyUrl: proxy.value
+      })
+    },
     onSuccess: (result) => {
       if (result.ok) push(t('settings:network.testOk'), 'success')
       else push(t('settings:network.testFail', { error: result.error }), 'error')
@@ -161,12 +175,7 @@ export function NetworkSection(): React.JSX.Element {
       <p className="text-[12px] text-ink-faint">{t('settings:network.downloadWarning')}</p>
 
       <div className="flex flex-wrap gap-2">
-        <Button
-          variant="cta"
-          size="sm"
-          loading={apply.isPending}
-          onClick={() => apply.mutate()}
-        >
+        <Button variant="cta" size="sm" loading={apply.isPending} onClick={() => apply.mutate()}>
           <Globe className="size-3.5" aria-hidden />
           {t('settings:network.apply')}
         </Button>

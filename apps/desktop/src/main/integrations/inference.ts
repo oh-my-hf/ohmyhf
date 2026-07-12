@@ -2,13 +2,23 @@
  * Inference playground backend: one-shot chat completion plus a streaming variant that
  * pushes deltas through `evt:inference`, correlated by caller-provided id.
  */
+import type { InferenceClient } from '@huggingface/inference'
 import type { InferenceRequest, InferenceResult } from '@oh-my-huggingface/shared'
+import { createProxiedFetch, getHubNetworkOptions } from '../hub'
 import type { InferenceDeps } from './types'
 
 /** Batching window for streamed deltas so tiny tokens don't each cost an IPC round-trip. */
 const FLUSH_INTERVAL_MS = 50
 
 const activeStreams = new Map<string, AbortController>()
+
+/** The SDK's default fetch is global and unproxied; hand it the app's proxied one. */
+async function createClient(accessToken: string): Promise<InferenceClient> {
+  const { InferenceClient } = await import('@huggingface/inference')
+  return new InferenceClient(accessToken, {
+    fetch: createProxiedFetch(getHubNetworkOptions().proxyUrl)
+  })
+}
 
 export async function runInference(
   request: InferenceRequest,
@@ -18,8 +28,7 @@ export async function runInference(
     return { ok: false, error: 'auth-required' }
   }
   try {
-    const { InferenceClient } = await import('@huggingface/inference')
-    const client = new InferenceClient(accessToken)
+    const client = await createClient(accessToken)
     const res = await client.chatCompletion({
       model: request.model,
       messages: [{ role: 'user', content: request.input }],
@@ -57,8 +66,7 @@ export async function runInferenceStream(
   }
 
   try {
-    const { InferenceClient } = await import('@huggingface/inference')
-    const client = new InferenceClient(accessToken)
+    const client = await createClient(accessToken)
     const stream = client.chatCompletionStream(
       {
         model: request.model,

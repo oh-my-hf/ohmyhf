@@ -16,6 +16,14 @@ const repoId = z
   .regex(/^[\w.-]+(\/[\w.-]+)?$/, 'invalid repo id')
   .refine((v) => v.split('/').every((segment) => !/^\.+$/.test(segment)), 'invalid repo id')
 
+/**
+ * Renderer-safe predicate mirroring the `repoId` schema above: "owner/name" or
+ * single-segment ids like "gpt2"; dot-only segments (".", "..") are rejected.
+ */
+export function isValidRepoId(id: string): boolean {
+  return repoId.safeParse(id).success
+}
+
 const revision = z
   .string()
   .min(1)
@@ -70,7 +78,11 @@ const settingsPatch = z
     speedLimitBps: z.number().int().min(1024).nullable(),
     hfCacheDir: z.string().max(1024).nullable(),
     notificationsEnabled: z.boolean(),
-    pollIntervalMinutes: z.number().int().min(5).max(24 * 60),
+    pollIntervalMinutes: z
+      .number()
+      .int()
+      .min(5)
+      .max(24 * 60),
     uiScale: z.number().int().min(80).max(140),
     hubEndpoint: z.union([z.url({ protocol: /^https?$/ }), z.null()]),
     proxyUrl: z.union([z.url({ protocol: /^https?$/ }), z.null()]),
@@ -84,12 +96,7 @@ const settingsPatch = z
     sidebarCollapsed: z.boolean(),
     browsePageSize: z.union([z.literal(20), z.literal(30), z.literal(50)]),
     repoOpenTarget: z.enum(['app', 'browser']),
-    historyLimit: z.union([
-      z.literal(50),
-      z.literal(100),
-      z.literal(200),
-      z.literal(500)
-    ])
+    historyLimit: z.union([z.literal(50), z.literal(100), z.literal(200), z.literal(500)])
   })
   .partial()
 
@@ -102,7 +109,11 @@ export const settingsExportFileSchema = z.object({
 
 const absolutePath = z.string().min(1).max(4096)
 
-const username = z.string().min(1).max(128).regex(/^[\w.-]+$/, 'invalid username')
+const username = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[\w.-]+$/, 'invalid username')
 
 /** Collection API path segment: "owner/title-slug-<24hex>". */
 const collectionSlug = z
@@ -155,6 +166,14 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     otherKv: z.boolean().optional(),
     signOut: z.boolean().optional()
   }),
+  // Draft endpoint/proxy from Settings → Network "Test connection"; same URL
+  // rules as the settings patch. Omitted fields fall back to applied settings.
+  'network:testConnection': z
+    .object({
+      endpoint: z.union([z.url({ protocol: /^https?$/ }), z.null()]).optional(),
+      proxyUrl: z.union([z.url({ protocol: /^https?$/ }), z.null()]).optional()
+    })
+    .optional(),
   // No hf_ prefix check: fine-grained/org tokens and mirror deployments vary.
   'auth:signInWithToken': z.object({ token: z.string().trim().min(1).max(512) }),
   'hub:search': z.object({ query: searchQuery }),
@@ -172,19 +191,40 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     kind: repoKind,
     repoId,
     type: z.enum(['discussion', 'pull_request']).optional(),
-    status: z.enum(['open', 'closed']).optional()
+    status: z.enum(['open', 'closed']).optional(),
+    cursor: z.string().max(4096).optional()
   }),
   'hub:discussionDiff': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
   'hub:posts': z.object({ cursor: z.string().max(4096).optional() }).optional(),
   'hub:recentActivity': z.object({ cursor: z.string().max(4096).optional() }).optional(),
   'hub:postDetail': z.object({
     author: z.string().min(1).max(128),
-    slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
+    slug: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w-]+$/)
   }),
-  'hub:userOverview': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
-  'hub:userFollowing': z.object({ username: z.string().min(1).max(128).regex(/^[\w.-]+$/) }),
+  'hub:userOverview': z.object({
+    username: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w.-]+$/)
+  }),
+  'hub:userFollowing': z.object({
+    username: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w.-]+$/)
+  }),
   'hub:orgMembers': z.object({
-    org: z.string().min(1).max(128).regex(/^[\w.-]+$/),
+    org: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w.-]+$/),
     limit: z.number().int().min(1).max(100).optional()
   }),
   'hub:discussionDetail': z.object({ kind: repoKind, repoId, num: z.number().int().min(1) }),
@@ -206,7 +246,12 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     repoId,
     path: relPath,
     revision: revision.optional(),
-    maxBytes: z.number().int().min(1).max(8 * 1024 * 1024).optional()
+    maxBytes: z
+      .number()
+      .int()
+      .min(1)
+      .max(8 * 1024 * 1024)
+      .optional()
   }),
   'hub:safetensorsHeader': z.object({
     kind: repoKind,
@@ -214,7 +259,9 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     path: relPath,
     revision: revision.optional()
   }),
-  'hub:notifications': z.object({ page: z.number().int().min(0).max(10_000).optional() }).optional(),
+  'hub:notifications': z
+    .object({ page: z.number().int().min(0).max(10_000).optional() })
+    .optional(),
   'hub:notificationsMarkRead': z.object({
     // Empty array = mark all notifications. Repo discussion ids are 24-hex but
     // post/blog/paper notification ids are plain strings, so stay permissive.
@@ -354,24 +401,40 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'hub:userLikes': z.object({ username }),
   'hub:postComment': z.object({
     author: username,
-    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    slug: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w-]+$/),
     comment: z.string().min(1).max(65536),
     replyToCommentId: hexId.optional()
   }),
   // 32-char cap: an emoji cluster with variation selectors/ZWJ stays well under it.
   'hub:postReactionSet': z.object({
     author: username,
-    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    slug: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w-]+$/),
     reaction: z.string().min(1).max(32),
     active: z.boolean()
   }),
   'hub:postComments': z.object({
     author: username,
-    slug: z.string().min(1).max(128).regex(/^[\w-]+$/)
+    slug: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w-]+$/)
   }),
   'hub:postCommentHide': z.object({
     author: username,
-    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    slug: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w-]+$/),
     commentId: hexId,
     // Verbatim reason label; kept as a length-capped string (see HUB_HIDE_REASONS).
     reason: z.string().min(1).max(64).optional()
@@ -396,14 +459,22 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   }),
   'hub:postCommentReactionSet': z.object({
     author: username,
-    slug: z.string().min(1).max(128).regex(/^[\w-]+$/),
+    slug: z
+      .string()
+      .min(1)
+      .max(128)
+      .regex(/^[\w-]+$/),
     commentId: hexId,
     reaction: z.string().min(1).max(32),
     active: z.boolean()
   }),
   'hub:postCreate': z.object({ content: z.string().min(1).max(65536) }),
   'hub:paperUpvoteSet': z.object({
-    paperId: z.string().min(1).max(64).regex(/^[\w.-]+$/, 'invalid paper id'),
+    paperId: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[\w.-]+$/, 'invalid paper id'),
     upvoted: z.boolean()
   }),
   'hub:collectionUpvoteSet': z.object({ slug: collectionSlug, upvoted: z.boolean() }),
@@ -416,7 +487,11 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     active: z.boolean()
   }),
   'hub:paperComment': z.object({
-    paperId: z.string().min(1).max(64).regex(/^[\w.-]+$/, 'invalid paper id'),
+    paperId: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[\w.-]+$/, 'invalid paper id'),
     comment: z.string().min(1).max(65536),
     replyToCommentId: hexId.optional()
   }),
@@ -463,8 +538,12 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'downloads:remove': z.object({ id: z.uuid() }),
   'cache:deleteRevisions': z.object({
     repoPath: absolutePath,
-    commitHashes: z.array(z.string().regex(/^[0-9a-f]{40}$/)).min(1).max(100)
+    commitHashes: z
+      .array(z.string().regex(/^[0-9a-f]{40}$/))
+      .min(1)
+      .max(100)
   }),
+  'cache:cleanPartials': z.object({ repoPath: absolutePath }),
   'follows:add': z.object({
     type: z.enum(['user', 'org', 'repo', 'papers']),
     target: z.string().max(300)

@@ -1,6 +1,8 @@
 import { join } from 'node:path'
-import { BrowserWindow, app, nativeTheme, shell } from 'electron'
+import { BrowserWindow, app, dialog, nativeTheme, protocol, shell } from 'electron'
+import { HubApiError } from '@oh-my-huggingface/hub-api'
 import type { IpcEventChannel, IpcEventPayload } from '@oh-my-huggingface/shared'
+import { isValidRepoId } from '@oh-my-huggingface/shared'
 import { AuthManager } from './auth'
 import { CacheManager } from './cache'
 import { openDatabase } from './db'
@@ -22,6 +24,25 @@ import { resolveUpdateClient, UpdateManager } from './updater'
 // or stored ciphertexts stop decrypting and profiles orphan.
 app.setName('oh-my-huggingface-desktop')
 
+// Windows routes toasts by AppUserModelID; it must match the shortcut AUMID
+// electron-builder (NSIS) derives from appId in electron-builder.yml, or
+// Notification.show() silently no-ops.
+if (process.platform === 'win32') app.setAppUserModelId('dev.oh-my-huggingface.desktop')
+
+// Repo images (file previews, README images) load through this custom scheme
+// so the hub client's auth + proxy apply — a renderer <img> pointing straight
+// at https://huggingface.co/…/resolve/… carries no Authorization header and
+// 401s on private/gated repos. bypassCSP lets omhf-file: subresources load
+// under the renderer CSP (img-src 'self' https: data:) without widening it
+// for every scheme; the handler only ever proxies Hub resolve URLs. Must run
+// before app ready.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'omhf-file',
+    privileges: { standard: true, secure: true, stream: true, bypassCSP: true }
+  }
+])
+
 const isDev = !app.isPackaged
 // Squirrel.Mac validates the update against the running app's designated
 // requirement. Releases are signed with the stable self-signed OhMyHF-Release
@@ -29,6 +50,11 @@ const isDev = !app.isPackaged
 // Installs older than the first self-signed release still fall back to manual
 // because their ad-hoc requirement (cdhash-based) can never match.
 const macAutoInstallEnabled = true
+
+// Renderer crash / load-failure recovery: reload this many times before asking
+// the user, with a short pause so a persistent crash can't spin a tight loop.
+const MAX_RENDER_RECOVERIES = 3
+const RENDER_RECOVERY_DELAY_MS = 1000
 
 // E2E tests point userData at a temp dir so they never touch a real profile.
 if (process.env.OMH_USER_DATA_DIR) {
@@ -48,13 +74,25 @@ function broadcast<C extends IpcEventChannel>(channel: C, payload: IpcEventPaylo
   }
 }
 
+// Assigned inside app.whenReady() where the window factory lives; lets
+// navigate() recreate the window when none exists (macOS keeps the app alive
+// after the last window closes).
+let recreateWindow: (() => BrowserWindow) | null = null
+// Route queued while no window existed; createWindow flushes it once the new
+// renderer has mounted and is actually listening for 'evt:navigate'.
+let pendingRoute: string | null = null
+
 function navigate(route: string): void {
   const win = BrowserWindow.getAllWindows()[0]
-  if (win) {
-    if (win.isMinimized()) win.restore()
-    win.show()
-    win.focus()
+  if (!win) {
+    // Broadcasting now would be dropped — no renderer is listening yet.
+    pendingRoute = route
+    recreateWindow?.()
+    return
   }
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
   broadcast('evt:navigate', route)
 }
 
@@ -99,8 +137,47 @@ if (!gotLock) {
     await applyAppProxy(initial.proxyUrl)
     app.setLoginItemSettings({ openAtLogin: initial.launchAtLogin })
 
+    // omhf-file://repo/?kind=…&repoId=…&revision=…&path=… → authenticated
+    // fetch of the Hub resolve URL through the live hub client (token + proxy
+    // + endpoint rebuilds all apply; the token never reaches the renderer).
+    // The upstream response streams through; failures map to plain status
+    // responses so a broken image stays a broken image.
+    protocol.handle('omhf-file', async (request) => {
+      const params = new URL(request.url).searchParams
+      const kindParam = params.get('kind')
+      const kind =
+        kindParam === 'model' || kindParam === 'dataset' || kindParam === 'space' ? kindParam : null
+      const repoId = params.get('repoId')
+      const path = params.get('path')
+      const revision = params.get('revision') ?? 'main'
+      if (!kind || !repoId || !path) {
+        return new Response('invalid omhf-file URL', { status: 400 })
+      }
+      // The token rides this request, so refuse anything that could redirect it
+      // off the addressed repo: a malformed repoId (unencoded in the resolve
+      // URL), or a path with traversal/empty segments that URL normalization
+      // would resolve outside the repo. The revision is encodeURIComponent'd by
+      // resolveUrl, so its separators can't traverse and it needs no guard.
+      const segments = path.split('/')
+      if (!isValidRepoId(repoId) || segments.some((s) => s === '..' || s === '.' || s === '')) {
+        return new Response('invalid omhf-file URL', { status: 400 })
+      }
+      try {
+        const upstream = await hub.fetchFileResponse(kind, repoId, path, revision)
+        // Rebuild as a plain Response with Content-Type only: undici
+        // decompresses bodies, so the upstream Content-Length may not match
+        // what actually streams out.
+        const headers = new Headers()
+        const contentType = upstream.headers.get('Content-Type')
+        if (contentType) headers.set('Content-Type', contentType)
+        return new Response(upstream.body, { status: upstream.status, headers })
+      } catch (err) {
+        const status = err instanceof HubApiError && err.status ? err.status : 502
+        return new Response(err instanceof Error ? err.message : 'fetch failed', { status })
+      }
+    })
+
     const library = new Library(db, () => settings.get().historyLimit)
-    const cache = new CacheManager(settings)
     const downloads = new DownloadManager(
       db,
       settings,
@@ -110,6 +187,8 @@ if (!gotLock) {
       (tasks) => broadcast('evt:downloads', tasks),
       navigate
     )
+    // Cache cleanup must spare partials of still-resumable downloads.
+    const cache = new CacheManager(settings, () => downloads.protectedTaskIds())
     const follows = new FollowsPoller(
       library,
       hub,
@@ -252,9 +331,7 @@ if (!gotLock) {
           ? { titleBarStyle: 'hidden' as const, titleBarOverlay: titleBarOverlay() }
           : {}),
         // Window/taskbar icon for Windows and Linux; macOS uses the app bundle icon.
-        ...(process.platform !== 'darwin'
-          ? { icon: join(__dirname, '../../build/icon.png') }
-          : {}),
+        ...(process.platform !== 'darwin' ? { icon: join(__dirname, '../../build/icon.png') } : {}),
         webPreferences: {
           preload: join(__dirname, '../preload/index.js'),
           contextIsolation: true,
@@ -285,6 +362,84 @@ if (!gotLock) {
         }
       })
 
+      // A route queued while no window existed cannot be sent at did-finish-load:
+      // the renderer bootstraps asynchronously (awaits settings/auth IPC in
+      // main.tsx) before mounting React, so the 'evt:navigate' listener attaches
+      // well after the load event. Wait for the React tree to commit into #root,
+      // then flush.
+      win.webContents.on('did-finish-load', () => {
+        if (pendingRoute === null) return
+        void win.webContents
+          .executeJavaScript(
+            `new Promise((resolve) => {
+              const root = document.getElementById('root')
+              if (!root || root.childElementCount > 0) return resolve(undefined)
+              new MutationObserver((_records, observer) => {
+                if (root.childElementCount > 0) {
+                  observer.disconnect()
+                  resolve(undefined)
+                }
+              }).observe(root, { childList: true })
+            })`
+          )
+          .then(() => {
+            const route = pendingRoute
+            if (route === null) return
+            pendingRoute = null
+            broadcast('evt:navigate', route)
+          })
+          .catch(() => {
+            /* window destroyed before the renderer mounted */
+          })
+      })
+
+      // Recover from renderer crashes and failed loads instead of leaving a
+      // permanently blank window; past the retry bound the user decides.
+      let renderFailures = 0
+      const recoverRenderer = (reason: string): void => {
+        if (win.isDestroyed() || isQuitting) return
+        renderFailures += 1
+        console.error(
+          `[window] renderer failure (${reason}), recovery ${renderFailures}/${MAX_RENDER_RECOVERIES}`
+        )
+        if (renderFailures <= MAX_RENDER_RECOVERIES) {
+          setTimeout(() => {
+            if (!win.isDestroyed()) win.webContents.reload()
+          }, RENDER_RECOVERY_DELAY_MS)
+          return
+        }
+        void dialog
+          .showMessageBox(win, {
+            type: 'error',
+            title: i18n.t('app.name'),
+            message: i18n.t('dialogs.renderFailureMessage'),
+            detail: i18n.t('dialogs.renderFailureDetail'),
+            buttons: [i18n.t('dialogs.renderFailureReload'), i18n.t('dialogs.renderFailureQuit')],
+            defaultId: 0
+          })
+          .then(({ response }) => {
+            if (response === 0) {
+              renderFailures = 0
+              if (!win.isDestroyed()) win.webContents.reload()
+            } else {
+              app.quit()
+            }
+          })
+      }
+      win.webContents.on('render-process-gone', (_event, details) => {
+        // 'clean-exit' accompanies ordinary teardown (window close, app quit).
+        if (details.reason === 'clean-exit') return
+        recoverRenderer(details.reason)
+      })
+      win.webContents.on(
+        'did-fail-load',
+        (_event, errorCode, errorDescription, _url, isMainFrame) => {
+          // -3 (ERR_ABORTED) is a cancelled navigation, not a failure.
+          if (!isMainFrame || errorCode === -3) return
+          recoverRenderer(`${errorCode} ${errorDescription}`)
+        }
+      )
+
       if (isDev && process.env.ELECTRON_RENDERER_URL) {
         void win.loadURL(process.env.ELECTRON_RENDERER_URL)
       } else {
@@ -293,7 +448,12 @@ if (!gotLock) {
       return win
     }
 
-    createWindow(windowBackground())
+    // Single window-creation path shared by startup, dock activate, and
+    // navigate() (menu accelerators / notification clicks with no window).
+    const createAppWindow = (): BrowserWindow => createWindow(windowBackground())
+    recreateWindow = createAppWindow
+
+    createAppWindow()
     follows.start()
 
     if (!isDev) {
@@ -312,7 +472,7 @@ if (!gotLock) {
         win.show()
         win.focus()
       } else {
-        createWindow(windowBackground())
+        createAppWindow()
       }
     })
 

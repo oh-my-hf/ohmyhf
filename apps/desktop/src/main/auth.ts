@@ -1,7 +1,16 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  watch,
+  writeFileSync,
+  type FSWatcher
+} from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { safeStorage } from 'electron'
+import { net, safeStorage } from 'electron'
 import type {
   AuthState,
   HubSessionConnectResult,
@@ -9,7 +18,7 @@ import type {
   UserProfile
 } from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
-import { isUnauthorized } from '@oh-my-huggingface/hub-api'
+import { isForbidden, isUnauthorized } from '@oh-my-huggingface/hub-api'
 import type { AppDatabase } from './db'
 
 /**
@@ -46,13 +55,35 @@ interface StoredToken {
   sessionUsername?: string
 }
 
-/** Retry cadence after a transient (network/5xx) whoAmI failure at startup. */
-const RETRY_MS = 60_000
+/**
+ * Retry backoff after a transient (network/5xx/403) whoAmI failure at startup:
+ * starts low so a brief blip resolves fast, doubles up to the ceiling.
+ */
+const RETRY_FLOOR_MS = 5_000
+const RETRY_CEIL_MS = 60_000
+/** While offline, poll cheap net.isOnline() so reconnect triggers an immediate re-check. */
+const ONLINE_POLL_MS = 5_000
+/** Re-validate the session periodically so a token revoked mid-run is detected. */
+const REVALIDATE_MS = 15 * 60_000
+/** Random spread added per cycle so many clients don't re-validate in lockstep. */
+const REVALIDATE_JITTER_MS = 60_000
+/** Collapse bursts of fs.watch events into one credentials-file check. */
+const WATCH_DEBOUNCE_MS = 500
 
 export class AuthManager {
   private state: AuthState = { status: 'signedOut' }
   private token: StoredToken | null = null
   private retryTimer: NodeJS.Timeout | null = null
+  private retryDelay = RETRY_FLOOR_MS
+  private onlineTimer: NodeJS.Timeout | null = null
+  private revalidateTimer: NodeJS.Timeout | null = null
+  private revalidateInFlight = false
+  private credentialsWatcher: FSWatcher | null = null
+  private watchDebounce: NodeJS.Timeout | null = null
+  /** True while persistToken() rewrites the shared file, so the watcher ignores our own churn. */
+  private persisting = false
+  /** Whether this session believes the shared file currently holds its token. */
+  private tokenOnDisk = false
   /**
    * Bumped whenever the session owner changes intent (sign-out, new sign-in).
    * An in-flight whoAmI from a previous epoch must discard its result instead
@@ -86,6 +117,9 @@ export class AuthManager {
 
   private setState(state: AuthState): void {
     this.state = state
+    // Only signed-in sessions re-validate; the timer dies with the session.
+    if (state.status === 'signedIn') this.scheduleRevalidate()
+    else this.clearRevalidate()
     this.onChange(state)
   }
 
@@ -101,27 +135,35 @@ export class AuthManager {
   }
 
   private persistToken(): void {
-    const file = credentialsFile()
-    if (!this.token) {
-      rmSync(file, { force: true })
+    this.persisting = true
+    try {
+      const file = credentialsFile()
+      if (!this.token) {
+        this.tokenOnDisk = false
+        rmSync(file, { force: true })
+        this.db.prepare('DELETE FROM auth WHERE id = 1').run()
+        return
+      }
+      if (!safeStorage.isEncryptionAvailable()) {
+        // Hard rule: never store the token unencrypted. Session stays in memory only.
+        console.warn('[auth] OS encryption unavailable; token will not be persisted')
+        this.tokenOnDisk = false
+        return
+      }
+      const cipher = safeStorage.encryptString(JSON.stringify(this.token))
+      mkdirSync(join(file, '..'), { recursive: true, mode: 0o700 })
+      // Atomic replace: concurrent sessions read this file, a torn write must be impossible.
+      const tmp = `${file}.${process.pid}.tmp`
+      writeFileSync(tmp, JSON.stringify({ version: 1, cipher: cipher.toString('base64') }), {
+        mode: 0o600
+      })
+      renameSync(tmp, file)
+      this.tokenOnDisk = true
+      // The pre-shared-credentials location; clear it so there is one source of truth.
       this.db.prepare('DELETE FROM auth WHERE id = 1').run()
-      return
+    } finally {
+      this.persisting = false
     }
-    if (!safeStorage.isEncryptionAvailable()) {
-      // Hard rule: never store the token unencrypted. Session stays in memory only.
-      console.warn('[auth] OS encryption unavailable; token will not be persisted')
-      return
-    }
-    const cipher = safeStorage.encryptString(JSON.stringify(this.token))
-    mkdirSync(join(file, '..'), { recursive: true, mode: 0o700 })
-    // Atomic replace: concurrent sessions read this file, a torn write must be impossible.
-    const tmp = `${file}.${process.pid}.tmp`
-    writeFileSync(tmp, JSON.stringify({ version: 1, cipher: cipher.toString('base64') }), {
-      mode: 0o600
-    })
-    renameSync(tmp, file)
-    // The pre-shared-credentials location; clear it so there is one source of truth.
-    this.db.prepare('DELETE FROM auth WHERE id = 1').run()
   }
 
   /**
@@ -146,9 +188,7 @@ export class AuthManager {
     if (existsSync(file)) {
       try {
         const { cipher } = JSON.parse(readFileSync(file, 'utf8')) as { cipher: string }
-        return JSON.parse(
-          safeStorage.decryptString(Buffer.from(cipher, 'base64'))
-        ) as StoredToken
+        return JSON.parse(safeStorage.decryptString(Buffer.from(cipher, 'base64'))) as StoredToken
       } catch (err) {
         console.warn('[auth] failed to decrypt shared credentials, discarding', err)
         rmSync(file, { force: true })
@@ -156,8 +196,7 @@ export class AuthManager {
     }
     // Legacy location (pre-shared-credentials): migrate out of the profile DB.
     const row = this.db.prepare('SELECT token_cipher FROM auth WHERE id = 1').get() as
-      | { token_cipher: Buffer }
-      | undefined
+      { token_cipher: Buffer } | undefined
     if (!row) return null
     let token: StoredToken
     try {
@@ -171,7 +210,10 @@ export class AuthManager {
     try {
       this.persistToken()
     } catch (err) {
-      console.warn('[auth] migrating legacy token to the shared file failed; keeping it in memory', err)
+      console.warn(
+        '[auth] migrating legacy token to the shared file failed; keeping it in memory',
+        err
+      )
     }
     return token
   }
@@ -181,8 +223,37 @@ export class AuthManager {
     if (this.retryTimer) clearTimeout(this.retryTimer)
     this.retryTimer = setTimeout(() => {
       void this.init()
-    }, RETRY_MS)
+    }, this.retryDelay)
     this.retryTimer.unref?.()
+    this.retryDelay = Math.min(this.retryDelay * 2, RETRY_CEIL_MS)
+    this.watchOnline()
+  }
+
+  /** Cancel the startup retry loop (a definitive outcome was reached) and reset its backoff. */
+  private clearRetry(): void {
+    if (this.retryTimer) clearTimeout(this.retryTimer)
+    this.retryTimer = null
+    if (this.onlineTimer) clearInterval(this.onlineTimer)
+    this.onlineTimer = null
+    this.retryDelay = RETRY_FLOOR_MS
+  }
+
+  /**
+   * Backoff alone leaves a restored session signed out for up to the ceiling
+   * after connectivity returns; poll net.isOnline() while offline so the retry
+   * fires the moment we are back online.
+   */
+  private watchOnline(): void {
+    if (this.onlineTimer || net.isOnline()) return
+    this.onlineTimer = setInterval(() => {
+      if (!net.isOnline()) return
+      if (this.onlineTimer) clearInterval(this.onlineTimer)
+      this.onlineTimer = null
+      if (this.retryTimer) clearTimeout(this.retryTimer)
+      this.retryTimer = null
+      void this.init()
+    }, ONLINE_POLL_MS)
+    this.onlineTimer.unref?.()
   }
 
   /**
@@ -199,6 +270,7 @@ export class AuthManager {
   /** Restore the session at startup (also the retry entry point after transient failures). */
   async init(): Promise<void> {
     if (this.state.status !== 'signedOut') return
+    this.ensureCredentialsWatch()
     // Prefer a sibling session's shared file (dev + packaged share ~/.oh_my_hf).
     const rawShared = this.readSharedToken()
     const rawLoaded = this.loadPersistedToken() ?? this.token
@@ -218,15 +290,107 @@ export class AuthManager {
     }
     try {
       const user = await this.client.whoAmI()
+      this.clearRetry()
       this.setState(this.signedInState(user))
     } catch (err) {
       if (isUnauthorized(err)) {
+        // Definitive 401 only: the token was revoked. A 403 (WAF challenge,
+        // geo block, proxy) is transient and must never wipe stored credentials.
         await this.signOut()
         return
       }
       console.warn('[auth] whoAmI failed at startup', err)
       this.scheduleRetry()
     }
+  }
+
+  /**
+   * Deleting ~/.oh_my_hf/credentials.json is the documented "sign out
+   * everywhere" gesture; honor it for running sessions too. Watching the
+   * directory (not the file) survives the atomic rename-based rewrites.
+   */
+  private ensureCredentialsWatch(): void {
+    if (this.credentialsWatcher) return
+    const file = credentialsFile()
+    try {
+      mkdirSync(join(file, '..'), { recursive: true, mode: 0o700 })
+      const watcher = watch(join(file, '..'), (_event, filename) => {
+        if (filename && filename !== 'credentials.json') return
+        if (this.watchDebounce) clearTimeout(this.watchDebounce)
+        this.watchDebounce = setTimeout(() => {
+          this.watchDebounce = null
+          this.onCredentialsFsEvent()
+        }, WATCH_DEBOUNCE_MS)
+        this.watchDebounce.unref?.()
+      })
+      watcher.on('error', (err) => {
+        console.warn('[auth] credentials watch failed', err)
+        watcher.close()
+        if (this.credentialsWatcher === watcher) this.credentialsWatcher = null
+      })
+      watcher.unref?.()
+      this.credentialsWatcher = watcher
+    } catch (err) {
+      // Best effort: without a watcher the delete-to-sign-out contract only
+      // applies at the next startup.
+      console.warn('[auth] cannot watch shared credentials', err)
+    }
+  }
+
+  private onCredentialsFsEvent(): void {
+    // Our own persistToken() writes/removals must not loop back into a sign-out.
+    if (this.persisting || !this.tokenOnDisk) return
+    if (this.state.status !== 'signedIn' || !this.token) return
+    if (existsSync(credentialsFile())) return
+    // Another session (or the user) deleted the file: drop the in-memory
+    // session too, without re-deleting anything.
+    console.warn('[auth] shared credentials removed externally; signing out this session')
+    this.epoch += 1
+    this.clearRetry()
+    this.token = null
+    this.tokenOnDisk = false
+    this.client.invalidateCache()
+    this.setState({ status: 'signedOut' })
+  }
+
+  /** Periodic whoAmI while signed in, so a token revoked mid-run is detected. */
+  private scheduleRevalidate(): void {
+    if (this.revalidateTimer) clearTimeout(this.revalidateTimer)
+    this.revalidateTimer = setTimeout(
+      () => {
+        void this.revalidate()
+      },
+      REVALIDATE_MS + Math.random() * REVALIDATE_JITTER_MS
+    )
+    this.revalidateTimer.unref?.()
+  }
+
+  private clearRevalidate(): void {
+    if (this.revalidateTimer) clearTimeout(this.revalidateTimer)
+    this.revalidateTimer = null
+  }
+
+  private async revalidate(): Promise<void> {
+    if (this.state.status !== 'signedIn' || !this.token) return
+    if (this.revalidateInFlight) {
+      this.scheduleRevalidate()
+      return
+    }
+    this.revalidateInFlight = true
+    const startEpoch = this.epoch
+    try {
+      await this.client.whoAmI()
+    } catch (err) {
+      if (this.epoch === startEpoch && isUnauthorized(err)) {
+        console.warn('[auth] session token was revoked; signing out')
+        await this.signOut()
+        return
+      }
+      // Transient (network/5xx/403): keep the session and try again next cycle.
+    } finally {
+      this.revalidateInFlight = false
+    }
+    if (this.epoch === startEpoch && this.state.status === 'signedIn') this.scheduleRevalidate()
   }
 
   /**
@@ -243,7 +407,12 @@ export class AuthManager {
     try {
       validated = await this.client.whoAmIWithToken(accessToken)
     } catch (err) {
-      return { ok: false, error: isUnauthorized(err) ? 'invalid' : 'network' }
+      // 'invalid' only on a definitive 401; a 403 (WAF/geo/proxy block) does
+      // not condemn the token.
+      return {
+        ok: false,
+        error: isUnauthorized(err) ? 'invalid' : isForbidden(err) ? 'forbidden' : 'network'
+      }
     }
     if (this.epoch !== startEpoch) {
       // The user signed out (or in) mid-validation; that newer intent owns
@@ -251,15 +420,18 @@ export class AuthManager {
       return { ok: false, error: 'network' }
     }
     this.epoch += 1
-    if (this.retryTimer) clearTimeout(this.retryTimer)
-    this.retryTimer = null
+    this.clearRetry()
     this.token = {
       accessToken,
       mode: 'token',
       tokenDisplayName: validated.tokenDisplayName,
       tokenRole: validated.tokenRole
     }
-    this.persistToken()
+    try {
+      this.persistToken()
+    } catch {
+      // Memory-only is fine for this run.
+    }
     this.client.invalidateCache()
     this.setState(this.signedInState(validated.user))
     return { ok: true, state: this.state }
@@ -284,7 +456,12 @@ export class AuthManager {
     try {
       validated = await this.client.whoAmIWithCookie(trimmed)
     } catch (err) {
-      return { ok: false, error: isUnauthorized(err) ? 'invalid' : 'network' }
+      // Same 401/403 split as signInWithToken: only a definitive 401 marks
+      // the cookie invalid.
+      return {
+        ok: false,
+        error: isUnauthorized(err) ? 'invalid' : isForbidden(err) ? 'forbidden' : 'network'
+      }
     }
     if (this.epoch !== startEpoch || this.state.status !== 'signedIn' || !this.token) {
       // The user signed out (or re-signed-in) mid-validation; newer intent wins.
@@ -346,10 +523,14 @@ export class AuthManager {
 
   async signOut(): Promise<AuthState> {
     this.epoch += 1
-    if (this.retryTimer) clearTimeout(this.retryTimer)
-    this.retryTimer = null
+    this.clearRetry()
     this.token = null
-    this.persistToken()
+    try {
+      this.persistToken()
+    } catch (err) {
+      // The file may linger on disk; this session still signs out cleanly.
+      console.warn('[auth] failed to remove persisted credentials', err)
+    }
     this.client.invalidateCache()
     this.setState({ status: 'signedOut' })
     return this.state

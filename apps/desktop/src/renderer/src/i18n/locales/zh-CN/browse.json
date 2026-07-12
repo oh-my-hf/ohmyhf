@@ -20,9 +20,7 @@
     "title": "没有结果"
   },
   "endOfResults": "已加载全部结果",
-  "error": {
-    "rateLimited": "Hugging Face API 已限流。应用会自动退避并重试，请稍候再搜索。"
-  },
+  "error": {},
   "filter": {
     "all": "全部",
     "clear": "清除筛选",
@@ -74,5 +72,6 @@
     "trending": "热门趋势",
     "updated": "最近更新"
   },
-  "updated": "更新于 {{time}}"
+  "updated": "更新于 {{time}}",
+  "searchingMore": "正在搜索更多结果…"
 }

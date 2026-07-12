@@ -20,5 +20,6 @@
   "hint": "并排对比 2–4 个模型。",
   "max": "最多可对比 4 个模型。",
   "remove": "移除",
-  "title": "模型对比"
+  "title": "模型对比",
+  "invalidId": "请输入有效的模型 id，例如 gpt2 或 meta-llama/Llama-3-8B。"
 }

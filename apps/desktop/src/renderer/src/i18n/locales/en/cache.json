@@ -26,5 +26,8 @@
   "scan": "Rescan",
   "scanning": "Scanning…",
   "title": "Local cache",
-  "totalOnDisk": "{{size}} on disk"
+  "totalOnDisk": "{{size}} on disk",
+  "pinned": "pinned",
+  "partialData": "{{size}} of incomplete download data",
+  "cleanPartials": "Clean up"
 }

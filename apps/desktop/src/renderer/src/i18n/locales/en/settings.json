@@ -235,7 +235,8 @@
     "save": "Save changes",
     "saved": "Profile saved",
     "title": "Public profile",
-    "twitter": "Twitter username"
+    "twitter": "Twitter username",
+    "avatarTooLarge": "That image is too large — avatars are limited to 10 MB."
   },
   "title": "Settings"
 }

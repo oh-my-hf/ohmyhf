@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   GitCommitHorizontal,
@@ -199,9 +199,7 @@ function ThreadEvent({
             postUrl={hubUrl}
             locale={locale}
             currentUser={currentUser}
-            onToggle={
-              canReact ? (emoji, active) => onReact(event.id, emoji, active) : undefined
-            }
+            onToggle={canReact ? (emoji, active) => onReact(event.id, emoji, active) : undefined}
             pending={reactPending}
           />
         </div>
@@ -269,8 +267,23 @@ function Thread({
   const hubSession = useHubSession()
   const currentUser = auth.status === 'signedIn' ? auth.user.name : undefined
   const react = useMutation({
-    mutationFn: ({ commentId, emoji, active }: { commentId: string; emoji: string; active: boolean }) =>
-      invoke('hub:discussionReactionSet', { kind, repoId, num, commentId, reaction: emoji, active }),
+    mutationFn: ({
+      commentId,
+      emoji,
+      active
+    }: {
+      commentId: string
+      emoji: string
+      active: boolean
+    }) =>
+      invoke('hub:discussionReactionSet', {
+        kind,
+        repoId,
+        num,
+        commentId,
+        reaction: emoji,
+        active
+      }),
     onError: (err) => push(t('detail:discussions.reactionError', { error: err.message }), 'error'),
     onSettled: () =>
       void queryClient.invalidateQueries({ queryKey: ['discussion', kind, repoId, num] })
@@ -424,12 +437,7 @@ function Thread({
           <Button variant="secondary" size="sm" onClick={() => setMergeOpen(false)}>
             {t('common:cancel')}
           </Button>
-          <Button
-            variant="cta"
-            size="sm"
-            loading={merge.isPending}
-            onClick={() => merge.mutate()}
-          >
+          <Button variant="cta" size="sm" loading={merge.isPending} onClick={() => merge.mutate()}>
             {t('detail:maintainer.merge')}
           </Button>
         </div>
@@ -650,22 +658,26 @@ export function DiscussionsPanel({
   // repo change) so the open-on-Hub button falls back to the repo home page.
   useEffect(() => () => onActiveDiscussion?.(null), [onActiveDiscussion])
 
-  const list = useQuery({
+  const list = useInfiniteQuery({
     queryKey: ['discussions', kind, repoId, segment, status],
-    queryFn: () =>
+    queryFn: ({ pageParam }) =>
       invoke('hub:discussions', {
         kind,
         repoId,
         type: segment,
-        status: status === 'all' ? undefined : status
-      })
+        status: status === 'all' ? undefined : status,
+        cursor: pageParam === '' ? undefined : pageParam
+      }),
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? null
   })
+  const discussions = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data])
 
   if (selected !== null) {
     return <Thread kind={kind} repoId={repoId} num={selected} onBack={() => select(null)} />
   }
 
-  const count = list.data?.items.length
+  const count = list.data !== undefined ? discussions.length : undefined
 
   return (
     <div className="flex h-full flex-col">
@@ -728,12 +740,12 @@ export function DiscussionsPanel({
             </Button>
           </div>
         )}
-        {list.data?.items.length === 0 && (
+        {list.data !== undefined && discussions.length === 0 && (
           <div className="p-6 text-center text-[13px] text-ink-muted">
             {segment === 'pull_request' ? t('detail:pr.empty') : t('detail:discussions.empty')}
           </div>
         )}
-        {list.data?.items.map((discussion: DiscussionSummary) => (
+        {discussions.map((discussion: DiscussionSummary) => (
           <button
             key={discussion.num}
             type="button"
@@ -757,6 +769,18 @@ export function DiscussionsPanel({
             </span>
           </button>
         ))}
+        {list.hasNextPage && (
+          <div className="flex justify-center py-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={list.isFetchingNextPage}
+              onClick={() => void list.fetchNextPage()}
+            >
+              {t('detail:discussions.loadMore')}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -856,7 +880,9 @@ function NewDiscussionButton({
                 />
               </div>
               {asPr && (
-                <p className="text-[12px] text-ink-faint">{t('detail:discussions.create.prHint')}</p>
+                <p className="text-[12px] text-ink-faint">
+                  {t('detail:discussions.create.prHint')}
+                </p>
               )}
               <Input
                 value={title}

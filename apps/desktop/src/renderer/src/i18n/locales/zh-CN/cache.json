@@ -22,5 +22,8 @@
   "scan": "重新扫描",
   "scanning": "扫描中…",
   "title": "本地缓存",
-  "totalOnDisk": "磁盘占用 {{size}}"
+  "totalOnDisk": "磁盘占用 {{size}}",
+  "pinned": "已固定",
+  "partialData": "{{size}} 未完成的下载数据",
+  "cleanPartials": "清理"
 }

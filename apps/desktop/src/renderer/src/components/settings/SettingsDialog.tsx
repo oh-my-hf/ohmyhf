@@ -55,6 +55,7 @@ import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
 import type { SettingsSection } from '@/stores/app'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { isAuthError } from '@/lib/errors'
 import { APP_UPDATE_QUERY_KEY } from '@/lib/query'
 import { PrivacySection } from '@/components/settings/PrivacySection'
 import { ProfileSection } from '@/components/settings/ProfileSection'
@@ -73,11 +74,6 @@ const FONT_SCALE_STEP = 5
 const ACCENT_OPTIONS: AccentPreset[] = ['default', 'blue', 'green', 'orange', 'violet']
 const PAGE_SIZE_OPTIONS: BrowsePageSize[] = [20, 30, 50]
 const HISTORY_LIMIT_OPTIONS: HistoryLimit[] = [50, 100, 200, 500]
-
-/** IPC flattens HubApiError into a message string; sniff auth failures from it. */
-function isAuthErrorMessage(message: string): boolean {
-  return /\b401\b|\b403\b|unauthorized|forbidden/i.test(message)
-}
 
 interface NavEntry {
   id: SettingsSection
@@ -243,7 +239,7 @@ function TokenSignInForm({ onDone }: { onDone?: () => void }): React.JSX.Element
   const { t } = useTranslation(['auth'])
   const setAuth = useAppStore((s) => s.setAuth)
   const [token, setToken] = useState('')
-  const [error, setError] = useState<'invalid' | 'network' | null>(null)
+  const [error, setError] = useState<'invalid' | 'forbidden' | 'network' | null>(null)
 
   const submit = useMutation({
     mutationFn: (value: string) => invoke('auth:signInWithToken', { token: value }),
@@ -384,7 +380,9 @@ function TokenAccountBlock({
 function HubSessionBlock({ connected }: { connected: boolean }): React.JSX.Element {
   const { t } = useTranslation(['auth'])
   const setAuth = useAppStore((s) => s.setAuth)
-  const [error, setError] = useState<'mismatch' | 'timeout' | 'invalid' | 'network' | null>(null)
+  const [error, setError] = useState<
+    'mismatch' | 'timeout' | 'invalid' | 'forbidden' | 'network' | null
+  >(null)
 
   const connect = useMutation({
     mutationFn: () => invoke('auth:connectHubSession', undefined),
@@ -411,9 +409,7 @@ function HubSessionBlock({ connected }: { connected: boolean }): React.JSX.Eleme
         {connected && <Badge variant="success">{t('auth:hubSession.connected')}</Badge>}
       </div>
       <p className="max-w-[65ch] text-[12px] text-ink-faint">{t('auth:hubSession.hint')}</p>
-      {error !== null && (
-        <p className="text-[12px] text-error">{t(`auth:hubSession.${error}`)}</p>
-      )}
+      {error !== null && <p className="text-[12px] text-error">{t(`auth:hubSession.${error}`)}</p>}
       <div className="flex flex-wrap items-center gap-2">
         {connected ? (
           <Button
@@ -453,7 +449,7 @@ function BillingUsageCard(): React.JSX.Element {
     queryKey: ['hub-billing-usage'],
     queryFn: () => invoke('hub:billingUsage', undefined),
     // A 401/403 is a capability gap, not a transient failure — do not retry it.
-    retry: (failureCount, error) => failureCount < 2 && !isAuthErrorMessage(error.message)
+    retry: (failureCount, error) => failureCount < 2 && !isAuthError(error.message)
   })
 
   // The Hub bills in USD; rows carry integer cents.
@@ -477,7 +473,7 @@ function BillingUsageCard(): React.JSX.Element {
       </div>
       {usage.isPending && <Skeleton className="h-14" />}
       {usage.isError &&
-        (isAuthErrorMessage(usage.error.message) ? (
+        (isAuthError(usage.error.message) ? (
           <p className="text-[12px] text-ink-faint">{t('settings:account.billing.unauthorized')}</p>
         ) : (
           <div className="flex items-center justify-between gap-2">
@@ -535,10 +531,7 @@ function AppearanceSection(): React.JSX.Element {
   }
 
   const stepFontScale = (delta: number): void => {
-    const fontScale = Math.min(
-      FONT_SCALE_MAX,
-      Math.max(FONT_SCALE_MIN, settings.fontScale + delta)
-    )
+    const fontScale = Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, settings.fontScale + delta))
     if (fontScale !== settings.fontScale) void updateSettings({ fontScale })
   }
 

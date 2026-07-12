@@ -35,6 +35,21 @@ const HUB_PREFIX: Record<RepoKind, string> = {
   space: 'spaces/'
 }
 
+/** Pipeline tags whose models the Hub can serve through chat completion. */
+const CHAT_PIPELINE_TAGS = new Set(['text-generation', 'image-text-to-text'])
+
+/**
+ * Whether the playground's chat completion can work for this model. Providers
+ * expose chat only for conversational text-generation / image-text-to-text
+ * models (the Hub tags those "conversational"); every other task fails at the
+ * provider. Without task metadata this stays permissive so the provider-based
+ * availability check alone decides.
+ */
+export function chatCompletionCapable(detail?: { pipelineTag?: string; tags: string[] }): boolean {
+  if (detail?.pipelineTag === undefined) return true
+  return CHAT_PIPELINE_TAGS.has(detail.pipelineTag) && detail.tags.includes('conversational')
+}
+
 export function RepoDetail({
   kind,
   repoId
@@ -128,7 +143,11 @@ export function RepoDetail({
 
   const hubUrl = `https://huggingface.co/${HUB_PREFIX[kind]}${repoId}`
   const isModel = kind === 'model'
-  const showPlayground = isModel && inferenceAvailable.data === true
+  // Provider-served AND chat-capable: the playground only speaks chat
+  // completion, so non-conversational tasks (embeddings, text-to-image, …)
+  // hide the tab instead of failing on every run.
+  const showPlayground =
+    isModel && inferenceAvailable.data === true && chatCompletionCapable(detailData)
 
   // Owner segment of "owner/name" links to the public profile; the rest stays plain.
   const slash = repoId.indexOf('/')

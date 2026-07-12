@@ -18,7 +18,8 @@
     "rangeNoTotal": "第 {{from}}–{{to}} 行",
     "sampleNote": "完整查看器不可用——以下为 Hub 提供的样本预览（{{count}} 行）。",
     "split": "切分",
-    "unavailable": "该数据集暂不支持在线预览。你仍可浏览其文件，或在 Hub 上打开。"
+    "unavailable": "该数据集暂不支持在线预览。你仍可浏览其文件，或在 Hub 上打开。",
+    "rowsError": "无法加载行数据。"
   },
   "discussions": {
     "comments": "{{count}} 条评论",
@@ -40,6 +41,7 @@
       "closed": "已关闭",
       "open": "开放"
     },
+    "loadMore": "加载更多",
     "pullRequest": "PR",
     "quoteReply": "引用回复",
     "reactionError": "回应更新失败：{{error}}",

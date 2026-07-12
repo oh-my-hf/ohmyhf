@@ -23,6 +23,7 @@ import {
 import { defaultCacheDir, HubApiError } from '@oh-my-huggingface/hub-api'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import type { AuthManager } from './auth'
+import { buildHubClient } from './hub'
 import { captureHubSessionCookie } from './hub-session'
 import type { CacheManager } from './cache'
 import type { AppDatabase } from './db'
@@ -242,9 +243,28 @@ export function registerIpcHandlers(ctx: AppContext): void {
     return { cleared: true as const, signedOut: signOut }
   })
 
-  handle('network:testConnection', async () => {
+  handle('network:testConnection', async (req) => {
+    const applied = ctx.settings.get()
+    const endpoint = req?.endpoint !== undefined ? req.endpoint : applied.hubEndpoint
+    const proxyUrl = req?.proxyUrl !== undefined ? req.proxyUrl : applied.proxyUrl
+    // Drafts are probed on a throwaway client so the live client (and the
+    // recorded applied network options) are never touched. Credentials stay
+    // bound to the endpoint they belong to — the same rule Apply enforces — so
+    // NEITHER the token NOR the web-session cookie ever rides along to a draft
+    // mirror endpoint. The probe (public trending search) needs no auth, so a
+    // draft host receives an anonymous request; this keeps the main-process
+    // token siloed even if the renderer supplies an arbitrary endpoint.
+    const endpointMatches = endpoint === applied.hubEndpoint
+    const matchesApplied = endpointMatches && proxyUrl === applied.proxyUrl
+    const client = matchesApplied
+      ? ctx.hub
+      : buildHubClient(
+          endpointMatches ? () => ctx.auth.accessToken() : () => undefined,
+          endpointMatches ? () => ctx.auth.sessionCookie() : () => undefined,
+          { endpoint, proxyUrl }
+        )
     try {
-      await ctx.hub.searchRepos({ kind: 'model', sort: 'trending', limit: 1 })
+      await client.searchRepos({ kind: 'model', sort: 'trending', limit: 1 })
       return { ok: true as const }
     } catch (err) {
       return {
@@ -263,8 +283,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:fileTree', ({ kind, repoId, revision, path }) =>
     ctx.hub.getFileTree(kind, repoId, revision, path)
   )
-  handle('hub:discussions', ({ kind, repoId, type, status }) =>
-    ctx.hub.listDiscussions(kind, repoId, { type, status })
+  handle('hub:discussions', ({ kind, repoId, type, status, cursor }) =>
+    ctx.hub.listDiscussions(kind, repoId, { type, status, cursor })
   )
   handle('hub:discussionDiff', ({ kind, repoId, num }) =>
     ctx.hub.getDiscussionDiff(kind, repoId, num)
@@ -447,7 +467,8 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('auth:signOut', () => ctx.auth.signOut())
   // The captured cookie is a secret: it stays in the main process, never logged.
   handle('auth:connectHubSession', async () => {
-    if (ctx.auth.getState().status !== 'signedIn') return { ok: false as const, error: 'invalid' as const }
+    if (ctx.auth.getState().status !== 'signedIn')
+      return { ok: false as const, error: 'invalid' as const }
     const settings = ctx.settings.get()
     const captured = await captureHubSessionCookie({
       endpoint: ctx.hub.baseUrl,
@@ -484,6 +505,7 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('cache:deleteRevisions', ({ repoPath, commitHashes }) =>
     ctx.cache.deleteRevisions(repoPath, commitHashes)
   )
+  handle('cache:cleanPartials', ({ repoPath }) => ctx.cache.cleanPartials(repoPath))
 
   // --- follows & inbox ------------------------------------------------------------------
   handle('follows:list', () => ctx.library.listFollows())

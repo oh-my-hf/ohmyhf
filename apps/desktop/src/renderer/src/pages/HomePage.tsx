@@ -2,9 +2,10 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { Newspaper, UserPlus } from 'lucide-react'
+import { CloudOff, Newspaper, UserPlus } from 'lucide-react'
 import type { PaperSummary, PostSummary, RepoSummary } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { describeError } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,7 +31,7 @@ function toTimestamp(iso: string | undefined): number {
 }
 
 export function HomePage(): React.JSX.Element {
-  const { t } = useTranslation(['home', 'common'])
+  const { t } = useTranslation(['home', 'common', 'errors'])
   const navigate = useNavigate()
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
@@ -180,8 +181,12 @@ export function HomePage(): React.JSX.Element {
   const followSourcesSettled = follows.isSuccess && (!me || hubFollowing.isSuccess)
   // The "follow someone" nudge only applies to the fallback feed, not the
   // personalized stream (which already reflects the Hub following list).
-  const showEmptyFollowing =
-    !personalized && followSourcesSettled && followTargets.length === 0
+  const showEmptyFollowing = !personalized && followSourcesSettled && followTargets.length === 0
+  // Individual source failures are tolerated while anything renders, but a
+  // feed that is empty BECAUSE sources failed needs a retry, not "nothing yet".
+  const failedSources = [recentActivity, posts, papers, follows, hubFollowing, activity].filter(
+    (q) => q.isError
+  )
 
   return (
     <div className="animate-fade-rise flex h-full min-w-0">
@@ -228,6 +233,17 @@ export function HomePage(): React.JSX.Element {
             activityItems.map((item, i) => (
               <ActivityCard key={`activity:${i}`} item={item} locale={locale} />
             ))
+          ) : feed.length === 0 && !showEmptyFollowing && failedSources.length > 0 ? (
+            <EmptyState
+              icon={CloudOff}
+              title={t('home:feed.error')}
+              body={describeError(t, failedSources[0]!.error)}
+              action={
+                <Button size="sm" onClick={() => failedSources.forEach((q) => void q.refetch())}>
+                  {t('common:retry')}
+                </Button>
+              }
+            />
           ) : feed.length === 0 && !showEmptyFollowing ? (
             <EmptyState
               icon={Newspaper}

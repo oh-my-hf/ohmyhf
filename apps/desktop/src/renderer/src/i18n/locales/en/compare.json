@@ -20,5 +20,6 @@
   "hint": "Compare 2–4 models side by side.",
   "max": "You can compare up to 4 models.",
   "remove": "Remove",
-  "title": "Compare models"
+  "title": "Compare models",
+  "invalidId": "Enter a valid model id, e.g. gpt2 or meta-llama/Llama-3-8B."
 }

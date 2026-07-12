@@ -20,9 +20,7 @@
     "title": "No results"
   },
   "endOfResults": "End of results",
-  "error": {
-    "rateLimited": "The Hugging Face API is rate-limiting requests. The app backs off and retries automatically — please wait a moment before searching again."
-  },
+  "error": {},
   "filter": {
     "all": "All",
     "clear": "Clear filters",
@@ -74,5 +72,6 @@
     "trending": "Trending",
     "updated": "Recently updated"
   },
-  "updated": "Updated {{time}}"
+  "updated": "Updated {{time}}",
+  "searchingMore": "Searching more results…"
 }

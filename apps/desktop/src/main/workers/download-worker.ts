@@ -4,6 +4,7 @@
  *
  * Protocol (parentPort messages):
  *   in : { type: 'abort' }
+ *        { type: 'limit', limitBps }   // live per-worker share of the speed limit
  *   out: { type: 'meta', commit, etag, size, isLfs }
  *        { type: 'progress', received, size }
  *        { type: 'done', received, verified, snapshotPath }
@@ -27,6 +28,8 @@ import { parentPort, workerData } from 'node:worker_threads'
 import { ProxyAgent, fetch as undiciFetch } from 'undici'
 
 export interface DownloadJob {
+  /** Download-task id owning this file; keys the task-unique partial file. */
+  taskId: string
   /** resolve URL, e.g. https://huggingface.co/org/name/resolve/main/file.bin */
   url: string
   /** "models--org--name" repo directory inside the cache. */
@@ -35,14 +38,20 @@ export interface DownloadJob {
   path: string
   revision: string
   authToken?: string
+  /** Per-worker share of the aggregate speed limit; null/undefined = unlimited. */
   speedLimitBps?: number | null
   userAgent: string
   /** App-level HTTP(S) proxy; null/undefined = direct Node fetch. */
   proxyUrl?: string | null
 }
 
-const job = workerData as DownloadJob
-const port = parentPort!
+// Guarded so tests can import Throttle/gitBlobSha1OfFile outside a worker thread.
+const job = (workerData ?? {}) as DownloadJob
+const port = parentPort
+
+function post(msg: object): void {
+  port?.postMessage(msg)
+}
 
 const proxyAgent = job.proxyUrl ? new ProxyAgent(job.proxyUrl) : null
 
@@ -56,10 +65,12 @@ function httpFetch(input: string, init?: RequestInit): Promise<Response> {
 
 let aborted = false
 let abortController = new AbortController()
-port.on('message', (msg: { type?: string }) => {
+port?.on('message', (msg: { type?: string; limitBps?: number | null }) => {
   if (msg?.type === 'abort') {
     aborted = true
     abortController.abort()
+  } else if (msg?.type === 'limit') {
+    throttle.setLimit(msg.limitBps ?? null)
   }
 })
 
@@ -139,14 +150,34 @@ function sha256OfFile(path: string): Promise<string> {
   })
 }
 
+/** Git blob oid: sha1 of `blob <size>\0` + content — what non-LFS etags are. */
+export function gitBlobSha1OfFile(path: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha1')
+    hash.update(`blob ${statSync(path).size}\0`)
+    const stream = createReadStream(path)
+    stream.on('data', (chunk) => hash.update(chunk))
+    stream.on('end', () => resolve(hash.digest('hex')))
+    stream.on('error', reject)
+  })
+}
+
 /** Simple token bucket; sleeps when the rolling send rate exceeds the limit. */
-class Throttle {
+export class Throttle {
   private windowStart = Date.now()
   private windowBytes = 0
 
-  constructor(private readonly limitBps: number) {}
+  constructor(private limitBps: number | null) {}
+
+  /** Live rate update from the manager as sibling workers spawn/exit; null = unlimited. */
+  setLimit(limitBps: number | null): void {
+    this.limitBps = limitBps
+    this.windowStart = Date.now()
+    this.windowBytes = 0
+  }
 
   async take(bytes: number): Promise<void> {
+    if (!this.limitBps) return
     this.windowBytes += bytes
     const elapsed = (Date.now() - this.windowStart) / 1000
     const expected = this.windowBytes / this.limitBps
@@ -160,6 +191,8 @@ class Throttle {
   }
 }
 
+const throttle = new Throttle(job.speedLimitBps ?? null)
+
 function linkSnapshot(snapshotFile: string, blobPath: string): void {
   mkdirSync(dirname(snapshotFile), { recursive: true })
   rmSync(snapshotFile, { force: true })
@@ -172,8 +205,18 @@ function linkSnapshot(snapshotFile: string, blobPath: string): void {
   }
 }
 
+/**
+ * Task-unique partial path: two tasks (or two identical-content files within one
+ * task) must never append to a shared '.incomplete' file — a corrupt interleaved
+ * blob could be promoted. Stable across pause/resume because the task id persists.
+ */
+function partialPath(blobPath: string): string {
+  const pathHash = createHash('sha1').update(job.path).digest('hex').slice(0, 8)
+  return `${blobPath}.incomplete.${job.taskId}-${pathHash}`
+}
+
 async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<number> {
-  const incomplete = `${blobPath}.incomplete`
+  const incomplete = partialPath(blobPath)
   mkdirSync(dirname(blobPath), { recursive: true })
 
   let offset = 0
@@ -200,7 +243,6 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
     }
     if (!res.body) throw new Error('Response has no body')
 
-    const throttle = job.speedLimitBps ? new Throttle(job.speedLimitBps) : null
     const out = createWriteStream(incomplete, { flags: offset > 0 ? 'a' : 'w' })
     let received = offset
     let lastReport = 0
@@ -214,11 +256,11 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
         await new Promise<void>((resolve, reject) =>
           out.write(value, (err) => (err ? reject(err) : resolve()))
         )
-        if (throttle) await throttle.take(value.byteLength)
+        await throttle.take(value.byteLength)
         const now = Date.now()
         if (now - lastReport > 200) {
           lastReport = now
-          port.postMessage({ type: 'progress', received, size: meta.size })
+          post({ type: 'progress', received, size: meta.size })
         }
       }
     } finally {
@@ -229,13 +271,21 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
     }
   }
 
-  // LFS etags are the sha256 of the content; verify before promoting the blob.
+  // LFS etags are the sha256 of the content; non-LFS etags are the git blob oid.
+  // Verify either before promoting the blob.
   let verified = false
   if (meta.isLfs && /^[0-9a-f]{64}$/.test(meta.etag)) {
     const digest = await sha256OfFile(incomplete)
     if (digest !== meta.etag) {
       rmSync(incomplete, { force: true })
       throw new Error('Checksum mismatch (sha256); the partial file was discarded')
+    }
+    verified = true
+  } else if (!meta.isLfs && /^[0-9a-f]{40}$/.test(meta.etag)) {
+    const digest = await gitBlobSha1OfFile(incomplete)
+    if (digest !== meta.etag) {
+      rmSync(incomplete, { force: true })
+      throw new Error('Checksum mismatch (git blob sha1); the partial file was discarded')
     }
     verified = true
   }
@@ -245,27 +295,44 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
 
 async function run(): Promise<void> {
   const meta = await fetchMetadata()
-  port.postMessage({ type: 'meta', commit: meta.commit, etag: meta.etag, size: meta.size, isLfs: meta.isLfs })
+  post({ type: 'meta', commit: meta.commit, etag: meta.etag, size: meta.size, isLfs: meta.isLfs })
 
   const blobPath = join(job.repoDir, 'blobs', meta.etag)
   const snapshotFile = join(job.repoDir, 'snapshots', meta.commit, ...job.path.split('/'))
 
-  let verified: boolean
+  let verified = false
+  let haveBlob = false
   if (existsSync(blobPath) && (meta.size === 0 || statSync(blobPath).size === meta.size)) {
-    verified = meta.isLfs
-  } else {
+    if (meta.isLfs) {
+      // Blob names ARE the sha256; a full re-hash on every reuse is too slow.
+      haveBlob = true
+      verified = true
+    } else if (/^[0-9a-f]{40}$/.test(meta.etag)) {
+      // Cheap for small non-LFS files; redownload if a pre-verification blob is corrupt.
+      verified = (await gitBlobSha1OfFile(blobPath)) === meta.etag
+      haveBlob = verified
+    } else {
+      haveBlob = true
+    }
+  }
+  if (!haveBlob) {
     verified = (await downloadToBlob(meta, blobPath)) === 1
   }
   linkSnapshot(snapshotFile, blobPath)
 
-  // Record the ref so transformers/CLI resolve this revision without a network call.
-  const refsDir = join(job.repoDir, 'refs')
-  mkdirSync(refsDir, { recursive: true })
+  // Record the ref so transformers/CLI resolve this revision without a network
+  // call. Nested refs (e.g. "refs/pr/1") live at their real path like the standard
+  // layout; commit-pinned downloads get no ref file.
   if (!/^[0-9a-f]{40}$/.test(job.revision)) {
-    writeFileSync(join(refsDir, job.revision.replace(/\//g, '_')), meta.commit)
+    const segments = job.revision.split('/')
+    if (segments.every((s) => s && s !== '.' && s !== '..')) {
+      const refPath = join(job.repoDir, 'refs', ...segments)
+      mkdirSync(dirname(refPath), { recursive: true })
+      writeFileSync(refPath, meta.commit)
+    }
   }
 
-  port.postMessage({
+  post({
     type: 'done',
     received: meta.size,
     verified,
@@ -273,7 +340,9 @@ async function run(): Promise<void> {
   })
 }
 
-run().catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : String(err)
-  port.postMessage({ type: aborted ? 'error' : 'error', message: aborted ? 'aborted' : message })
-})
+if (port) {
+  run().catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err)
+    post({ type: 'error', message: aborted ? 'aborted' : message })
+  })
+}

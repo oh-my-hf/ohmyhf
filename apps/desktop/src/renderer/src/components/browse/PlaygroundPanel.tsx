@@ -3,15 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { Play, Square } from 'lucide-react'
 import type { InferenceStreamEvent } from '@oh-my-huggingface/shared'
+import { isAuthError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { useIpcEvent } from '@/hooks/use-ipc-event'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useAppStore } from '@/stores/app'
-
-function isAuthError(message: string): boolean {
-  return /\b401\b|\b403\b|unauthorized|forbidden|auth/i.test(message)
-}
 
 export function PlaygroundPanel({ repoId }: { repoId: string }): React.JSX.Element {
   const { t } = useTranslation('detail')

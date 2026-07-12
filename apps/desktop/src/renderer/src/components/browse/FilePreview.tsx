@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToasts } from '@/components/ui/toaster'
 import { CodeBlock } from '@/components/browse/CodeBlock'
-import { MarkdownView } from '@/components/browse/MarkdownView'
+import { MarkdownView, repoFileUrl } from '@/components/browse/MarkdownView'
 
 /** Text previews cap the transfer; anything past this shows the truncation bar. */
 const MAX_TEXT_BYTES = 512 * 1024
@@ -183,17 +183,13 @@ function SafetensorsPreview({
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b px-4 py-3">
         <div>
-          <div className="text-[11px] font-medium text-ink-faint">
-            {t('preview.totalParams')}
-          </div>
+          <div className="text-[11px] font-medium text-ink-faint">{t('preview.totalParams')}</div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {formatParams(header.data.totalParams)}
           </div>
         </div>
         <div>
-          <div className="text-[11px] font-medium text-ink-faint">
-            {t('preview.tensors')}
-          </div>
+          <div className="text-[11px] font-medium text-ink-faint">{t('preview.tensors')}</div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {header.data.tensors.length}
           </div>
@@ -277,8 +273,11 @@ export function FilePreview({
     case 'image':
       body = (
         <div className="flex h-full items-center justify-center p-6">
+          {/* Served via omhf-file:// so private/gated repo images load with
+              the main process's auth; the copy button keeps the shareable
+              https resolve URL. */}
           <img
-            src={rawUrl}
+            src={repoFileUrl(kind, repoId, entry.path)}
             alt={name}
             className="max-h-full max-w-full rounded-md border object-contain"
           />

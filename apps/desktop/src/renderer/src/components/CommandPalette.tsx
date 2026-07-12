@@ -70,6 +70,13 @@ const KIND_LABEL_KEY: Record<RepoKind, string> = {
 
 const ALL_KINDS: RepoKind[] = ['model', 'dataset', 'space']
 
+const SORTS: RepoSort[] = ['trending', 'downloads', 'likes', 'updated', 'created']
+
+/** Mirrors FiltersBar: spaces have no download counts, so no downloads sort. */
+export function sortsForKind(kind: RepoKind): RepoSort[] {
+  return SORTS.filter((sort) => !(kind === 'space' && sort === 'downloads'))
+}
+
 /** Result-group order: key into useGlobalSearch's buckets + the repo kind. */
 const SEARCH_GROUPS = [
   ['models', 'model'],
@@ -146,10 +153,19 @@ export function CommandPalette(): React.JSX.Element {
   const closeAnd = useCallback(
     (fn: () => void): void => {
       setOpen(false)
+      // Programmatic close skips onOpenChange, so reset here too.
+      setPage('root')
+      setValue('')
       fn()
     },
     [setOpen]
   )
+
+  // Sub-page lists filter on the input, so a leftover needle would hide every option.
+  const enterPage = (next: Page): void => {
+    setPage(next)
+    setValue('')
+  }
 
   const applyFilter = (kind: RepoKind, patch: Parameters<typeof setFilters>[1]): void =>
     closeAnd(() => {
@@ -174,7 +190,10 @@ export function CommandPalette(): React.JSX.Element {
     { page: 'task', label: t('browse:filter.task'), icon: Filter },
     { page: 'library', label: t('browse:filter.library'), icon: Filter },
     { page: 'license', label: t('browse:filter.license'), icon: Filter },
-    { page: 'params', label: t('browse:filter.params'), icon: Filter },
+    // Param counts only exist on models; other kinds would always filter to nothing.
+    ...(browseKind === 'model'
+      ? [{ page: 'params' as const, label: t('browse:filter.params'), icon: Filter }]
+      : []),
     { page: 'sort', label: t('browse:sort.label'), icon: ArrowUpDown }
   ]
 
@@ -184,7 +203,7 @@ export function CommandPalette(): React.JSX.Element {
     { theme: 'system', label: t('common:theme.system'), icon: SunMoon }
   ] as const
 
-  const sorts: RepoSort[] = ['trending', 'downloads', 'likes', 'updated', 'created']
+  const sorts = sortsForKind(browseKind)
 
   const visibleNav = navItems.filter((item) => matches(item.label))
   const visibleFilterPages = filterPages.filter((item) => matches(item.label))
@@ -228,6 +247,13 @@ export function CommandPalette(): React.JSX.Element {
         <Command.Input
           value={value}
           onValueChange={setValue}
+          onKeyDown={(e) => {
+            // Footer hint: '?' on an empty input jumps to the shortcuts dialog.
+            if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey && value === '') {
+              e.preventDefault()
+              closeAnd(() => setShortcutsOpen(true))
+            }
+          }}
           placeholder={page === 'root' ? t('nav:globalSearch') : t('nav:search')}
           className="h-11 w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint"
         />
@@ -401,7 +427,7 @@ export function CommandPalette(): React.JSX.Element {
             {(visibleFilterPages.length > 0 || showClear) && (
               <Command.Group heading={t('browse:filter.task')}>
                 {visibleFilterPages.map((item) => (
-                  <Command.Item key={item.page} onSelect={() => setPage(item.page)}>
+                  <Command.Item key={item.page} onSelect={() => enterPage(item.page)}>
                     <item.icon className="size-4 text-ink-faint" aria-hidden />
                     {item.label}…
                   </Command.Item>

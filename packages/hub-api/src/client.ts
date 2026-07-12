@@ -203,6 +203,50 @@ function totalSizeFrom(res: Response, received: number): number {
   return Number.isFinite(length) && length > 0 ? length : received
 }
 
+/**
+ * Stream at most maxBytes from a response body, cancelling the remainder.
+ * `capped` reports whether bytes past the limit were actually dropped, for
+ * servers that omit Content-Length (chunked transfer).
+ */
+async function readBodyCapped(
+  res: Response,
+  maxBytes: number
+): Promise<{ bytes: Uint8Array; capped: boolean }> {
+  const reader = res.body?.getReader()
+  if (!reader) {
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    return bytes.byteLength > maxBytes
+      ? { bytes: bytes.slice(0, maxBytes), capped: true }
+      : { bytes, capped: false }
+  }
+  const chunks: Uint8Array[] = []
+  let received = 0
+  let capped = false
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    received += value.byteLength
+    if (received > maxBytes) {
+      capped = true
+      await reader.cancel().catch(() => undefined)
+      break
+    }
+  }
+  const bytes = new Uint8Array(Math.min(received, maxBytes))
+  let offset = 0
+  for (const chunk of chunks) {
+    const take = Math.min(chunk.byteLength, bytes.byteLength - offset)
+    bytes.set(take === chunk.byteLength ? chunk : chunk.subarray(0, take), offset)
+    offset += take
+    if (offset === bytes.byteLength) break
+  }
+  return { bytes, capped }
+}
+
+/** Sanity cap when draining Link-header pagination, bounding runaway fan-out. */
+const LINK_DRAIN_MAX_PAGES = 50
+
 const MAX_CELL_CHARS = 200
 
 /** Pre-stringify a dataset cell for display, truncating long values. */
@@ -256,7 +300,11 @@ async function hubErrorDetail(res: Response): Promise<string> {
   }
   if (!text) return ''
   // HTML error pages (CSRF/WAF 403s) are useless in toasts — keep statusText only.
-  if (/^<!doctype\b/i.test(text) || /^<html[\s>]/i.test(text) || /<html[\s>]/i.test(text.slice(0, 200))) {
+  if (
+    /^<!doctype\b/i.test(text) ||
+    /^<html[\s>]/i.test(text) ||
+    /<html[\s>]/i.test(text.slice(0, 200))
+  ) {
     return ''
   }
   try {
@@ -469,9 +517,7 @@ export class HubClient {
     )
       .replace(/\s+/g, ' ')
       .trim()
-    const hubDetail = headerMsg
-      ? `: ${headerMsg.slice(0, 240)}`
-      : await hubErrorDetail(res)
+    const hubDetail = headerMsg ? `: ${headerMsg.slice(0, 240)}` : await hubErrorDetail(res)
     throw new HubApiError(
       `${method} ${url} failed: ${res.status} ${res.statusText}${rate}${hubDetail}`,
       res.status,
@@ -616,7 +662,10 @@ export class HubClient {
   async searchRepos(query: SearchQuery): Promise<Page<RepoSummary>> {
     const url = query.cursor ?? this.buildSearchUrl(query)
     const { body, nextUrl } = await this.getJson<unknown[]>(url)
-    return { items: body.map((raw) => mapRepoSummary(raw as never, query.kind)), nextCursor: nextUrl }
+    return {
+      items: body.map((raw) => mapRepoSummary(raw as never, query.kind)),
+      nextCursor: nextUrl
+    }
   }
 
   async getRepoDetail(kind: RepoKind, repoId: string): Promise<RepoDetail> {
@@ -676,16 +725,40 @@ export class HubClient {
     return mapPaperDetail(body as never)
   }
 
+  /**
+   * One page of discussions/PRs. The endpoint paginates by a 0-based `p`
+   * param and reports progress via `start`/`count` in the body; `nextCursor`
+   * is the ready-to-fetch next-page URL (pass it back as `opts.cursor`).
+   */
   async listDiscussions(
     kind: RepoKind,
     repoId: string,
-    opts: { type?: DiscussionType; status?: DiscussionStatusFilter } = {}
+    opts: { type?: DiscussionType; status?: DiscussionStatusFilter; cursor?: string } = {}
   ): Promise<Page<DiscussionSummary>> {
-    const url = new URL(`${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions`)
-    if (opts.type) url.searchParams.set('type', opts.type)
-    if (opts.status) url.searchParams.set('status', opts.status)
-    const { body } = await this.getJson<{ discussions?: unknown[] }>(url.toString())
-    return { items: (body.discussions ?? []).map((d) => mapDiscussionSummary(d as never)) }
+    let url = opts.cursor
+    if (!url) {
+      const first = new URL(`${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions`)
+      if (opts.type) first.searchParams.set('type', opts.type)
+      if (opts.status) first.searchParams.set('status', opts.status)
+      url = first.toString()
+    }
+    const { body, nextUrl } = await this.getJson<{
+      discussions?: unknown[]
+      count?: number
+      start?: number
+    }>(url)
+    const items = (body.discussions ?? []).map((d) => mapDiscussionSummary(d as never))
+    let nextCursor = nextUrl
+    if (!nextCursor && items.length > 0 && body.count !== undefined) {
+      const seen = (body.start ?? 0) + items.length
+      if (seen < body.count) {
+        const next = new URL(url)
+        const p = Number(next.searchParams.get('p') ?? '0')
+        next.searchParams.set('p', String(p + 1))
+        nextCursor = next.toString()
+      }
+    }
+    return { items, nextCursor }
   }
 
   /**
@@ -846,7 +919,16 @@ export class HubClient {
     return mapNotificationsPage(body as never, this.endpoint)
   }
 
-  /** Marks discussions read/unread; an empty id list applies to all notifications. */
+  /**
+   * Marks discussions read/unread; an empty id list applies to all
+   * notifications. Discussion ids are the ONLY per-item handle the Hub offers:
+   * notifications carry no id of their own and there is no
+   * mark-read-by-notification-id endpoint (openapi.json, verified 2026-07-12 —
+   * every notification variant is additionalProperties:false with just
+   * type/updatedAt/read/discussionEventId plus the type payload, and this
+   * endpoint's body accepts only discussionIds). Notifications without a
+   * discussion-backed id can therefore only be cleared by the applyToAll form.
+   */
   async markNotificationsRead(discussionIds: string[], read: boolean): Promise<void> {
     const all = discussionIds.length === 0
     const url = `${this.endpoint}/api/notifications/mark-as-read${all ? '?applyToAll=true' : ''}`
@@ -882,14 +964,38 @@ export class HubClient {
       }
     })
     if (res.status !== 200 && res.status !== 206) await this.throwHttpError(res, 'GET', url)
-    const bytes = new Uint8Array(await res.arrayBuffer())
+    // A 200 means the server ignored the Range; cap the read so maxBytes still holds.
+    const { bytes, capped } =
+      res.status === 200
+        ? await readBodyCapped(res, maxBytes)
+        : { bytes: new Uint8Array(await res.arrayBuffer()), capped: false }
     if (bytes.includes(0)) throw new HubApiError('binary file', undefined, url)
     const size = totalSizeFrom(res, bytes.byteLength)
     return {
       content: new TextDecoder().decode(bytes),
-      truncated: size > bytes.byteLength,
+      truncated: capped || size > bytes.byteLength,
       size
     }
+  }
+
+  /**
+   * Raw authenticated GET of a repo file via its resolve URL, returning the
+   * streaming Response. Backs the desktop app's omhf-file:// protocol so
+   * private/gated repo images render in-app — a direct <img> pointing at the
+   * https resolve URL carries no Authorization header and 401s. Same
+   * limiter/retry/auth policy as every other request; the caller consumes
+   * (or cancels) the body.
+   */
+  async fetchFileResponse(
+    kind: RepoKind,
+    repoId: string,
+    path: string,
+    revision = 'main'
+  ): Promise<Response> {
+    const url = this.resolveUrl(kind, repoId, revision, path)
+    const res = await this.fetchWithPolicy(url, { headers: this.headers(url) })
+    if (!res.ok) await this.throwHttpError(res, 'GET', url)
+    return res
   }
 
   /** Parse the safetensors JSON header via ranged requests (never downloads tensors). */
@@ -1361,9 +1467,7 @@ export class HubClient {
     target: WatchTarget,
     watching: boolean
   ): Promise<{ applied: boolean; watched: WatchedEntry[] }> {
-    const watched = await this.updateWatch(
-      watching ? { add: [target] } : { delete: [target] }
-    )
+    const watched = await this.updateWatch(watching ? { add: [target] } : { delete: [target] })
     const handle = target.id.toLowerCase()
     const present = watched.some((w) => w.name.toLowerCase() === handle)
     return { applied: present === watching, watched }
@@ -1414,11 +1518,10 @@ export class HubClient {
     toRepo: string,
     options: { private?: boolean } = {}
   ): Promise<{ url?: string }> {
-    const res = await this.sendJson(
-      'POST',
-      `${this.endpoint}/api/spaces/${repoId}/duplicate`,
-      { repository: toRepo, private: options.private }
-    )
+    const res = await this.sendJson('POST', `${this.endpoint}/api/spaces/${repoId}/duplicate`, {
+      repository: toRepo,
+      private: options.private
+    })
     const body = (await res.json()) as { url?: string }
     return { url: body.url }
   }
@@ -1465,15 +1568,23 @@ export class HubClient {
     )
   }
 
-  /** Access requests on a gated repo, filtered by status. */
+  /** Access requests on a gated repo, filtered by status. Drains Link pagination. */
   async listAccessRequests(
     kind: GatedRepoKind,
     repoId: string,
     status: 'pending' | 'accepted' | 'rejected'
   ): Promise<AccessRequest[]> {
-    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/user-access-request/${status}`
-    const { body } = await this.getJson<unknown[]>(url, { ttl: 5_000 })
-    return body.map((raw) => mapAccessRequest(raw as never, this.endpoint))
+    let url: string | undefined =
+      `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/user-access-request/${status}`
+    const all: AccessRequest[] = []
+    let pages = 0
+    while (url && pages < LINK_DRAIN_MAX_PAGES) {
+      const page: { body: unknown[]; nextUrl?: string } = await this.getJson(url, { ttl: 5_000 })
+      all.push(...page.body.map((raw) => mapAccessRequest(raw as never, this.endpoint)))
+      url = page.nextUrl
+      pages++
+    }
+    return all
   }
 
   async handleAccessRequest(
@@ -1625,16 +1736,27 @@ export class HubClient {
     await this.sendJson(following ? 'POST' : 'DELETE', base)
   }
 
-  /** Repos a user has liked. Entries are minimal ({name, type}); buckets/kernels are dropped. */
+  /**
+   * Repos a user has liked. Entries are minimal ({name, type}); buckets/kernels
+   * are dropped. Drains Link pagination — isLiked() checks membership over this
+   * list, so a partial page would misreport hearts past the first 100 likes.
+   */
   async getUserLikes(username: string): Promise<RepoSummary[]> {
-    const url = `${this.endpoint}/api/users/${encodeURIComponent(username)}/likes?limit=100`
-    const { body } = await this.getJson<Array<{ repo?: { name?: string; type?: string } }>>(url)
+    let url: string | undefined =
+      `${this.endpoint}/api/users/${encodeURIComponent(username)}/likes?limit=100`
     const items: RepoSummary[] = []
-    for (const entry of body) {
-      const repo = entry.repo
-      const kind = repo?.type
-      if (!repo?.name || (kind !== 'model' && kind !== 'dataset' && kind !== 'space')) continue
-      items.push(mapRepoSummary({ ...repo, id: repo.name } as never, kind))
+    let pages = 0
+    while (url && pages < LINK_DRAIN_MAX_PAGES) {
+      const page: { body: Array<{ repo?: { name?: string; type?: string } }>; nextUrl?: string } =
+        await this.getJson(url)
+      for (const entry of page.body) {
+        const repo = entry.repo
+        const kind = repo?.type
+        if (!repo?.name || (kind !== 'model' && kind !== 'dataset' && kind !== 'space')) continue
+        items.push(mapRepoSummary({ ...repo, id: repo.name } as never, kind))
+      }
+      url = page.nextUrl
+      pages++
     }
     return items
   }
@@ -1723,10 +1845,7 @@ export class HubClient {
    * /uploads (NOT under /api/) with the raw file bytes as the body and the
    * file's Content-Type; the response body is the plain-text CDN URL.
    */
-  async uploadCommentAsset(
-    data: Uint8Array,
-    contentType: string
-  ): Promise<string> {
+  async uploadCommentAsset(data: Uint8Array, contentType: string): Promise<string> {
     const url = `${this.endpoint}/uploads`
     if (!this.getSessionCookie() || !this.allowsAuth(url)) throw new CookieRequiredError(url)
     const res = await this.fetchWithPolicy(
@@ -1791,9 +1910,7 @@ export class HubClient {
       /\bcsrf[^=]*=/i.test(session) ||
       responseCookies.some((p) => /^csrf/i.test(p.split('=', 1)[0] ?? ''))
     const extras =
-      !hasCsrfCookie && csrf !== ''
-        ? [...responseCookies, `csrf=${csrf}`]
-        : responseCookies
+      !hasCsrfCookie && csrf !== '' ? [...responseCookies, `csrf=${csrf}`] : responseCookies
     const body = new URLSearchParams({
       csrf,
       fullname: update.fullname,
@@ -1931,11 +2048,7 @@ export class HubClient {
     )
   }
 
-  async commentOnPaper(
-    paperId: string,
-    comment: string,
-    replyToCommentId?: string
-  ): Promise<void> {
+  async commentOnPaper(paperId: string, comment: string, replyToCommentId?: string): Promise<void> {
     const base = `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}`
     const url = replyToCommentId
       ? `${base}/comment/${encodeURIComponent(replyToCommentId)}/reply`

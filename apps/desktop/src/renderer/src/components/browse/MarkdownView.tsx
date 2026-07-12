@@ -28,6 +28,23 @@ function stripFrontmatter(markdown: string): string {
   return end === -1 ? markdown : markdown.slice(end + 4)
 }
 
+/**
+ * URL for a repo file served through the app's omhf-file:// protocol: the
+ * main process fetches the Hub resolve URL with the hub client's auth and
+ * proxy, so images in private/gated repos render (a direct https resolve URL
+ * carries no Authorization header and 401s). Public repos pass through the
+ * same path unauthenticated. `path` is the raw (undecoded) repo path.
+ */
+export function repoFileUrl(
+  kind: RepoKind,
+  repoId: string,
+  path: string,
+  revision = 'main'
+): string {
+  const query = new URLSearchParams({ kind, repoId, revision, path })
+  return `omhf-file://repo/?${query.toString()}`
+}
+
 export interface MarkdownViewProps {
   markdown: string
   /** Repo context for resolving relative links; omit for non-repo content (posts). */
@@ -43,7 +60,8 @@ export function MarkdownView({
   revision = 'main'
 }: MarkdownViewProps): React.JSX.Element {
   const content = useMemo(() => stripFrontmatter(markdown), [markdown])
-  const base = kind && repoId ? `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}` : undefined
+  const base =
+    kind && repoId ? `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}` : undefined
   // Any rendered image opens full-size in the lightbox.
   const [lightbox, setLightbox] = useState<string>()
 
@@ -51,9 +69,20 @@ export function MarkdownView({
     if (/^(https?:|data:)/.test(url)) return url
     if (url.startsWith('#')) return url
     const clean = url.replace(/^\.?\//, '')
-    return base
-      ? `${base}/${forImage ? 'resolve' : 'blob'}/${revision}/${clean}`
-      : `https://huggingface.co/${clean}`
+    if (!kind || !repoId || !base) return `https://huggingface.co/${clean}`
+    if (!forImage) return `${base}/blob/${revision}/${clean}`
+    // Repo-relative images go through the authenticated omhf-file protocol so
+    // private/gated repo assets render. Markdown srcs are URL references:
+    // drop any query/fragment and percent-decode into the raw repo path
+    // (a stray '%' that is not an escape keeps the original string).
+    const filePath = clean.split(/[?#]/, 1)[0] ?? clean
+    let decoded = filePath
+    try {
+      decoded = decodeURIComponent(filePath)
+    } catch {
+      /* not percent-encoded */
+    }
+    return repoFileUrl(kind, repoId, decoded, revision)
   }
 
   return (

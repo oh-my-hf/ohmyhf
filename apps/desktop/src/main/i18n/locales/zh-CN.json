@@ -65,6 +65,10 @@
     "updateInstallCancel": "取消",
     "updateInstallDetail": "应用将在安装前关闭，请先确认当前工作可以安全中断。",
     "updateInstallMessage": "现在安装版本 {{version}} 吗？",
-    "updateInstallTitle": "安装更新"
+    "updateInstallTitle": "安装更新",
+    "renderFailureMessage": "应用窗口加载失败。",
+    "renderFailureDetail": "界面连续崩溃或加载失败。你可以重新加载，或退出应用。",
+    "renderFailureReload": "重新加载",
+    "renderFailureQuit": "退出"
   }
 }

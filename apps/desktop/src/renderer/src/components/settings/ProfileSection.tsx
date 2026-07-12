@@ -148,7 +148,13 @@ function ProfileForm({ initial }: { initial: HubProfileSettings }): React.JSX.El
   })
 
   const pickAvatar = async (file: File | undefined): Promise<void> => {
-    if (!file || file.size > MAX_AVATAR_BYTES) return
+    if (!file) return
+    if (file.size > MAX_AVATAR_BYTES) {
+      push(t('settings:profile.avatarTooLarge'), 'error')
+      // Reset so re-picking the same file fires onChange again.
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
     setUploading(true)
     try {
       const data = new Uint8Array(await file.arrayBuffer())

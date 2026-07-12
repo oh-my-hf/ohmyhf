@@ -34,5 +34,6 @@
     "running": "下载中"
   },
   "title": "下载",
-  "verified": "sha256 校验通过"
+  "verified": "sha256 校验通过",
+  "checksumsVerified": "校验和验证通过"
 }

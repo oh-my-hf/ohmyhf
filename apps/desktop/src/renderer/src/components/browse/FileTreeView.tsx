@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ArrowDownToLine, ChevronRight, File, FileSearch, Folder, Share } from 'lucide-react'
 import type { ExportTool, FileTreeEntry, RepoKind } from '@oh-my-huggingface/shared'
+import { describeError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { cn, formatBytes } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +25,25 @@ const TOOL_LABELS: Record<ExportTool, string> = {
   comfyui: 'ComfyUI'
 }
 
+/**
+ * File types each target ingests (mirrors main/integrations/export.ts):
+ * Ollama builds from a single GGUF, LM Studio's models dir loads GGUF, and
+ * ComfyUI's models/* folders take the usual weight formats.
+ */
+const TOOL_EXTENSIONS: Record<ExportTool, string[]> = {
+  ollama: ['.gguf'],
+  lmstudio: ['.gguf'],
+  comfyui: ['.safetensors', '.ckpt', '.pt', '.pth', '.bin', '.gguf']
+}
+
+/** Export tools that can ingest the given file, by extension. */
+export function exportToolsFor(name: string): ExportTool[] {
+  const lower = name.toLowerCase()
+  return (Object.keys(TOOL_EXTENSIONS) as ExportTool[]).filter((tool) =>
+    TOOL_EXTENSIONS[tool].some((ext) => lower.endsWith(ext))
+  )
+}
+
 export function FileTreeView({
   kind,
   repoId
@@ -31,7 +51,7 @@ export function FileTreeView({
   kind: RepoKind
   repoId: string
 }): React.JSX.Element {
-  const { t } = useTranslation(['detail', 'common', 'integrations'])
+  const { t } = useTranslation(['detail', 'common', 'integrations', 'errors'])
   const [path, setPath] = useState('')
   // Selection is a full repo-relative path (plus the entry metadata the preview
   // header needs), independent of the browsed directory. It only resets when
@@ -60,7 +80,8 @@ export function FileTreeView({
     mutationFn: (args: { tool: ExportTool; filePath: string }) =>
       invoke('export:run', { tool: args.tool, kind, repoId, filePath: args.filePath }),
     onSuccess: (res) =>
-      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'info')
+      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'error'),
+    onError: (err) => push(describeError(t, err), 'error')
   })
 
   const crumbs = path ? path.split('/') : []
@@ -134,7 +155,11 @@ export function FileTreeView({
           )}
           {tree.data?.map((entry) => {
             const name = entry.path.split('/').at(-1) ?? entry.path
-            const isGguf = name.toLowerCase().endsWith('.gguf')
+            const exportTools = exportToolsFor(name)
+            const validTargets =
+              targets.data?.filter(
+                (target) => target.detected && exportTools.includes(target.tool)
+              ) ?? []
             const isSelected = entry.type === 'file' && entry.path === selected?.path
             return (
               <div
@@ -185,7 +210,7 @@ export function FileTreeView({
                     <span className="w-16 text-right font-mono text-[11.5px] text-ink-faint">
                       {formatBytes(entry.size)}
                     </span>
-                    {isGguf && (
+                    {exportTools.length > 0 && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -198,23 +223,21 @@ export function FileTreeView({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {targets.data?.filter((target) => target.detected).length === 0 && (
+                          {targets.data && validTargets.length === 0 && (
                             <DropdownMenuItem disabled>
                               {t('detail:files.noTargets')}
                             </DropdownMenuItem>
                           )}
-                          {targets.data
-                            ?.filter((target) => target.detected)
-                            .map((target) => (
-                              <DropdownMenuItem
-                                key={target.tool}
-                                onSelect={() =>
-                                  exportRun.mutate({ tool: target.tool, filePath: entry.path })
-                                }
-                              >
-                                {t('detail:files.exportTo', { tool: TOOL_LABELS[target.tool] })}
-                              </DropdownMenuItem>
-                            ))}
+                          {validTargets.map((target) => (
+                            <DropdownMenuItem
+                              key={target.tool}
+                              onSelect={() =>
+                                exportRun.mutate({ tool: target.tool, filePath: entry.path })
+                              }
+                            >
+                              {t('detail:files.exportTo', { tool: TOOL_LABELS[target.tool] })}
+                            </DropdownMenuItem>
+                          ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}

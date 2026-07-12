@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueries } from '@tanstack/react-query'
-import { Columns3, Plus, X } from 'lucide-react'
+import { CircleX, Columns3, Plus, X } from 'lucide-react'
+import { isValidRepoId } from '@oh-my-huggingface/shared'
+import { describeError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { formatCount, formatDate, formatParams } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -63,12 +65,13 @@ function benchmarksOf(cardData: Record<string, unknown> | undefined): Map<string
 
 /** Phase D: side-by-side model comparison. */
 export function ComparePage(): React.JSX.Element {
-  const { t } = useTranslation(['compare', 'common'])
+  const { t } = useTranslation(['compare', 'common', 'errors'])
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
   const [ids, setIds] = useState<string[]>([])
   const [draft, setDraft] = useState('')
+  const [draftInvalid, setDraftInvalid] = useState(false)
 
   const results = useQueries({
     queries: ids.map((id) => ({
@@ -80,7 +83,10 @@ export function ComparePage(): React.JSX.Element {
   const add = (): void => {
     const id = draft.trim()
     if (!id || ids.includes(id) || ids.length >= MAX_MODELS) return
-    if (!/^[\w.-]+\/[\w.-]+$/.test(id)) return
+    if (!isValidRepoId(id)) {
+      setDraftInvalid(true)
+      return
+    }
     setIds([...ids, id])
     setDraft('')
   }
@@ -150,9 +156,13 @@ export function ComparePage(): React.JSX.Element {
         <div className="flex max-w-md gap-1.5">
           <Input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value)
+              setDraftInvalid(false)
+            }}
             onKeyDown={(e) => e.key === 'Enter' && add()}
             placeholder={t('compare:addPlaceholder')}
+            aria-invalid={draftInvalid || undefined}
             disabled={ids.length >= MAX_MODELS}
           />
           <Button
@@ -165,6 +175,11 @@ export function ComparePage(): React.JSX.Element {
             <Plus className="size-4" aria-hidden />
           </Button>
         </div>
+        {draftInvalid && (
+          <p role="alert" className="text-[12px] text-error">
+            {t('compare:invalidId')}
+          </p>
+        )}
         {ids.length >= MAX_MODELS && (
           <p className="text-[12px] text-ink-faint">{t('compare:max')}</p>
         )}
@@ -200,6 +215,12 @@ export function ComparePage(): React.JSX.Element {
                             <X className="size-3.5" aria-hidden />
                           </Button>
                         </div>
+                        {results[i]?.isError && (
+                          <div className="mt-1 flex items-start gap-1 text-[11px] font-normal text-error">
+                            <CircleX className="mt-px size-3.5 shrink-0" aria-hidden />
+                            <span className="min-w-0">{describeError(t, results[i]?.error)}</span>
+                          </div>
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -212,7 +233,7 @@ export function ComparePage(): React.JSX.Element {
                         <td key={id} className="p-2.5 align-top">
                           {results[i]?.isLoading ? (
                             <Skeleton className="h-4 w-16" />
-                          ) : (
+                          ) : results[i]?.isError ? null : ( // failed column: header carries the error
                             row.render(i)
                           )}
                         </td>
@@ -244,7 +265,7 @@ export function ComparePage(): React.JSX.Element {
                             <td key={id} className="nums min-w-44 p-2.5 align-top font-mono">
                               {results[i]?.isLoading ? (
                                 <Skeleton className="h-4 w-12" />
-                              ) : (
+                              ) : results[i]?.isError ? null : (
                                 (benchmarks[i]?.get(label) ?? '—')
                               )}
                             </td>

@@ -12,8 +12,6 @@ import { parentPort, workerData } from 'node:worker_threads'
 import type { CacheReport, CachedRepo, CachedRevision } from '@oh-my-huggingface/shared'
 import { parseRepoFolderName } from '@oh-my-huggingface/hub-api'
 
-const { cacheDir } = workerData as { cacheDir: string }
-
 function safeReaddir(dir: string): string[] {
   try {
     return readdirSync(dir)
@@ -53,23 +51,37 @@ function walkSnapshot(dir: string, files: WalkedFile[]): void {
   }
 }
 
-function scanRepo(repoFolder: string): CachedRepo | null {
+/** Refs may nest (refs/pr/1 is a file under refs/pr/); collect recursively, keyed by commit. */
+function collectRefs(dir: string, prefix: string, refs: Map<string, string>): void {
+  for (const name of safeReaddir(dir)) {
+    const full = join(dir, name)
+    let st
+    try {
+      st = lstatSync(full)
+    } catch {
+      continue
+    }
+    if (st.isDirectory()) {
+      collectRefs(full, `${prefix}${name}/`, refs)
+    } else {
+      try {
+        refs.set(readFileSync(full, 'utf8').trim(), `${prefix}${name}`)
+      } catch {
+        /* unreadable ref */
+      }
+    }
+  }
+}
+
+function scanRepo(cacheDir: string, repoFolder: string): CachedRepo | null {
   const parsed = parseRepoFolderName(repoFolder)
   if (!parsed) return null
   const repoPath = join(cacheDir, repoFolder)
 
   const refs = new Map<string, string>()
-  const refsDir = join(repoPath, 'refs')
-  for (const ref of safeReaddir(refsDir)) {
-    try {
-      refs.set(readFileSync(join(refsDir, ref), 'utf8').trim(), ref)
-    } catch {
-      /* unreadable ref */
-    }
-  }
+  collectRefs(join(repoPath, 'refs'), '', refs)
 
   const revisions: CachedRevision[] = []
-  const repoBlobs = new Set<string>()
   let nonBlobSize = 0
   const snapshotsDir = join(repoPath, 'snapshots')
   for (const commitHash of safeReaddir(snapshotsDir)) {
@@ -89,7 +101,6 @@ function scanRepo(repoFolder: string): CachedRepo | null {
           revBlobs.add(f.blobPath)
           revSize += f.size
         }
-        if (!repoBlobs.has(f.blobPath)) repoBlobs.add(f.blobPath)
       } else {
         revSize += f.size
         nonBlobSize += f.size
@@ -110,12 +121,26 @@ function scanRepo(repoFolder: string): CachedRepo | null {
     })
   }
 
+  // Count the blob store directly: the copy-fallback layout (Windows without the
+  // symlink privilege) has no symlinks to walk, and orphaned blobs or leftover
+  // '.incomplete' partials occupy disk either way.
   let blobSize = 0
-  for (const blob of repoBlobs) {
+  let partialSize = 0
+  let partialCount = 0
+  const blobsDir = join(repoPath, 'blobs')
+  for (const name of safeReaddir(blobsDir)) {
+    let st
     try {
-      blobSize += statSync(blob).size
+      st = statSync(join(blobsDir, name))
     } catch {
-      /* blob vanished mid-scan */
+      continue
+    }
+    if (!st.isFile()) continue
+    if (name.includes('.incomplete')) {
+      partialSize += st.size
+      partialCount += 1
+    } else {
+      blobSize += st.size
     }
   }
 
@@ -124,8 +149,10 @@ function scanRepo(repoFolder: string): CachedRepo | null {
     id: parsed.repoId,
     kind: parsed.kind,
     path: repoPath,
-    sizeOnDisk: blobSize + nonBlobSize,
+    sizeOnDisk: blobSize + nonBlobSize + partialSize,
     revisions,
+    partialSize,
+    partialCount,
     lastModified: revisions
       .map((r) => r.lastModified)
       .filter(Boolean)
@@ -134,20 +161,26 @@ function scanRepo(repoFolder: string): CachedRepo | null {
   }
 }
 
-function scan(): CacheReport {
+/** Exported for tests; the worker entry below feeds it workerData. */
+export function scanCache(cacheDir: string): CacheReport {
   const repos: CachedRepo[] = []
   for (const folder of safeReaddir(cacheDir)) {
     if (!/^(models|datasets|spaces)--/.test(folder)) continue
-    const repo = scanRepo(folder)
+    const repo = scanRepo(cacheDir, folder)
     if (repo) repos.push(repo)
   }
   repos.sort((a, b) => b.sizeOnDisk - a.sizeOnDisk)
   return {
     root: cacheDir,
     totalSize: repos.reduce((acc, r) => acc + r.sizeOnDisk, 0),
+    partialSize: repos.reduce((acc, r) => acc + (r.partialSize ?? 0), 0),
     repos,
     scannedAt: new Date().toISOString()
   }
 }
 
-parentPort!.postMessage(scan())
+// Only act as a worker when actually spawned as one (tests import scanCache directly).
+if (parentPort) {
+  const { cacheDir } = workerData as { cacheDir: string }
+  parentPort.postMessage(scanCache(cacheDir))
+}

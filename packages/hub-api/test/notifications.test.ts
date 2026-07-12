@@ -117,6 +117,31 @@ describe('HubClient.getNotifications', () => {
     expect(page.items[3]!.route).toBeUndefined()
   })
 
+  it('degrades unknown id-less variants to kind other with no discussionId', async () => {
+    // Undocumented variants (org invites, …) carry no discussion-backed id,
+    // and the Hub has no per-notification id or mark-read-by-id endpoint
+    // (openapi-verified 2026-07-12) — such rows are only clearable via
+    // markNotificationsRead([], …), i.e. the applyToAll form.
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        count: { view: 1 },
+        notifications: [{ type: 'org_invite', read: false, updatedAt: '2026-07-09T10:00:00.000Z' }]
+      })
+    )
+    const client = new HubClient({ fetchImpl, ...FAST })
+    const page = await client.getNotifications()
+    expect(page.items).toEqual([
+      {
+        kind: 'other',
+        read: false,
+        updatedAt: '2026-07-09T10:00:00.000Z',
+        title: '',
+        discussionId: undefined,
+        participants: []
+      }
+    ])
+  })
+
   it('passes the page number as p', async () => {
     const fetchImpl = vi
       .fn()
@@ -231,9 +256,11 @@ describe('HubClient.setWatch', () => {
   })
 
   it('reports applied=true when the target handle appears after an add', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      jsonResponse({ watched: [{ _id: HEX, id: 'Alice', name: 'Alice', type: 'user' }] })
-    )
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ watched: [{ _id: HEX, id: 'Alice', name: 'Alice', type: 'user' }] })
+      )
     const client = new HubClient({ fetchImpl, ...FAST })
     // Handle match is case-insensitive.
     await expect(client.setWatch({ id: 'alice', type: 'user' }, true)).resolves.toEqual({

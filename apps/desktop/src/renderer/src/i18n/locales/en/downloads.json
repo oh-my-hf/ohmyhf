@@ -35,5 +35,6 @@
     "running": "Downloading"
   },
   "title": "Downloads",
-  "verified": "sha256 verified"
+  "verified": "sha256 verified",
+  "checksumsVerified": "checksums verified"
 }
