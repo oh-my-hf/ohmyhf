@@ -11,6 +11,7 @@ import type { FileTreeEntry, RepoKind } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { codeLanguageOf, fileKindOf, hubBlobUrl, resolveUrl } from '@/lib/file-kinds'
 import { formatBytes, formatParams } from '@/lib/utils'
+import { parseNotebook } from '@/lib/notebook'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -19,9 +20,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useToasts } from '@/components/ui/toaster'
 import { CodeBlock } from '@/components/browse/CodeBlock'
 import { MarkdownView, repoFileUrl } from '@/components/browse/MarkdownView'
+import { NotebookView } from '@/components/browse/NotebookView'
 
 /** Text previews cap the transfer; anything past this shows the truncation bar. */
 const MAX_TEXT_BYTES = 512 * 1024
+
+/** Notebooks embed base64 image outputs, so they need a larger transfer cap. */
+const MAX_NOTEBOOK_BYTES = 4 * 1024 * 1024
 
 interface FilePreviewProps {
   kind: RepoKind
@@ -140,6 +145,55 @@ function TextPreview({
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+function NotebookPreview({
+  kind,
+  repoId,
+  path,
+  onDownload,
+  downloading
+}: {
+  kind: RepoKind
+  repoId: string
+  path: string
+  onDownload: () => void
+  downloading: boolean
+}): React.JSX.Element {
+  const file = useQuery({
+    queryKey: ['fileText', kind, repoId, path, MAX_NOTEBOOK_BYTES],
+    queryFn: () => invoke('hub:fileText', { kind, repoId, path, maxBytes: MAX_NOTEBOOK_BYTES }),
+    retry: false
+  })
+
+  if (file.isPending) return <LoadingBlock />
+  if (file.isError) {
+    if (/binary/i.test(file.error.message)) {
+      return <NoPreview onDownload={onDownload} downloading={downloading} />
+    }
+    return <ErrorBlock message={file.error.message} onRetry={() => void file.refetch()} />
+  }
+
+  const notebook = parseNotebook(file.data.content)
+  // A truncated notebook is invalid JSON and won't parse; anything else that
+  // fails to parse isn't a notebook we can render — fall back to the raw source.
+  if (!notebook) {
+    if (file.data.truncated) return <NoPreview onDownload={onDownload} downloading={downloading} />
+    return (
+      <div className="p-3">
+        <div className="overflow-hidden rounded-lg border border-border-card bg-panel [&_pre]:overflow-x-auto [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-[12px] [&_pre]:leading-relaxed [&_.shiki]:bg-transparent!">
+          <CodeBlock key={path} code={file.data.content} language="json" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {file.data.truncated && <TruncatedBar />}
+      <NotebookView notebook={notebook} kind={kind} repoId={repoId} />
     </>
   )
 }
@@ -286,6 +340,17 @@ export function FilePreview({
       break
     case 'safetensors':
       body = <SafetensorsPreview kind={kind} repoId={repoId} path={entry.path} />
+      break
+    case 'notebook':
+      body = (
+        <NotebookPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
       break
     default:
       body = <NoPreview onDownload={onDownload} downloading={downloading} />

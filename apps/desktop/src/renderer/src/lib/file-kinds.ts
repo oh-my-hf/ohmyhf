@@ -1,7 +1,7 @@
 import type { RepoKind } from '@oh-my-huggingface/shared'
 
 /** How a repo file should be previewed in the renderer. */
-export type FileKind = 'markdown' | 'text' | 'image' | 'safetensors' | 'binary'
+export type FileKind = 'markdown' | 'text' | 'image' | 'safetensors' | 'notebook' | 'binary'
 
 /** Hub URL path prefix per repo kind (models live at the root). */
 export const RESOLVE_PREFIX: Record<RepoKind, string> = {
@@ -92,6 +92,7 @@ export function fileKindOf(path: string): FileKind {
   if (MARKDOWN_EXTENSIONS.has(ext)) return 'markdown'
   if (IMAGE_EXTENSIONS.has(ext)) return 'image'
   if (ext === 'safetensors') return 'safetensors'
+  if (ext === 'ipynb') return 'notebook'
   if (TEXT_EXTENSIONS.has(ext) || TEXT_BASENAMES.has(name)) return 'text'
   return 'binary'
 }
