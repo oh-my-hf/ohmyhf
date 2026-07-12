@@ -59,12 +59,23 @@ function itemHref(item: CollectionItem): string {
   return `/${ITEM_PATH[item.type]}/${target}`
 }
 
-/** Single collection detail with owner controls (/collections/{owner}/{slug}). */
+/** Route wrapper for /collections/{owner}/{slug}. */
 export function CollectionPage(): React.JSX.Element {
-  const { t } = useTranslation(['collections', 'common', 'auth'])
-  const navigate = useNavigate()
   const params = useParams()
   const slug = params['*'] ?? ''
+  return <CollectionDetail key={slug} slug={slug} showBack />
+}
+
+/** Single collection detail with owner controls. */
+export function CollectionDetail({
+  slug,
+  showBack = false
+}: {
+  slug: string
+  showBack?: boolean
+}): React.JSX.Element {
+  const { t } = useTranslation(['collections', 'common', 'auth'])
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const push = useToasts((s) => s.push)
   const auth = useAppStore((s) => s.auth)
@@ -194,12 +205,14 @@ export function CollectionPage(): React.JSX.Element {
   return (
     <div className="h-full overflow-y-auto">
       <div className="animate-fade-rise mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-5">
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-3.5" aria-hidden />
-            {t('common:back')}
-          </Button>
-        </div>
+        {showBack ? (
+          <div>
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+              <ArrowLeft className="size-3.5" aria-hidden />
+              {t('common:back')}
+            </Button>
+          </div>
+        ) : null}
 
         {collection.isPending && (
           <div className="flex flex-col gap-3">

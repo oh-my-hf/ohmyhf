@@ -9,6 +9,7 @@ allowBuilds:
   '@tailwindcss/oxide': true
   '@parcel/watcher': true
   electron-winstaller: false
+  protobufjs: true
 
 # Flat node_modules: electron-builder and native-module rebuilds need a hoisted layout.
 nodeLinker: hoisted

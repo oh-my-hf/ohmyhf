@@ -2,7 +2,20 @@ import type { RepoKind } from '@oh-my-huggingface/shared'
 
 /** How a repo file should be previewed in the renderer. */
 export type FileKind =
-  'markdown' | 'text' | 'image' | 'safetensors' | 'notebook' | 'parquet' | 'binary'
+  | 'markdown'
+  | 'text'
+  | 'image'
+  | 'audio'
+  | 'video'
+  | 'pdf'
+  | 'csv'
+  | 'arrow'
+  | 'gguf'
+  | 'onnx'
+  | 'safetensors'
+  | 'notebook'
+  | 'parquet'
+  | 'binary'
 
 /** Hub URL path prefix per repo kind (models live at the root). */
 export const RESOLVE_PREFIX: Record<RepoKind, string> = {
@@ -14,6 +27,14 @@ export const RESOLVE_PREFIX: Record<RepoKind, string> = {
 const MARKDOWN_EXTENSIONS = new Set(['md', 'markdown', 'mdx'])
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif', 'ico', 'bmp'])
+
+const AUDIO_EXTENSIONS = new Set(['wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac', 'opus'])
+
+const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', 'mov'])
+
+const CSV_EXTENSIONS = new Set(['csv', 'tsv'])
+
+const ARROW_EXTENSIONS = new Set(['arrow', 'feather'])
 
 const TEXT_EXTENSIONS = new Set([
   'json',
@@ -29,8 +50,6 @@ const TEXT_EXTENSIONS = new Set([
   'ts',
   'tsx',
   'jsx',
-  'csv',
-  'tsv',
   'cfg',
   'ini',
   'conf',
@@ -62,7 +81,51 @@ const TEXT_EXTENSIONS = new Set([
   'proto',
   'gitignore',
   'gitattributes',
-  'env'
+  'env',
+  'r',
+  'rmd',
+  'jl',
+  'scala',
+  'sc',
+  'sbt',
+  'php',
+  'pl',
+  'pm',
+  'dart',
+  'vue',
+  'svelte',
+  'astro',
+  'graphql',
+  'gql',
+  'tf',
+  'hcl',
+  'nix',
+  'zig',
+  'nim',
+  'ex',
+  'exs',
+  'hs',
+  'ml',
+  'fs',
+  'clj',
+  'edn',
+  'rst',
+  'tex',
+  'bib',
+  'jinja',
+  'j2',
+  'mustache',
+  'hbs',
+  'cmake',
+  'gradle',
+  'properties',
+  'plist',
+  'lock',
+  'editorconfig',
+  'dockerignore',
+  'npmrc',
+  'fish',
+  'nu'
 ])
 
 /** Extensionless files that are conventionally plain text on the Hub. */
@@ -78,10 +141,39 @@ const TEXT_BASENAMES = new Set([
   'dockerfile',
   'modelcard',
   '.gitattributes',
-  '.gitignore'
+  '.gitignore',
+  'copying',
+  'patent',
+  'gemfile',
+  'procfile',
+  'cmakelists.txt'
 ])
 
-function extensionOf(path: string): string {
+/** MIME fallback when Hub returns missing / generic Content-Type for omhf-file. */
+const MIME_BY_EXTENSION: Record<string, string> = {
+  wav: 'audio/wav',
+  mp3: 'audio/mpeg',
+  flac: 'audio/flac',
+  ogg: 'audio/ogg',
+  m4a: 'audio/mp4',
+  aac: 'audio/aac',
+  opus: 'audio/opus',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  avif: 'image/avif',
+  ico: 'image/x-icon',
+  bmp: 'image/bmp'
+}
+
+export function extensionOf(path: string): string {
   const name = path.split('/').at(-1) ?? path
   const dot = name.lastIndexOf('.')
   return dot === -1 ? '' : name.slice(dot + 1).toLowerCase()
@@ -92,11 +184,30 @@ export function fileKindOf(path: string): FileKind {
   const ext = extensionOf(path)
   if (MARKDOWN_EXTENSIONS.has(ext)) return 'markdown'
   if (IMAGE_EXTENSIONS.has(ext)) return 'image'
+  if (AUDIO_EXTENSIONS.has(ext)) return 'audio'
+  if (VIDEO_EXTENSIONS.has(ext)) return 'video'
+  if (ext === 'pdf') return 'pdf'
+  if (CSV_EXTENSIONS.has(ext)) return 'csv'
+  if (ARROW_EXTENSIONS.has(ext)) return 'arrow'
+  if (ext === 'gguf') return 'gguf'
+  if (ext === 'onnx') return 'onnx'
   if (ext === 'safetensors') return 'safetensors'
   if (ext === 'ipynb') return 'notebook'
   if (ext === 'parquet') return 'parquet'
   if (TEXT_EXTENSIONS.has(ext) || TEXT_BASENAMES.has(name)) return 'text'
   return 'binary'
+}
+
+/**
+ * Best-effort MIME for streaming previews. Prefer a concrete Hub Content-Type;
+ * fall back by extension when it is missing or generic.
+ */
+export function mimeForPreview(path: string, contentType: string | null | undefined): string | null {
+  const raw = contentType?.split(';')[0]?.trim().toLowerCase()
+  if (raw && raw !== 'application/octet-stream' && raw !== 'binary/octet-stream') {
+    return raw
+  }
+  return MIME_BY_EXTENSION[extensionOf(path)] ?? null
 }
 
 /** Shiki language id for syntax highlighting; undefined renders as plain text. */
@@ -115,6 +226,8 @@ const CODE_LANGUAGES: Record<string, string> = {
   sh: 'bash',
   bash: 'bash',
   zsh: 'bash',
+  fish: 'bash',
+  nu: 'bash',
   toml: 'toml',
   ini: 'ini',
   cfg: 'ini',
@@ -137,13 +250,57 @@ const CODE_LANGUAGES: Record<string, string> = {
   lua: 'lua',
   diff: 'diff',
   patch: 'diff',
-  proto: 'proto'
+  proto: 'proto',
+  r: 'r',
+  rmd: 'markdown',
+  jl: 'julia',
+  scala: 'scala',
+  sc: 'scala',
+  sbt: 'scala',
+  php: 'php',
+  pl: 'perl',
+  pm: 'perl',
+  dart: 'dart',
+  vue: 'vue',
+  svelte: 'svelte',
+  astro: 'astro',
+  graphql: 'graphql',
+  gql: 'graphql',
+  tf: 'hcl',
+  hcl: 'hcl',
+  nix: 'nix',
+  zig: 'zig',
+  nim: 'nim',
+  ex: 'elixir',
+  exs: 'elixir',
+  hs: 'haskell',
+  ml: 'ocaml',
+  fs: 'fsharp',
+  clj: 'clojure',
+  edn: 'clojure',
+  rst: 'rst',
+  tex: 'latex',
+  bib: 'bibtex',
+  jinja: 'jinja',
+  j2: 'jinja',
+  mustache: 'handlebars',
+  hbs: 'handlebars',
+  cmake: 'cmake',
+  gradle: 'groovy',
+  properties: 'properties',
+  plist: 'xml',
+  lock: 'json',
+  editorconfig: 'ini',
+  dockerignore: 'ignore',
+  npmrc: 'ini'
 }
 
 export function codeLanguageOf(path: string): string | undefined {
   const name = (path.split('/').at(-1) ?? path).toLowerCase()
   if (name === 'dockerfile') return 'docker'
   if (name === 'makefile') return 'make'
+  if (name === 'gemfile') return 'ruby'
+  if (name === 'cmakelists.txt') return 'cmake'
   return CODE_LANGUAGES[extensionOf(path)]
 }
 

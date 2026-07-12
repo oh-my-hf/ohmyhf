@@ -399,7 +399,13 @@ export function CommandPalette(): React.JSX.Element {
                 <Command.Item
                   key={`searchIn:${kind}`}
                   value={`searchIn:${kind}:${query}`}
-                  onSelect={() => applyFilter(kind, { search: query })}
+                  onSelect={() =>
+                    closeAnd(() =>
+                      navigate(
+                        `/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(kind)}`
+                      )
+                    )
+                  }
                 >
                   <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
                   <span className="truncate">

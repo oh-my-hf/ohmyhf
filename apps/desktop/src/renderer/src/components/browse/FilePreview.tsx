@@ -18,10 +18,16 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToasts } from '@/components/ui/toaster'
+import { ArrowPreview } from '@/components/browse/ArrowPreview'
 import { CodeBlock } from '@/components/browse/CodeBlock'
+import { CsvPreview } from '@/components/browse/CsvPreview'
+import { GgufPreview } from '@/components/browse/GgufPreview'
 import { MarkdownView, repoFileUrl } from '@/components/browse/MarkdownView'
+import { MediaPreview } from '@/components/browse/MediaPreview'
 import { NotebookView } from '@/components/browse/NotebookView'
+import { OnnxPreview } from '@/components/browse/OnnxPreview'
 import { ParquetPreview } from '@/components/browse/ParquetPreview'
+import { PdfPreview } from '@/components/browse/PdfPreview'
 
 /** Text previews cap the transfer; anything past this shows the truncation bar. */
 const MAX_TEXT_BYTES = 512 * 1024
@@ -356,6 +362,69 @@ export function FilePreview({
     case 'parquet':
       body = (
         <ParquetPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          size={entry.size}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
+      break
+    case 'audio':
+    case 'video':
+      body = (
+        <MediaPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          mode={fileKind}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
+      break
+    case 'pdf':
+      body = (
+        <PdfPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
+      break
+    case 'csv':
+      body = <CsvPreview kind={kind} repoId={repoId} path={entry.path} />
+      break
+    case 'arrow':
+      body = (
+        <ArrowPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          size={entry.size}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
+      break
+    case 'gguf':
+      body = (
+        <GgufPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          size={entry.size}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
+      break
+    case 'onnx':
+      body = (
+        <OnnxPreview
           kind={kind}
           repoId={repoId}
           path={entry.path}

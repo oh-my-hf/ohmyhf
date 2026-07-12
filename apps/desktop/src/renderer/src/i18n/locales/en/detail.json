@@ -172,8 +172,13 @@
     "colShape": "Shape",
     "colTensor": "Tensor",
     "copyRawUrl": "Copy raw URL",
+    "mediaErrorBody": "This media file couldn't be played here. Download it to open locally.",
+    "mediaErrorTitle": "Can't play this file",
     "noPreviewBody": "This file type can't be previewed here. Download it to inspect locally.",
     "noPreviewTitle": "No preview available",
+    "pdfErrorBody": "This PDF couldn't be rendered here. Download it to open locally.",
+    "pdfErrorTitle": "Can't open this PDF",
+    "pdfPage": "Page {{page}} of {{total}}",
     "pickFile": "Select a file to preview",
     "pickFileBody": "Choose a file on the left to see its contents here.",
     "tensors": "Tensors",
@@ -208,5 +213,39 @@
     "unsupportedCodec": "This file uses a compression codec that can't be previewed. Download it to open locally.",
     "unreadableTitle": "Can't read this Parquet file",
     "unreadableBody": "The file's metadata couldn't be read. Download it to open it locally."
+  },
+  "csvPreview": {
+    "rows_one": "{{count}} row",
+    "rows_other": "{{count}} rows",
+    "columns_one": "{{count}} column",
+    "columns_other": "{{count}} columns",
+    "emptyHeader": "Column {{index}}"
+  },
+  "arrowPreview": {
+    "rows_one": "{{count}} row",
+    "rows_other": "{{count}} rows",
+    "columns_one": "{{count}} column",
+    "columns_other": "{{count}} columns",
+    "prefixOnly": "Only the first {{size}} of this file was loaded for preview.",
+    "unreadableTitle": "Can't read this Arrow file",
+    "unreadableBody": "The Arrow/Feather table couldn't be parsed from the file prefix. Download it to open locally."
+  },
+  "ggufPreview": {
+    "size": "File size",
+    "unreadableTitle": "Can't read this GGUF file",
+    "unreadableBody": "The GGUF header couldn't be parsed (it may need more than the preview window). Download it to inspect locally."
+  },
+  "onnxPreview": {
+    "nodes": "Nodes",
+    "size": "File size",
+    "inputs": "Inputs",
+    "outputs": "Outputs",
+    "none": "None",
+    "graph": "Graph: {{name}}",
+    "colNode": "Node",
+    "colOp": "Op",
+    "tooLargeBody": "ONNX files larger than {{size}} can't be previewed here (weights are usually embedded). Download it to inspect locally.",
+    "unreadableTitle": "Can't read this ONNX file",
+    "unreadableBody": "The ONNX model protobuf couldn't be decoded. Download it to open locally."
   }
 }

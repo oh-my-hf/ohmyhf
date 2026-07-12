@@ -187,7 +187,7 @@ function UserRepoList({
   )
 }
 
-function UserProfile({ username }: { username: string }): React.JSX.Element {
+export function UserProfile({ username }: { username: string }): React.JSX.Element {
   const { t } = useTranslation(['profile', 'common', 'auth'])
   const navigate = useNavigate()
   const queryClient = useQueryClient()

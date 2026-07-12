@@ -4,6 +4,7 @@ import { HubApiError } from '@oh-my-huggingface/hub-api'
 import type { IpcEventChannel, IpcEventPayload } from '@oh-my-huggingface/shared'
 import { isValidRepoId } from '@oh-my-huggingface/shared'
 import { AuthManager } from './auth'
+import { mimeForOmhfFile } from './preview-mime'
 import { CacheManager } from './cache'
 import { openDatabase } from './db'
 import { DownloadManager } from './downloads'
@@ -168,8 +169,8 @@ if (!gotLock) {
         // decompresses bodies, so the upstream Content-Length may not match
         // what actually streams out.
         const headers = new Headers()
-        const contentType = upstream.headers.get('Content-Type')
-        if (contentType) headers.set('Content-Type', contentType)
+        const mime = mimeForOmhfFile(path, upstream.headers.get('Content-Type'))
+        if (mime) headers.set('Content-Type', mime)
         return new Response(upstream.body, { status: upstream.status, headers })
       } catch (err) {
         const status = err instanceof HubApiError && err.status ? err.status : 502

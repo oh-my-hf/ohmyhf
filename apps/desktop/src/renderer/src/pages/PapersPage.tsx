@@ -16,16 +16,133 @@ import { resolveLocale, useAppStore } from '@/stores/app'
 
 const ROW_HEIGHT = 64
 
-export function PapersPage(): React.JSX.Element {
+/** Paper detail pane; reusable from SearchPage without leaving the search layout. */
+export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Element {
   const { t } = useTranslation(['papers', 'common'])
-  const navigate = useNavigate()
-  const params = useParams()
-  const selectedId = params['*'] || undefined
   const auth = useAppStore((s) => s.auth)
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
   const push = useToasts((s) => s.push)
+
+  const paper = useQuery({
+    queryKey: ['paper', paperId],
+    queryFn: () => invoke('hub:paper', { paperId }),
+    enabled: paperId !== ''
+  })
+  const selected = paper.data
+
+  if (paper.isPending) {
+    return (
+      <div className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
+        <Skeleton className="h-8" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-40" />
+      </div>
+    )
+  }
+
+  if (!selected) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <EmptyState icon={FileText} title={t('papers:empty')} />
+      </div>
+    )
+  }
+
+  return (
+    <article className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
+      <div className="flex items-start gap-3">
+        {auth.status === 'signedIn' && (
+          <UpvoteButton
+            upvotes={selected.upvotes}
+            hubUrl={`https://huggingface.co/papers/${selected.id}`}
+            onToggle={(next) =>
+              invoke('hub:paperUpvoteSet', { paperId: selected.id, upvoted: next })
+            }
+          />
+        )}
+        <h1 className="min-w-0 flex-1 text-xl leading-snug font-semibold text-balance text-ink-strong">
+          {selected.title}
+        </h1>
+      </div>
+      <div className="nums flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-faint">
+        <span className="flex items-center gap-1">
+          <ThumbsUp className="size-3.5" aria-hidden />
+          {formatCount(selected.upvotes, locale)}
+        </span>
+        {selected.publishedAt && (
+          <>
+            <span className="text-decor" aria-hidden>
+              ·
+            </span>
+            <span>
+              {t('papers:published', {
+                time: formatRelativeTime(selected.publishedAt, locale)
+              })}
+            </span>
+          </>
+        )}
+      </div>
+      {selected.authors.length > 0 && (
+        <p className="text-[12.5px] text-ink-muted">
+          <span className="font-medium text-ink">{t('papers:authors')}: </span>
+          {selected.authors.join(', ')}
+        </p>
+      )}
+      {selected.thumbnail && (
+        <img
+          src={selected.thumbnail}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="max-h-64 w-full rounded-lg border object-cover"
+        />
+      )}
+      <p className="text-[13.5px] leading-[1.7] text-pretty">{selected.summary}</p>
+      <div className="flex gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => openExternal(`https://arxiv.org/abs/${selected.id}`)}
+        >
+          <ExternalLink className="size-3.5" aria-hidden />
+          {t('papers:readOnArxiv')}
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => openExternal(`https://huggingface.co/papers/${selected.id}`)}
+        >
+          <ExternalLink className="size-3.5" aria-hidden />
+          {t('papers:readOnHub')}
+        </Button>
+      </div>
+      {auth.status === 'signedIn' && (
+        <div className="flex flex-col gap-2 border-t pt-4">
+          <h2 className="text-[13px] font-semibold">{t('papers:comment.heading')}</h2>
+          <CommentComposer
+            key={selected.id}
+            kind="model"
+            repoId={selected.id}
+            placeholder={t('papers:comment.placeholder')}
+            submit={(comment) => invoke('hub:paperComment', { paperId: selected.id, comment })}
+            onSubmitted={() => push(t('papers:comment.posted'), 'success')}
+          />
+        </div>
+      )}
+    </article>
+  )
+}
+
+export function PapersPage(): React.JSX.Element {
+  const { t } = useTranslation(['papers', 'common'])
+  const navigate = useNavigate()
+  const params = useParams()
+  const selectedId = params['*'] || undefined
+  const settings = useAppStore((s) => s.settings)
+  const appInfo = useAppStore((s) => s.appInfo)
+  const locale = resolveLocale(settings, appInfo)
   const parentRef = useRef<HTMLDivElement>(null)
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -36,16 +153,6 @@ export function PapersPage(): React.JSX.Element {
   })
 
   const papers = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
-  const inFeed = papers.some((p) => p.id === selectedId)
-
-  // Deep links (collections, notifications) can point at papers outside the
-  // daily feed; fetch those directly. A 404 falls through to the empty state.
-  const fallback = useQuery({
-    queryKey: ['paper', selectedId],
-    queryFn: () => invoke('hub:paper', { paperId: selectedId ?? '' }),
-    enabled: selectedId !== undefined && !isLoading && !inFeed
-  })
-  const selected = papers.find((p) => p.id === selectedId) ?? fallback.data
 
   const virtualizer = useVirtualizer({
     count: papers.length + (hasNextPage ? 1 : 0),
@@ -128,96 +235,8 @@ export function PapersPage(): React.JSX.Element {
       </section>
 
       <section className="min-w-0 flex-1 overflow-y-auto">
-        {selected ? (
-          <article className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
-            <div className="flex items-start gap-3">
-              {auth.status === 'signedIn' && (
-                <UpvoteButton
-                  upvotes={selected.upvotes}
-                  hubUrl={`https://huggingface.co/papers/${selected.id}`}
-                  onToggle={(next) =>
-                    invoke('hub:paperUpvoteSet', { paperId: selected.id, upvoted: next })
-                  }
-                />
-              )}
-              <h1 className="min-w-0 flex-1 text-xl leading-snug font-semibold text-balance text-ink-strong">
-                {selected.title}
-              </h1>
-            </div>
-            <div className="nums flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-faint">
-              <span className="flex items-center gap-1">
-                <ThumbsUp className="size-3.5" aria-hidden />
-                {formatCount(selected.upvotes, locale)}
-              </span>
-              {selected.publishedAt && (
-                <>
-                  <span className="text-decor" aria-hidden>
-                    ·
-                  </span>
-                  <span>
-                    {t('papers:published', {
-                      time: formatRelativeTime(selected.publishedAt, locale)
-                    })}
-                  </span>
-                </>
-              )}
-            </div>
-            {selected.authors.length > 0 && (
-              <p className="text-[12.5px] text-ink-muted">
-                <span className="font-medium text-ink">{t('papers:authors')}: </span>
-                {selected.authors.join(', ')}
-              </p>
-            )}
-            {selected.thumbnail && (
-              <img
-                src={selected.thumbnail}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="max-h-64 w-full rounded-lg border object-cover"
-              />
-            )}
-            <p className="text-[13.5px] leading-[1.7] text-pretty">{selected.summary}</p>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => openExternal(`https://arxiv.org/abs/${selected.id}`)}
-              >
-                <ExternalLink className="size-3.5" aria-hidden />
-                {t('papers:readOnArxiv')}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => openExternal(`https://huggingface.co/papers/${selected.id}`)}
-              >
-                <ExternalLink className="size-3.5" aria-hidden />
-                {t('papers:readOnHub')}
-              </Button>
-            </div>
-            {auth.status === 'signedIn' && (
-              <div className="flex flex-col gap-2 border-t pt-4">
-                <h2 className="text-[13px] font-semibold">{t('papers:comment.heading')}</h2>
-                <CommentComposer
-                  key={selected.id}
-                  kind="model"
-                  repoId={selected.id}
-                  placeholder={t('papers:comment.placeholder')}
-                  submit={(comment) =>
-                    invoke('hub:paperComment', { paperId: selected.id, comment })
-                  }
-                  onSubmitted={() => push(t('papers:comment.posted'), 'success')}
-                />
-              </div>
-            )}
-          </article>
-        ) : fallback.isLoading ? (
-          <div className="mx-auto flex max-w-[72ch] flex-col gap-4 p-6">
-            <Skeleton className="h-8" />
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-40" />
-          </div>
+        {selectedId ? (
+          <PaperDetailPane key={selectedId} paperId={selectedId} />
         ) : (
           <div className="flex h-full items-center justify-center p-8">
             <EmptyState icon={FileText} title={t('papers:empty')} />

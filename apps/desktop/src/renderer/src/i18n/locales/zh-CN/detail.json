@@ -172,8 +172,13 @@
     "colShape": "形状",
     "colTensor": "张量",
     "copyRawUrl": "复制原始链接",
+    "mediaErrorBody": "无法在此播放该媒体文件，请下载后在本地打开。",
+    "mediaErrorTitle": "无法播放",
     "noPreviewBody": "此文件类型无法在应用内预览，可下载后在本地查看。",
     "noPreviewTitle": "暂不支持预览",
+    "pdfErrorBody": "无法在此渲染该 PDF，请下载后在本地打开。",
+    "pdfErrorTitle": "无法打开 PDF",
+    "pdfPage": "第 {{page}} / {{total}} 页",
     "pickFile": "选择要预览的文件",
     "pickFileBody": "在左侧选择文件，即可在此处查看其内容。",
     "tensors": "张量数",
@@ -206,5 +211,35 @@
     "unsupportedCodec": "该文件使用了无法预览的压缩编码，请下载后在本地打开。",
     "unreadableTitle": "无法读取该 Parquet 文件",
     "unreadableBody": "无法读取文件元数据，请下载后在本地打开。"
+  },
+  "csvPreview": {
+    "rows_other": "{{count}} 行",
+    "columns_other": "{{count}} 列",
+    "emptyHeader": "列 {{index}}"
+  },
+  "arrowPreview": {
+    "rows_other": "{{count}} 行",
+    "columns_other": "{{count}} 列",
+    "prefixOnly": "预览仅加载了文件前 {{size}}。",
+    "unreadableTitle": "无法读取该 Arrow 文件",
+    "unreadableBody": "无法从文件前缀解析 Arrow/Feather 表，请下载后在本地打开。"
+  },
+  "ggufPreview": {
+    "size": "文件大小",
+    "unreadableTitle": "无法读取该 GGUF 文件",
+    "unreadableBody": "无法解析 GGUF 头信息（可能超出预览窗口），请下载后在本地查看。"
+  },
+  "onnxPreview": {
+    "nodes": "节点数",
+    "size": "文件大小",
+    "inputs": "输入",
+    "outputs": "输出",
+    "none": "无",
+    "graph": "图：{{name}}",
+    "colNode": "节点",
+    "colOp": "算子",
+    "tooLargeBody": "超过 {{size}} 的 ONNX 文件无法在此预览（权重通常内嵌），请下载后在本地查看。",
+    "unreadableTitle": "无法读取该 ONNX 文件",
+    "unreadableBody": "无法解码 ONNX 模型，请下载后在本地打开。"
   }
 }
