@@ -5,13 +5,51 @@ import { ArrowDownToLine, ChevronLeft, ChevronRight, FileQuestion } from 'lucide
 import type { AsyncBuffer, FileMetaData } from 'hyparquet'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
-import { formatParquetCell, isUnsupportedCodecError } from '@/lib/parquet'
+import {
+  bytesToDataUri,
+  formatParquetCell,
+  imageMimeOfBytes,
+  isUnsupportedCodecError
+} from '@/lib/parquet'
 import { cn, formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Lightbox } from '@/components/ui/lightbox'
 
 const PAGE_SIZE = 25
+
+/** Skip thumbnailing images larger than this to keep the table light. */
+const MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024
+
+function ParquetCell({
+  value,
+  onZoom
+}: {
+  value: unknown
+  onZoom: (src: string) => void
+}): React.JSX.Element {
+  if (value instanceof Uint8Array && value.byteLength <= MAX_THUMBNAIL_BYTES) {
+    const mime = imageMimeOfBytes(value)
+    if (mime) {
+      const src = bytesToDataUri(value, mime)
+      return (
+        <img
+          src={src}
+          alt=""
+          className="max-h-16 max-w-32 cursor-zoom-in rounded border border-border-card bg-white object-contain"
+          onClick={() => onZoom(src)}
+        />
+      )
+    }
+  }
+  const text = formatParquetCell(value)
+  return (
+    <div className="max-w-80 truncate" title={text}>
+      {text}
+    </div>
+  )
+}
 
 interface ParquetPreviewProps {
   kind: RepoKind
@@ -82,6 +120,7 @@ export function ParquetPreview({
 }: ParquetPreviewProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
   const [page, setPage] = useState(0)
+  const [lightbox, setLightbox] = useState<string>()
 
   const file = useMemo(() => makeAsyncBuffer(kind, repoId, path, size), [kind, repoId, path, size])
 
@@ -115,6 +154,10 @@ export function ParquetPreview({
       return parquetReadObjects({
         file: data.file,
         metadata: data.metadata,
+        // Decode by the column's logical type: real string columns stay strings,
+        // raw BYTE_ARRAY columns come back as bytes (rendered as a thumbnail or a
+        // "<N bytes>" label) instead of being force-decoded into UTF-8 garbage.
+        utf8: false,
         rowStart: page * PAGE_SIZE,
         rowEnd: Math.min(data.numRows, (page + 1) * PAGE_SIZE)
       })
@@ -209,16 +252,11 @@ export function ParquetPreview({
                   key={i}
                   className="border-b border-border-card align-top last:border-b-0 hover:bg-panel/60"
                 >
-                  {columns.map((col) => {
-                    const cell = formatParquetCell(row[col])
-                    return (
-                      <td key={col} className="px-3 py-1.5">
-                        <div className="max-w-80 truncate" title={cell}>
-                          {cell}
-                        </div>
-                      </td>
-                    )
-                  })}
+                  {columns.map((col) => (
+                    <td key={col} className="px-3 py-1.5">
+                      <ParquetCell value={row[col]} onZoom={setLightbox} />
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -253,6 +291,8 @@ export function ParquetPreview({
           </Button>
         </div>
       </div>
+
+      <Lightbox src={lightbox} onClose={() => setLightbox(undefined)} />
     </div>
   )
 }
