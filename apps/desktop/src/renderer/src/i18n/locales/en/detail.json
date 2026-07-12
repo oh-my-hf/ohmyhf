@@ -199,5 +199,14 @@
     "playground": "Playground",
     "preview": "Preview",
     "run": "Run"
+  },
+  "parquetPreview": {
+    "rows_one": "{{count}} row",
+    "rows_other": "{{count}} rows",
+    "columns_one": "{{count}} column",
+    "columns_other": "{{count}} columns",
+    "unsupportedCodec": "This file uses a compression codec that can't be previewed. Download it to open locally.",
+    "unreadableTitle": "Can't read this Parquet file",
+    "unreadableBody": "The file's metadata couldn't be read. Download it to open it locally."
   }
 }

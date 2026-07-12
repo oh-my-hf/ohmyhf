@@ -253,6 +253,22 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
       .max(8 * 1024 * 1024)
       .optional()
   }),
+  'hub:fileRange': z
+    .object({
+      kind: repoKind,
+      repoId,
+      path: relPath,
+      revision: revision.optional(),
+      start: z.number().int().min(0),
+      end: z.number().int().min(0)
+    })
+    // Bound the window so a compromised renderer can't request a multi-GB slice
+    // and OOM the main process. 64 MiB covers a parquet footer plus any single
+    // column chunk a preview needs; larger asks fail clearly instead.
+    .refine(
+      (r) => r.end >= r.start && r.end - r.start < 64 * 1024 * 1024,
+      'range window too large'
+    ),
   'hub:safetensorsHeader': z.object({
     kind: repoKind,
     repoId,

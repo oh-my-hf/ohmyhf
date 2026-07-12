@@ -21,6 +21,7 @@ import { useToasts } from '@/components/ui/toaster'
 import { CodeBlock } from '@/components/browse/CodeBlock'
 import { MarkdownView, repoFileUrl } from '@/components/browse/MarkdownView'
 import { NotebookView } from '@/components/browse/NotebookView'
+import { ParquetPreview } from '@/components/browse/ParquetPreview'
 
 /** Text previews cap the transfer; anything past this shows the truncation bar. */
 const MAX_TEXT_BYTES = 512 * 1024
@@ -347,6 +348,18 @@ export function FilePreview({
           kind={kind}
           repoId={repoId}
           path={entry.path}
+          onDownload={onDownload}
+          downloading={downloading}
+        />
+      )
+      break
+    case 'parquet':
+      body = (
+        <ParquetPreview
+          kind={kind}
+          repoId={repoId}
+          path={entry.path}
+          size={entry.size}
           onDownload={onDownload}
           downloading={downloading}
         />

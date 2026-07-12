@@ -202,6 +202,18 @@ export interface IpcInvokeContract {
     req: { kind: RepoKind; repoId: string; path: string; revision?: string; maxBytes?: number }
     res: FileTextResult
   }
+  'hub:fileRange': {
+    /** `start`..`end` inclusive byte offsets, HTTP Range semantics. */
+    req: {
+      kind: RepoKind
+      repoId: string
+      path: string
+      revision?: string
+      start: number
+      end: number
+    }
+    res: Uint8Array
+  }
   'hub:safetensorsHeader': {
     req: { kind: RepoKind; repoId: string; path: string; revision?: string }
     res: SafetensorsHeader
@@ -537,6 +549,7 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:watchList',
   'hub:watchSet',
   'hub:fileText',
+  'hub:fileRange',
   'hub:safetensorsHeader',
   'hub:datasetSplits',
   'hub:datasetRows',

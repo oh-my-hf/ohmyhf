@@ -258,6 +258,13 @@ function formatCell(value: unknown): string {
 
 const SAFETENSORS_MAX_HEADER_BYTES = 8 * 1024 * 1024
 
+/**
+ * When a server ignores a Range header (200), fetchFileRange can only read from
+ * offset 0. Reads whose end lands past this ceiling are refused so a
+ * range-ignoring endpoint can never buffer a large file into memory.
+ */
+const RANGE_FALLBACK_MAX = 64 * 1024 * 1024
+
 /** PR diffs beyond this length are truncated before reaching the renderer. */
 const DIFF_MAX_CHARS = 2 * 1024 * 1024
 
@@ -996,6 +1003,48 @@ export class HubClient {
     const res = await this.fetchWithPolicy(url, { headers: this.headers(url) })
     if (!res.ok) await this.throwHttpError(res, 'GET', url)
     return res
+  }
+
+  /**
+   * Authenticated byte-range read of a repo file, `start`..`end` inclusive
+   * (HTTP Range semantics). Backs the renderer's parquet AsyncBuffer so a large
+   * columnar file previews by fetching only its footer plus the visible rows,
+   * never the whole file. The window is bounded by the IPC schema (< 64 MiB),
+   * so a 206 buffers at most that. If the server ignores the Range and replies
+   * 200, the only bytes reachable are from offset 0; a deep offset (e.g. a
+   * footer read near EOF) would require buffering the whole file, so such a
+   * read is refused past a hard ceiling rather than pulling the file into
+   * memory — the caller degrades to a download prompt.
+   */
+  async fetchFileRange(
+    kind: RepoKind,
+    repoId: string,
+    path: string,
+    start: number,
+    end: number,
+    revision = 'main'
+  ): Promise<Uint8Array> {
+    const url = this.resolveUrl(kind, repoId, revision, path)
+    const res = await this.fetchWithPolicy(url, {
+      headers: {
+        ...this.headers(url),
+        Range: `bytes=${start}-${end}`,
+        // Byte ranges are only meaningful without transfer compression.
+        'Accept-Encoding': 'identity'
+      }
+    })
+    if (res.status !== 200 && res.status !== 206) await this.throwHttpError(res, 'GET', url)
+    // 206: the server honored the Range, so the body is exactly [start, end],
+    // bounded by the schema's window cap.
+    if (res.status === 206) return new Uint8Array(await res.arrayBuffer())
+    // 200: the server ignored the Range. Reaching byte `end` means reading from
+    // 0, so a deep offset would buffer (nearly) the whole file — refuse it.
+    if (end >= RANGE_FALLBACK_MAX) {
+      await res.body?.cancel()
+      throw new HubApiError('server does not support range requests', res.status, url)
+    }
+    const { bytes } = await readBodyCapped(res, end + 1)
+    return bytes.slice(start, end + 1)
   }
 
   /** Parse the safetensors JSON header via ranged requests (never downloads tensors). */

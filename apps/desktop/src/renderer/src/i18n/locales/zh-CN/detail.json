@@ -199,5 +199,12 @@
     "playground": "试用",
     "preview": "预览",
     "run": "运行"
+  },
+  "parquetPreview": {
+    "rows_other": "{{count}} 行",
+    "columns_other": "{{count}} 列",
+    "unsupportedCodec": "该文件使用了无法预览的压缩编码，请下载后在本地打开。",
+    "unreadableTitle": "无法读取该 Parquet 文件",
+    "unreadableBody": "无法读取文件元数据，请下载后在本地打开。"
   }
 }

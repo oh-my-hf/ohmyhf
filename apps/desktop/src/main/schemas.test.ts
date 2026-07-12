@@ -14,9 +14,7 @@ describe('ipcRequestSchemas', () => {
     expect(schema.safeParse({ slug: 'nvidia/cosmos-69ab2f273c55ae147e43c342' }).success).toBe(true)
     // "../victim-<24hex>" would resolve to /api/victim under /api/collections/.
     expect(schema.safeParse({ slug: '../deadbeefdeadbeefdeadbeef' }).success).toBe(false)
-    expect(
-      schema.safeParse({ slug: '../secret-69ab2f273c55ae147e43c342' }).success
-    ).toBe(false)
+    expect(schema.safeParse({ slug: '../secret-69ab2f273c55ae147e43c342' }).success).toBe(false)
   })
 
   it('requires the delete confirmation to match the target', () => {
@@ -26,12 +24,12 @@ describe('ipcRequestSchemas', () => {
     expect(collection.safeParse({ slug, confirmSlug: 'wrong' }).success).toBe(false)
 
     const repo = ipcRequestSchemas['hub:repoDelete']!
-    expect(
-      repo.safeParse({ kind: 'model', repoId: 'me/x', confirmName: 'me/x' }).success
-    ).toBe(true)
-    expect(
-      repo.safeParse({ kind: 'model', repoId: 'me/x', confirmName: 'me/y' }).success
-    ).toBe(false)
+    expect(repo.safeParse({ kind: 'model', repoId: 'me/x', confirmName: 'me/x' }).success).toBe(
+      true
+    )
+    expect(repo.safeParse({ kind: 'model', repoId: 'me/x', confirmName: 'me/y' }).success).toBe(
+      false
+    )
   })
 
   it('accepts non-hex notification ids for mark-as-read (post/paper ids are plain strings)', () => {
@@ -42,14 +40,27 @@ describe('ipcRequestSchemas', () => {
     ).toBe(true)
   })
 
+  it('bounds hub:fileRange windows so a renderer cannot request a multi-GB slice', () => {
+    const schema = ipcRequestSchemas['hub:fileRange']!
+    const base = { kind: 'dataset', repoId: 'me/ds', path: 'data/train.parquet' }
+    // A normal footer/row read passes.
+    expect(schema.safeParse({ ...base, start: 0, end: 512 * 1024 }).success).toBe(true)
+    // A huge window (the OOM vector) is rejected.
+    expect(schema.safeParse({ ...base, start: 0, end: 10_000_000_000 }).success).toBe(false)
+    // Inverted ranges are rejected.
+    expect(schema.safeParse({ ...base, start: 100, end: 50 }).success).toBe(false)
+    // Path traversal is rejected by relPath.
+    expect(schema.safeParse({ ...base, path: '../secret', start: 0, end: 10 }).success).toBe(false)
+  })
+
   it('accepts privacy:clearLocalData with optional signOut', () => {
     const schema = ipcRequestSchemas['privacy:clearLocalData']!
     expect(schema.safeParse({}).success).toBe(true)
     expect(schema.safeParse({ signOut: true }).success).toBe(true)
     expect(schema.safeParse({ signOut: 'yes' }).success).toBe(false)
-    expect(
-      schema.safeParse({ favorites: true, history: false, downloads: true }).success
-    ).toBe(true)
+    expect(schema.safeParse({ favorites: true, history: false, downloads: true }).success).toBe(
+      true
+    )
   })
 
   it('accepts personalization settings patches and rejects out-of-range fontScale', () => {
@@ -91,17 +102,11 @@ describe('ipcRequestSchemas', () => {
 
   it('accepts hubEndpoint and proxyUrl http(s) URLs or null', () => {
     const schema = ipcRequestSchemas['settings:set']!
-    expect(
-      schema.safeParse({ patch: { hubEndpoint: 'https://hf-mirror.com' } }).success
-    ).toBe(true)
+    expect(schema.safeParse({ patch: { hubEndpoint: 'https://hf-mirror.com' } }).success).toBe(true)
     expect(schema.safeParse({ patch: { hubEndpoint: null } }).success).toBe(true)
-    expect(schema.safeParse({ patch: { proxyUrl: 'http://127.0.0.1:7890' } }).success).toBe(
-      true
-    )
+    expect(schema.safeParse({ patch: { proxyUrl: 'http://127.0.0.1:7890' } }).success).toBe(true)
     expect(schema.safeParse({ patch: { proxyUrl: null } }).success).toBe(true)
-    expect(schema.safeParse({ patch: { hubEndpoint: 'ftp://bad.example' } }).success).toBe(
-      false
-    )
+    expect(schema.safeParse({ patch: { hubEndpoint: 'ftp://bad.example' } }).success).toBe(false)
     expect(schema.safeParse({ patch: { proxyUrl: 'not-a-url' } }).success).toBe(false)
   })
 

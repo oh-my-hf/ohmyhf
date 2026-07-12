@@ -309,6 +309,9 @@ export function registerIpcHandlers(ctx: AppContext): void {
     ctx.hub.markNotificationsRead(discussionIds, read)
   )
   handle('hub:notificationsClear', () => ctx.hub.clearNotifications())
+  handle('hub:fileRange', ({ kind, repoId, path, revision, start, end }) =>
+    ctx.hub.fetchFileRange(kind, repoId, path, start, end, revision)
+  )
   handle('hub:fileText', ({ kind, repoId, path, revision, maxBytes }) =>
     ctx.hub.getFileText(kind, repoId, path, revision, maxBytes)
   )
