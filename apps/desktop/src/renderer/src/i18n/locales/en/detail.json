@@ -178,6 +178,7 @@
     "noPreviewTitle": "No preview available",
     "pdfErrorBody": "This PDF couldn't be rendered here. Download it to open locally.",
     "pdfErrorTitle": "Can't open this PDF",
+    "pdfTooLargeBody": "PDFs larger than {{size}} can't be previewed here. Download it to open locally.",
     "pdfPage": "Page {{page}} of {{total}}",
     "pickFile": "Select a file to preview",
     "pickFileBody": "Choose a file on the left to see its contents here.",

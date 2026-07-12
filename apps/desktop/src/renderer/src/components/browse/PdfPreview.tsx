@@ -2,15 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownToLine, ChevronLeft, ChevronRight, FileQuestion } from 'lucide-react'
 import type { RepoKind } from '@oh-my-huggingface/shared'
-import { repoFileUrl } from '@/components/browse/MarkdownView'
+import { invoke } from '@/lib/ipc'
+import { formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+
+/** Keep under hub:fileRange's 64 MiB inclusive-window cap. */
+const MAX_PDF_BYTES = 32 * 1024 * 1024
 
 interface PdfPreviewProps {
   kind: RepoKind
   repoId: string
   path: string
+  size: number
   onDownload: () => void
   downloading: boolean
 }
@@ -19,6 +24,7 @@ export function PdfPreview({
   kind,
   repoId,
   path,
+  size,
   onDownload,
   downloading
 }: PdfPreviewProps): React.JSX.Element {
@@ -26,10 +32,11 @@ export function PdfPreview({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [page, setPage] = useState(1)
   const [pageCount, setPageCount] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<'tooLarge' | 'unreadable' | null>(null)
   const [loading, setLoading] = useState(true)
   // Keep the pdf.js document across page flips without re-fetching.
   const docRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null)
+  const workerRef = useRef<Worker | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -41,11 +48,36 @@ export function PdfPreview({
 
     void (async () => {
       try {
+        if (size <= 0 || size > MAX_PDF_BYTES) {
+          if (!cancelled) {
+            setError('tooLarge')
+            setLoading(false)
+          }
+          return
+        }
+
+        // Fetch through main-process IPC: pdf.js can't reliably XHR/fetch the
+        // omhf-file:// custom scheme under the renderer CSP (connect-src 'self').
+        const bytes = await invoke('hub:fileRange', {
+          kind,
+          repoId,
+          path,
+          start: 0,
+          end: size - 1
+        })
+        if (cancelled) return
+
         const pdfjs = await import('pdfjs-dist')
-        // Vite emits the worker as a static asset URL (?url).
-        const worker = await import('pdfjs-dist/build/pdf.worker.mjs?url')
-        pdfjs.GlobalWorkerOptions.workerSrc = worker.default
-        const doc = await pdfjs.getDocument({ url: repoFileUrl(kind, repoId, path) }).promise
+        // Vite `?worker` emits a same-origin Worker module (CSP script-src 'self').
+        const PdfWorker = (await import('pdfjs-dist/build/pdf.worker.mjs?worker')).default
+        workerRef.current?.terminate()
+        const worker = new PdfWorker()
+        workerRef.current = worker
+        pdfjs.GlobalWorkerOptions.workerPort = worker
+
+        const copy = new Uint8Array(bytes.byteLength)
+        copy.set(bytes)
+        const doc = await pdfjs.getDocument({ data: copy }).promise
         if (cancelled) {
           await doc.cleanup()
           return
@@ -53,9 +85,9 @@ export function PdfPreview({
         docRef.current = doc
         setPageCount(doc.numPages)
         setLoading(false)
-      } catch (err) {
+      } catch {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err))
+          setError('unreadable')
           setLoading(false)
         }
       }
@@ -66,13 +98,18 @@ export function PdfPreview({
       const doc = docRef.current
       docRef.current = null
       if (doc) void doc.cleanup()
+      workerRef.current?.terminate()
+      workerRef.current = null
+      void import('pdfjs-dist').then((pdfjs) => {
+        pdfjs.GlobalWorkerOptions.workerPort = null
+      })
     }
-  }, [kind, repoId, path])
+  }, [kind, repoId, path, size])
 
   useEffect(() => {
     const doc = docRef.current
     const canvas = canvasRef.current
-    if (!doc || !canvas || page < 1 || page > pageCount) return
+    if (!doc || !canvas || page < 1 || page > pageCount || loading) return
     let cancelled = false
 
     void (async () => {
@@ -85,8 +122,8 @@ export function PdfPreview({
         canvas.width = viewport.width
         canvas.height = viewport.height
         await pdfPage.render({ canvasContext: context, viewport, canvas }).promise
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+      } catch {
+        if (!cancelled) setError('unreadable')
       }
     })()
 
@@ -110,7 +147,11 @@ export function PdfPreview({
         <EmptyState
           icon={FileQuestion}
           title={t('detail:preview.pdfErrorTitle')}
-          body={t('detail:preview.pdfErrorBody')}
+          body={
+            error === 'tooLarge'
+              ? t('detail:preview.pdfTooLargeBody', { size: formatBytes(MAX_PDF_BYTES) })
+              : t('detail:preview.pdfErrorBody')
+          }
           action={
             <Button variant="secondary" size="sm" loading={downloading} onClick={onDownload}>
               <ArrowDownToLine className="size-3.5" aria-hidden />

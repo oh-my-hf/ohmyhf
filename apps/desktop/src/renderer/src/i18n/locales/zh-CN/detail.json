@@ -178,6 +178,7 @@
     "noPreviewTitle": "暂不支持预览",
     "pdfErrorBody": "无法在此渲染该 PDF，请下载后在本地打开。",
     "pdfErrorTitle": "无法打开 PDF",
+    "pdfTooLargeBody": "超过 {{size}} 的 PDF 无法在此预览，请下载后在本地打开。",
     "pdfPage": "第 {{page}} / {{total}} 页",
     "pickFile": "选择要预览的文件",
     "pickFileBody": "在左侧选择文件，即可在此处查看其内容。",

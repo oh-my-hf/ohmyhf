@@ -390,6 +390,7 @@ export function FilePreview({
           kind={kind}
           repoId={repoId}
           path={entry.path}
+          size={entry.size}
           onDownload={onDownload}
           downloading={downloading}
         />
