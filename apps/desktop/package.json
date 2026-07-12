@@ -23,8 +23,7 @@
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "electron-updater": "^6.8.9",
-    "hyparquet": "^1.26.2",
-    "hyparquet-compressors": "^1.1.1"
+    "hyparquet": "^1.26.2"
   },
   "devDependencies": {
     "@fontsource-variable/noto-sans-sc": "^5.2.10",

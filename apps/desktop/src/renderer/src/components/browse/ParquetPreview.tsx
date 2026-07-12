@@ -104,15 +104,17 @@ export function ParquetPreview({
     placeholderData: keepPreviousData,
     retry: false,
     queryFn: async () => {
-      const [{ parquetReadObjects }, { compressors }] = await Promise.all([
-        import('hyparquet'),
-        import('hyparquet-compressors')
-      ])
+      // Only hyparquet core (pure JS) — it decodes uncompressed + snappy, the
+      // Hub's default codec. We deliberately do NOT pull in hyparquet-compressors:
+      // its SNAPPY decoder instantiates WebAssembly at import time, which the
+      // renderer CSP (script-src 'self', no wasm-unsafe-eval) blocks. Files using
+      // a codec hyparquet can't decode throw "unsupported compression codec",
+      // which surfaces as the download prompt below.
+      const { parquetReadObjects } = await import('hyparquet')
       const data = info.data!
       return parquetReadObjects({
         file: data.file,
         metadata: data.metadata,
-        compressors,
         rowStart: page * PAGE_SIZE,
         rowEnd: Math.min(data.numRows, (page + 1) * PAGE_SIZE)
       })
