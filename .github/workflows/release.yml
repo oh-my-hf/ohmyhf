@@ -148,6 +148,10 @@ jobs:
           security find-certificate -c OhMyHF-Release -p "$KEYCHAIN" > "$RUNNER_TEMP/sign.pem"
           sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$RUNNER_TEMP/sign.pem"
           rm "$RUNNER_TEMP/sign.p12"
+          # codesign resolves identities by NAME through the keychain SEARCH LIST,
+          # not the --keychain hint, so the throwaway keychain must be on it.
+          existing=$(security list-keychains -d user | tr -d '" ')
+          security list-keychains -d user -s "$KEYCHAIN" $existing
           # electron-builder reads CSC_KEYCHAIN when no CSC_LINK is set.
           echo "CSC_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
           echo "--- identities now valid for codesigning:"
