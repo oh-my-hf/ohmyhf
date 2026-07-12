@@ -38,7 +38,7 @@ export default tseslint.config(
   },
   {
     // Plain-JS tooling files run under Node.
-    files: ['**/*.mjs', '**/*.js'],
+    files: ['**/*.mjs', '**/*.js', '**/*.cjs'],
     languageOptions: {
       globals: {
         console: 'readonly',
@@ -49,6 +49,11 @@ export default tseslint.config(
         __dirname: 'readonly'
       }
     }
+  },
+  {
+    // .cjs files are CommonJS by definition (electron-builder hooks).
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' }
   },
   {
     rules: {

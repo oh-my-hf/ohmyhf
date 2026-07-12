@@ -15,6 +15,10 @@ asarUnpack:
 npmRebuild: true
 electronVersion: 43.1.0
 
+# Strip extended attributes (com.apple.provenance, iCloud fileprovider tags)
+# before signing; codesign hard-fails on them ("detritus not allowed").
+afterPack: ./scripts/mac-strip-xattrs.cjs
+
 mac:
   category: public.app-category.developer-tools
   target:
@@ -22,9 +26,14 @@ mac:
     # zip is required for Squirrel.Mac: without it electron-builder emits no
     # latest-mac.yml and electron-updater cannot stage macOS auto-updates.
     - zip
-  # Ad-hoc signature (not Developer ID). Fixes the Gatekeeper "damaged" dialog
-  # caused by broken nested signatures; still not notarized — see docs/signing.md.
+  # Ad-hoc signature for local builds. Release CI overrides this with the
+  # self-signed OhMyHF-Release certificate (build:mac:release) so Squirrel.Mac
+  # can validate auto-updates; still not notarized — see docs/signing.md.
   identity: '-'
+  # Fail the build instead of silently shipping an unsigned (broken-seal) app
+  # when the release identity cannot be found, e.g. a missing CI secret.
+  # Ad-hoc ('-') always resolves, so local builds are unaffected.
+  forceCodeSigning: true
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist

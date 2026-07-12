@@ -105,7 +105,7 @@ jobs:
           - os: ubuntu-latest
             target: build:linux
           - os: macos-latest
-            target: build:mac
+            target: build:mac:release
           - os: windows-latest
             target: build:win
     runs-on: ${{ matrix.os }}
@@ -120,12 +120,44 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # Self-signed release certificate (CN OhMyHF-Release): electron-builder only
+      # accepts identities that `security find-identity -v -p codesigning` lists as
+      # valid, and that requires the certificate to be TRUSTED, not just imported.
+      # macOS runners have passwordless sudo, so trust it in the admin domain.
+      # See docs/signing.md for why this certificate exists (Squirrel.Mac updates).
+      - name: Import macOS signing certificate
+        if: runner.os == 'macOS'
+        env:
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MAC_CSC_LINK" || -z "$MAC_CSC_KEY_PASSWORD" ]]; then
+            echo "::error::MAC_CSC_LINK / MAC_CSC_KEY_PASSWORD secrets are missing; macOS builds must be signed (docs/signing.md)."
+            exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/ohmyhf-sign.keychain-db"
+          KEYCHAIN_PW="$(openssl rand -hex 16)"
+          printf '%s' "$MAC_CSC_LINK" | base64 -d > "$RUNNER_TEMP/sign.p12"
+          security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/sign.p12" -k "$KEYCHAIN" -P "$MAC_CSC_KEY_PASSWORD" -T /usr/bin/codesign
+          # Allow codesign to use the key without a UI prompt (headless runner).
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PW" "$KEYCHAIN" > /dev/null
+          security find-certificate -c OhMyHF-Release -p "$KEYCHAIN" > "$RUNNER_TEMP/sign.pem"
+          sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$RUNNER_TEMP/sign.pem"
+          rm "$RUNNER_TEMP/sign.p12"
+          # electron-builder reads CSC_KEYCHAIN when no CSC_LINK is set.
+          echo "CSC_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+          echo "--- identities now valid for codesigning:"
+          security find-identity -v -p codesigning "$KEYCHAIN"
       - name: Build and upload to the draft release
         run: pnpm --filter oh-my-huggingface-desktop ${{ matrix.target }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Force ad-hoc (identity: '-') instead of picking a local Developer ID.
-          # See docs/signing.md.
+          # Never pick up a stray local identity; macOS uses the explicit
+          # OhMyHF-Release identity from build:mac:release. See docs/signing.md.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
   publish:

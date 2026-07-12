@@ -23,9 +23,12 @@ import { resolveUpdateClient, UpdateManager } from './updater'
 app.setName('oh-my-huggingface-desktop')
 
 const isDev = !app.isPackaged
-// Squirrel.Mac requires signed current and replacement apps. Keep automatic
-// installation gated until the signing checklist in docs/signing.md is complete.
-const macAutoInstallEnabled = false
+// Squirrel.Mac validates the update against the running app's designated
+// requirement. Releases are signed with the stable self-signed OhMyHF-Release
+// certificate (docs/signing.md), so the requirement matches across versions.
+// Installs older than the first self-signed release still fall back to manual
+// because their ad-hoc requirement (cdhash-based) can never match.
+const macAutoInstallEnabled = true
 
 // E2E tests point userData at a temp dir so they never touch a real profile.
 if (process.env.OMH_USER_DATA_DIR) {

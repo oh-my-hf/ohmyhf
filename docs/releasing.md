@@ -52,8 +52,9 @@ The app uses the `electron-builder` generated `app-update.yml` and the release's
 strings in the renderer. Keep each manifest and its artifacts from the same build together so the
 SHA-512 metadata remains valid.
 
-macOS automatic installation requires a signed and notarized app. Until the signing work in
-[signing.md](signing.md) is complete, the updater provides GitHub Releases as the manual fallback.
+macOS releases are signed with a stable self-signed certificate so Squirrel.Mac accepts
+auto-updates between them (see [signing.md](signing.md)). Installs from before the first
+self-signed release cannot pass that validation and must install the next version manually once.
 
 ## Notes
 
@@ -62,8 +63,9 @@ macOS automatic installation requires a signed and notarized app. Until the sign
 - Re-running: if a release needs to be redone, delete the draft/release and its
   `vx.y.z` tag, then land a new `[RELEASE]` commit (bump the patch version — the
   CI refuses to reuse an existing tag).
-- Signing/notarization is still a documented follow-up; see
-  [signing.md](signing.md). macOS artifacts are currently unsigned.
+- Developer ID signing/notarization is still a documented follow-up; see
+  [signing.md](signing.md). macOS artifacts are self-signed (auto-update works,
+  Gatekeeper first-run friction remains); Windows artifacts are unsigned.
 - The publish target (`owner`/`repo` in `apps/desktop/electron-builder.yml`) must
   be the repository the workflow runs in — `GITHUB_TOKEN` can only publish there,
   and electron-updater reads the same config to find updates.

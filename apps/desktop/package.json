@@ -17,6 +17,7 @@
     "i18n:extract": "i18next",
     "build:linux": "electron-vite build && electron-builder --linux",
     "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac:release": "electron-vite build && electron-builder --mac -c.mac.identity=OhMyHF-Release",
     "build:win": "electron-vite build && electron-builder --win"
   },
   "dependencies": {
