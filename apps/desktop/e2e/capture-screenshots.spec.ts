@@ -34,6 +34,18 @@ async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: join(OUT, name), type: 'png' })
 }
 
+// settings:set alone never restyles the running renderer (main.tsx reads settings
+// once at startup), so persist the theme, reload, and wait for the shell to remount
+// before re-navigating and shooting.
+async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await page.evaluate(async (t) => {
+    await window.omh.invoke('settings:set', { patch: { theme: t } })
+  }, theme)
+  await page.evaluate(() => window.location.reload()).catch(() => undefined)
+  await settle(page, 500)
+  await waitForMain(page)
+}
+
 test('capture docs screenshots', async () => {
   test.skip(
     !process.env.CAPTURE_SCREENSHOTS,
@@ -82,6 +94,15 @@ test('capture docs screenshots', async () => {
     await settle(page, 2500)
     await shot(page, 'home-feed.png')
 
+    // --- home-feed-dark ---
+    await setTheme(page, 'dark')
+    await go(page, '#/')
+    await page.waitForSelector('text=Home', { timeout: 30_000 })
+    await page.waitForSelector('text=Trending', { timeout: 30_000 })
+    await settle(page, 2500)
+    await shot(page, 'home-feed-dark.png')
+    await setTheme(page, 'light')
+
     // --- browse (model card) ---
     await go(page, '#/models/tencent/Hy3')
     await page.waitForSelector('text=tencent/Hy3', { timeout: 45_000 })
@@ -93,26 +114,12 @@ test('capture docs screenshots', async () => {
     await shot(page, 'browse.png')
 
     // --- browse-dark ---
-    // settings:set alone never restyles the running renderer (main.tsx reads settings
-    // once at startup), so persist the theme, reload, and re-navigate before shooting.
-    await page.evaluate(async () => {
-      await window.omh.invoke('settings:set', { patch: { theme: 'dark' } })
-    })
-    await page.evaluate(() => window.location.reload()).catch(() => undefined)
-    // Let the navigation commit so waitForMain sees the fresh document, not the old one.
-    await settle(page, 500)
-    await waitForMain(page)
+    await setTheme(page, 'dark')
     await go(page, '#/models/tencent/Hy3')
     await page.waitForSelector('text=tencent/Hy3', { timeout: 45_000 })
     await settle(page, 2500)
     await shot(page, 'browse-dark.png')
-    // Restore light the same way for the remaining shots.
-    await page.evaluate(async () => {
-      await window.omh.invoke('settings:set', { patch: { theme: 'light' } })
-    })
-    await page.evaluate(() => window.location.reload()).catch(() => undefined)
-    await settle(page, 500)
-    await waitForMain(page)
+    await setTheme(page, 'light')
     await settle(page, 800)
 
     // --- filter-panel ---
@@ -130,6 +137,22 @@ test('capture docs screenshots', async () => {
       .catch(() => undefined)
     await settle(page, 400)
 
+    // --- filter-panel-dark ---
+    await setTheme(page, 'dark')
+    await go(page, '#/models')
+    await page.waitForSelector('input[data-list-search]', { timeout: 20_000 })
+    await page.getByRole('button', { name: /filter/i }).click()
+    await page.waitForSelector('text=Tasks', { timeout: 10_000 })
+    await settle(page, 800)
+    await shot(page, 'filter-panel-dark.png')
+    await page
+      .getByRole('button', { name: /done|filter/i })
+      .first()
+      .click()
+      .catch(() => undefined)
+    await settle(page, 400)
+    await setTheme(page, 'light')
+
     // --- file-preview ---
     await go(page, '#/models/openai-community/gpt2')
     await page.waitForSelector('text=openai-community/gpt2', { timeout: 45_000 })
@@ -139,6 +162,18 @@ test('capture docs screenshots', async () => {
     await page.waitForSelector('text=n_embd', { timeout: 30_000 })
     await settle(page, 1000)
     await shot(page, 'file-preview.png')
+
+    // --- file-preview-dark ---
+    await setTheme(page, 'dark')
+    await go(page, '#/models/openai-community/gpt2')
+    await page.waitForSelector('text=openai-community/gpt2', { timeout: 45_000 })
+    await page.getByRole('tab', { name: /^Files$/i }).click()
+    await page.waitForSelector('text=config.json', { timeout: 30_000 })
+    await page.getByText('config.json', { exact: true }).first().click()
+    await page.waitForSelector('text=n_embd', { timeout: 30_000 })
+    await settle(page, 1000)
+    await shot(page, 'file-preview-dark.png')
+    await setTheme(page, 'light')
 
     // --- pr-files ---
     await page.getByRole('tab', { name: /^Discussions$/i }).click()
@@ -163,12 +198,24 @@ test('capture docs screenshots', async () => {
     await shot(page, 'pr-files.png')
 
     // --- dataset-preview ---
+    // The dataset-viewer backend (datasets-server.huggingface.co) is a separate service from
+    // the Hub API and occasionally has outages independent of this dataset; don't let a
+    // transient 503 there abort the rest of the capture run.
     await go(page, '#/datasets/stanfordnlp/imdb')
     await page.waitForSelector('text=stanfordnlp/imdb', { timeout: 45_000 })
     await page.getByRole('tab', { name: /^Preview$/i }).click()
-    await page.waitForSelector('text=label', { timeout: 45_000 })
-    await settle(page, 2000)
-    await shot(page, 'dataset-preview.png')
+    const datasetViewerReady = await page
+      .waitForSelector('text=label', { timeout: 45_000 })
+      .then(() => true)
+      .catch(() => false)
+    if (datasetViewerReady) {
+      await settle(page, 2000)
+      await shot(page, 'dataset-preview.png')
+    } else {
+      console.warn(
+        '[capture-screenshots] dataset viewer unavailable for stanfordnlp/imdb — skipping dataset-preview.png'
+      )
+    }
 
     // --- spaces-gallery ---
     await go(page, '#/spaces')
@@ -178,6 +225,16 @@ test('capture docs screenshots', async () => {
     await page.getByRole('option', { name: /^Likes$/i }).click()
     await settle(page, 2500)
     await shot(page, 'spaces-gallery.png')
+
+    // --- spaces-gallery-dark ---
+    await setTheme(page, 'dark')
+    await go(page, '#/spaces')
+    await page.waitForSelector('input[data-list-search]', { timeout: 20_000 })
+    await page.getByRole('combobox').first().click()
+    await page.getByRole('option', { name: /^Likes$/i }).click()
+    await settle(page, 2500)
+    await shot(page, 'spaces-gallery-dark.png')
+    await setTheme(page, 'light')
 
     // --- space-runner ---
     await go(page, '#/spaces/akhaliq/Unlimited-OCR')
@@ -198,7 +255,10 @@ test('capture docs screenshots', async () => {
     await settle(page, 2000)
     const postCard = page.locator('article, [class*="card"]').filter({ hasText: /Post/i }).first()
     if (await postCard.count()) {
-      await postCard.click()
+      // Click the card's own padding, not its center — the center can land on a
+      // nested UserLink/mention/attachment that stops propagation and opens its
+      // own dialog (e.g. a profile hover card) instead of navigating to the post.
+      await postCard.click({ position: { x: 8, y: 8 } })
       await settle(page, 2000)
     } else {
       await go(page, '#/posts/AbstractPhil/203080872373598')

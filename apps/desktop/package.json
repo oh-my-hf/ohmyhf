@@ -16,7 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "electron-vite build && playwright test",
     "test:e2e:packaged": "playwright test --config playwright.packaged.config.ts",
-    "test:screenshots": "CAPTURE_SCREENSHOTS=1 playwright test e2e/capture-screenshots.spec.ts",
+    "test:screenshots": "CAPTURE_SCREENSHOTS=1 playwright test --config playwright.screenshots.config.ts",
     "i18n:extract": "i18next",
     "build:linux": "electron-vite build && electron-builder --linux",
     "build:mac": "electron-vite build && electron-builder --mac",
