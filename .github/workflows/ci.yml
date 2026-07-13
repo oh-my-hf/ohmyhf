@@ -5,35 +5,18 @@ on:
     branches: [main]
   pull_request:
 
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Enable corepack (pnpm)
-        run: corepack enable
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Lint (includes i18n hardcoded-string checks)
-        run: pnpm lint
-      - name: Typecheck
-        run: pnpm typecheck
-      - name: Unit tests
-        run: pnpm test
-      - name: Build
-        run: pnpm --filter oh-my-huggingface-desktop build
+permissions:
+  contents: read
 
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
-      - name: E2E smoke test (Playwright + Electron)
-        run: xvfb-run --auto-servernum pnpm --filter oh-my-huggingface-desktop test:e2e
+jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  packaged-smoke:
+    needs: verify
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/packaged-smoke.yml
+    with:
+      commit_sha: ${{ github.sha }}
+      publishable: false
+      signed_macos: false
