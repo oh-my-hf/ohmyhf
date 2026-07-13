@@ -63,6 +63,8 @@ interface UpdateManagerOptions {
   onStateChange: (state: AppUpdateState) => void
   scheduleInstall?: (task: () => void) => void
   logger?: Pick<Console, 'warn'>
+  /** How long to wait for quitAndInstall to actually quit the app before treating it as failed. */
+  installTimeoutMs?: number
 }
 
 function classifyError(error: unknown): AppUpdateErrorCode {
@@ -108,12 +110,14 @@ export class UpdateManager {
   private readonly onStateChange: (state: AppUpdateState) => void
   private readonly scheduleInstall: (task: () => void) => void
   private readonly logger: Pick<Console, 'warn'>
+  private readonly installTimeoutMs: number
   private clientPromise: Promise<UpdateClient> | null = null
   private checkPromise: Promise<AppUpdateState> | null = null
   private downloadPromise: Promise<AppUpdateState> | null = null
   private availableVersion: string | null = null
   private activeOperation: AppUpdateOperation | null = null
   private installScheduled = false
+  private installWatchdog: NodeJS.Timeout | null = null
 
   constructor(options: UpdateManagerOptions) {
     this.currentVersion = options.currentVersion
@@ -123,6 +127,7 @@ export class UpdateManager {
     this.onStateChange = options.onStateChange
     this.scheduleInstall = options.scheduleInstall ?? ((task) => setImmediate(task))
     this.logger = options.logger ?? console
+    this.installTimeoutMs = options.installTimeoutMs ?? 45_000
     this.state = {
       status: this.isPackaged ? 'idle' : 'unsupported',
       currentVersion: this.currentVersion
@@ -169,6 +174,13 @@ export class UpdateManager {
       this.scheduleInstall(() => {
         try {
           client.quitAndInstall(false, true)
+          // quitAndInstall is expected to quit the app almost immediately, at which
+          // point no further JS runs. If we're still alive after this fires, the
+          // native install/relaunch handshake silently never completed (observed on
+          // macOS) and the user is left staring at an app that didn't restart.
+          // installScheduled may already be false here if quitAndInstall reported
+          // its failure synchronously (via the client's 'error' event).
+          if (this.installScheduled) this.armInstallWatchdog()
         } catch (error) {
           this.installScheduled = false
           this.fail('install', error)
@@ -177,6 +189,25 @@ export class UpdateManager {
     } catch (error) {
       this.installScheduled = false
       this.fail('install', error)
+    }
+  }
+
+  private armInstallWatchdog(): void {
+    this.clearInstallWatchdog()
+    const timer = setTimeout(() => {
+      this.installWatchdog = null
+      if (!this.installScheduled) return
+      this.installScheduled = false
+      this.fail('install', new Error('Install timed out: the app did not quit and relaunch'))
+    }, this.installTimeoutMs)
+    timer.unref?.()
+    this.installWatchdog = timer
+  }
+
+  private clearInstallWatchdog(): void {
+    if (this.installWatchdog) {
+      clearTimeout(this.installWatchdog)
+      this.installWatchdog = null
     }
   }
 
@@ -283,7 +314,10 @@ export class UpdateManager {
     client.on('update-cancelled', (info) => this.markAvailable(info))
     client.on('error', (error) => {
       const operation = this.installScheduled ? 'install' : (this.activeOperation ?? 'check')
-      if (operation === 'install') this.installScheduled = false
+      if (operation === 'install') {
+        this.installScheduled = false
+        this.clearInstallWatchdog()
+      }
       this.fail(operation, error)
     })
   }

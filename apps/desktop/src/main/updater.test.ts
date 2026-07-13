@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AppUpdateState } from '@oh-my-huggingface/shared'
 import { resolveUpdateClient, UpdateManager, type UpdateClient } from './updater'
 
@@ -289,6 +289,58 @@ describe('UpdateManager', () => {
       currentVersion: '1.0.0',
       operation: 'check',
       error: 'configuration'
+    })
+  })
+
+  describe('install watchdog', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('fails the install if quitAndInstall never actually quits the app', async () => {
+      const { client, manager, scheduled } = setup()
+      client.nextVersion = '1.1.0'
+      await manager.checkForUpdates()
+      await manager.downloadUpdate()
+
+      await manager.installUpdate()
+      scheduled[0]!()
+      expect(client.installCalls).toEqual([[false, true]])
+      expect(manager.getState().status).toBe('ready')
+
+      await vi.advanceTimersByTimeAsync(45_000)
+
+      expect(manager.getState()).toEqual({
+        status: 'error',
+        currentVersion: '1.0.0',
+        availableVersion: '1.1.0',
+        operation: 'install',
+        error: 'unknown'
+      })
+
+      // installScheduled was reset, so a retry schedules another install attempt.
+      await manager.installUpdate()
+      expect(scheduled).toHaveLength(2)
+    })
+
+    it('does not fail the install once quitAndInstall reports an error first', async () => {
+      const { client, manager, scheduled } = setup()
+      client.nextVersion = '1.1.0'
+      client.installError = new Error('EACCES: permission denied')
+      await manager.checkForUpdates()
+      await manager.downloadUpdate()
+
+      await manager.installUpdate()
+      scheduled[0]!()
+      expect(manager.getState()).toMatchObject({ status: 'error', error: 'permission' })
+
+      await vi.advanceTimersByTimeAsync(45_000)
+
+      expect(manager.getState()).toMatchObject({ status: 'error', error: 'permission' })
     })
   })
 })
