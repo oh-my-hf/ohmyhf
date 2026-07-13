@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: ['capture-screenshots.spec.ts', 'packaged-smoke.spec.ts'],
+  testMatch: 'packaged-smoke.spec.ts',
   timeout: 60_000,
   workers: 1,
   retries: process.env.CI ? 1 : 0,

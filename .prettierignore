@@ -1,7 +1,9 @@
 node_modules/
+.pnpm-store/
 dist/
 out/
 release/
 coverage/
+.claude/
 pnpm-lock.yaml
 LICENSE

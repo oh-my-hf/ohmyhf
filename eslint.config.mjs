@@ -11,6 +11,8 @@ export default tseslint.config(
       '**/out/**',
       '**/release/**',
       '**/coverage/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
       // Finder-style duplicate artifacts the environment occasionally creates.
       '**/* 2.*'
     ]
