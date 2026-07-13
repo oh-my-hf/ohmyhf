@@ -1,7 +1,6 @@
 {
   "authors": "著者",
   "comment": {
-    "heading": "この論文にコメントする",
     "placeholder": "コメントを入力(Markdown対応)…",
     "posted": "コメントを投稿しました"
   },
@@ -20,5 +19,10 @@
     "remove": "アップボートを取り消す",
     "sessionExpired": "Hub Webセッションの有効期限が切れました。アプリからアップボートするには、設定 → アカウントで再接続してください。"
   },
-  "upvotes": "アップボート数"
+  "upvotes": "アップボート数",
+  "comments": {
+    "heading": "コメント",
+    "empty": "まだコメントはありません。",
+    "loadError": "コメントを読み込めませんでした"
+  }
 }

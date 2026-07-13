@@ -1,7 +1,6 @@
 {
   "authors": "Auteurs",
   "comment": {
-    "heading": "Commenter cet article",
     "placeholder": "Écrivez un commentaire (Markdown pris en charge)…",
     "posted": "Commentaire publié"
   },
@@ -20,5 +19,10 @@
     "remove": "Retirer le vote",
     "sessionExpired": "Votre session web du Hub a expiré. Reconnectez-la dans Paramètres → Compte pour voter depuis l'application."
   },
-  "upvotes": "Votes"
+  "upvotes": "Votes",
+  "comments": {
+    "heading": "Commentaires",
+    "empty": "Aucun commentaire pour le moment.",
+    "loadError": "Impossible de charger les commentaires"
+  }
 }

@@ -159,13 +159,19 @@
     "binary": "Binary",
     "diffTruncated": "This diff was truncated — only part of the changes are shown.",
     "empty": "No pull requests yet.",
+    "locked": "{{author}} locked this discussion",
     "noDescription": "No description provided.",
     "noDiff": "No changes to show.",
+    "pinned": "{{author}} pinned this discussion",
+    "refDeleted": "{{author}} deleted the merge ref",
     "refsLabel": "Merge direction",
     "renamed": "Renamed",
     "statusChanged": "{{author}} changed status to {{status}}",
     "tabDiscussion": "Discussion",
-    "tabFiles": "Files changed"
+    "tabFiles": "Files changed",
+    "titleChanged": "{{author}} changed the title from \"{{from}}\" to \"{{to}}\"",
+    "unlocked": "{{author}} unlocked this discussion",
+    "unpinned": "{{author}} unpinned this discussion"
   },
   "preview": {
     "colDtype": "Dtype",

@@ -6,6 +6,7 @@ export {
   mapRepoDetail,
   mapFileTree,
   mapPaper,
+  mapPaperComments,
   mapPaperDetail,
   mapPost,
   mapActivityFeed,

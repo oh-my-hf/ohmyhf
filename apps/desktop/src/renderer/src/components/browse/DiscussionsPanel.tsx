@@ -6,10 +6,13 @@ import {
   GitCommitHorizontal,
   GitMerge,
   GitPullRequest,
+  Lock,
   MessageSquare,
   Pencil,
+  Pin,
   Plus,
-  Reply
+  Reply,
+  Trash2
 } from 'lucide-react'
 import type {
   AuthState,
@@ -156,6 +159,86 @@ function ThreadEvent({
         </span>
         <span className="min-w-0 flex-1 truncate">
           {t('detail:pr.statusChanged', { author: event.author ?? '', status: statusWord })}
+        </span>
+        <span className="shrink-0 text-[11.5px] text-ink-faint">
+          {formatRelativeTime(event.createdAt, locale)}
+        </span>
+      </div>
+    )
+  }
+
+  if (event.type === 'title-change') {
+    if (event.titleFrom === undefined || event.titleTo === undefined) return null
+    return (
+      <div className="flex items-center gap-2.5 px-1 text-[12.5px] text-ink-muted">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-panel ring-1 ring-border">
+          <Pencil className="size-3.5 text-ink-faint" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1 truncate">
+          {t('detail:pr.titleChanged', {
+            author: event.author ?? '',
+            from: event.titleFrom,
+            to: event.titleTo
+          })}
+        </span>
+        <span className="shrink-0 text-[11.5px] text-ink-faint">
+          {formatRelativeTime(event.createdAt, locale)}
+        </span>
+      </div>
+    )
+  }
+
+  if (event.type === 'pinning-change') {
+    if (event.pinned === undefined) return null
+    return (
+      <div className="flex items-center gap-2.5 px-1 text-[12.5px] text-ink-muted">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-panel ring-1 ring-border">
+          <Pin className="size-3.5 text-ink-faint" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1 truncate">
+          {t(event.pinned ? 'detail:pr.pinned' : 'detail:pr.unpinned', {
+            author: event.author ?? ''
+          })}
+        </span>
+        <span className="shrink-0 text-[11.5px] text-ink-faint">
+          {formatRelativeTime(event.createdAt, locale)}
+        </span>
+      </div>
+    )
+  }
+
+  if (event.type === 'locking-change') {
+    if (event.locked === undefined) return null
+    return (
+      <div className="flex items-center gap-2.5 px-1 text-[12.5px] text-ink-muted">
+        <span
+          className={cn(
+            'flex size-6 shrink-0 items-center justify-center rounded-full ring-1',
+            event.locked ? 'bg-error/10 ring-error/30' : 'bg-panel ring-border'
+          )}
+        >
+          <Lock className={cn('size-3.5', event.locked ? 'text-error' : 'text-ink-faint')} aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1 truncate">
+          {t(event.locked ? 'detail:pr.locked' : 'detail:pr.unlocked', {
+            author: event.author ?? ''
+          })}
+        </span>
+        <span className="shrink-0 text-[11.5px] text-ink-faint">
+          {formatRelativeTime(event.createdAt, locale)}
+        </span>
+      </div>
+    )
+  }
+
+  if (event.type === 'ref-deleted') {
+    return (
+      <div className="flex items-center gap-2.5 px-1 text-[12.5px] text-ink-muted">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-panel ring-1 ring-border">
+          <Trash2 className="size-3.5 text-ink-faint" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1 truncate">
+          {t('detail:pr.refDeleted', { author: event.author ?? '' })}
         </span>
         <span className="shrink-0 text-[11.5px] text-ink-faint">
           {formatRelativeTime(event.createdAt, locale)}

@@ -1,9 +1,13 @@
 {
   "authors": "Authors",
   "comment": {
-    "heading": "Comment on this paper",
     "placeholder": "Write a comment (Markdown supported)…",
     "posted": "Comment posted"
+  },
+  "comments": {
+    "empty": "No comments yet.",
+    "heading": "Comments",
+    "loadError": "Couldn't load comments"
   },
   "empty": "No papers loaded yet.",
   "listError": "Couldn't load Daily Papers",

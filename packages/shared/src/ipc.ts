@@ -412,6 +412,13 @@ export interface IpcInvokeContract {
     req: { paperId: string; comment: string; replyToCommentId?: string }
     res: void
   }
+  /** Existing comment thread on a Daily Papers entry (public read, no auth needed). */
+  'hub:paperComments': { req: { paperId: string }; res: PostComment[] }
+  /** Toggle an emoji reaction on a paper comment (needs a Hub web session). */
+  'hub:paperCommentReactionSet': {
+    req: { paperId: string; commentId: string; reaction: string; active: boolean }
+    res: void
+  }
   'hub:prMerge': {
     req: { kind: RepoKind; repoId: string; num: number; comment?: string }
     res: void
@@ -610,6 +617,8 @@ export const IPC_INVOKE_CHANNELS = [
   'hub:collectionUpvoteSet',
   'hub:discussionReactionSet',
   'hub:paperComment',
+  'hub:paperComments',
+  'hub:paperCommentReactionSet',
   'hub:prMerge',
   'hub:discussionStatusSet',
   'hub:discussionTitleSet',

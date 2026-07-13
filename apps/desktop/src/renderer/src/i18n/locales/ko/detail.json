@@ -165,7 +165,13 @@
     "renamed": "이름 변경됨",
     "statusChanged": "{{author}}이(가) 상태를 {{status}}(으)로 변경했습니다",
     "tabDiscussion": "토론",
-    "tabFiles": "변경된 파일"
+    "tabFiles": "변경된 파일",
+    "titleChanged": "{{author}}이(가) 제목을 “{{from}}”에서 “{{to}}”(으)로 변경했습니다",
+    "pinned": "{{author}}이(가) 이 토론을 고정했습니다",
+    "unpinned": "{{author}}이(가) 이 토론의 고정을 해제했습니다",
+    "locked": "{{author}}이(가) 이 토론을 잠갔습니다",
+    "unlocked": "{{author}}이(가) 이 토론의 잠금을 해제했습니다",
+    "refDeleted": "{{author}}이(가) 병합 참조를 삭제했습니다"
   },
   "preview": {
     "colDtype": "Dtype",

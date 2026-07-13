@@ -165,7 +165,13 @@
     "renamed": "Renomeado",
     "statusChanged": "{{author}} alterou o status para {{status}}",
     "tabDiscussion": "Discussão",
-    "tabFiles": "Arquivos alterados"
+    "tabFiles": "Arquivos alterados",
+    "titleChanged": "{{author}} alterou o título de “{{from}}” para “{{to}}”",
+    "pinned": "{{author}} fixou esta discussão",
+    "unpinned": "{{author}} desafixou esta discussão",
+    "locked": "{{author}} bloqueou esta discussão",
+    "unlocked": "{{author}} desbloqueou esta discussão",
+    "refDeleted": "{{author}} excluiu a referência de mesclagem"
   },
   "preview": {
     "colDtype": "Tipo de dado",

@@ -1,7 +1,6 @@
 {
   "authors": "Autores",
   "comment": {
-    "heading": "Comentar este artículo",
     "placeholder": "Escriba un comentario (se admite Markdown)…",
     "posted": "Comentario publicado"
   },
@@ -20,5 +19,10 @@
     "remove": "Quitar voto a favor",
     "sessionExpired": "Su sesión web del Hub ha caducado. Vuelva a conectarla en Configuración → Cuenta para votar a favor desde la aplicación."
   },
-  "upvotes": "Votos a favor"
+  "upvotes": "Votos a favor",
+  "comments": {
+    "heading": "Comentarios",
+    "empty": "Aún no hay comentarios.",
+    "loadError": "No se pudieron cargar los comentarios"
+  }
 }

@@ -370,6 +370,13 @@ export interface DiscussionEvent {
   subject?: string
   /** Per-emoji reactions on comment events (empty/absent otherwise). */
   reactions?: PostReaction[]
+  /** title-change events: previous and new title. */
+  titleFrom?: string
+  titleTo?: string
+  /** pinning-change events: true = pinned, false = unpinned. */
+  pinned?: boolean
+  /** locking-change events: true = locked, false = unlocked. */
+  locked?: boolean
 }
 
 export interface DiscussionDetail extends DiscussionSummary {

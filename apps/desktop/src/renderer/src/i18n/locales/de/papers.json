@@ -1,7 +1,6 @@
 {
   "authors": "Autoren",
   "comment": {
-    "heading": "Dieses Paper kommentieren",
     "placeholder": "Einen Kommentar schreiben (Markdown wird unterstützt)…",
     "posted": "Kommentar veröffentlicht"
   },
@@ -20,5 +19,10 @@
     "remove": "Upvote entfernen",
     "sessionExpired": "Ihre Hub-Websitzung ist abgelaufen. Verbinden Sie sie erneut unter Einstellungen → Konto, um aus der App zu upvoten."
   },
-  "upvotes": "Upvotes"
+  "upvotes": "Upvotes",
+  "comments": {
+    "heading": "Kommentare",
+    "empty": "Noch keine Kommentare.",
+    "loadError": "Kommentare konnten nicht geladen werden"
+  }
 }

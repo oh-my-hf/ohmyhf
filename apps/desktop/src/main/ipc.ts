@@ -464,6 +464,10 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('hub:paperComment', ({ paperId, comment, replyToCommentId }) =>
     ctx.hub.commentOnPaper(paperId, comment, replyToCommentId)
   )
+  handle('hub:paperComments', ({ paperId }) => ctx.hub.getPaperComments(paperId))
+  handle('hub:paperCommentReactionSet', ({ paperId, commentId, reaction, active }) =>
+    cookieBacked(() => ctx.hub.setPaperCommentReaction(paperId, commentId, reaction, active))
+  )
   handle('hub:prMerge', ({ kind, repoId, num, comment }) =>
     ctx.hub.mergePullRequest(kind, repoId, num, comment)
   )

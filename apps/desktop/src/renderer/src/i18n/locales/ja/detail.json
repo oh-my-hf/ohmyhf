@@ -165,7 +165,13 @@
     "renamed": "名前変更",
     "statusChanged": "{{author}}がステータスを{{status}}に変更しました",
     "tabDiscussion": "ディスカッション",
-    "tabFiles": "変更されたファイル"
+    "tabFiles": "変更されたファイル",
+    "titleChanged": "{{author}}がタイトルを「{{from}}」から「{{to}}」に変更しました",
+    "pinned": "{{author}}がこのディスカッションをピン留めしました",
+    "unpinned": "{{author}}がこのディスカッションのピン留めを解除しました",
+    "locked": "{{author}}がこのディスカッションをロックしました",
+    "unlocked": "{{author}}がこのディスカッションのロックを解除しました",
+    "refDeleted": "{{author}}がマージ参照を削除しました"
   },
   "preview": {
     "colDtype": "Dtype",

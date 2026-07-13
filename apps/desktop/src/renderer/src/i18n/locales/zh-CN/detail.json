@@ -165,7 +165,13 @@
     "renamed": "已重命名",
     "statusChanged": "{{author}} 将状态改为 {{status}}",
     "tabDiscussion": "讨论",
-    "tabFiles": "文件变更"
+    "tabFiles": "文件变更",
+    "titleChanged": "{{author}} 将标题从“{{from}}”改为“{{to}}”",
+    "pinned": "{{author}} 置顶了此讨论",
+    "unpinned": "{{author}} 取消了此讨论的置顶",
+    "locked": "{{author}} 锁定了此讨论",
+    "unlocked": "{{author}} 解锁了此讨论",
+    "refDeleted": "{{author}} 删除了合并引用"
   },
   "preview": {
     "colDtype": "数据类型",

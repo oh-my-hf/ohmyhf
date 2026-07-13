@@ -165,7 +165,13 @@
     "renamed": "已重新命名",
     "statusChanged": "{{author}} 將狀態變更為 {{status}}",
     "tabDiscussion": "討論",
-    "tabFiles": "變更的檔案"
+    "tabFiles": "變更的檔案",
+    "titleChanged": "{{author}} 將標題從「{{from}}」改為「{{to}}」",
+    "pinned": "{{author}} 已將此討論置頂",
+    "unpinned": "{{author}} 已取消此討論的置頂",
+    "locked": "{{author}} 已鎖定此討論",
+    "unlocked": "{{author}} 已解鎖此討論",
+    "refDeleted": "{{author}} 已刪除合併參照"
   },
   "preview": {
     "colDtype": "資料型別",

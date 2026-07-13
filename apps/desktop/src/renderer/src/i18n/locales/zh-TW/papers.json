@@ -1,7 +1,6 @@
 {
   "authors": "作者",
   "comment": {
-    "heading": "留言評論此論文",
     "placeholder": "撰寫留言（支援 Markdown）…",
     "posted": "留言已發佈"
   },
@@ -20,5 +19,10 @@
     "remove": "取消推薦",
     "sessionExpired": "您的 Hub 網頁工作階段已過期。請前往「設定 → 帳戶」重新連接，以在應用程式內推薦。"
   },
-  "upvotes": "推薦數"
+  "upvotes": "推薦數",
+  "comments": {
+    "heading": "留言",
+    "empty": "尚無留言。",
+    "loadError": "無法載入留言"
+  }
 }

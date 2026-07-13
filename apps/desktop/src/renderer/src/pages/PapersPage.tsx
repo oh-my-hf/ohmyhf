@@ -10,8 +10,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorState } from '@/components/errors/QueryErrorState'
-import { useToasts } from '@/components/ui/toaster'
-import { CommentComposer } from '@/components/community/CommentComposer'
+import { PaperComments } from '@/components/community/PaperComments'
 import { UpvoteButton } from '@/components/community/UpvoteButton'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { hubPaperUrl, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
@@ -26,7 +25,6 @@ export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Ele
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
   const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
-  const push = useToasts((s) => s.push)
 
   const paper = useQuery({
     queryKey: ['paper', paperId, endpointKey],
@@ -132,19 +130,10 @@ export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Ele
           {t('papers:readOnHub')}
         </Button>
       </div>
-      {auth.status === 'signedIn' && (
-        <div className="flex flex-col gap-2 border-t pt-4">
-          <h2 className="text-[13px] font-semibold">{t('papers:comment.heading')}</h2>
-          <CommentComposer
-            key={selected.id}
-            kind="model"
-            repoId={selected.id}
-            placeholder={t('papers:comment.placeholder')}
-            submit={(comment) => invoke('hub:paperComment', { paperId: selected.id, comment })}
-            onSubmitted={() => push(t('papers:comment.posted'), 'success')}
-          />
-        </div>
-      )}
+      <div className="flex flex-col gap-2 border-t pt-4">
+        <h2 className="text-[13px] font-semibold">{t('papers:comments.heading')}</h2>
+        <PaperComments paperId={selected.id} />
+      </div>
     </article>
   )
 }

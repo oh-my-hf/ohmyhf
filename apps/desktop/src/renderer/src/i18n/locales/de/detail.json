@@ -165,7 +165,13 @@
     "renamed": "Umbenannt",
     "statusChanged": "{{author}} hat den Status auf {{status}} geändert",
     "tabDiscussion": "Diskussion",
-    "tabFiles": "Geänderte Dateien"
+    "tabFiles": "Geänderte Dateien",
+    "titleChanged": "{{author}} hat den Titel von „{{from}}“ in „{{to}}“ geändert",
+    "pinned": "{{author}} hat diese Diskussion angeheftet",
+    "unpinned": "{{author}} hat die Anheftung dieser Diskussion aufgehoben",
+    "locked": "{{author}} hat diese Diskussion gesperrt",
+    "unlocked": "{{author}} hat diese Diskussion entsperrt",
+    "refDeleted": "{{author}} hat die Merge-Referenz gelöscht"
   },
   "preview": {
     "colDtype": "Dtype",

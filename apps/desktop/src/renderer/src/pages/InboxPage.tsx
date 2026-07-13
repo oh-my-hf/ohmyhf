@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react'
 import type { FollowTargetType, InboxItem } from '@oh-my-huggingface/shared'
+import { normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -41,12 +42,16 @@ type InboxTab = 'hub' | 'local'
 function TabButton({
   active,
   onClick,
-  label
+  label,
+  count
 }: {
   active: boolean
   onClick: () => void
   label: string
+  /** Unread items in this tab; omitted/undefined or 0 hides the badge. */
+  count?: number
 }): React.JSX.Element {
+  const { t } = useTranslation(['inbox'])
   return (
     <button
       type="button"
@@ -60,6 +65,14 @@ function TabButton({
       )}
     >
       {label}
+      {count !== undefined && count > 0 && (
+        <span
+          aria-label={t('inbox:unreadCount', { count })}
+          className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink"
+        >
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
     </button>
   )
 }
@@ -67,9 +80,28 @@ function TabButton({
 export function InboxPage(): React.JSX.Element {
   const { t } = useTranslation(['inbox'])
   const auth = useAppStore((s) => s.auth)
+  const settings = useAppStore((s) => s.settings)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
+  const signedIn = auth.status === 'signedIn'
   // The Hub inbox is the primary surface once an account is connected; the
   // local follows feed stays fully available in the second tab.
-  const [tab, setTab] = useState<InboxTab>(auth.status === 'signedIn' ? 'hub' : 'local')
+  const [tab, setTab] = useState<InboxTab>(signedIn ? 'hub' : 'local')
+
+  // Same query keys the two panels use — React Query dedupes, so these tab
+  // badges cost no extra requests beyond what the active panel already fetches.
+  const localInbox = useQuery({
+    queryKey: ['inbox'],
+    queryFn: () => invoke('inbox:list', undefined)
+  })
+  const hubNotifications = useQuery({
+    queryKey: ['hub-notifications', 0, endpointKey],
+    queryFn: () => invoke('hub:notifications', { page: 0 }),
+    enabled: signedIn
+  })
+  const localUnread = localInbox.data?.filter((i) => !i.readAt).length
+  // Hub unread is page-0-only (20 items) — the Hub exposes no total-unread
+  // count, same limitation the sidebar badge already accepts.
+  const hubUnread = hubNotifications.data?.items.filter((i) => !i.read).length
 
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -80,11 +112,13 @@ export function InboxPage(): React.JSX.Element {
             active={tab === 'hub'}
             onClick={() => setTab('hub')}
             label={t('inbox:tabs.hub')}
+            count={hubUnread}
           />
           <TabButton
             active={tab === 'local'}
             onClick={() => setTab('local')}
             label={t('inbox:tabs.local')}
+            count={localUnread}
           />
         </div>
       </div>

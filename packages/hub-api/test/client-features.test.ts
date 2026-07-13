@@ -389,6 +389,34 @@ describe('mapDiscussionDetail PR fields', () => {
     ])
     expect(detail.events[1]!.reactions).toEqual([])
   })
+
+  it('surfaces title-change, pinning-change, and locking-change fields (openapi.json, verified 2026-07-13)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        num: 1,
+        title: 't',
+        status: 'open',
+        events: [
+          { id: 'e1', type: 'title-change', data: { from: 'Old title', to: 'New title' } },
+          { id: 'e2', type: 'pinning-change', data: { pinned: true } },
+          { id: 'e3', type: 'pinning-change', data: { pinned: false } },
+          { id: 'e4', type: 'locking-change', data: { locked: true } },
+          { id: 'e5', type: 'ref-deleted', data: {} }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const detail = await client.getDiscussion('model', 'a/b', 1)
+    expect(detail.events[0]).toMatchObject({
+      type: 'title-change',
+      titleFrom: 'Old title',
+      titleTo: 'New title'
+    })
+    expect(detail.events[1]).toMatchObject({ type: 'pinning-change', pinned: true })
+    expect(detail.events[2]).toMatchObject({ type: 'pinning-change', pinned: false })
+    expect(detail.events[3]).toMatchObject({ type: 'locking-change', locked: true })
+    expect(detail.events[4]).toMatchObject({ type: 'ref-deleted' })
+  })
 })
 
 describe('HubClient.isInferenceAvailable', () => {
@@ -447,5 +475,81 @@ describe('HubClient.createDiscussion', () => {
     expect(JSON.parse((fetchImpl.mock.calls[0]![1] as RequestInit).body as string)).toMatchObject({
       pullRequest: true
     })
+  })
+})
+
+describe('HubClient.getPaperComments', () => {
+  it('nests replies one level via parentCommentId, drops hidden content, and normalizes reactions', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        comments: [
+          {
+            id: 'c1',
+            type: 'comment',
+            author: {
+              name: 'alice',
+              fullname: 'Alice',
+              avatarUrl: 'https://cdn/a.png',
+              isPro: true
+            },
+            createdAt: '2024-01-01T00:00:00Z',
+            data: {
+              hidden: false,
+              latest: { raw: 'top-level' },
+              reactions: [{ reaction: '🔥', users: ['x'], count: 1 }]
+            }
+          },
+          {
+            id: 'c2',
+            type: 'comment',
+            author: { name: 'bob' },
+            createdAt: '2024-01-02T00:00:00Z',
+            data: { hidden: false, latest: { raw: 'a reply' }, parentCommentId: 'c1' }
+          },
+          {
+            id: 'c3',
+            type: 'comment',
+            author: { name: 'mod' },
+            createdAt: '2024-01-03T00:00:00Z',
+            data: {
+              hidden: true,
+              hiddenReason: 'Spam',
+              hiddenBy: 'mod',
+              latest: { raw: 'should be dropped' }
+            }
+          }
+        ]
+      })
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    const comments = await client.getPaperComments('2310.06825')
+    expect(comments).toHaveLength(2)
+    expect(comments[0]).toMatchObject({
+      id: 'c1',
+      author: 'alice',
+      authorFullname: 'Alice',
+      authorAvatarUrl: 'https://cdn/a.png',
+      authorIsPro: true,
+      content: 'top-level',
+      reactions: [{ emoji: '🔥', count: 1, users: ['x'] }]
+    })
+    expect(comments[0]!.replies).toEqual([
+      expect.objectContaining({ id: 'c2', author: 'bob', content: 'a reply' })
+    ])
+    expect(comments[1]).toMatchObject({
+      id: 'c3',
+      hidden: true,
+      hiddenReason: 'Spam',
+      hiddenBy: 'mod',
+      content: ''
+    })
+    const [url] = fetchImpl.mock.calls[0]! as [string]
+    expect(url).toBe('https://huggingface.co/api/papers/2310.06825?field=comments')
+  })
+
+  it('returns an empty list when the response has no comments field', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ id: '2310.06825' }))
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+    await expect(client.getPaperComments('2310.06825')).resolves.toEqual([])
   })
 })

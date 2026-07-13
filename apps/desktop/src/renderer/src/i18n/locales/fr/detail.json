@@ -165,7 +165,13 @@
     "renamed": "Renommé",
     "statusChanged": "{{author}} a changé le statut en {{status}}",
     "tabDiscussion": "Discussion",
-    "tabFiles": "Fichiers modifiés"
+    "tabFiles": "Fichiers modifiés",
+    "titleChanged": "{{author}} a changé le titre de « {{from}} » à « {{to}} »",
+    "pinned": "{{author}} a épinglé cette discussion",
+    "unpinned": "{{author}} a désépinglé cette discussion",
+    "locked": "{{author}} a verrouillé cette discussion",
+    "unlocked": "{{author}} a déverrouillé cette discussion",
+    "refDeleted": "{{author}} a supprimé la référence de fusion"
   },
   "preview": {
     "colDtype": "Dtype",

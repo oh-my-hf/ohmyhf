@@ -1,7 +1,6 @@
 {
   "authors": "저자",
   "comment": {
-    "heading": "이 논문에 댓글 달기",
     "placeholder": "댓글을 작성하세요 (Markdown 지원)…",
     "posted": "댓글이 게시되었습니다"
   },
@@ -20,5 +19,10 @@
     "remove": "추천 취소",
     "sessionExpired": "Hub 웹 세션이 만료되었습니다. 앱에서 추천하려면 설정 → 계정에서 다시 연결하세요."
   },
-  "upvotes": "추천 수"
+  "upvotes": "추천 수",
+  "comments": {
+    "heading": "댓글",
+    "empty": "아직 댓글이 없습니다.",
+    "loadError": "댓글을 불러올 수 없습니다"
+  }
 }

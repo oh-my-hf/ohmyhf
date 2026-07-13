@@ -508,6 +508,23 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
     comment: z.string().min(1).max(65536),
     replyToCommentId: hexId.optional()
   }),
+  'hub:paperComments': z.object({
+    paperId: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[\w.-]+$/, 'invalid paper id')
+  }),
+  'hub:paperCommentReactionSet': z.object({
+    paperId: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[\w.-]+$/, 'invalid paper id'),
+    commentId: hexId,
+    reaction: z.string().min(1).max(32),
+    active: z.boolean()
+  }),
   'hub:prMerge': z.object({
     kind: repoKind,
     repoId,

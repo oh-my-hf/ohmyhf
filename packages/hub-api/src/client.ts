@@ -57,6 +57,7 @@ import {
   mapMyRepos,
   mapNotificationsPage,
   mapPaper,
+  mapPaperComments,
   mapPaperDetail,
   mapPost,
   mapRepoDetail,
@@ -744,6 +745,17 @@ export class HubClient {
     const url = `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}`
     const { body } = await this.getJson<unknown>(url, { ttl: 60_000 })
     return mapPaperDetail(body as never)
+  }
+
+  /**
+   * Existing comment thread on a Daily Papers entry. Unlike community posts,
+   * this is a clean public JSON endpoint (sparse fieldset: `field=comments`) —
+   * no HTML scraping needed (openapi.json, live-verified 2026-07-13).
+   */
+  async getPaperComments(paperId: string): Promise<PostComment[]> {
+    const url = `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}?field=comments`
+    const { body } = await this.getJson<unknown>(url, { ttl: 10_000 })
+    return mapPaperComments(body as never)
   }
 
   /**
@@ -2121,6 +2133,28 @@ export class HubClient {
     // stays the fallback so token-only sessions keep their current behavior.
     const auth = this.getSessionCookie() ? ('cookie' as const) : ('token' as const)
     await this.sendJson('POST', url, { comment }, { auth })
+  }
+
+  /**
+   * Toggle an emoji reaction on a paper comment. Cookie-session only, same
+   * undocumented .../comment/{id}/reaction pattern as discussion/post
+   * comments — openapi.json omits reaction endpoints entirely (for every repo
+   * type), but a live unauthenticated probe returns 401, not 404, confirming
+   * the route exists (verified 2026-07-13).
+   */
+  async setPaperCommentReaction(
+    paperId: string,
+    commentId: string,
+    reaction: string,
+    active: boolean
+  ): Promise<void> {
+    const url = `${this.endpoint}/api/papers/${encodeURIComponent(paperId)}/comment/${encodeURIComponent(commentId)}/reaction`
+    await this.sendJson(
+      'POST',
+      url,
+      { reaction, action: active ? 'add' : 'remove' },
+      { auth: 'cookie' }
+    )
   }
 
   async mergePullRequest(

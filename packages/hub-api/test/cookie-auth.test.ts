@@ -157,6 +157,34 @@ describe('HubClient.setDiscussionCommentReaction', () => {
   })
 })
 
+describe('HubClient.setPaperCommentReaction', () => {
+  it('POSTs to the paper comment reaction endpoint with {reaction, action}', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
+    await cookieClient(fetchImpl).setPaperCommentReaction(
+      '2310.06825',
+      '6526cf453b3b217bf81225fc',
+      '🔥',
+      true
+    )
+    const { url, init } = requestOf(fetchImpl)
+    expect(url).toBe(
+      'https://huggingface.co/api/papers/2310.06825/comment/6526cf453b3b217bf81225fc/reaction'
+    )
+    expect(init.method).toBe('POST')
+    expect(jsonBodyOf(init)).toEqual({ reaction: '🔥', action: 'add' })
+    expect(headersOf(init).Cookie).toBe('token=session_cookie')
+  })
+
+  it('requires a web session', async () => {
+    const fetchImpl = vi.fn<typeof fetch>()
+    const client = new HubClient({ fetchImpl, ...FAST })
+    await expect(
+      client.setPaperCommentReaction('2310.06825', '6526cf453b3b217bf81225fc', '🔥', true)
+    ).rejects.toBeInstanceOf(CookieRequiredError)
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+})
+
 describe('HubClient.updateWatch auth mode', () => {
   it('uses the cookie when a web session is connected', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ watched: [] }))

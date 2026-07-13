@@ -189,6 +189,61 @@ export function mapPaperDetail(raw: NonNullable<RawDailyPaper['paper']>): PaperS
   return mapPaper({ paper: raw })
 }
 
+interface RawPaperComment {
+  id?: string
+  type?: string
+  author?: { name?: string; fullname?: string; avatarUrl?: string; isPro?: boolean }
+  createdAt?: string
+  data?: {
+    hidden?: boolean
+    hiddenReason?: string
+    hiddenBy?: string
+    latest?: { raw?: string }
+    reactions?: RawReaction[]
+    /** Threads one level deep, like post/discussion comments (openapi.json). */
+    parentCommentId?: string
+  }
+}
+
+/**
+ * Comments on a Daily Papers entry, from `GET /api/papers/{id}?field=comments`
+ * — a flat list threaded via `data.parentCommentId`, unlike the pre-nested
+ * shape post comments arrive in. Nested one level to match the Hub's own
+ * reply depth (a reply-to-a-reply attaches to its immediate parent).
+ */
+export function mapPaperComments(raw: { comments?: RawPaperComment[] }): PostComment[] {
+  const all = (raw.comments ?? []).filter(
+    (c): c is RawPaperComment & { id: string } => c.type === 'comment' && Boolean(c.id)
+  )
+  const byParent = new Map<string, RawPaperComment[]>()
+  for (const c of all) {
+    const parentId = c.data?.parentCommentId
+    if (parentId === undefined) continue
+    byParent.set(parentId, [...(byParent.get(parentId) ?? []), c])
+  }
+  const mapOne = (c: RawPaperComment & { id: string }): PostComment => {
+    const hidden = c.data?.hidden === true
+    const replies = (byParent.get(c.id) ?? [])
+      .filter((r): r is RawPaperComment & { id: string } => Boolean(r.id))
+      .map(mapOne)
+    return {
+      id: c.id,
+      author: c.author?.name ?? '',
+      authorFullname: c.author?.fullname,
+      authorAvatarUrl: c.author?.avatarUrl,
+      authorIsPro: c.author?.isPro,
+      createdAt: c.createdAt,
+      content: hidden ? '' : (c.data?.latest?.raw ?? ''),
+      reactions: normalizeReactions(c.data?.reactions),
+      ...(replies.length > 0 ? { replies } : {}),
+      ...(hidden
+        ? { hidden: true, hiddenReason: c.data?.hiddenReason, hiddenBy: c.data?.hiddenBy }
+        : {})
+    }
+  }
+  return all.filter((c) => c.data?.parentCommentId === undefined).map(mapOne)
+}
+
 interface RawDiscussion {
   num?: number
   title?: string
@@ -211,6 +266,13 @@ interface RawDiscussion {
       subject?: string
       /** Same {reaction, users, count} rows as posts (live-verified 2026-07-11). */
       reactions?: RawReaction[]
+      /** title-change events (openapi.json, verified 2026-07-13). */
+      from?: string
+      to?: string
+      /** pinning-change events. */
+      pinned?: boolean
+      /** locking-change events. */
+      locked?: boolean
     }
   }>
 }
@@ -242,7 +304,11 @@ export function mapDiscussionDetail(raw: RawDiscussion): DiscussionDetail {
       status: e.data?.status,
       oid: e.data?.oid,
       subject: e.data?.subject,
-      reactions: normalizeReactions(e.data?.reactions)
+      reactions: normalizeReactions(e.data?.reactions),
+      titleFrom: e.data?.from,
+      titleTo: e.data?.to,
+      pinned: e.data?.pinned,
+      locked: e.data?.locked
     }))
   }
 }
