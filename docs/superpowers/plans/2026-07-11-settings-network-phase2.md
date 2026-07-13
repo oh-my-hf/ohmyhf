@@ -1,5 +1,7 @@
 # Phase 2 Network Settings Implementation Plan
 
+> **Status:** Implemented / Historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add Settings → Connection → Network with custom Hub endpoint and HTTP(S) proxy URL, applied to HubClient and downloads.
@@ -16,20 +18,20 @@
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/types.ts` | `hubEndpoint`, `proxyUrl` on `AppSettings` + defaults |
-| `packages/shared/src/schemas.ts` | URL-or-null refinements in `settingsPatch` |
-| `apps/desktop/src/main/hub.ts` | Accept endpoint; export rebuild helper |
-| `apps/desktop/src/main/index.ts` | Hold mutable hub ref; apply proxy on boot + settings change |
-| `apps/desktop/src/main/proxy.ts` | `applyProxy(proxyUrl: string \| null)` via `session.setProxy` |
-| `apps/desktop/src/main/workers/download-worker.ts` | Honor `HTTPS_PROXY` / `HTTP_PROXY` from workerData |
-| `apps/desktop/src/main/downloads.ts` | Pass proxy into workerData from settings |
-| `packages/shared/src/ipc.ts` | Optional `network:testConnection` → `{ ok: boolean; error?: string }` |
-| `apps/desktop/src/renderer/.../NetworkSection.tsx` | New section UI |
-| `apps/desktop/src/renderer/.../SettingsDialog.tsx` | Connection nav group |
-| `apps/desktop/src/renderer/src/stores/app.ts` | `'network'` in `SettingsSection` |
-| i18n `en` / `zh-CN` `settings.json` | Strings |
+| File                                               | Role                                                                  |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| `packages/shared/src/types.ts`                     | `hubEndpoint`, `proxyUrl` on `AppSettings` + defaults                 |
+| `packages/shared/src/schemas.ts`                   | URL-or-null refinements in `settingsPatch`                            |
+| `apps/desktop/src/main/hub.ts`                     | Accept endpoint; export rebuild helper                                |
+| `apps/desktop/src/main/index.ts`                   | Hold mutable hub ref; apply proxy on boot + settings change           |
+| `apps/desktop/src/main/proxy.ts`                   | `applyProxy(proxyUrl: string \| null)` via `session.setProxy`         |
+| `apps/desktop/src/main/workers/download-worker.ts` | Honor `HTTPS_PROXY` / `HTTP_PROXY` from workerData                    |
+| `apps/desktop/src/main/downloads.ts`               | Pass proxy into workerData from settings                              |
+| `packages/shared/src/ipc.ts`                       | Optional `network:testConnection` → `{ ok: boolean; error?: string }` |
+| `apps/desktop/src/renderer/.../NetworkSection.tsx` | New section UI                                                        |
+| `apps/desktop/src/renderer/.../SettingsDialog.tsx` | Connection nav group                                                  |
+| `apps/desktop/src/renderer/src/stores/app.ts`      | `'network'` in `SettingsSection`                                      |
+| i18n `en` / `zh-CN` `settings.json`                | Strings                                                               |
 
 ---
 

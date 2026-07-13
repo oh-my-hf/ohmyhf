@@ -25,26 +25,26 @@ Settings already cover theme, locale, UI scale, default home/sort, network, desk
 
 ## Decisions (locked)
 
-| Decision | Choice |
-|----------|--------|
-| Information architecture | Appearance for look + browse prefs; Privacy for clear / import / export |
-| Accent scope | Remap `--c-focus` and selection only; CTA and `--c-brand` unchanged |
-| Font vs zoom | `fontScale` (90–120) independent of `uiScale` (document zoom) |
-| Sidebar | Move from `localStorage` (`omh:sidebarCollapsed`) into `AppSettings` with one-time migrate |
-| `repoOpenTarget: browser` | Favorites / history / global search only; browse split-pane stays in-app |
-| Import | `AppSettings` JSON only; preserve local `hfCacheDir` on import |
-| Clear | Category checkboxes; `settings` kv key never deleted |
+| Decision                  | Choice                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| Information architecture  | Appearance for look + browse prefs; Privacy for clear / import / export                    |
+| Accent scope              | Remap `--c-focus` and selection only; CTA and `--c-brand` unchanged                        |
+| Font vs zoom              | `fontScale` (90–120) independent of `uiScale` (document zoom)                              |
+| Sidebar                   | Move from `localStorage` (`omh:sidebarCollapsed`) into `AppSettings` with one-time migrate |
+| `repoOpenTarget: browser` | Favorites / history / global search only; browse split-pane stays in-app                   |
+| Import                    | `AppSettings` JSON only; preserve local `hfCacheDir` on import                             |
+| Clear                     | Category checkboxes; `settings` kv key never deleted                                       |
 
 ## New `AppSettings` fields
 
 ```ts
-uiDensity: 'comfortable' | 'compact'          // default 'comfortable'
-accent: 'default' | 'blue' | 'green' | 'orange' | 'violet'  // default 'default'
-fontScale: number                             // 90–120, step 5; default 100
-sidebarCollapsed: boolean                     // default false
-browsePageSize: 20 | 30 | 50                  // default 30
-repoOpenTarget: 'app' | 'browser'             // default 'app'
-historyLimit: 50 | 100 | 200 | 500            // default 200
+uiDensity: 'comfortable' | 'compact' // default 'comfortable'
+accent: 'default' | 'blue' | 'green' | 'orange' | 'violet' // default 'default'
+fontScale: number // 90–120, step 5; default 100
+sidebarCollapsed: boolean // default false
+browsePageSize: 20 | 30 | 50 // default 30
+repoOpenTarget: 'app' | 'browser' // default 'app'
+historyLimit: 50 | 100 | 200 | 500 // default 200
 ```
 
 ## Architecture

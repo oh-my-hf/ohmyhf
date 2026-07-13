@@ -26,23 +26,23 @@ The Settings modal today covers Account, Appearance, Downloads, Notifications, a
 
 ## Decisions (locked)
 
-| Decision | Choice |
-|----------|--------|
-| Scope | All four areas, phased **Privacy → Network → Desktop → Browse prefs** |
-| Phase 1 depth | Lightweight: cache summary + link to `/cache`; clear app local data; optional sign-out |
-| Information architecture | New sidebar sections per phase; browse prefs fold into Appearance |
-| Settings file structure | Split `SettingsDialog.tsx` into per-section components under `settings/` as sections grow |
+| Decision                 | Choice                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| Scope                    | All four areas, phased **Privacy → Network → Desktop → Browse prefs**                     |
+| Phase 1 depth            | Lightweight: cache summary + link to `/cache`; clear app local data; optional sign-out    |
+| Information architecture | New sidebar sections per phase; browse prefs fold into Appearance                         |
+| Settings file structure  | Split `SettingsDialog.tsx` into per-section components under `settings/` as sections grow |
 
 ## Final settings information architecture
 
-| Group (i18n) | Section id | Phase |
-|--------------|------------|-------|
-| Account | `account` | existing |
-| Interface | `appearance` (+ browse prefs), `downloads`, `notifications` | existing + Phase 4 |
-| Data | `privacy` | **Phase 1** |
-| Connection | `network` | Phase 2 |
-| System | `desktop` | Phase 3 |
-| About | `about` | existing |
+| Group (i18n) | Section id                                                  | Phase              |
+| ------------ | ----------------------------------------------------------- | ------------------ |
+| Account      | `account`                                                   | existing           |
+| Interface    | `appearance` (+ browse prefs), `downloads`, `notifications` | existing + Phase 4 |
+| Data         | `privacy`                                                   | **Phase 1**        |
+| Connection   | `network`                                                   | Phase 2            |
+| System       | `desktop`                                                   | Phase 3            |
+| About        | `about`                                                     | existing           |
 
 Phase 1 only adds the Data / `privacy` nav entry. Connection and System groups appear when those phases ship.
 
@@ -88,16 +88,16 @@ New nav group **Data** with one item `privacy` (Privacy & data).
 
 ### Clear semantics
 
-| Target | Default clear | With “Also sign out” |
-|--------|---------------|----------------------|
-| `favorites` | yes | yes |
-| `history` | yes | yes |
-| `downloads` | yes | yes |
-| `follows` | yes | yes |
-| `inbox` | yes | yes |
-| `kv` keys other than `settings` | yes | yes |
-| `kv` key `settings` | **keep** | **keep** |
-| `auth` | **keep** | clear |
+| Target                          | Default clear | With “Also sign out” |
+| ------------------------------- | ------------- | -------------------- |
+| `favorites`                     | yes           | yes                  |
+| `history`                       | yes           | yes                  |
+| `downloads`                     | yes           | yes                  |
+| `follows`                       | yes           | yes                  |
+| `inbox`                         | yes           | yes                  |
+| `kv` keys other than `settings` | yes           | yes                  |
+| `kv` key `settings`             | **keep**      | **keep**             |
+| `auth`                          | **keep**      | clear                |
 
 Active download workers should be cancelled/stopped before wiping the `downloads` table so the UI and main process do not diverge.
 
@@ -133,8 +133,8 @@ Add keys under `settings` namespace in `en/settings.json` and `zh-CN/settings.js
 ### Settings fields
 
 ```ts
-hubEndpoint: string | null  // null → https://huggingface.co
-proxyUrl: string | null     // null → system / no app override
+hubEndpoint: string | null // null → https://huggingface.co
+proxyUrl: string | null // null → system / no app override
 ```
 
 ### Behavior
@@ -155,8 +155,8 @@ proxyUrl: string | null     // null → system / no app override
 ### Settings fields
 
 ```ts
-launchAtLogin: boolean  // default false
-closeToTray: boolean    // default false
+launchAtLogin: boolean // default false
+closeToTray: boolean // default false
 ```
 
 ### Behavior
@@ -175,8 +175,8 @@ closeToTray: boolean    // default false
 ### Settings fields
 
 ```ts
-defaultHome: 'home' | 'models' | 'datasets' | 'spaces' | 'papers'  // default 'home'
-defaultRepoSort: RepoSort  // default 'trending'
+defaultHome: 'home' | 'models' | 'datasets' | 'spaces' | 'papers' // default 'home'
+defaultRepoSort: RepoSort // default 'trending'
 ```
 
 ### Behavior

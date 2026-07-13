@@ -1,5 +1,7 @@
 # Command+K Org Search + Search-All Page Implementation Plan
 
+> **Status:** Implemented / Historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add org/paper/collection results to Command+K, plus a sidebar-based `/search` page that searches all hub entity types for a query.
@@ -14,28 +16,29 @@
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/types.ts` | `OrgSearchResult`, `PaperSearchResult`, `CollectionSearchResult`; optional `isOrg` on user result |
-| `packages/shared/src/ipc.ts` | Three new invoke channels + imports |
-| `packages/shared/src/schemas.ts` | Zod `query` min 1 max 64 for each |
-| `packages/hub-api/src/client.ts` | `searchOrgs` / `searchPapers` / `searchCollections` |
-| `packages/hub-api/test/client-features.test.ts` | Unit tests for the three methods |
-| `apps/desktop/src/main/ipc.ts` | Register handlers |
-| `apps/desktop/src/main/schemas.test.ts` | Schema accept/reject |
-| `apps/desktop/src/renderer/src/hooks/use-global-search.ts` | Return orgs/papers/collections |
-| `apps/desktop/src/renderer/src/components/CommandPalette.tsx` | New groups + Search all action |
-| `apps/desktop/src/renderer/src/hooks/use-search-page.ts` | Debounced multi-bucket fetch for `/search` |
-| `apps/desktop/src/renderer/src/pages/SearchPage.tsx` | Sidebar + results UI |
-| `apps/desktop/src/renderer/src/App.tsx` | Route `search` |
-| `apps/desktop/src/renderer/src/i18n/locales/en/nav.json` | Strings |
-| `apps/desktop/src/renderer/src/i18n/locales/zh-CN/nav.json` | Strings |
+| File                                                          | Role                                                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `packages/shared/src/types.ts`                                | `OrgSearchResult`, `PaperSearchResult`, `CollectionSearchResult`; optional `isOrg` on user result |
+| `packages/shared/src/ipc.ts`                                  | Three new invoke channels + imports                                                               |
+| `packages/shared/src/schemas.ts`                              | Zod `query` min 1 max 64 for each                                                                 |
+| `packages/hub-api/src/client.ts`                              | `searchOrgs` / `searchPapers` / `searchCollections`                                               |
+| `packages/hub-api/test/client-features.test.ts`               | Unit tests for the three methods                                                                  |
+| `apps/desktop/src/main/ipc.ts`                                | Register handlers                                                                                 |
+| `apps/desktop/src/main/schemas.test.ts`                       | Schema accept/reject                                                                              |
+| `apps/desktop/src/renderer/src/hooks/use-global-search.ts`    | Return orgs/papers/collections                                                                    |
+| `apps/desktop/src/renderer/src/components/CommandPalette.tsx` | New groups + Search all action                                                                    |
+| `apps/desktop/src/renderer/src/hooks/use-search-page.ts`      | Debounced multi-bucket fetch for `/search`                                                        |
+| `apps/desktop/src/renderer/src/pages/SearchPage.tsx`          | Sidebar + results UI                                                                              |
+| `apps/desktop/src/renderer/src/App.tsx`                       | Route `search`                                                                                    |
+| `apps/desktop/src/renderer/src/i18n/locales/en/nav.json`      | Strings                                                                                           |
+| `apps/desktop/src/renderer/src/i18n/locales/zh-CN/nav.json`   | Strings                                                                                           |
 
 ---
 
 ### Task 1: Shared types + IPC contract + Zod schemas
 
 **Files:**
+
 - Modify: `packages/shared/src/types.ts`
 - Modify: `packages/shared/src/ipc.ts`
 - Modify: `packages/shared/src/schemas.ts`
@@ -106,11 +109,7 @@ Append to `apps/desktop/src/main/schemas.test.ts`:
 
 ```ts
 it('accepts hub quicksearch query channels and rejects empty/oversized', () => {
-  for (const channel of [
-    'hub:searchOrgs',
-    'hub:searchPapers',
-    'hub:searchCollections'
-  ] as const) {
+  for (const channel of ['hub:searchOrgs', 'hub:searchPapers', 'hub:searchCollections'] as const) {
     const schema = ipcRequestSchemas[channel]!
     expect(schema.safeParse({ query: 'meta' }).success).toBe(true)
     expect(schema.safeParse({ query: '' }).success).toBe(false)
@@ -137,6 +136,7 @@ git commit -m "feat(ipc): add org/paper/collection quicksearch channels"
 ### Task 2: HubClient quicksearch methods (TDD)
 
 **Files:**
+
 - Modify: `packages/hub-api/src/client.ts`
 - Modify: `packages/hub-api/test/client-features.test.ts`
 
@@ -330,6 +330,7 @@ git commit -m "feat(hub-api): search orgs, papers, and collections via quicksear
 ### Task 3: Wire main-process IPC handlers
 
 **Files:**
+
 - Modify: `apps/desktop/src/main/ipc.ts`
 
 - [ ] **Step 1: Register handlers**
@@ -360,6 +361,7 @@ git commit -m "feat(desktop): wire org/paper/collection search IPC"
 ### Task 4: Extend `useGlobalSearch`
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/src/hooks/use-global-search.ts`
 
 - [ ] **Step 1: Replace hook contents**
@@ -446,8 +448,7 @@ export function useGlobalSearch(query: string): GlobalSearchResults {
     orgs: orgs.data ?? [],
     papers: papers.data ?? [],
     collections: collections.data ?? [],
-    isLoading:
-      trimmed !== '' && (trimmed !== q || asyncQueries.some((r) => r.isLoading))
+    isLoading: trimmed !== '' && (trimmed !== q || asyncQueries.some((r) => r.isLoading))
   }
 }
 ```
@@ -464,6 +465,7 @@ git commit -m "feat(search): extend useGlobalSearch with orgs, papers, collectio
 ### Task 5: i18n strings
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/src/i18n/locales/en/nav.json`
 - Modify: `apps/desktop/src/renderer/src/i18n/locales/zh-CN/nav.json`
 
@@ -523,6 +525,7 @@ git commit -m "feat(i18n): strings for org search and search-all page"
 ### Task 6: CommandPalette UI
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/src/components/CommandPalette.tsx`
 
 - [ ] **Step 1: Imports and icons**
@@ -553,100 +556,110 @@ Inside the `page === 'root' && needle !== '' && !search.isLoading` block, after 
 Concrete structure (insert/replace the results + searchIn section):
 
 ```tsx
-{SEARCH_GROUPS.map(([group, kind]) =>
-  search[group].length > 0 ? (
-    <Command.Group key={group} heading={t(KIND_LABEL_KEY[kind])}>
-      {search[group].map((repo) => (
-        <RepoResultItem
-          key={repo.id}
-          repo={repo}
-          locale={locale}
-          onSelect={() => closeAnd(() => navigate(`${KIND_PATH[repo.kind]}/${repo.id}`))}
-        />
+{
+  SEARCH_GROUPS.map(([group, kind]) =>
+    search[group].length > 0 ? (
+      <Command.Group key={group} heading={t(KIND_LABEL_KEY[kind])}>
+        {search[group].map((repo) => (
+          <RepoResultItem
+            key={repo.id}
+            repo={repo}
+            locale={locale}
+            onSelect={() => closeAnd(() => navigate(`${KIND_PATH[repo.kind]}/${repo.id}`))}
+          />
+        ))}
+      </Command.Group>
+    ) : null
+  )
+}
+{
+  search.orgs.length > 0 && (
+    <Command.Group heading={t('nav:organizations')}>
+      {search.orgs.map((org) => (
+        <Command.Item
+          key={org.name}
+          value={`org:${org.name}`}
+          onSelect={() => closeAnd(() => navigate(`/users/${org.name}`))}
+        >
+          <Building2 className="size-4 shrink-0 text-ink-faint" aria-hidden />
+          <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{org.name}</span>
+          {org.fullname ? (
+            <span className="max-w-40 shrink-0 truncate text-[11px] text-ink-faint">
+              {org.fullname}
+            </span>
+          ) : null}
+        </Command.Item>
       ))}
     </Command.Group>
-  ) : null
-)}
-{search.orgs.length > 0 && (
-  <Command.Group heading={t('nav:organizations')}>
-    {search.orgs.map((org) => (
-      <Command.Item
-        key={org.name}
-        value={`org:${org.name}`}
-        onSelect={() => closeAnd(() => navigate(`/users/${org.name}`))}
-      >
-        <Building2 className="size-4 shrink-0 text-ink-faint" aria-hidden />
-        <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{org.name}</span>
-        {org.fullname ? (
-          <span className="max-w-40 shrink-0 truncate text-[11px] text-ink-faint">{org.fullname}</span>
-        ) : null}
-      </Command.Item>
-    ))}
-  </Command.Group>
-)}
-{search.users.length > 0 && (
-  <Command.Group heading={t('nav:users')}>
-    {/* existing user items unchanged */}
-  </Command.Group>
-)}
-{search.papers.length > 0 && (
-  <Command.Group heading={t('nav:papers')}>
-    {search.papers.map((paper) => (
-      <Command.Item
-        key={paper.id}
-        value={`paper:${paper.id}`}
-        onSelect={() => closeAnd(() => navigate(`/papers/${paper.id}`))}
-      >
-        <FileText className="size-4 shrink-0 text-ink-faint" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-ink-strong">{paper.title}</span>
-      </Command.Item>
-    ))}
-  </Command.Group>
-)}
-{search.collections.length > 0 && (
-  <Command.Group heading={t('nav:collections')}>
-    {search.collections.map((col) => (
-      <Command.Item
-        key={col.slug}
-        value={`collection:${col.slug}`}
-        onSelect={() => closeAnd(() => navigate(`/collections/${col.slug}`))}
-      >
-        <Library className="size-4 shrink-0 text-ink-faint" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-ink-strong">{col.title}</span>
-      </Command.Item>
-    ))}
-  </Command.Group>
-)}
+  )
+}
+{
+  search.users.length > 0 && (
+    <Command.Group heading={t('nav:users')}>{/* existing user items unchanged */}</Command.Group>
+  )
+}
+{
+  search.papers.length > 0 && (
+    <Command.Group heading={t('nav:papers')}>
+      {search.papers.map((paper) => (
+        <Command.Item
+          key={paper.id}
+          value={`paper:${paper.id}`}
+          onSelect={() => closeAnd(() => navigate(`/papers/${paper.id}`))}
+        >
+          <FileText className="size-4 shrink-0 text-ink-faint" aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-ink-strong">{paper.title}</span>
+        </Command.Item>
+      ))}
+    </Command.Group>
+  )
+}
+{
+  search.collections.length > 0 && (
+    <Command.Group heading={t('nav:collections')}>
+      {search.collections.map((col) => (
+        <Command.Item
+          key={col.slug}
+          value={`collection:${col.slug}`}
+          onSelect={() => closeAnd(() => navigate(`/collections/${col.slug}`))}
+        >
+          <Library className="size-4 shrink-0 text-ink-faint" aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-ink-strong">{col.title}</span>
+        </Command.Item>
+      ))}
+    </Command.Group>
+  )
+}
 ```
 
 Then action rows:
 
 ```tsx
-{needle !== '' && (
-  <>
-    <Command.Item
-      value={`searchAll:${query}`}
-      onSelect={() =>
-        closeAnd(() => navigate(`/search?q=${encodeURIComponent(query)}&type=all`))
-      }
-    >
-      <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
-      <span className="truncate">{t('nav:searchAll', { query })}</span>
-    </Command.Item>
-    {searchKinds.map((kind) => (
+{
+  needle !== '' && (
+    <>
       <Command.Item
-        key={`searchIn:${kind}`}
-        value={`searchIn:${kind}:${query}`}
-        onSelect={() => applyFilter(kind, { search: query })}
+        value={`searchAll:${query}`}
+        onSelect={() => closeAnd(() => navigate(`/search?q=${encodeURIComponent(query)}&type=all`))}
       >
         <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
-        <span className="truncate">
-          {t('nav:searchIn', { kind: t(KIND_LABEL_KEY[kind]), query })}
-        </span>
+        <span className="truncate">{t('nav:searchAll', { query })}</span>
       </Command.Item>
-    ))}
-  </>
-)}
+      {searchKinds.map((kind) => (
+        <Command.Item
+          key={`searchIn:${kind}`}
+          value={`searchIn:${kind}:${query}`}
+          onSelect={() => applyFilter(kind, { search: query })}
+        >
+          <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
+          <span className="truncate">
+            {t('nav:searchIn', { kind: t(KIND_LABEL_KEY[kind]), query })}
+          </span>
+        </Command.Item>
+      ))}
+    </>
+  )
+}
 ```
 
 Keep users group order as: orgs then users (matches spec: Organizations → Users → Papers → Collections). Move the existing users block to after orgs if it currently precedes orgs.
@@ -669,6 +682,7 @@ git commit -m "feat(palette): show orgs/papers/collections and Search all"
 ### Task 7: `useSearchPage` hook
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/src/hooks/use-search-page.ts`
 
 - [ ] **Step 1: Create hook**
@@ -690,14 +704,7 @@ const STALE_TIME = 60_000
 const ALL_LIMIT = 10
 
 export type SearchPageType =
-  | 'all'
-  | 'model'
-  | 'dataset'
-  | 'space'
-  | 'org'
-  | 'user'
-  | 'paper'
-  | 'collection'
+  'all' | 'model' | 'dataset' | 'space' | 'org' | 'user' | 'paper' | 'collection'
 
 export interface SearchPageBuckets {
   models: RepoSummary[]
@@ -861,6 +868,7 @@ git commit -m "feat(search): add useSearchPage hook for /search"
 ### Task 8: SearchPage UI + route
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/src/pages/SearchPage.tsx`
 - Modify: `apps/desktop/src/renderer/src/App.tsx`
 
@@ -888,10 +896,7 @@ import { formatCount } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  type SearchPageType,
-  useSearchPage
-} from '@/hooks/use-search-page'
+import { type SearchPageType, useSearchPage } from '@/hooks/use-search-page'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 const TYPES: SearchPageType[] = [
@@ -999,10 +1004,16 @@ export function SearchPage(): React.JSX.Element {
     const b = search.buckets
     return {
       all: undefined as number | undefined,
-      model: type === 'all' ? b.models.length : type === 'model' ? search.repoItems.length : undefined,
+      model:
+        type === 'all' ? b.models.length : type === 'model' ? search.repoItems.length : undefined,
       dataset:
-        type === 'all' ? b.datasets.length : type === 'dataset' ? search.repoItems.length : undefined,
-      space: type === 'all' ? b.spaces.length : type === 'space' ? search.repoItems.length : undefined,
+        type === 'all'
+          ? b.datasets.length
+          : type === 'dataset'
+            ? search.repoItems.length
+            : undefined,
+      space:
+        type === 'all' ? b.spaces.length : type === 'space' ? search.repoItems.length : undefined,
       org: b.orgs.length || undefined,
       user: b.users.length || undefined,
       paper: b.papers.length || undefined,
@@ -1027,9 +1038,7 @@ export function SearchPage(): React.JSX.Element {
     <div className="flex h-full min-w-0 flex-col">
       <header className="shrink-0 border-b px-5 py-4">
         <h1 className="text-[15px] font-semibold text-ink-strong">{t('searchPage.title')}</h1>
-        {q.trim() ? (
-          <p className="mt-0.5 text-[12.5px] text-ink-muted">“{q.trim()}”</p>
-        ) : null}
+        {q.trim() ? <p className="mt-0.5 text-[12.5px] text-ink-muted">“{q.trim()}”</p> : null}
       </header>
 
       <div className="flex min-h-0 flex-1 max-md:flex-col">
@@ -1039,7 +1048,16 @@ export function SearchPage(): React.JSX.Element {
         >
           {TYPES.map((item) => {
             const active = item === type
-            const count = counts[item === 'model' ? 'model' : item === 'dataset' ? 'dataset' : item === 'space' ? 'space' : item]
+            const count =
+              counts[
+                item === 'model'
+                  ? 'model'
+                  : item === 'dataset'
+                    ? 'dataset'
+                    : item === 'space'
+                      ? 'space'
+                      : item
+              ]
             return (
               <button
                 key={item}
@@ -1074,7 +1092,11 @@ export function SearchPage(): React.JSX.Element {
               ))}
             </div>
           ) : !hasAny ? (
-            <EmptyState icon={Search} title={t('searchPage.emptyTitle')} body={t('searchPage.emptyBody')} />
+            <EmptyState
+              icon={Search}
+              title={t('searchPage.emptyTitle')}
+              body={t('searchPage.emptyBody')}
+            />
           ) : type === 'all' ? (
             <div className="space-y-5">
               {(
@@ -1116,7 +1138,11 @@ export function SearchPage(): React.JSX.Element {
                     <h2 className="text-[10px] font-semibold tracking-wider text-ink-faint uppercase">
                       {t('organizations')}
                     </h2>
-                    <button type="button" className="text-[11px] text-ink-muted hover:text-ink" onClick={() => setType('org')}>
+                    <button
+                      type="button"
+                      className="text-[11px] text-ink-muted hover:text-ink"
+                      onClick={() => setType('org')}
+                    >
                       {t('searchPage.viewMore')}
                     </button>
                   </div>
@@ -1128,9 +1154,13 @@ export function SearchPage(): React.JSX.Element {
                       onClick={() => navigate(`/users/${org.name}`)}
                     >
                       <Building2 className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{org.name}</span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">
+                        {org.name}
+                      </span>
                       {org.fullname ? (
-                        <span className="max-w-40 truncate text-[11px] text-ink-faint">{org.fullname}</span>
+                        <span className="max-w-40 truncate text-[11px] text-ink-faint">
+                          {org.fullname}
+                        </span>
                       ) : null}
                     </button>
                   ))}
@@ -1142,7 +1172,11 @@ export function SearchPage(): React.JSX.Element {
                     <h2 className="text-[10px] font-semibold tracking-wider text-ink-faint uppercase">
                       {t('users')}
                     </h2>
-                    <button type="button" className="text-[11px] text-ink-muted hover:text-ink" onClick={() => setType('user')}>
+                    <button
+                      type="button"
+                      className="text-[11px] text-ink-muted hover:text-ink"
+                      onClick={() => setType('user')}
+                    >
                       {t('searchPage.viewMore')}
                     </button>
                   </div>
@@ -1154,7 +1188,9 @@ export function SearchPage(): React.JSX.Element {
                       onClick={() => navigate(`/users/${user.name}`)}
                     >
                       <User className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{user.name}</span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">
+                        {user.name}
+                      </span>
                     </button>
                   ))}
                 </section>
@@ -1165,7 +1201,11 @@ export function SearchPage(): React.JSX.Element {
                     <h2 className="text-[10px] font-semibold tracking-wider text-ink-faint uppercase">
                       {t('papers')}
                     </h2>
-                    <button type="button" className="text-[11px] text-ink-muted hover:text-ink" onClick={() => setType('paper')}>
+                    <button
+                      type="button"
+                      className="text-[11px] text-ink-muted hover:text-ink"
+                      onClick={() => setType('paper')}
+                    >
                       {t('searchPage.viewMore')}
                     </button>
                   </div>
@@ -1247,9 +1287,13 @@ export function SearchPage(): React.JSX.Element {
                 onClick={() => navigate(`/users/${org.name}`)}
               >
                 <Building2 className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{org.name}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">
+                  {org.name}
+                </span>
                 {org.fullname ? (
-                  <span className="max-w-40 truncate text-[11px] text-ink-faint">{org.fullname}</span>
+                  <span className="max-w-40 truncate text-[11px] text-ink-faint">
+                    {org.fullname}
+                  </span>
                 ) : null}
               </button>
             ))
@@ -1262,7 +1306,9 @@ export function SearchPage(): React.JSX.Element {
                 onClick={() => navigate(`/users/${user.name}`)}
               >
                 <User className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{user.name}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">
+                  {user.name}
+                </span>
               </button>
             ))
           ) : type === 'paper' ? (
@@ -1352,22 +1398,22 @@ Otherwise done.
 
 ## Spec coverage self-review
 
-| Spec requirement | Task |
-|------------------|------|
-| `hub:searchOrgs/Papers/Collections` + types | 1–3 |
-| Palette groups for org/paper/collection | 4, 6 |
-| Search all action above per-kind searchIn | 6 |
-| Keep searchIn for model/dataset/space | 6 |
-| `/search?q=&type=` sidebar layout | 7–8 |
-| All = typed sections; single type filters | 8 |
-| Repo pagination on single type | 7–8 |
-| Per-bucket failure → [] | 2 |
-| Empty q empty-state | 8 |
-| i18n en + zh-CN | 5 |
-| No main sidebar Search nav | (explicitly omitted) |
-| No papers/collections searchIn rows | (explicitly omitted) |
-| Schema tests | 1 |
-| HubClient unit tests | 2 |
+| Spec requirement                            | Task                 |
+| ------------------------------------------- | -------------------- |
+| `hub:searchOrgs/Papers/Collections` + types | 1–3                  |
+| Palette groups for org/paper/collection     | 4, 6                 |
+| Search all action above per-kind searchIn   | 6                    |
+| Keep searchIn for model/dataset/space       | 6                    |
+| `/search?q=&type=` sidebar layout           | 7–8                  |
+| All = typed sections; single type filters   | 8                    |
+| Repo pagination on single type              | 7–8                  |
+| Per-bucket failure → []                     | 2                    |
+| Empty q empty-state                         | 8                    |
+| i18n en + zh-CN                             | 5                    |
+| No main sidebar Search nav                  | (explicitly omitted) |
+| No papers/collections searchIn rows         | (explicitly omitted) |
+| Schema tests                                | 1                    |
+| HubClient unit tests                        | 2                    |
 
 **Placeholder scan:** none intentional.  
 **Type consistency:** `OrgSearchResult` / `PaperSearchResult` / `CollectionSearchResult` / `SearchPageType` names match across tasks.

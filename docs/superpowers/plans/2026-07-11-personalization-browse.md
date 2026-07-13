@@ -8,21 +8,21 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-11-local-personalization-design.md` (Phase 2)
 
-**Status:** Implemented with the local personalization rollout.
+**Status:** Implemented / Historical (local personalization rollout).
 
 ---
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/types.ts` | `browsePageSize`, `repoOpenTarget`, `historyLimit` |
-| `packages/shared/src/schemas.ts` | Zod unions/enums |
-| `RepoList.tsx` / `use-search-page.ts` | `limit` from settings |
-| `lib/repo-open.ts` | Open in app vs browser |
-| `FavoritesPage` / `SearchPage` / `CommandPalette` | Honor `repoOpenTarget` |
-| `library.ts` | Settings-backed history limit + prune |
-| Appearance UI | Three Selects |
+| File                                              | Role                                               |
+| ------------------------------------------------- | -------------------------------------------------- |
+| `packages/shared/src/types.ts`                    | `browsePageSize`, `repoOpenTarget`, `historyLimit` |
+| `packages/shared/src/schemas.ts`                  | Zod unions/enums                                   |
+| `RepoList.tsx` / `use-search-page.ts`             | `limit` from settings                              |
+| `lib/repo-open.ts`                                | Open in app vs browser                             |
+| `FavoritesPage` / `SearchPage` / `CommandPalette` | Honor `repoOpenTarget`                             |
+| `library.ts`                                      | Settings-backed history limit + prune              |
+| Appearance UI                                     | Three Selects                                      |
 
 ---
 

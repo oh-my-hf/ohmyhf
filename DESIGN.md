@@ -22,26 +22,26 @@ cool-gray ramp; dark mode uses HF's near-black blues, not plain grays.
 
 ### Roles (light / dark)
 
-| Role        | Light                | Dark                 | Usage                                        |
-| ----------- | -------------------- | -------------------- | -------------------------------------------- |
-| bg          | white                | gray-950 `#030712`   | page                                         |
-| panel       | gray-50              | `#0b0f19`            | sidebar, toolbars, pre blocks                |
-| panel-2     | gray-100             | `#101623`            | hovers, chips, skeletons                     |
-| elevated    | white                | `#0b0f19`            | dialog, menu, palette, toast                 |
-| field       | white                | `#101623`            | input interiors (recessed inset shadow)      |
-| border      | gray-200             | gray-800 `#1e2939`   | interactive borders (universal default)      |
-| border-card | gray-100 `#f3f4f6`   | `#141c2e`            | card outlines, hairlines                     |
-| ink-strong  | gray-900 `#101828`   | gray-100             | headings, repo names, links                  |
-| ink         | gray-700 `#364153`   | gray-300             | body (10.3:1)                                |
-| ink-muted   | gray-600             | gray-400             | secondary text                               |
-| ink-faint   | gray-500 `#6a7282`   | custom L 0.63        | metadata TEXT — the ≥4.5:1 floor             |
-| decor       | gray-400             | gray-600             | decorative glyphs/dots only, never words     |
-| cta / -ink  | gray-900 / white     | gray-100 / gray-950  | black-pill CTA; inverts on hover             |
-| link        | gray-900             | gray-200             | inline links, hover underline                |
-| hover-title | = select             | yellow-500 / acc-400 | mono-title hover recolor; follows accent     |
-| focus       | blue-500             | blue-500             | focus rings (at /25–/50), `::selection`      |
-| select      | indigo-600           | indigo-400           | selection tint (/10), progress, switch       |
-| brand       | `#FFD21E` (+ orange) | same                 | count badges, unread dots, star fills ONLY   |
+| Role        | Light                | Dark                 | Usage                                      |
+| ----------- | -------------------- | -------------------- | ------------------------------------------ |
+| bg          | white                | gray-950 `#030712`   | page                                       |
+| panel       | gray-50              | `#0b0f19`            | sidebar, toolbars, pre blocks              |
+| panel-2     | gray-100             | `#101623`            | hovers, chips, skeletons                   |
+| elevated    | white                | `#0b0f19`            | dialog, menu, palette, toast               |
+| field       | white                | `#101623`            | input interiors (recessed inset shadow)    |
+| border      | gray-200             | gray-800 `#1e2939`   | interactive borders (universal default)    |
+| border-card | gray-100 `#f3f4f6`   | `#141c2e`            | card outlines, hairlines                   |
+| ink-strong  | gray-900 `#101828`   | gray-100             | headings, repo names, links                |
+| ink         | gray-700 `#364153`   | gray-300             | body (10.3:1)                              |
+| ink-muted   | gray-600             | gray-400             | secondary text                             |
+| ink-faint   | gray-500 `#6a7282`   | custom L 0.63        | metadata TEXT — the ≥4.5:1 floor           |
+| decor       | gray-400             | gray-600             | decorative glyphs/dots only, never words   |
+| cta / -ink  | gray-900 / white     | gray-100 / gray-950  | black-pill CTA; inverts on hover           |
+| link        | gray-900             | gray-200             | inline links, hover underline              |
+| hover-title | = select             | yellow-500 / acc-400 | mono-title hover recolor; follows accent   |
+| focus       | blue-500             | blue-500             | focus rings (at /25–/50), `::selection`    |
+| select      | indigo-600           | indigo-400           | selection tint (/10), progress, switch     |
+| brand       | `#FFD21E` (+ orange) | same                 | count badges, unread dots, star fills ONLY |
 
 WCAG deviations from huggingface.co (deliberate): HF sets metadata in gray-400 (≈2.7:1, fails
 AA) — our metadata text sits one step darker (`ink-faint`); gray-400 survives only as `decor`

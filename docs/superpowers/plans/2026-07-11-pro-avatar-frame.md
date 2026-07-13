@@ -1,5 +1,7 @@
 # Pro Avatar Frame Implementation Plan
 
+> **Status:** Implemented / Historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add Hub-faithful Pro avatar frames (gradient ring + rainbow sparkle) to `ProfileAvatar`, with profile/compact recipes and `isPro` plumbed through posts + activity feed.
@@ -14,21 +16,22 @@
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/types.ts` | `authorIsPro` on `PostSummary`; `actorIsPro` on `ActivityItem` |
-| `packages/hub-api/src/mappers.ts` | Map `isPro` in `mapPost` / `mapActivityFeed` |
-| `packages/hub-api/src/index.ts` | Export `mapActivityFeed` for unit tests |
-| `packages/hub-api/test/pro-avatar-mappers.test.ts` | Mapper unit tests |
-| `apps/desktop/.../profile/ProSparkleIcon.tsx` | Official sparkle SVG |
-| `apps/desktop/.../profile/ProfileAvatar.tsx` | Ring + sparkle chrome |
-| `UserPage.tsx`, `FeedItems.tsx`, `ActivityFeedItems.tsx`, `PostPage.tsx`, `SettingsDialog.tsx` | Pass `isPro` / `frame` |
+| File                                                                                           | Role                                                           |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `packages/shared/src/types.ts`                                                                 | `authorIsPro` on `PostSummary`; `actorIsPro` on `ActivityItem` |
+| `packages/hub-api/src/mappers.ts`                                                              | Map `isPro` in `mapPost` / `mapActivityFeed`                   |
+| `packages/hub-api/src/index.ts`                                                                | Export `mapActivityFeed` for unit tests                        |
+| `packages/hub-api/test/pro-avatar-mappers.test.ts`                                             | Mapper unit tests                                              |
+| `apps/desktop/.../profile/ProSparkleIcon.tsx`                                                  | Official sparkle SVG                                           |
+| `apps/desktop/.../profile/ProfileAvatar.tsx`                                                   | Ring + sparkle chrome                                          |
+| `UserPage.tsx`, `FeedItems.tsx`, `ActivityFeedItems.tsx`, `PostPage.tsx`, `SettingsDialog.tsx` | Pass `isPro` / `frame`                                         |
 
 ---
 
 ### Task 1: Types + mapper tests (TDD) + mapper impl
 
 **Files:**
+
 - Modify: `packages/shared/src/types.ts`
 - Modify: `packages/hub-api/src/mappers.ts`
 - Modify: `packages/hub-api/src/index.ts`
@@ -38,11 +41,13 @@
 - [ ] **Step 1: Add shared fields**
 
 `PostSummary`:
+
 ```ts
 authorIsPro?: boolean
 ```
 
 Every `ActivityItem` variant:
+
 ```ts
 actorIsPro?: boolean
 ```
@@ -111,7 +116,11 @@ describe('mapActivityFeed actorIsPro', () => {
       'https://huggingface.co'
     )
     expect(feed.items[0]).toMatchObject({ kind: 'like', actor: 'u' })
-    expect('actorIsPro' in (feed.items[0] ?? {}) ? (feed.items[0] as { actorIsPro?: boolean }).actorIsPro : undefined).toBeUndefined()
+    expect(
+      'actorIsPro' in (feed.items[0] ?? {})
+        ? (feed.items[0] as { actorIsPro?: boolean }).actorIsPro
+        : undefined
+    ).toBeUndefined()
   })
 })
 ```
@@ -121,21 +130,25 @@ describe('mapActivityFeed actorIsPro', () => {
 - [ ] **Step 4: Implement mapper changes**
 
 `RawPost.author`:
+
 ```ts
 author?: { name?: string; fullname?: string; avatarUrl?: string; isPro?: boolean }
 ```
 
 In `mapPost` return:
+
 ```ts
 authorIsPro: raw.author?.isPro,
 ```
 
 `RawActivityItem`:
+
 ```ts
 isPro?: boolean
 ```
 
 When pushing activity items, include:
+
 ```ts
 actorIsPro: a.isPro,
 ```
@@ -160,6 +173,7 @@ git commit -m "feat(hub): plumb isPro into post and activity mappers"
 ### Task 2: `ProSparkleIcon` + `ProfileAvatar` frame
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/src/components/profile/ProSparkleIcon.tsx`
 - Modify: `apps/desktop/src/renderer/src/components/profile/ProfileAvatar.tsx`
 
@@ -174,12 +188,14 @@ Props: `isPro?: boolean`, `frame?: 'profile' | 'compact'` (default `'compact'` w
 When `isPro !== true`: keep current markup.
 
 When Pro + `profile`:
+
 - Outer `relative inline-flex shrink-0`
 - Ring: `bg-linear-to-br from-pink-300 via-green-400 to-yellow-300 p-[3px] dark:from-pink-500/70 dark:via-green-500/70 dark:to-yellow-500/70 relative rounded-full`
 - Inner img/fallback: apply caller `className` for size; add `rounded-full border-[3px] border-white object-cover dark:border-gray-950` (drop plain `border`)
 - Sparkle: `absolute left-0 top-[10%] text-[1.15em] text-white dark:text-gray-950` (scale with avatar via em)
 
 When Pro + `compact`:
+
 - Ring: `from-pink-500 via-green-500 to-yellow-500 p-px relative rounded-full bg-linear-to-br`
 - Inner: `rounded-full bg-white object-cover dark:bg-gray-950` + size `className`; thin inset ok via ring padding
 - Sparkle: `absolute -bottom-0.5 -right-0.5 text-[0.65em] text-white dark:text-gray-950`
@@ -197,6 +213,7 @@ git commit -m "feat(ui): add Hub-style Pro avatar frame to ProfileAvatar"
 ### Task 3: Wire call sites
 
 **Files:**
+
 - `UserPage.tsx` — header `frame="profile" isPro={data.isPro === true}`; compact where available
 - `FeedItems.tsx` — `isPro={post.authorIsPro === true} frame="compact"`
 - `ActivityFeedItems.tsx` — pass `actorIsPro`; for social-post prefer `item.actorIsPro ?? item.post.authorIsPro`
@@ -215,11 +232,11 @@ git commit -m "feat(ui): show Pro avatar frame on profile, feed, and settings"
 
 ## Spec coverage
 
-| Spec item | Task |
-|-----------|------|
-| Ring + sparkle only | 2 |
-| Profile + compact recipes / light-dark | 2 |
-| Plumb feed/post isPro | 1, 3 |
-| Extend ProfileAvatar | 2 |
-| No TFLOPS/Sync/org frames | — |
-| Mapper tests | 1 |
+| Spec item                              | Task |
+| -------------------------------------- | ---- |
+| Ring + sparkle only                    | 2    |
+| Profile + compact recipes / light-dark | 2    |
+| Plumb feed/post isPro                  | 1, 3 |
+| Extend ProfileAvatar                   | 2    |
+| No TFLOPS/Sync/org frames              | —    |
+| Mapper tests                           | 1    |

@@ -9,26 +9,26 @@ Extend the Command+K palette so users can find organizations (and papers / colle
 
 ## Decisions
 
-| Topic | Choice |
-|-------|--------|
-| Interaction model | Keep palette grouped previews; add a **Search all “q”** action that opens a dedicated page |
-| Orgs | Show in both palette preview and the search-all page |
-| Search-all layout | Sidebar category nav + results list (HF-like) |
-| Per-kind palette actions | Keep existing “Search models/datasets/spaces for q”; put **Search all** above them |
-| Implementation approach | Extend parallel `hub:search` + new quicksearch IPC channels (not a single unified quicksearch for repos) |
-| Entity scope | Models, Datasets, Spaces, Organizations, Users, Papers, Collections |
+| Topic                    | Choice                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Interaction model        | Keep palette grouped previews; add a **Search all “q”** action that opens a dedicated page               |
+| Orgs                     | Show in both palette preview and the search-all page                                                     |
+| Search-all layout        | Sidebar category nav + results list (HF-like)                                                            |
+| Per-kind palette actions | Keep existing “Search models/datasets/spaces for q”; put **Search all** above them                       |
+| Implementation approach  | Extend parallel `hub:search` + new quicksearch IPC channels (not a single unified quicksearch for repos) |
+| Entity scope             | Models, Datasets, Spaces, Organizations, Users, Papers, Collections                                      |
 
 ## Architecture
 
 ### Data sources
 
-| Entity | IPC | Hub API | Palette limit | Search-all |
-|--------|-----|---------|---------------|------------|
-| Model / Dataset / Space | existing `hub:search` | list endpoints with `search` | 5 each | ~10 + cursor pagination |
-| User | existing `hub:searchUsers` | `/api/quicksearch?type=user` | ~8 | one page |
-| Org | new `hub:searchOrgs` | `/api/quicksearch?type=org` | ~5–8 | one page |
-| Paper | new `hub:searchPapers` | `/api/quicksearch?type=paper` | ~5 | one page |
-| Collection | new `hub:searchCollections` | `/api/quicksearch?type=collection` | ~5 | one page |
+| Entity                  | IPC                         | Hub API                            | Palette limit | Search-all              |
+| ----------------------- | --------------------------- | ---------------------------------- | ------------- | ----------------------- |
+| Model / Dataset / Space | existing `hub:search`       | list endpoints with `search`       | 5 each        | ~10 + cursor pagination |
+| User                    | existing `hub:searchUsers`  | `/api/quicksearch?type=user`       | ~8            | one page                |
+| Org                     | new `hub:searchOrgs`        | `/api/quicksearch?type=org`        | ~5–8          | one page                |
+| Paper                   | new `hub:searchPapers`      | `/api/quicksearch?type=paper`      | ~5            | one page                |
+| Collection              | new `hub:searchCollections` | `/api/quicksearch?type=collection` | ~5            | one page                |
 
 Failures on any single channel degrade to an empty list for that bucket (same pattern as `searchUsers` today). Do not fail the whole palette or page.
 

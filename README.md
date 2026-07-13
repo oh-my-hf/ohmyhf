@@ -11,7 +11,7 @@ Face Hub, managing large model downloads, and plugging models into your local AI
 
 **Privacy-first: everything stays on your machine.** No telemetry, no analytics, no external
 services beyond the Hugging Face API itself. Your access token is encrypted with your OS keychain
-(Electron `safeStorage`) and stored in a local SQLite database.
+(Electron `safeStorage`) and stored in `~/.oh_my_hf/credentials.json` with owner-only permissions.
 
 ![Three-pane browse view: model list with a live detail pane](docs/screenshots/browse.png)
 
@@ -30,7 +30,9 @@ services beyond the Hugging Face API itself. Your access token is encrypted with
   with one click.
 - **Follow & inbox** — follow users/orgs/repos and Daily Papers; get system notifications.
 - **Compare** — 2–4 models side by side (params, license, downloads, likes).
-- **Export** _(in progress)_ — push GGUFs to Ollama / LM Studio, models to ComfyUI.
+- **Upload & export** — scan and upload local folders safely; export downloaded files to Ollama,
+  LM Studio, or ComfyUI with progress and cancellation.
+- **History** — local, searchable browsing history with repository-type filters.
 - **i18n** — English and 简体中文 built in; adding a language is a single JSON folder.
 - **Dark & light themes**, native menus, and OS conventions on every platform.
 - **In-app updates** — installed builds compare their version with the latest published GitHub
@@ -47,8 +49,9 @@ Grab the latest release for your platform from
 
 ### macOS: Gatekeeper / quarantine
 
-macOS builds are **ad-hoc signed** (not Developer ID / notarized — see
-[docs/signing.md](docs/signing.md)). After a browser download, first launch may still need:
+macOS release builds use the stable self-signed `OhMyHF-Release` certificate; local builds remain
+**ad-hoc signed**. Neither is Developer ID notarized (see [docs/signing.md](docs/signing.md)). After
+a browser download, first launch may still need:
 
 ```sh
 xattr -dr com.apple.quarantine "/Applications/Oh My HuggingFace.app"
@@ -56,9 +59,9 @@ xattr -dr com.apple.quarantine "/Applications/Oh My HuggingFace.app"
 
 or right-click the app → **Open** → **Open**.
 
-The app can discover new GitHub Releases from **Settings → About**. macOS requires a notarized
-Developer ID release for automatic installation; until then, use the GitHub Releases link in the
-updater as the fallback.
+The app can discover new GitHub Releases from **Settings → About**. Releases signed with the same
+self-signed certificate can update in-app; older or differently signed installations use the
+GitHub Releases link as the one-time manual fallback.
 
 ## Development
 
@@ -103,10 +106,10 @@ at `~/.oh_my_hf/credentials.json`.
 ### Releasing
 
 Releases are cut from `main` by a commit whose subject is `[RELEASE] Vx.y.z`. See
-[docs/releasing.md](docs/releasing.md) for the full flow; in short: bump the version in
-`apps/desktop/package.json`, then land a commit titled e.g. `[RELEASE] V0.2.0`. CI validates
-the version, tags `v0.2.0`, drafts a GitHub Release whose notes are the commits since the last
-tag, builds macOS/Windows/Linux, uploads the artifacts, and publishes.
+[docs/releasing.md](docs/releasing.md) for the full flow; in short: bump all four workspace
+manifest versions, then land a commit titled e.g. `[RELEASE] V0.2.0`. CI verifies the source,
+builds and smoke-tests all three platforms, and validates the updater manifests before it creates
+the `v0.2.0` tag or draft release. Publishing happens only after the remote asset list is verified.
 
 ## Architecture
 
@@ -122,8 +125,9 @@ apps/desktop        oh-my-huggingface-desktop    electron-vite app (main / prelo
   Radix). `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, strict CSP.
 - The whole IPC surface is a **typed contract** in `packages/shared` — no magic strings; every
   handler validates its input.
-- Local SQLite (better-sqlite3) stores favorites, history, download tasks, follows, settings, and
-  the safeStorage-encrypted token.
+- Local SQLite (better-sqlite3) stores favorites, history, download tasks, follows, and settings.
+  The token lives only in the separate safeStorage-encrypted credentials file; a legacy database
+  token is migrated and deleted on first successful restore.
 
 ## Contributing
 

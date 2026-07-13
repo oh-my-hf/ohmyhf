@@ -26,15 +26,15 @@ Hugging Face Pro users are identified on the Hub by a distinctive avatar frame (
 
 ## Decisions (locked)
 
-| Decision | Choice |
-|----------|--------|
-| Scope ornaments | Gradient ring + `IconProSparkle` only (A); no TFLOPS/Sync |
-| Surfaces | Profile large avatar **and** compact list/feed avatars (C) |
-| Size recipes | Fully follow Hub’s **two** recipes (not one scaled recipe) |
-| Light/dark | Match Hub token differences (not a single gradient for both themes) |
-| Missing feed `isPro` | Plumb from Hub payloads in this work (B) |
-| Component shape | Extend existing `ProfileAvatar` with `isPro` + `frame` (approach A) |
-| Org accounts | No Pro frame; existing plan badges unchanged |
+| Decision             | Choice                                                              |
+| -------------------- | ------------------------------------------------------------------- |
+| Scope ornaments      | Gradient ring + `IconProSparkle` only (A); no TFLOPS/Sync           |
+| Surfaces             | Profile large avatar **and** compact list/feed avatars (C)          |
+| Size recipes         | Fully follow Hub’s **two** recipes (not one scaled recipe)          |
+| Light/dark           | Match Hub token differences (not a single gradient for both themes) |
+| Missing feed `isPro` | Plumb from Hub payloads in this work (B)                            |
+| Component shape      | Extend existing `ProfileAvatar` with `isPro` + `frame` (approach A) |
+| Org accounts         | No Pro frame; existing plan badges unchanged                        |
 
 ## Hub reference (source of truth)
 
@@ -106,13 +106,13 @@ Extract a tiny `ProSparkleIcon` (inline SVG) next to or inside the avatar module
 
 ### Call sites (desktop renderer)
 
-| Location | `frame` | `isPro` source |
-|----------|---------|----------------|
-| `UserPage` header avatar | `profile` | `data.isPro` |
-| `UserPage` small avatars (org strip, etc.) | `compact` | pass when available |
-| `FeedItems` / `ActivityFeedItems` | `compact` | `actorIsPro` / `post.authorIsPro` |
-| `PostPage` | `compact` | `authorIsPro` |
-| `SettingsDialog` account avatar | `compact` | `auth.user.isPro` |
+| Location                                   | `frame`   | `isPro` source                    |
+| ------------------------------------------ | --------- | --------------------------------- |
+| `UserPage` header avatar                   | `profile` | `data.isPro`                      |
+| `UserPage` small avatars (org strip, etc.) | `compact` | pass when available               |
+| `FeedItems` / `ActivityFeedItems`          | `compact` | `actorIsPro` / `post.authorIsPro` |
+| `PostPage`                                 | `compact` | `authorIsPro`                     |
+| `SettingsDialog` account avatar            | `compact` | `auth.user.isPro`                 |
 
 ## Error handling / degradation
 

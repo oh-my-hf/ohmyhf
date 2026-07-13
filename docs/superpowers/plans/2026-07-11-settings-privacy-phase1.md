@@ -1,5 +1,7 @@
 # Phase 1 Privacy Settings Implementation Plan
 
+> **Status:** Implemented / Historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a Settings → Data → Privacy section with HF cache summary + link to `/cache`, and a clear-local-app-data action (optional sign-out) that never deletes the HF cache directory.
@@ -14,26 +16,27 @@
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/ipc.ts` | Add `privacy:clearLocalData` to contract + channel list |
-| `packages/shared/src/schemas.ts` | Zod for `{ signOut?: boolean }` |
-| `apps/desktop/src/main/privacy.ts` | Pure SQL clear helper (testable) |
-| `apps/desktop/src/main/privacy.test.ts` | Unit tests for clear semantics |
-| `apps/desktop/src/main/downloads.ts` | `clearAll()` — cancel workers, wipe tasks + DB rows |
-| `apps/desktop/src/main/ipc.ts` | Register handler |
-| `apps/desktop/src/renderer/src/stores/app.ts` | Extend `SettingsSection` with `'privacy'` |
-| `apps/desktop/src/renderer/src/components/settings/PrivacySection.tsx` | New section UI |
-| `apps/desktop/src/renderer/src/components/settings/SettingsDialog.tsx` | Nav group + section map |
-| `apps/desktop/src/renderer/src/i18n/locales/en/settings.json` | English strings |
-| `apps/desktop/src/renderer/src/i18n/locales/zh-CN/settings.json` | Chinese strings |
-| `apps/desktop/src/main/schemas.test.ts` | Schema accept/reject for new channel |
+| File                                                                   | Role                                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------------------- |
+| `packages/shared/src/ipc.ts`                                           | Add `privacy:clearLocalData` to contract + channel list |
+| `packages/shared/src/schemas.ts`                                       | Zod for `{ signOut?: boolean }`                         |
+| `apps/desktop/src/main/privacy.ts`                                     | Pure SQL clear helper (testable)                        |
+| `apps/desktop/src/main/privacy.test.ts`                                | Unit tests for clear semantics                          |
+| `apps/desktop/src/main/downloads.ts`                                   | `clearAll()` — cancel workers, wipe tasks + DB rows     |
+| `apps/desktop/src/main/ipc.ts`                                         | Register handler                                        |
+| `apps/desktop/src/renderer/src/stores/app.ts`                          | Extend `SettingsSection` with `'privacy'`               |
+| `apps/desktop/src/renderer/src/components/settings/PrivacySection.tsx` | New section UI                                          |
+| `apps/desktop/src/renderer/src/components/settings/SettingsDialog.tsx` | Nav group + section map                                 |
+| `apps/desktop/src/renderer/src/i18n/locales/en/settings.json`          | English strings                                         |
+| `apps/desktop/src/renderer/src/i18n/locales/zh-CN/settings.json`       | Chinese strings                                         |
+| `apps/desktop/src/main/schemas.test.ts`                                | Schema accept/reject for new channel                    |
 
 ---
 
 ### Task 1: Shared IPC contract + Zod schema
 
 **Files:**
+
 - Modify: `packages/shared/src/ipc.ts`
 - Modify: `packages/shared/src/schemas.ts`
 - Modify: `apps/desktop/src/main/schemas.test.ts`
@@ -82,6 +85,7 @@ git commit -m "feat(ipc): add privacy:clearLocalData contract"
 ### Task 2: DB clear helper + DownloadManager.clearAll + IPC handler
 
 **Files:**
+
 - Create: `apps/desktop/src/main/privacy.ts`
 - Create: `apps/desktop/src/main/privacy.test.ts`
 - Modify: `apps/desktop/src/main/downloads.ts`
@@ -115,9 +119,12 @@ describe('clearLocalAppData', () => {
       `INSERT INTO downloads (id, repo_id, kind, revision, status, files_json, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).run('d1', 'a/b', 'model', 'main', 'completed', '[]', new Date().toISOString())
-    db.prepare(
-      `INSERT INTO follows (id, type, target, created_at) VALUES (?, ?, ?, ?)`
-    ).run('f1', 'user', 'hf', new Date().toISOString())
+    db.prepare(`INSERT INTO follows (id, type, target, created_at) VALUES (?, ?, ?, ?)`).run(
+      'f1',
+      'user',
+      'hf',
+      new Date().toISOString()
+    )
     db.prepare(
       `INSERT INTO inbox (id, kind, title, body, route, created_at) VALUES (?, ?, ?, ?, ?, ?)`
     ).run('i1', 'follow', 't', 'b', '/', new Date().toISOString())
@@ -248,6 +255,7 @@ git commit -m "feat(privacy): clear local app data in main process"
 ### Task 3: SettingsSection type + i18n + PrivacySection UI
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/src/stores/app.ts`
 - Modify: `apps/desktop/src/renderer/src/i18n/locales/en/settings.json`
 - Modify: `apps/desktop/src/renderer/src/i18n/locales/zh-CN/settings.json`
@@ -258,12 +266,7 @@ git commit -m "feat(privacy): clear local app data in main process"
 
 ```ts
 export type SettingsSection =
-  | 'account'
-  | 'appearance'
-  | 'downloads'
-  | 'notifications'
-  | 'privacy'
-  | 'about'
+  'account' | 'appearance' | 'downloads' | 'notifications' | 'privacy' | 'about'
 ```
 
 - [ ] **Step 2: i18n keys (en)**
@@ -354,14 +357,14 @@ git commit -m "feat(settings): add Privacy & data section"
 
 ## Self-review (plan vs spec)
 
-| Spec requirement | Task |
-|------------------|------|
-| Data / privacy nav | Task 3 |
-| Cache summary + open `/cache` | Task 3 |
-| Clear favorites/history/downloads/follows/inbox/non-settings kv | Task 2 |
-| Keep settings; keep auth unless checkbox | Task 2 |
-| Optional sign-out | Task 2–3 |
-| `privacy:clearLocalData` IPC | Task 1–2 |
-| i18n en + zh-CN | Task 3 |
-| Unit test clear semantics | Task 2 |
-| Do not delete HF cache dir | Task 2 (SQL only; no cache FS calls) |
+| Spec requirement                                                | Task                                 |
+| --------------------------------------------------------------- | ------------------------------------ |
+| Data / privacy nav                                              | Task 3                               |
+| Cache summary + open `/cache`                                   | Task 3                               |
+| Clear favorites/history/downloads/follows/inbox/non-settings kv | Task 2                               |
+| Keep settings; keep auth unless checkbox                        | Task 2                               |
+| Optional sign-out                                               | Task 2–3                             |
+| `privacy:clearLocalData` IPC                                    | Task 1–2                             |
+| i18n en + zh-CN                                                 | Task 3                               |
+| Unit test clear semantics                                       | Task 2                               |
+| Do not delete HF cache dir                                      | Task 2 (SQL only; no cache FS calls) |

@@ -1,5 +1,7 @@
 # Phase 4 Browse Preferences Implementation Plan
 
+> **Status:** Implemented / Historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Persist default home route and default repo sort in `AppSettings`, exposed under Settings → Appearance (no new nav item).
@@ -16,15 +18,15 @@
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/types.ts` | `defaultHome`, `defaultRepoSort` + defaults |
-| `packages/shared/src/schemas.ts` | enums in `settingsPatch` |
-| `apps/desktop/src/renderer/src/stores/app.ts` | Init filters from settings; persist sort on `setFilters` when `sort` changes |
-| `apps/desktop/src/renderer/src/main.tsx` | After `settings:get`, seed filters / home |
-| `apps/desktop/src/renderer/src/App.tsx` or `AppShell` | Index route uses `defaultHome` |
-| `apps/desktop/src/renderer/.../SettingsDialog.tsx` (`AppearanceSection`) | Two Selects |
-| i18n en / zh-CN | Labels for home options + sort |
+| File                                                                     | Role                                                                         |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `packages/shared/src/types.ts`                                           | `defaultHome`, `defaultRepoSort` + defaults                                  |
+| `packages/shared/src/schemas.ts`                                         | enums in `settingsPatch`                                                     |
+| `apps/desktop/src/renderer/src/stores/app.ts`                            | Init filters from settings; persist sort on `setFilters` when `sort` changes |
+| `apps/desktop/src/renderer/src/main.tsx`                                 | After `settings:get`, seed filters / home                                    |
+| `apps/desktop/src/renderer/src/App.tsx` or `AppShell`                    | Index route uses `defaultHome`                                               |
+| `apps/desktop/src/renderer/.../SettingsDialog.tsx` (`AppearanceSection`) | Two Selects                                                                  |
+| i18n en / zh-CN                                                          | Labels for home options + sort                                               |
 
 ---
 
@@ -36,8 +38,8 @@
 export type DefaultHome = 'home' | 'models' | 'datasets' | 'spaces' | 'papers'
 
 // on AppSettings:
-defaultHome: DefaultHome        // default 'home'
-defaultRepoSort: RepoSort       // default 'trending'
+defaultHome: DefaultHome // default 'home'
+defaultRepoSort: RepoSort // default 'trending'
 ```
 
 - [ ] Zod:
@@ -77,7 +79,7 @@ const HOME_PATH: Record<DefaultHome, string> = {
 
 ```tsx
 function DefaultHomeRedirect() {
-  const home = useAppStore(s => s.settings.defaultHome)
+  const home = useAppStore((s) => s.settings.defaultHome)
   if (home === 'home') return <HomePage />
   return <Navigate to={HOME_PATH[home]} replace />
 }
@@ -93,8 +95,8 @@ Use this only for the index route so deep links stay intact.
 
 - [ ] In `AppearanceSection`, after UI scale, add:
 
-- Default home: Select of five options  
-- Default sort: Select of `RepoSort` values  
+- Default home: Select of five options
+- Default sort: Select of `RepoSort` values
 
 - [ ] i18n keys under `settings:appearance.defaultHome` / `defaultSort` and option labels (reuse browse sort labels from existing namespaces if present).
 

@@ -8,20 +8,20 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-11-local-personalization-design.md` (Phase 3)
 
-**Status:** Implemented with the local personalization rollout.
+**Status:** Implemented / Historical (local personalization rollout).
 
 ---
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/ipc.ts` | Clear req shape; export/import channels |
-| `packages/shared/src/schemas.ts` | Clear + export file schemas |
-| `privacy.ts` | Selective table deletes |
-| `ipc.ts` | Handlers + dialogs |
-| `PrivacySection.tsx` | Checkboxes + transfer buttons |
-| i18n en / zh-CN | Copy |
+| File                             | Role                                    |
+| -------------------------------- | --------------------------------------- |
+| `packages/shared/src/ipc.ts`     | Clear req shape; export/import channels |
+| `packages/shared/src/schemas.ts` | Clear + export file schemas             |
+| `privacy.ts`                     | Selective table deletes                 |
+| `ipc.ts`                         | Handlers + dialogs                      |
+| `PrivacySection.tsx`             | Checkboxes + transfer buttons           |
+| i18n en / zh-CN                  | Copy                                    |
 
 ---
 

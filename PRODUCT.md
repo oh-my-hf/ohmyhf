@@ -37,7 +37,7 @@ the persuading.
 ## Anti-references
 
 - Identity impersonation: no HF logo or wordmark, no 🤗 in our own chrome, nothing implying
-  official status. We adopt the Hub's *design language* (grays, gradients, tags, mono titles)
+  official status. We adopt the Hub's _design language_ (grays, gradients, tags, mono titles)
   while keeping our own name, icon, and disclaimers.
 - Brand-color abuse: yellow/orange CTAs, yellow links, yellow selection states. On
   huggingface.co the brand is an accent — it stays one here.

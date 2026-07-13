@@ -1,5 +1,7 @@
 # Phase 3 Desktop Settings Implementation Plan
 
+> **Status:** Implemented / Historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add Settings → System → Desktop with launch-at-login and close-to-tray behavior, including a system tray icon.
@@ -16,18 +18,18 @@
 
 ## File map
 
-| File | Role |
-|------|------|
-| `packages/shared/src/types.ts` | `launchAtLogin`, `closeToTray` booleans + defaults `false` |
-| `packages/shared/src/schemas.ts` | boolean fields in `settingsPatch` |
-| `apps/desktop/src/main/tray.ts` | `TrayManager` create/update/destroy |
-| `apps/desktop/src/main/index.ts` | Wire tray; close-to-hide; apply login item on boot + settings change |
-| `apps/desktop/src/main/ipc.ts` | On `settings:set`, call login-item + tray policy helpers |
-| `apps/desktop/src/renderer/.../DesktopSection.tsx` | Switches + platform hint copy |
-| `apps/desktop/src/renderer/.../SettingsDialog.tsx` | System nav group |
-| `apps/desktop/src/renderer/src/stores/app.ts` | `'desktop'` section id |
-| i18n en / zh-CN | Strings; macOS vs win/linux hint keys |
-| Tray icon asset | Reuse existing app icon under `resources/` (locate current icon path used by BrowserWindow) |
+| File                                               | Role                                                                                        |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `packages/shared/src/types.ts`                     | `launchAtLogin`, `closeToTray` booleans + defaults `false`                                  |
+| `packages/shared/src/schemas.ts`                   | boolean fields in `settingsPatch`                                                           |
+| `apps/desktop/src/main/tray.ts`                    | `TrayManager` create/update/destroy                                                         |
+| `apps/desktop/src/main/index.ts`                   | Wire tray; close-to-hide; apply login item on boot + settings change                        |
+| `apps/desktop/src/main/ipc.ts`                     | On `settings:set`, call login-item + tray policy helpers                                    |
+| `apps/desktop/src/renderer/.../DesktopSection.tsx` | Switches + platform hint copy                                                               |
+| `apps/desktop/src/renderer/.../SettingsDialog.tsx` | System nav group                                                                            |
+| `apps/desktop/src/renderer/src/stores/app.ts`      | `'desktop'` section id                                                                      |
+| i18n en / zh-CN                                    | Strings; macOS vs win/linux hint keys                                                       |
+| Tray icon asset                                    | Reuse existing app icon under `resources/` (locate current icon path used by BrowserWindow) |
 
 ---
 
@@ -36,8 +38,8 @@
 - [ ] Add:
 
 ```ts
-launchAtLogin: boolean  // default false
-closeToTray: boolean    // default false
+launchAtLogin: boolean // default false
+closeToTray: boolean // default false
 ```
 
 - [ ] Zod booleans in `settingsPatch`.
@@ -57,12 +59,16 @@ export class TrayManager {
     private readonly getWindow: () => BrowserWindow | null,
     private readonly i18n: MainI18n
   ) {}
-  ensure(): void { /* create tray once with Show + Quit */ }
-  destroy(): void { /* tray.destroy() */ }
+  ensure(): void {
+    /* create tray once with Show + Quit */
+  }
+  destroy(): void {
+    /* tray.destroy() */
+  }
 }
 ```
 
-- Show: restore + focus main window.  
+- Show: restore + focus main window.
 - Quit: set `isQuitting = true` then `app.quit()`.
 
 - [ ] In window `close` handler:
