@@ -113,7 +113,9 @@ export function PaperComments({ paperId }: { paperId: string }): React.JSX.Eleme
       {items.length === 0 ? (
         <p className="text-[12.5px] text-ink-faint">{t('papers:comments.empty')}</p>
       ) : (
-        items.map((comment) => <CommentCard key={comment.id} comment={comment} depth={0} ctx={ctx} />)
+        items.map((comment) => (
+          <CommentCard key={comment.id} comment={comment} depth={0} ctx={ctx} />
+        ))
       )}
       {auth.status === 'signedIn' && (
         <CommentComposer

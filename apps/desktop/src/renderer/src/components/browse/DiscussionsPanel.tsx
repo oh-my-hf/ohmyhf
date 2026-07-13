@@ -217,7 +217,10 @@ function ThreadEvent({
             event.locked ? 'bg-error/10 ring-error/30' : 'bg-panel ring-border'
           )}
         >
-          <Lock className={cn('size-3.5', event.locked ? 'text-error' : 'text-ink-faint')} aria-hidden />
+          <Lock
+            className={cn('size-3.5', event.locked ? 'text-error' : 'text-ink-faint')}
+            aria-hidden
+          />
         </span>
         <span className="min-w-0 flex-1 truncate">
           {t(event.locked ? 'detail:pr.locked' : 'detail:pr.unlocked', {

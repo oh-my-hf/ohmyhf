@@ -28,7 +28,10 @@ const DICTIONARIES: Record<Locale, Dict> = {
 export function matchLocale(systemLocale: string): Locale {
   const lower = systemLocale.toLowerCase()
   if (lower.startsWith('zh')) {
-    return lower.includes('hant') || lower.includes('-tw') || lower.includes('-hk') || lower.includes('-mo')
+    return lower.includes('hant') ||
+      lower.includes('-tw') ||
+      lower.includes('-hk') ||
+      lower.includes('-mo')
       ? 'zh-TW'
       : 'zh-CN'
   }

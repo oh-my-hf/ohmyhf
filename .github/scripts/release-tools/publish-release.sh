@@ -59,9 +59,10 @@ fi
 REMOTE_DIR="$RUNNER_TEMP/ohmyhf-release-remote-$GITHUB_RUN_ID"
 mkdir -p "$REMOTE_DIR"
 
-if RELEASE_JSON="$(gh release view "$TAG" --json isDraft,targetCommitish,url 2>/dev/null)"; then
+if RELEASE_JSON="$(gh release view "$TAG" --json isDraft,targetCommitish,url,databaseId 2>/dev/null)"; then
   IS_DRAFT="$(jq -r .isDraft <<<"$RELEASE_JSON")"
   TARGET_COMMITISH="$(jq -r .targetCommitish <<<"$RELEASE_JSON")"
+  RELEASE_ID="$(jq -r .databaseId <<<"$RELEASE_JSON")"
   if [[ "$TARGET_COMMITISH" != "$COMMIT_SHA" ]]; then
     echo "Release $TAG targets $TARGET_COMMITISH, not $COMMIT_SHA" >&2
     exit 1
@@ -100,12 +101,19 @@ else
     --draft \
     --title "$TAG" \
     --notes-file "$NOTES_FILE"
+  # A fresh draft's tag is not a resolvable git ref yet (that only happens at
+  # publish time below), so it must be looked up by name here — the
+  # tag-scoped REST endpoint used for asset listing further down 404s until
+  # the ref exists, but `gh release view` resolves drafts by release name.
+  RELEASE_ID="$(gh release view "$TAG" --json databaseId | jq -r .databaseId)"
 fi
 
 # A failed prior run may have left a draft with stale or partial assets. Replace
 # the entire draft asset set so reruns converge on the preflight manifest.
+# Addressed by numeric release id, not by tag name: a draft's tag is not a
+# resolvable git ref yet, and repos/.../releases/tags/{tag} 404s until it is.
 EXISTING_ASSET_IDS_FILE="$RUNNER_TEMP/ohmyhf-release-asset-ids-$GITHUB_RUN_ID.txt"
-gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.assets[].id' >"$EXISTING_ASSET_IDS_FILE"
+gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --jq '.[].id' >"$EXISTING_ASSET_IDS_FILE"
 while IFS= read -r ASSET_ID; do
   [[ -z "$ASSET_ID" ]] && continue
   if [[ ! "$ASSET_ID" =~ ^[0-9]+$ ]]; then

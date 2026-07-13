@@ -72,7 +72,10 @@ function SidebarLink({
           {item.badge ? (
             collapsed ? (
               <>
-                <span className="absolute top-1 right-1 size-1.5 rounded-full bg-brand" aria-hidden />
+                <span
+                  className="absolute top-1 right-1 size-1.5 rounded-full bg-brand"
+                  aria-hidden
+                />
                 <span className="sr-only">{badgeLabel}</span>
               </>
             ) : (

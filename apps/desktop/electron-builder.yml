@@ -38,6 +38,14 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # productName has spaces ("Oh My HuggingFace"); electron-builder's default
+  # artifactName preserves them in the built file, but the safe name it
+  # computes for latest-mac.yml's differential-update reference replaces every
+  # space with a hyphen. --publish never (used by CI's build job) never
+  # renames the real file to match, so the two silently diverge and preflight
+  # fails with "references missing artifact". Space-free artifactName here
+  # makes the built file and the safe name identical, everywhere, always.
+  artifactName: 'Oh-My-HuggingFace-${version}-${arch}.${ext}'
 
 win:
   target:
@@ -46,6 +54,8 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
+  # See the mac.artifactName comment above — same fix, same reason.
+  artifactName: 'Oh-My-HuggingFace-Setup-${version}.${ext}'
 
 linux:
   target:
@@ -58,6 +68,12 @@ linux:
   desktop:
     entry:
       StartupWMClass: oh-my-huggingface
+
+# .deb already gets a fully sanitized name from dpkg tooling; only AppImage
+# needs the same space-free artifactName fix as mac/nsis above (scoped here,
+# not under linux:, so it doesn't touch the .deb naming convention).
+appImage:
+  artifactName: 'Oh-My-HuggingFace-${version}.${ext}'
 
 # Must match the repository the release CI runs in: GITHUB_TOKEN can only publish
 # there, and electron-updater reads this same config to find update artifacts.

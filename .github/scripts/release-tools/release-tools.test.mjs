@@ -142,13 +142,27 @@ exit 95
   )
   chmodSync(gitPath, 0o755)
 
+  // A fresh draft's tag is not a resolvable git ref until publish, so
+  // `gh release view` must work by release name both before AND right after
+  // `gh release create` (publish-release.sh looks the id up again post-create
+  // to address asset listing/deletion by numeric id instead of by tag, since
+  // the tag-scoped REST endpoint 404s until the ref exists). This mock tracks
+  // creation with a marker file so "view" only succeeds once "create" ran,
+  // matching real gh behavior.
+  const createdMarker = join(fixture, 'created')
   const ghPath = join(binDirectory, 'gh')
   writeFileSync(
     ghPath,
     `#!/bin/sh
 printf 'gh %s\\n' "$*" >> "$EFFECTS_FILE"
-if [ "$1" = "release" ] && [ "$2" = "view" ]; then exit 1; fi
-if [ "$1" = "release" ] && [ "$2" = "create" ]; then exit 0; fi
+if [ "$1" = "release" ] && [ "$2" = "view" ]; then
+  if [ -f "$CREATED_MARKER" ]; then
+    printf '%s\\n' '{"databaseId":999}'
+    exit 0
+  fi
+  exit 1
+fi
+if [ "$1" = "release" ] && [ "$2" = "create" ]; then touch "$CREATED_MARKER"; exit 0; fi
 if [ "$1" = "api" ]; then exit 0; fi
 if [ "$1" = "release" ] && [ "$2" = "upload" ]; then exit 0; fi
 if [ "$1" = "release" ] && [ "$2" = "download" ]; then
@@ -179,6 +193,7 @@ exit 94
         ...process.env,
         PATH: `${binDirectory}:${process.env.PATH}`,
         ASSET_SOURCE: assetPath,
+        CREATED_MARKER: createdMarker,
         EFFECTS_FILE: effectsFile,
         GH_TOKEN: 'test-token',
         GITHUB_REPOSITORY: 'owner/repo',
@@ -196,4 +211,8 @@ exit 94
   assert.ok(upload >= 0 && push > upload && publish > push, effects)
   assert.match(effects, /git fetch/)
   assert.match(effects, /git rev-list/)
+  // The asset-listing/deletion step must address the release by numeric id
+  // (resolved via a second `release view` after `create`), never by the tag
+  // name — that REST endpoint 404s until the tag ref exists at publish time.
+  assert.match(effects, /gh api repos\/owner\/repo\/releases\/999\/assets/)
 })
