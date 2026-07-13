@@ -1,0 +1,58 @@
+{
+  "appName": "Oh My HuggingFace",
+  "back": "Retour",
+  "cancel": "Annuler",
+  "close": "Fermer",
+  "confirm": "Confirmer",
+  "copied": "Copié",
+  "copy": "Copier",
+  "delete": "Supprimer",
+  "dismiss": "Ignorer",
+  "error": {
+    "generic": "Un problème est survenu",
+    "network": "Impossible de joindre l'API Hugging Face"
+  },
+  "gated": "Accès contrôlé",
+  "goBack": "Retour",
+  "goForward": "Avancer",
+  "imageViewer": "Visionneuse d'images",
+  "kind": {
+    "dataset": "Jeu de données",
+    "model": "Modèle",
+    "paper": "Article",
+    "space": "Space"
+  },
+  "language": {
+    "system": "Langue du système",
+    "en": "English",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    "de": "Deutsch",
+    "es": "Español",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pt-BR": "Português (Brasil)"
+  },
+  "loading": "Chargement…",
+  "progress": {
+    "indeterminate": "En cours"
+  },
+  "open": "Ouvrir",
+  "openOnHub": "Ouvrir sur le Hub",
+  "private": "Privé",
+  "remove": "Retirer",
+  "retry": "Réessayer",
+  "running": "En cours d'exécution",
+  "showInFolder": "Afficher dans le dossier",
+  "theme": {
+    "dark": "Sombre",
+    "label": "Thème",
+    "light": "Clair",
+    "system": "Système"
+  },
+  "undo": "Annuler",
+  "unofficial": "Non officiel",
+  "zoomImage": "Ouvrir la visionneuse d'images",
+  "zoomImageNamed": "Ouvrir la visionneuse d'images pour {{name}}"
+}

@@ -1,0 +1,41 @@
+{
+  "compose": {
+    "error": "No se pudo publicar: {{error}}",
+    "new": "Nueva publicación",
+    "placeholder": "Comparta una novedad con la comunidad… Se admite Markdown.",
+    "posted": "Publicado",
+    "submit": "Publicar",
+    "unavailable": "Publicación no disponible: {{reason}}",
+    "unavailableFallback": "su cuenta aún no está en la beta de publicaciones."
+  },
+  "feed": {
+    "acted": {
+      "discussion": "<author>{{actor}}</author> en <repo>{{repo}}</repo>",
+      "liked": "<author>{{actor}}</author> le dio me gusta",
+      "published": "<author>{{actor}}</author> publicó",
+      "untitledDiscussion": "Sin título",
+      "updated": "<author>{{actor}}</author> actualizó"
+    },
+    "empty": "Aún no hay nada aquí",
+    "emptyBody": "La actividad del Hub aparecerá aquí.",
+    "emptyFollowing": "Aún no sigue a nadie",
+    "emptyFollowingBody": "Siga a usuarios y organizaciones desde la Bandeja de entrada para ver aquí sus últimos modelos y conjuntos de datos.",
+    "manageFollows": "Gestionar seguidos",
+    "updated": "<author>{{author}}</author> actualizó <repo>{{repo}}</repo>",
+    "error": "No se pudo cargar el feed"
+  },
+  "kind": {
+    "post": "Publicación"
+  },
+  "reactions": {
+    "onHub": "Reaccionar en el Hub",
+    "react": "Añadir una reacción",
+    "toggle": "Reaccionar con {{emoji}}"
+  },
+  "title": "Inicio",
+  "trending": {
+    "all": "Todo",
+    "empty": "Nada en tendencia por ahora",
+    "title": "Tendencias"
+  }
+}

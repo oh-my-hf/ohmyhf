@@ -1,0 +1,241 @@
+{
+  "about": {
+    "disclaimer": "이 애플리케이션은 Hugging Face, Inc.와 제휴, 보증 또는 후원 관계가 없습니다. \"Hugging Face\"는 Hugging Face, Inc.의 상표이며, 여기서는 이 애플리케이션이 연결되는 서비스를 가리키기 위해서만 사용됩니다.",
+    "github": "GitHub의 소스 코드",
+    "license": "Apache-2.0 라이선스로 배포됨",
+    "privacy": "개인정보: 모든 데이터는 사용자의 기기에만 저장됩니다. 원격 측정이나 분석 도구가 없습니다. 토큰은 OS 키체인으로 암호화되어 로컬에 저장됩니다.",
+    "title": "정보",
+    "unofficialTitle": "비공식",
+    "updates": {
+      "available": "버전 {{version}}이(가) GitHub Releases에서 제공됩니다.",
+      "check": "업데이트 확인",
+      "checkAgain": "다시 확인",
+      "checking": "GitHub Releases에서 업데이트를 확인하는 중…",
+      "description": "업데이트는 최신 공개 GitHub Release를 기준으로 확인됩니다.",
+      "download": "업데이트 다운로드",
+      "downloadProgress": "{{total}} 중 {{transferred}}",
+      "downloading": "버전 {{version}} 다운로드 중 — {{percent}}%",
+      "downloadingButton": "다운로드 중 {{percent}}%",
+      "errors": {
+        "configuration": "GitHub Release 업데이트 메타데이터를 사용할 수 없습니다.",
+        "network": "GitHub Releases에 연결할 수 없습니다. 연결 상태를 확인한 후 다시 시도해 주세요.",
+        "permission": "업데이터에 이 업데이트를 설치할 권한이 없습니다.",
+        "unknown": "업데이트를 완료할 수 없습니다. 다시 시도하거나 GitHub Releases에서 직접 설치하세요.",
+        "verification": "업데이트를 확인할 수 없어 설치되지 않았습니다."
+      },
+      "manual": "버전 {{version}}을(를) 사용할 수 있습니다. 이 서명되지 않은 빌드는 수동으로 업데이트해야 합니다.",
+      "openReleases": "GitHub Releases 열기",
+      "progressLabel": "업데이트 다운로드 진행률",
+      "ready": "버전 {{version}}이(가) 준비되었습니다. 설치하려면 앱을 재시작하세요.",
+      "restartAndInstall": "재시작하고 설치",
+      "retry": "다시 시도",
+      "retryInstall": "설치 재시도",
+      "title": "앱 업데이트",
+      "toastAvailable": "버전 {{version}}을(를) 사용할 수 있습니다.",
+      "toastReady": "버전 {{version}} 설치 준비가 완료되었습니다.",
+      "unsupported": "앱 내 업데이트는 설치된 빌드에서만 사용할 수 있습니다.",
+      "upToDate": "최신 버전을 사용하고 있습니다.",
+      "view": "보기"
+    },
+    "version": "버전 {{version}}"
+  },
+  "account": {
+    "billing": {
+      "empty": "현재 기간에 기록된 사용량이 없습니다.",
+      "gated": "청구 사용량을 보려면 read-billing 권한이 필요합니다. 다시 인증하여 권한을 부여하세요.",
+      "period": "{{start}} – {{end}}",
+      "title": "청구 사용량",
+      "unauthorized": "Hub가 이 토큰의 청구 사용량 읽기를 승인하지 않았습니다."
+    },
+    "hub": {
+      "missingScopes": "누락된 권한: {{scopes}}. 다시 인증하여 권한을 부여하세요.",
+      "reauthorize": "다시 인증",
+      "roleLabels": {
+        "fineGrained": "세분화됨",
+        "read": "읽기",
+        "write": "쓰기"
+      },
+      "scopes": "부여된 권한",
+      "scopesUnknown": "이 세션에 부여된 권한을 알 수 없습니다. 다시 인증하여 새로고침하세요.",
+      "title": "Hub 계정",
+      "tokenHint": "사용자 액세스 토큰으로 로그인했습니다. 이 앱이 할 수 있는 작업은 Hub에서의 토큰 자체 권한에 따라 결정됩니다 — 브라우저 로그인으로는 접근할 수 없는 Hub 알림 받은 편지함도 포함됩니다.",
+      "tokenSession": "액세스 토큰"
+    },
+    "scopeLabels": {
+      "inference-api": "추론 API",
+      "jobs": "작업 관리",
+      "manage-repos": "저장소 관리",
+      "openid": "로그인 신원",
+      "profile": "프로필 읽기",
+      "read-billing": "청구 정보 읽기",
+      "read-collections": "컬렉션 읽기",
+      "read-repos": "저장소 읽기",
+      "webhooks": "웹훅 관리",
+      "write-collections": "컬렉션 쓰기",
+      "write-discussions": "토론 게시",
+      "write-repos": "저장소 쓰기"
+    },
+    "title": "계정"
+  },
+  "appearance": {
+    "accent": "강조 색상",
+    "accentOptions": {
+      "blue": "파랑",
+      "default": "기본",
+      "green": "초록",
+      "orange": "주황",
+      "violet": "보라"
+    },
+    "browsePageSize": "탐색 페이지 크기",
+    "browsePageSizeOption": "페이지당 {{count}}개",
+    "defaultHome": "기본 홈 화면",
+    "defaultSort": "기본 정렬",
+    "density": "밀도",
+    "densityOptions": {
+      "comfortable": "여유롭게",
+      "compact": "촘촘하게"
+    },
+    "fontScale": "텍스트 크기",
+    "fontScaleDecrease": "텍스트 크기 줄이기",
+    "fontScaleIncrease": "텍스트 크기 늘리기",
+    "historyLimit": "기록 보관 한도",
+    "historyLimitOption": "{{count}}개 항목",
+    "homeOptions": {
+      "datasets": "데이터셋",
+      "home": "홈 피드",
+      "models": "모델",
+      "papers": "논문",
+      "spaces": "Space"
+    },
+    "language": "언어",
+    "openTarget": {
+      "app": "앱 내에서",
+      "browser": "시스템 브라우저"
+    },
+    "repoOpenTarget": "즐겨찾기 및 기록 열기",
+    "sidebarCollapsed": "사이드바를 기본으로 접기",
+    "title": "화면",
+    "uiScale": "인터페이스 배율",
+    "uiScaleDecrease": "인터페이스 배율 줄이기",
+    "uiScaleIncrease": "인터페이스 배율 늘리기"
+  },
+  "desktop": {
+    "closeHintMac": "창을 닫으면 앱이 메뉴 막대 트레이로 숨겨집니다. 완전히 종료하려면 트레이 메뉴 또는 Dock에서 종료하세요.",
+    "closeHintOther": "창을 닫으면 앱이 시스템 트레이로 숨겨집니다. 완전히 종료하려면 트레이 메뉴에서 종료하세요.",
+    "closeToTray": "닫을 때 트레이로 이동",
+    "launchAtLogin": "로그인 시 자동 실행",
+    "launchAtLoginHint": "이 컴퓨터에 로그인할 때 Oh My HuggingFace를 시작합니다.",
+    "title": "데스크톱"
+  },
+  "downloads": {
+    "cacheDir": "HF 캐시 디렉터리",
+    "cacheDirDefault": "시스템 기본값",
+    "choose": "선택…",
+    "concurrency": "동시 다운로드 수",
+    "reset": "재설정",
+    "speedLimit": "속도 제한",
+    "speedPerSecond": "{{value}}/초",
+    "title": "다운로드",
+    "unlimited": "무제한"
+  },
+  "groups": {
+    "about": "정보",
+    "account": "계정",
+    "connection": "연결",
+    "data": "데이터",
+    "interface": "인터페이스",
+    "system": "시스템"
+  },
+  "network": {
+    "apply": "적용",
+    "description": "Hub API 기본 URL을 재정의하고 필요한 경우 HTTP(S) 프록시를 통해 트래픽을 전달합니다. 기본값을 사용하려면 비워 두세요.",
+    "downloadWarning": "진행 중인 다운로드는 일시 중지 후 재개할 때까지 이전 엔드포인트 또는 프록시를 유지할 수 있습니다.",
+    "hubEndpoint": "Hub 엔드포인트",
+    "invalidUrl": "유효한 http:// 또는 https:// URL을 입력하거나 비워 두세요.",
+    "proxyUrl": "HTTP(S) 프록시",
+    "reset": "기본값으로 재설정",
+    "resetEndpoint": "Hub 엔드포인트가 기본값으로 재설정되었습니다.",
+    "resetProxy": "프록시가 지워졌습니다.",
+    "saved": "네트워크 설정이 저장되었습니다.",
+    "test": "연결 테스트",
+    "testFail": "연결에 실패했습니다: {{error}}",
+    "testOk": "Hub에 성공적으로 연결되었습니다.",
+    "title": "네트워크"
+  },
+  "notifications": {
+    "enabled": "시스템 알림",
+    "minutes": "{{count}}분",
+    "minutes_other": "{{count}}분",
+    "pollInterval": "팔로우 확인 주기",
+    "title": "알림"
+  },
+  "privacy": {
+    "cache": {
+      "open": "캐시 관리자 열기",
+      "path": "위치",
+      "retry": "다시 시도",
+      "scanFailed": "캐시를 스캔할 수 없습니다.",
+      "size": "총 크기",
+      "title": "HF 캐시"
+    },
+    "local": {
+      "clear": "로컬 데이터 지우기…",
+      "confirm": "데이터 지우기",
+      "confirmBody": "이 기기에서 제거할 항목을 선택하세요:",
+      "confirmTitle": "로컬 데이터를 지우시겠습니까?",
+      "description": "이 기기에서 선택한 즐겨찾기, 기록, 다운로드 기록, 팔로우, 받은 편지함을 지웁니다. HF 캐시의 모델 또는 데이터셋 파일은 삭제되지 않습니다.",
+      "items": {
+        "downloads": "다운로드 작업 기록",
+        "favorites": "즐겨찾기",
+        "follows": "팔로우한 계정",
+        "history": "탐색 기록",
+        "inbox": "로컬 받은 편지함",
+        "otherKv": "기타 로컬 앱 데이터"
+      },
+      "signOutAlso": "Hub 로그아웃도 함께 수행",
+      "success": "로컬 데이터가 지워졌습니다.",
+      "successSignedOut": "로컬 데이터가 지워졌습니다. 로그아웃되었습니다.",
+      "title": "앱 로컬 데이터"
+    },
+    "title": "개인정보 및 데이터",
+    "transfer": {
+      "description": "화면 및 환경설정을 JSON으로 내보내거나 가져옵니다. 계정 토큰이나 라이브러리 데이터는 포함되지 않습니다. 가져올 때 이 기기의 캐시 디렉터리는 유지됩니다.",
+      "export": "설정 내보내기…",
+      "exportSuccess": "설정을 내보냈습니다.",
+      "import": "설정 가져오기…",
+      "importSuccess": "설정을 가져왔습니다.",
+      "title": "설정 이전"
+    }
+  },
+  "profile": {
+    "avatar": "아바타",
+    "avatarHint": "PNG, JPEG 또는 WebP, 최대 10MB.",
+    "avatarUpload": "이미지 업로드",
+    "bluesky": "Bluesky 사용자 이름",
+    "details": "AI 및 ML 관심 분야",
+    "error": "프로필을 저장할 수 없습니다: {{error}}",
+    "fullname": "전체 이름",
+    "github": "GitHub 사용자 이름",
+    "homepage": "홈페이지",
+    "homepagePlaceholder": "https://",
+    "linkedin": "LinkedIn 프로필",
+    "loadError": "프로필을 불러올 수 없습니다: {{error}}",
+    "needsSession": "공개 프로필을 편집하려면 Hub 웹 세션이 필요합니다 — 계정에서 연결하세요.",
+    "openAccount": "계정으로 이동",
+    "primaryOrg": "기본 조직",
+    "primaryOrgHint": "Team / Enterprise / Plus 조직만 기본 조직으로 설정할 수 있습니다. 메뉴는 사용 가능한 옵션과 사용할 수 없는 옵션을 구분하여 표시합니다.",
+    "primaryOrgNone": "없음",
+    "primaryOrgNonePaid": "유료 플랜을 사용 중인 조직이 없어 아직 기본 조직을 설정할 수 없습니다.",
+    "primaryOrgGroupAvailable": "사용 가능",
+    "primaryOrgGroupUnavailable": "사용 불가 (유료 플랜 필요)",
+    "primaryOrgOptionAvailable": "{{name}} ({{plan}})",
+    "primaryOrgOptionUnavailable": "{{name}} — 사용 불가",
+    "primaryOrgSummary": "사용 가능 {{available}}개 · 사용 불가 {{unavailable}}개",
+    "save": "변경 사항 저장",
+    "saved": "프로필이 저장되었습니다",
+    "title": "공개 프로필",
+    "twitter": "Twitter 사용자 이름",
+    "avatarTooLarge": "이 이미지는 너무 큽니다 — 아바타는 최대 10MB로 제한됩니다."
+  },
+  "title": "설정"
+}

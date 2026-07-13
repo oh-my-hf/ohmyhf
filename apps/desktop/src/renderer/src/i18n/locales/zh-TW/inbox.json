@@ -1,0 +1,85 @@
+{
+  "bell": {
+    "empty": "沒有新通知",
+    "title": "通知",
+    "viewAll": "檢視所有通知"
+  },
+  "checked": "{{count}} 個新項目",
+  "checked_other": "{{count}} 個新項目",
+  "checking": "檢查中…",
+  "checkNow": "立即檢查",
+  "clear": "清空收件匣",
+  "empty": {
+    "body": "追蹤使用者、組織、儲存庫或每日論文精選，更新內容就會顯示在這裡。",
+    "title": "全部都看過了"
+  },
+  "follows": {
+    "add": "追蹤",
+    "empty": "尚未追蹤任何項目。",
+    "loadError": "無法載入追蹤來源",
+    "targetLabel": "要追蹤的使用者、組織或儲存庫",
+    "imported": "已匯入 {{count}} 個您在 Hub 上追蹤的帳戶",
+    "imported_other": "已匯入 {{count}} 個您在 Hub 上追蹤的帳戶",
+    "importFromHub": "從 Hugging Face 匯入",
+    "papers": "每日論文精選",
+    "placeholder": "使用者名稱、組織，或 model:org/name",
+    "removed": "已取消追蹤 {{target}}",
+    "title": "追蹤中",
+    "type": {
+      "org": "組織",
+      "papers": "論文",
+      "repo": "儲存庫",
+      "user": "使用者"
+    }
+  },
+  "hub": {
+    "clearAll": "全部清除",
+    "loadError": "無法載入 Hub 通知",
+    "confirmClear": {
+      "body": "這會永久移除您 Hugging Face 收件匣中的所有通知。",
+      "confirm": "全部清除",
+      "title": "清除所有 Hub 通知？"
+    },
+    "empty": {
+      "body": "來自 Hub 上討論、Pull Request 與貼文的通知會顯示在這裡。",
+      "title": "沒有 Hub 通知"
+    },
+    "kind": {
+      "org": "組織",
+      "other": "其他",
+      "paper": "論文",
+      "post": "貼文",
+      "repo": "儲存庫"
+    },
+    "pageNext": "下一頁",
+    "pageOf": "第 {{page}} 頁，共 {{pages}} 頁",
+    "pagePrev": "上一頁",
+    "signIn": {
+      "action": "開啟帳戶設定",
+      "body": "連接您的 Hugging Face 帳戶，即可從 Hub 同步通知收件匣。",
+      "title": "登入以檢視 Hub 通知"
+    },
+    "unauthorized": {
+      "action": "在 Hub 上開啟",
+      "body": "此存取權杖無法讀取 Hub 通知（唯讀或權限不足的細粒度權杖）。請建立具備通知存取權限的寫入或細粒度權杖，或在 Hub 上檢視通知。",
+      "title": "無法使用 Hub 通知",
+      "tokenAction": "管理權杖"
+    }
+  },
+  "kind": {
+    "new-repo": "新增",
+    "paper": "論文",
+    "repo-update": "已更新"
+  },
+  "markAllRead": "全部標為已讀",
+  "local": {
+    "loadError": "無法載入本機收件匣"
+  },
+  "unreadCount": "{{count}} 則未讀項目",
+  "unreadCount_other": "{{count}} 則未讀項目",
+  "tabs": {
+    "hub": "Hub 通知",
+    "local": "追蹤動態消息"
+  },
+  "title": "收件匣"
+}

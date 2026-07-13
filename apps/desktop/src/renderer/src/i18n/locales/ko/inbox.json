@@ -1,0 +1,84 @@
+{
+  "bell": {
+    "empty": "새 알림이 없습니다",
+    "title": "알림",
+    "viewAll": "모든 알림 보기"
+  },
+  "checked": "새 항목 {{count}}개",
+  "checked_other": "새 항목 {{count}}개",
+  "checking": "확인 중…",
+  "checkNow": "지금 확인",
+  "clear": "받은 편지함 지우기",
+  "empty": {
+    "body": "사용자, 조직, 저장소, 또는 Daily Papers 다이제스트를 팔로우하면 업데이트가 여기에 도착합니다.",
+    "title": "모두 확인했습니다"
+  },
+  "follows": {
+    "add": "팔로우",
+    "empty": "아직 팔로우하는 항목이 없습니다.",
+    "loadError": "팔로우한 소스를 불러올 수 없습니다",
+    "targetLabel": "팔로우할 사용자, 조직 또는 저장소",
+    "imported_other": "Hub에서 팔로우하는 계정 {{count}}개를 가져왔습니다",
+    "importFromHub": "Hugging Face에서 가져오기",
+    "papers": "Daily Papers 다이제스트",
+    "placeholder": "사용자 이름, 조직, 또는 model:org/name",
+    "removed": "{{target}} 팔로우가 취소되었습니다",
+    "title": "팔로잉",
+    "type": {
+      "org": "조직",
+      "papers": "논문",
+      "repo": "저장소",
+      "user": "사용자"
+    }
+  },
+  "hub": {
+    "clearAll": "모두 지우기",
+    "loadError": "Hub 알림을 불러올 수 없습니다",
+    "confirmClear": {
+      "body": "Hugging Face 받은 편지함의 모든 알림이 영구적으로 삭제됩니다.",
+      "confirm": "모두 지우기",
+      "title": "모든 Hub 알림을 지우시겠습니까?"
+    },
+    "empty": {
+      "body": "Hub의 토론, Pull Request, 게시물에 대한 알림이 여기에 표시됩니다.",
+      "title": "Hub 알림이 없습니다"
+    },
+    "kind": {
+      "org": "조직",
+      "other": "기타",
+      "paper": "논문",
+      "post": "게시물",
+      "repo": "저장소"
+    },
+    "pageNext": "다음 페이지",
+    "pageOf": "{{pages}} 중 {{page}}페이지",
+    "pagePrev": "이전 페이지",
+    "signIn": {
+      "action": "계정 설정 열기",
+      "body": "Hugging Face 계정을 연결하여 Hub의 알림 받은 편지함을 동기화하세요.",
+      "title": "Hub 알림을 보려면 로그인하세요"
+    },
+    "unauthorized": {
+      "action": "Hub에서 열기",
+      "body": "이 액세스 토큰으로는 Hub 알림을 읽을 수 없습니다(읽기 전용이거나 권한이 부족한 세분화된 토큰). 알림 액세스 권한이 있는 write 또는 세분화된 토큰을 만들거나 Hub에서 확인하세요.",
+      "title": "Hub 알림을 사용할 수 없습니다",
+      "tokenAction": "토큰 관리"
+    }
+  },
+  "kind": {
+    "new-repo": "새로 생성됨",
+    "paper": "논문",
+    "repo-update": "업데이트됨"
+  },
+  "markAllRead": "모두 읽음으로 표시",
+  "local": {
+    "loadError": "로컬 받은 편지함을 불러올 수 없습니다"
+  },
+  "unreadCount": "읽지 않은 항목 {{count}}개",
+  "unreadCount_other": "읽지 않은 항목 {{count}}개",
+  "tabs": {
+    "hub": "Hub 알림",
+    "local": "팔로잉 피드"
+  },
+  "title": "받은 편지함"
+}

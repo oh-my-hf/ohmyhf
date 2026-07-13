@@ -1,0 +1,255 @@
+{
+  "actions": {
+    "download": "Baixar",
+    "downloadAll": "Baixar todos os arquivos",
+    "favorite": "Adicionar aos favoritos",
+    "follow": "Seguir repositório",
+    "unfavorite": "Remover dos favoritos",
+    "unfollow": "Deixar de seguir repositório"
+  },
+  "card": {
+    "empty": "Este repositório não tem Card."
+  },
+  "datasetPreview": {
+    "config": "Configuração",
+    "next": "Próxima página",
+    "prev": "Página anterior",
+    "range": "Linhas {{from}}–{{to}} de {{total}}",
+    "rangeNoTotal": "Linhas {{from}}–{{to}}",
+    "sampleNote": "Visualizador completo indisponível — mostrando a amostra de pré-visualização do Hub ({{count}} linhas).",
+    "split": "Divisão",
+    "unavailable": "O visualizador de conjuntos de dados não está disponível para este conjunto de dados. Você ainda pode navegar pelos arquivos ou abri-lo no Hub.",
+    "rowsError": "Não foi possível carregar as linhas."
+  },
+  "discussions": {
+    "comments": "{{count}} comentários",
+    "create": {
+      "bodyPlaceholder": "Descreva sua discussão ou alteração… Markdown é compatível.",
+      "created": "Tópico criado.",
+      "discussion": "Discussão",
+      "error": "Não foi possível criar o tópico: {{error}}",
+      "new": "Novo",
+      "prHint": "Abre um pull request de rascunho vazio com sua descrição como primeiro comentário — envie os commits para o branch refs/pr dele depois.",
+      "pullRequest": "Pull request",
+      "submit": "Criar",
+      "title": "Novo tópico em {{repoId}}",
+      "titlePlaceholder": "Título"
+    },
+    "empty": "Nenhuma discussão ainda.",
+    "filter": {
+      "all": "Todas",
+      "closed": "Fechadas",
+      "open": "Abertas"
+    },
+    "loadMore": "Carregar mais",
+    "pullRequest": "PR",
+    "quoteReply": "Responder citando",
+    "reactionError": "Não foi possível atualizar a reação: {{error}}",
+    "reply": "Responder",
+    "replyPlaceholder": "Escreva uma resposta (Markdown é compatível)…",
+    "segment": {
+      "discussions": "Discussões",
+      "pullRequests": "Pull Requests"
+    },
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "signInToReply": "Entre para participar da discussão.",
+    "status": {
+      "closed": "Fechada",
+      "draft": "Rascunho",
+      "merged": "Mesclada",
+      "open": "Aberta"
+    }
+  },
+  "downloadFailed": "Não foi possível iniciar o download: {{error}}",
+  "downloadStarted": "Adicionado aos downloads",
+  "editor": {
+    "attach": "Anexar um arquivo",
+    "bold": "Negrito",
+    "bulletList": "Lista com marcadores",
+    "charCount": "Contagem de caracteres",
+    "code": "Código embutido",
+    "italic": "Itálico",
+    "link": "Link",
+    "mentionEmpty": "Nenhum usuário encontrado",
+    "mentionHint": "Digite para mencionar um usuário ou organização",
+    "preview": "Pré-visualização",
+    "previewEmpty": "Nada para pré-visualizar ainda — escreva algo primeiro.",
+    "quote": "Citação",
+    "uploadBrowse": "procurar",
+    "uploadError": "Falha no envio: {{error}}",
+    "uploadHint": "Anexe imagens, áudio ou vídeo arrastando, colando ou",
+    "uploadTooLarge": "{{name}} é grande demais (máx. 64 MB)",
+    "uploading": "Enviando…",
+    "write": "Escrever"
+  },
+  "favoriteRemoved": "Removido dos favoritos",
+  "favoritesEmpty": {
+    "body": "Marque repositórios com estrela enquanto navega para fixá-los aqui.",
+    "title": "Nenhum favorito ainda"
+  },
+  "files": {
+    "download": "Baixar arquivo",
+    "empty": "Este diretório está vazio.",
+    "export": "Exportar…",
+    "exportTo": "Exportar para {{tool}}",
+    "lfs": "LFS",
+    "noTargets": "Nenhuma ferramenta local detectada",
+    "root": "raiz"
+  },
+  "gate": {
+    "ask": "Este repositório é restrito — solicite acesso para baixá-lo e pré-visualizá-lo.",
+    "error": "Não foi possível enviar a solicitação de acesso: {{error}}",
+    "granted": "Você recebeu acesso a este repositório.",
+    "needsSession": "Enviar uma solicitação de acesso requer uma sessão web do Hub — conecte uma em Configurações → Conta.",
+    "openSettings": "Abrir Configurações",
+    "pending": "Sua solicitação de acesso está aguardando a revisão dos autores.",
+    "request": "Solicitar acesso",
+    "requestBody": "Preencha as condições exigidas pelos autores de {{repoId}}. Seu nome de usuário e endereço de e-mail serão compartilhados com eles.",
+    "requestTitle": "Solicitar acesso",
+    "submit": "Concordar e enviar solicitação",
+    "submitted": "Solicitação de acesso enviada."
+  },
+  "info": {
+    "created": "Criado",
+    "downloadsAllTime": "Downloads totais",
+    "library": "Biblioteca",
+    "license": "Licença",
+    "params": "Parâmetros",
+    "sdk": "SDK",
+    "sha": "Revisão",
+    "storage": "Armazenamento usado",
+    "tags": "Tags",
+    "task": "Tarefa",
+    "updated": "Atualizado"
+  },
+  "like": {
+    "error": "Não foi possível atualizar a curtida: {{error}}",
+    "like": "Curtir",
+    "onHub": "Curtidas exigem uma sessão web do Hub — conecte uma em Configurações → Conta, ou abra o repositório no Hub para curti-lo.",
+    "reconnect": "Abrir configurações",
+    "sessionExpired": "Sua sessão web do Hub expirou. Reconecte-a em Configurações → Conta para curtir a partir do aplicativo.",
+    "unlike": "Descurtir"
+  },
+  "maintainer": {
+    "close": "Fechar",
+    "closeWithComment": "Comentar e fechar",
+    "editTitle": "Editar título",
+    "merge": "Mesclar",
+    "mergeCommentPlaceholder": "Adicione um comentário opcional…",
+    "mergeConfirmBody": "Isso mescla o pull request no repositório. Essa ação não pode ser desfeita.",
+    "mergeConfirmTitle": "Mesclar o pull request #{{num}}?",
+    "merged": "Pull request mesclado",
+    "reopen": "Reabrir",
+    "reopenWithComment": "Comentar e reabrir",
+    "statusUpdated": "Status da discussão atualizado",
+    "titleSave": "Salvar",
+    "titleUpdated": "Título atualizado"
+  },
+  "playground": {
+    "empty": "A resposta aparecerá aqui.",
+    "placeholder": "Envie um prompt para este modelo via API de Inferência…",
+    "run": "Executar",
+    "running": "Executando…",
+    "signIn": "Entre para usar o playground de inferência.",
+    "stop": "Parar",
+    "unavailable": "A inferência não está disponível para este modelo: {{error}}"
+  },
+  "pr": {
+    "binary": "Binário",
+    "diffTruncated": "Este diff foi truncado — apenas parte das alterações é exibida.",
+    "empty": "Nenhum pull request ainda.",
+    "noDescription": "Nenhuma descrição fornecida.",
+    "noDiff": "Nenhuma alteração para exibir.",
+    "refsLabel": "Direção da mesclagem",
+    "renamed": "Renomeado",
+    "statusChanged": "{{author}} alterou o status para {{status}}",
+    "tabDiscussion": "Discussão",
+    "tabFiles": "Arquivos alterados"
+  },
+  "preview": {
+    "colDtype": "Tipo de dado",
+    "colShape": "Formato",
+    "colTensor": "Tensor",
+    "copyRawUrl": "Copiar URL bruta",
+    "highlightFailed": "Falha no realce de sintaxe. Exibindo texto simples.",
+    "highlightTooLarge": "Este arquivo é grande demais para realce de sintaxe. Exibindo texto simples.",
+    "highlightUnknown": "Nenhum realçador de sintaxe disponível para {{language}}. Exibindo texto simples.",
+    "mediaErrorBody": "Não foi possível reproduzir este arquivo de mídia aqui. Baixe-o para abrir localmente.",
+    "mediaErrorTitle": "Não é possível reproduzir este arquivo",
+    "noPreviewBody": "Este tipo de arquivo não pode ser pré-visualizado aqui. Baixe-o para inspecionar localmente.",
+    "noPreviewTitle": "Nenhuma pré-visualização disponível",
+    "pdfErrorBody": "Não foi possível renderizar este PDF aqui. Baixe-o para abrir localmente.",
+    "pdfErrorTitle": "Não é possível abrir este PDF",
+    "pdfTooLargeBody": "PDFs maiores que {{size}} não podem ser pré-visualizados aqui. Baixe-o para abrir localmente.",
+    "pdfPage": "Página {{page}} de {{total}}",
+    "pickFile": "Selecione um arquivo para pré-visualizar",
+    "pickFileBody": "Escolha um arquivo à esquerda para ver o conteúdo aqui.",
+    "tensors": "Tensores",
+    "totalParams": "Total de parâmetros",
+    "truncated": "Pré-visualização truncada — exibindo os primeiros {{size}}."
+  },
+  "run": {
+    "loading": "Carregando o Space…",
+    "notRunning": "O Space está atualmente no estado \"{{stage}}\", então não pode ser executado aqui. Abra-o no Hub para reativá-lo ou reiniciá-lo.",
+    "notRunningTitle": "Este Space não está em execução",
+    "reload": "Recarregar"
+  },
+  "select": {
+    "body": "Escolha um item na lista — ou pressione ⌘K para pesquisar tudo.",
+    "title": "Nada selecionado"
+  },
+  "tabs": {
+    "card": "Card",
+    "discussions": "Discussões",
+    "files": "Arquivos",
+    "info": "Informações",
+    "manage": "Gerenciar",
+    "playground": "Playground",
+    "preview": "Pré-visualização",
+    "run": "Executar"
+  },
+  "parquetPreview": {
+    "rows_one": "{{count}} linha",
+    "rows_other": "{{count}} linhas",
+    "columns_one": "{{count}} coluna",
+    "columns_other": "{{count}} colunas",
+    "unsupportedCodec": "Este arquivo usa um codec de compressão que não pode ser pré-visualizado. Baixe-o para abrir localmente.",
+    "unreadableTitle": "Não é possível ler este arquivo Parquet",
+    "unreadableBody": "Não foi possível ler os metadados do arquivo. Baixe-o para abri-lo localmente."
+  },
+  "csvPreview": {
+    "rows_one": "{{count}} linha",
+    "rows_other": "{{count}} linhas",
+    "columns_one": "{{count}} coluna",
+    "columns_other": "{{count}} colunas",
+    "emptyHeader": "Coluna {{index}}"
+  },
+  "arrowPreview": {
+    "rows_one": "{{count}} linha",
+    "rows_other": "{{count}} linhas",
+    "columns_one": "{{count}} coluna",
+    "columns_other": "{{count}} colunas",
+    "prefixOnly": "Apenas os primeiros {{size}} deste arquivo foram carregados para pré-visualização.",
+    "unreadableTitle": "Não é possível ler este arquivo Arrow",
+    "unreadableBody": "Não foi possível analisar a tabela Arrow/Feather a partir do prefixo do arquivo. Baixe-o para abrir localmente."
+  },
+  "ggufPreview": {
+    "size": "Tamanho do arquivo",
+    "unreadableTitle": "Não é possível ler este arquivo GGUF",
+    "unreadableBody": "Não foi possível analisar o cabeçalho GGUF (pode exigir mais dados do que a janela de pré-visualização). Baixe-o para inspecionar localmente."
+  },
+  "onnxPreview": {
+    "nodes": "Nós",
+    "size": "Tamanho do arquivo",
+    "inputs": "Entradas",
+    "outputs": "Saídas",
+    "none": "Nenhum",
+    "graph": "Grafo: {{name}}",
+    "colNode": "Nó",
+    "colOp": "Operação",
+    "tooLargeBody": "Arquivos ONNX maiores que {{size}} não podem ser pré-visualizados aqui (os pesos geralmente estão incorporados). Baixe-o para inspecionar localmente.",
+    "unreadableTitle": "Não é possível ler este arquivo ONNX",
+    "unreadableBody": "Não foi possível decodificar o protobuf do modelo ONNX. Baixe-o para abrir localmente."
+  }
+}

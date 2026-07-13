@@ -1,0 +1,35 @@
+{
+  "export": {
+    "comfyuiMissing": "No se detectó ninguna instalación de ComfyUI. Configure COMFYUI_PATH o instale ComfyUI en su carpeta personal.",
+    "copied": "Exportado a {{path}}.",
+    "failed": "Error al exportar: {{error}}",
+    "invalidPath": "Ruta de archivo no válida: {{file}}",
+    "notInCache": "{{file}} aún no está en la caché local; descárguelo primero.",
+    "ollamaDone": "Se creó el modelo de Ollama {{name}}.",
+    "ollamaFailed": "Error al importar en Ollama: {{error}}",
+    "ollamaMissing": "No se encontró Ollama. Instálelo desde ollama.com e inténtelo de nuevo.",
+    "targetsError": "No se pudieron detectar los destinos de exportación"
+  },
+  "task": {
+    "canceled": "Tarea cancelada.",
+    "done": "Tarea completada.",
+    "failed": "Error en la tarea.",
+    "phase": {
+      "copying": "Copiando archivo…",
+      "preparing": "Preparando exportación…",
+      "running": "Ejecutando exportación…"
+    }
+  },
+  "upload": {
+    "done": "Se subió {{repo}} al Hub.",
+    "emptyFolder": "La carpeta seleccionada no contiene archivos que se puedan subir.",
+    "failed": "Error al subir: {{error}}",
+    "ignoreUnreadable": "El archivo .gitignore o .hfignore de la carpeta no se puede leer de forma segura.",
+    "invalidPath": "La carpeta contiene un nombre de archivo que no se puede representar de forma segura en el Hub.",
+    "needWriteScope": "Su sesión no tiene acceso de escritura. Cierre sesión y vuelva a iniciarla para conceder permiso de escritura.",
+    "selectionStale": "La carpeta seleccionada cambió. Vuelva a elegirla antes de subir.",
+    "signInFirst": "Inicie sesión en su cuenta de Hugging Face antes de subir archivos.",
+    "specialFile": "La carpeta contiene un socket, FIFO, dispositivo u otro archivo especial y no se puede subir de forma segura.",
+    "tooManyFiles": "La carpeta tiene demasiados archivos; el límite actual es {{max}}."
+  }
+}

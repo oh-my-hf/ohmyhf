@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "Format",
+    "modalities": "Modalités",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "Taille (lignes)",
+      "lt1k": "< 1K"
+    }
+  },
+  "downloads": "Téléchargements",
+  "empty": {
+    "body": "Essayez une autre recherche, ou effacez les filtres actifs.",
+    "title": "Aucun résultat"
+  },
+  "endOfResults": "Fin des résultats",
+  "error": {},
+  "filter": {
+    "all": "Tous",
+    "clear": "Effacer les filtres",
+    "clearAll": "Tout effacer",
+    "clientSide": "les filtres ne s'appliquent qu'aux résultats déjà chargés",
+    "done": "Terminé",
+    "hardware": "Matériel",
+    "inferenceProviders": "Fournisseurs d'inférence",
+    "languages": "Langues",
+    "libraries": "Bibliothèques",
+    "library": "Bibliothèque",
+    "license": "Licence",
+    "licenses": "Licences",
+    "mcp": "Compatible MCP",
+    "options": "Options",
+    "other": "Autre",
+    "params": "Paramètres",
+    "runningOnly": "En cours d'exécution uniquement",
+    "sdk": "SDK",
+    "status": "Statut",
+    "task": "Tâche",
+    "tasks": "Tâches",
+    "title": "Filtres"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "Mentions « j'aime »",
+  "listHint": "naviguer",
+  "params": {
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
+  },
+  "paramsBadge": "{{value}} paramètres",
+  "searchPlaceholder": {
+    "dataset": "Rechercher des jeux de données…",
+    "model": "Rechercher des modèles…",
+    "space": "Rechercher des Spaces…"
+  },
+  "sort": {
+    "created": "Créés récemment",
+    "downloads": "Téléchargements",
+    "label": "Trier",
+    "likes": "Mentions « j'aime »",
+    "trending": "Tendances",
+    "updated": "Mis à jour récemment"
+  },
+  "updated": "Mis à jour {{time}}",
+  "searchingMore": "Recherche de plus de résultats…"
+}

@@ -1,0 +1,32 @@
+{
+  "clear": "Limpar histórico",
+  "clearFilters": "Limpar filtros",
+  "cleared": "Histórico de navegação limpo",
+  "confirm": {
+    "body": "Isso remove permanentemente todas as {{count}} entradas de histórico armazenadas neste dispositivo.",
+    "confirm": "Limpar histórico",
+    "error": "Não foi possível limpar o histórico. Tente novamente.",
+    "title": "Limpar histórico de navegação?"
+  },
+  "count": "{{count}} no total",
+  "empty": {
+    "body": "Os repositórios que você abrir aparecerão aqui para acesso rápido.",
+    "title": "Nenhum histórico de navegação ainda"
+  },
+  "error": {
+    "body": "Não foi possível carregar seu histórico de navegação local.",
+    "title": "Não foi possível carregar o histórico"
+  },
+  "filter": {
+    "all": "Todos os tipos"
+  },
+  "filterLabel": "Filtrar por tipo de repositório",
+  "filteredEmpty": {
+    "body": "Tente outro ID de repositório ou tipo.",
+    "title": "Nenhum histórico correspondente"
+  },
+  "searchLabel": "Pesquisar histórico de navegação pelo ID do repositório",
+  "searchPlaceholder": "Pesquisar ID do repositório…",
+  "showing": "Mostrando {{shown}} de {{total}}",
+  "title": "Histórico de navegação"
+}

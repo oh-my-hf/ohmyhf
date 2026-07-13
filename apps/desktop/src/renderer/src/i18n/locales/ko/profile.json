@@ -1,0 +1,76 @@
+{
+  "editProfile": "프로필 편집",
+  "empty": {
+    "dataset": "아직 공개 데이터셋이 없습니다",
+    "model": "아직 공개 모델이 없습니다",
+    "space": "아직 공개 Space가 없습니다"
+  },
+  "error": {
+    "title": "이 프로필을 불러올 수 없습니다"
+  },
+  "follow": "팔로우",
+  "followError": "팔로우를 업데이트할 수 없습니다: {{error}}",
+  "members": "멤버",
+  "orgBadge": "조직",
+  "orgsLabel": "조직",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
+  "post": {
+    "actions": "댓글 작업",
+    "comment": {
+      "heading": "댓글 추가",
+      "placeholder": "댓글을 작성하세요… Markdown을 지원합니다.",
+      "posted": "댓글이 게시되었습니다"
+    },
+    "commentOnHub": "Hub에서 댓글 달기",
+    "commentsOnHub": "게시물 댓글을 달려면 Hub 웹 세션이 필요합니다 — 설정 → 계정에서 연결하거나, Hub에서 게시물을 열어 답글을 다세요.",
+    "error": {
+      "title": "이 게시물을 불러올 수 없습니다"
+    },
+    "hide": {
+      "action": "숨기기",
+      "confirm": "댓글 숨기기",
+      "done": "댓글이 숨겨졌습니다",
+      "error": "댓글을 숨길 수 없습니다: {{error}}",
+      "hidden": "이 댓글은 숨겨졌습니다.",
+      "hiddenWithReason": "이 댓글은 숨겨졌습니다 ({{reason}}(으)로 표시됨).",
+      "reason": "사유",
+      "selectReason": "이 댓글을 숨길 사유를 선택하세요 (선택 사항):",
+      "title": "댓글 숨기기",
+      "warning": "댓글 숨기기는 되돌릴 수 없습니다. 이후 아무도 이 내용을 볼 수 없습니다."
+    },
+    "reply": "답글",
+    "replyInThread": "스레드에서 답글",
+    "replyPlaceholder": "{{user}}에게 답글을 작성하세요… Markdown을 지원합니다."
+  },
+  "reactions": {
+    "error": "반응을 업데이트할 수 없습니다: {{error}}"
+  },
+  "selfBadge": "내 프로필",
+  "stats": {
+    "datasets": "데이터셋",
+    "followers": "팔로워",
+    "following": "팔로잉",
+    "members": "멤버",
+    "models": "모델",
+    "spaces": "Space"
+  },
+  "unfollow": "팔로우 취소",
+  "unwatch": "지켜보기 취소",
+  "unwatchOpenHub": "Hub는 앱에서의 지켜보기 취소를 무시합니다 — Hub 페이지에서 지켜보기 취소를 사용하세요.",
+  "viewProfile": "프로필 보기",
+  "watch": "지켜보기",
+  "watchError": "지켜보기를 업데이트할 수 없습니다: {{error}}",
+  "watchOnHub": "Hub에서 열기",
+  "watchReconnect": "설정 열기",
+  "watchSessionExpired": "이 지켜보기 변경이 Hub에 반영되지 않았습니다 — Hub 웹 세션이 만료되었을 수 있습니다. 설정 → 계정에서 다시 연결하세요.",
+  "watchSuccess": "지켜보는 중입니다 — 이 계정에 대한 Hub 알림을 받게 됩니다.",
+  "unwatchSuccess": "이 계정 지켜보기를 중단했습니다.",
+  "watchOpenHub": "Hub는 앱에서의 지켜보기를 무시합니다 — Hub 페이지에서 저장소 지켜보기를 사용하세요.",
+  "watchSyncNotApplied": "로컬에서 팔로우했습니다. Hub는 앱의 지켜보기 요청을 무시합니다 — 이 계정에 대한 Hub 알림도 받으려면 해당 Hub 페이지의 지켜보기 버튼을 사용하세요."
+}

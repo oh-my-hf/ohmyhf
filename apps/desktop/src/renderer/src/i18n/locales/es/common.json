@@ -1,0 +1,58 @@
+{
+  "appName": "Oh My HuggingFace",
+  "back": "Atrás",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "confirm": "Confirmar",
+  "copied": "Copiado",
+  "copy": "Copiar",
+  "delete": "Eliminar",
+  "dismiss": "Descartar",
+  "error": {
+    "generic": "Algo salió mal",
+    "network": "No se pudo contactar con la API de Hugging Face"
+  },
+  "gated": "Restringido",
+  "goBack": "Atrás",
+  "goForward": "Adelante",
+  "imageViewer": "Visor de imágenes",
+  "kind": {
+    "dataset": "Conjunto de datos",
+    "model": "Modelo",
+    "paper": "Artículo",
+    "space": "Space"
+  },
+  "language": {
+    "system": "Idioma del sistema",
+    "en": "English",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    "de": "Deutsch",
+    "es": "Español",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pt-BR": "Português (Brasil)"
+  },
+  "loading": "Cargando…",
+  "progress": {
+    "indeterminate": "En curso"
+  },
+  "open": "Abrir",
+  "openOnHub": "Abrir en el Hub",
+  "private": "Privado",
+  "remove": "Quitar",
+  "retry": "Reintentar",
+  "running": "En ejecución",
+  "showInFolder": "Mostrar en la carpeta",
+  "theme": {
+    "dark": "Oscuro",
+    "label": "Tema",
+    "light": "Claro",
+    "system": "Sistema"
+  },
+  "undo": "Deshacer",
+  "unofficial": "No oficial",
+  "zoomImage": "Abrir visor de imágenes",
+  "zoomImageNamed": "Abrir visor de imágenes para {{name}}"
+}

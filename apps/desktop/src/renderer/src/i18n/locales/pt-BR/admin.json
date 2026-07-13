@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "Aceitar",
+    "empty": "Nenhuma solicitação por aqui.",
+    "grant": "Conceder acesso",
+    "granted": "Acesso concedido",
+    "grantPlaceholder": "nome de usuário",
+    "handled": "Solicitação atualizada",
+    "notGated": "Ative o acesso restrito para revisar solicitações de acesso.",
+    "reasonPlaceholder": "Motivo da rejeição (opcional)",
+    "reject": "Rejeitar",
+    "tab": {
+      "accepted": "Aceitas",
+      "pending": "Pendentes",
+      "rejected": "Rejeitadas"
+    },
+    "title": "Solicitações de acesso"
+  },
+  "actions": {
+    "duplicate": "Duplicar",
+    "label": "Ações do repositório",
+    "rename": "Renomear / mover"
+  },
+  "delete": {
+    "body": "Isso exclui permanentemente {{repoId}} e todos os seus arquivos. Essa ação não pode ser desfeita.",
+    "confirmLabel": "Digite {{repoId}} para confirmar",
+    "success": "Repositório excluído",
+    "title": "Excluir repositório"
+  },
+  "duplicate": {
+    "body": "Crie uma cópia de {{repoId}} com um novo id.",
+    "label": "Id do repositório de destino",
+    "private": "Tornar a cópia privada",
+    "submit": "Duplicar",
+    "success": "Repositório duplicado",
+    "title": "Duplicar repositório"
+  },
+  "error": {
+    "title": "Não foi possível carregar seus repositórios"
+  },
+  "gatedHint": {
+    "body": "Seu token de acesso não inclui o escopo manage-repos, então a administração de repositórios está desativada.",
+    "title": "Permissão ausente"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "Os repositórios que você possui aparecerão aqui.",
+      "title": "Nenhum repositório ainda"
+    },
+    "filter": {
+      "all": "Todos"
+    },
+    "title": "Meus repositórios"
+  },
+  "refs": {
+    "branchCreated": "Branch criado",
+    "branchDeleted": "Branch excluído",
+    "branchesHint": "Crie um branch ou exclua um pelo nome.",
+    "branchPlaceholder": "nome-do-branch",
+    "createBranch": "Criar branch",
+    "createTag": "Criar tag",
+    "deleteBranch": "Excluir branch",
+    "deleteTag": "Excluir tag",
+    "startingPointPlaceholder": "ponto de partida (opcional)",
+    "tagCreated": "Tag criada",
+    "tagDeleted": "Tag excluída",
+    "tagMessagePlaceholder": "mensagem (opcional)",
+    "tagPlaceholder": "nome-da-tag",
+    "tagsHint": "Crie uma tag na main ou exclua uma pelo nome.",
+    "title": "Branches e tags"
+  },
+  "rename": {
+    "body": "Mova {{repoId}} para um novo nome ou namespace. Todos os arquivos, curtidas e downloads se movem junto.",
+    "label": "Novo id do repositório",
+    "submit": "Renomear",
+    "success": "Repositório movido",
+    "title": "Renomear ou mover"
+  },
+  "repoIdPlaceholder": "proprietário/nome",
+  "settings": {
+    "gated": "Acesso restrito",
+    "gatedAuto": "Aprovação automática",
+    "gatedHint": "Exigir que os usuários solicitem acesso antes de baixar.",
+    "gatedManual": "Revisão manual",
+    "gatedOff": "Desativado",
+    "private": "Privado",
+    "privateHint": "Somente você e os colaboradores podem ver este repositório.",
+    "title": "Configurações",
+    "updated": "Configurações atualizadas"
+  },
+  "signedOut": {
+    "body": "Seus modelos, conjuntos de dados e Spaces aparecem aqui assim que você entrar.",
+    "title": "Entre para gerenciar seus repositórios"
+  },
+  "space": {
+    "descriptionPlaceholder": "descrição (opcional)",
+    "keyPlaceholder": "CHAVE",
+    "logs": {
+      "build": "Build",
+      "empty": "Nenhuma saída de log.",
+      "refresh": "Atualizar logs",
+      "run": "Executar",
+      "title": "Logs"
+    },
+    "restart": {
+      "done": "Reinicialização solicitada",
+      "factory": "Reconstrução de fábrica",
+      "factoryHint": "A reconstrução de fábrica limpa o cache de build e reconstrói o Space do zero.",
+      "restart": "Reiniciar Space",
+      "title": "Reiniciar"
+    },
+    "secrets": {
+      "add": "Adicionar segredo",
+      "deleted": "Segredo excluído",
+      "empty": "Nenhum segredo definido.",
+      "saved": "Segredo salvo",
+      "title": "Segredos",
+      "writeOnly": "Os valores dos segredos são somente para escrita e nunca são exibidos novamente após serem salvos."
+    },
+    "valuePlaceholder": "valor",
+    "variables": {
+      "deleted": "Variável excluída",
+      "edit": "Editar variável",
+      "empty": "Nenhuma variável definida.",
+      "save": "Salvar variável",
+      "saved": "Variável salva",
+      "title": "Variáveis"
+    }
+  },
+  "visibility": {
+    "makePrivate": "Tornar privado",
+    "makePublic": "Tornar público",
+    "protected": "Protegido",
+    "updated": "Visibilidade atualizada"
+  }
+}

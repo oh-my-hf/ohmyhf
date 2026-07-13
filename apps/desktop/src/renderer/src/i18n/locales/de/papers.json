@@ -1,0 +1,24 @@
+{
+  "authors": "Autoren",
+  "comment": {
+    "heading": "Dieses Paper kommentieren",
+    "placeholder": "Einen Kommentar schreiben (Markdown wird unterstützt)…",
+    "posted": "Kommentar veröffentlicht"
+  },
+  "empty": "Noch keine Paper geladen.",
+  "listError": "Daily Papers konnten nicht geladen werden",
+  "detailError": "Dieses Paper konnte nicht geladen werden",
+  "retryMore": "Erneut mehr laden",
+  "published": "Veröffentlicht {{time}}",
+  "readOnArxiv": "Auf arXiv lesen",
+  "readOnHub": "Im Hub öffnen",
+  "title": "Daily Papers",
+  "upvote": {
+    "add": "Upvote",
+    "error": "Der Upvote konnte nicht aktualisiert werden: {{error}}",
+    "onHub": "Upvoten benötigt eine Hub-Websitzung — verbinden Sie eine unter Einstellungen → Konto, oder öffnen Sie es im Hub.",
+    "remove": "Upvote entfernen",
+    "sessionExpired": "Ihre Hub-Websitzung ist abgelaufen. Verbinden Sie sie erneut unter Einstellungen → Konto, um aus der App zu upvoten."
+  },
+  "upvotes": "Upvotes"
+}

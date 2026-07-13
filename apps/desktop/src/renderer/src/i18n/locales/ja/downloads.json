@@ -1,0 +1,49 @@
+{
+  "actions": {
+    "cancel": "キャンセル",
+    "openFolder": "フォルダに表示",
+    "pause": "一時停止",
+    "remove": "リストから削除",
+    "resume": "再開"
+  },
+  "bulk": {
+    "clearCompleted": "完了した項目をクリア",
+    "pauseAll": "すべて一時停止",
+    "resumeAll": "すべて再開"
+  },
+  "commands": {
+    "actions": "操作",
+    "downloadCurrentRepository": "{{repo}}をダウンロード",
+    "downloadRepository": "リポジトリをダウンロード",
+    "downloadSelectedFile": "{{file}}をダウンロード",
+    "searchPlaceholder": "ダウンロードするモデル、データセット、Spaceを検索…",
+    "started": "ダウンロードを開始しました",
+    "starting": "ダウンロードを開始しています…",
+    "typeToSearch": "リポジトリ名を入力してダウンロードを開始してください。"
+  },
+  "confirmRemove": {
+    "body": "このダウンロードはまだ進行中です。削除すると転送がキャンセルされ、リストから削除されます。",
+    "confirm": "キャンセルして削除",
+    "title": "実行中のダウンロードを削除しますか?"
+  },
+  "count_other": "{{count}}件のタスク",
+  "empty": {
+    "body": "気に入ったモデルを見つけてダウンロードをクリックすると、標準のHFキャッシュにファイルが保存され、transformersやllama.cppなどですぐに使えます。",
+    "title": "まだダウンロードはありません"
+  },
+  "files": "{{done}}/{{total}}ファイル",
+  "removed": "ダウンロード項目を削除しました",
+  "revision": "リビジョン{{revision}}",
+  "speed": "{{speed}}/秒",
+  "status": {
+    "canceled": "キャンセル済み",
+    "completed": "完了",
+    "error": "失敗",
+    "paused": "一時停止中",
+    "queued": "キュー待ち",
+    "running": "ダウンロード中"
+  },
+  "title": "ダウンロード",
+  "verified": "sha256検証済み",
+  "checksumsVerified": "チェックサム検証済み"
+}

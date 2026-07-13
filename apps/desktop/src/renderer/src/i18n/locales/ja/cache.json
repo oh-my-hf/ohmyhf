@@ -1,0 +1,29 @@
+{
+  "confirmDelete": {
+    "body": "ディスク上の{{size}}が解放されます。他のリビジョンと共有されているファイルは保持されます。この操作は取り消せません。",
+    "title": "{{count}}件のリビジョンを削除しますか?",
+    "title_other": "{{count}}件のリビジョンを削除しますか?"
+  },
+  "deleted": "削除しました。{{size}}を解放しました。",
+  "deleteRevision": "リビジョンを削除",
+  "deleteStale": "参照のないリビジョンをクリーンアップ",
+  "empty": {
+    "body": "このアプリ(およびtransformersやCLI)からのダウンロードがここに表示されます。",
+    "title": "キャッシュは空です"
+  },
+  "files": "{{count}}個のファイル",
+  "files_other": "{{count}}個のファイル",
+  "location": "キャッシュの場所",
+  "noRefs": "参照なし",
+  "reposCount": "{{count}}件のキャッシュ済みリポジトリ",
+  "reposCount_other": "{{count}}件のキャッシュ済みリポジトリ",
+  "revisions": "{{count}}件のリビジョン",
+  "revisions_other": "{{count}}件のリビジョン",
+  "scan": "再スキャン",
+  "scanning": "スキャン中…",
+  "title": "ローカルキャッシュ",
+  "totalOnDisk": "ディスク使用量 {{size}}",
+  "pinned": "固定済み",
+  "partialData": "未完了のダウンロードデータ {{size}}",
+  "cleanPartials": "クリーンアップ"
+}

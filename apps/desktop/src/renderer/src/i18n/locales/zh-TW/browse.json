@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "格式",
+    "modalities": "模態",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "大小（列數）",
+      "lt1k": "< 1K"
+    }
+  },
+  "downloads": "下載次數",
+  "empty": {
+    "body": "請嘗試其他搜尋條件，或清除目前的篩選條件。",
+    "title": "沒有結果"
+  },
+  "endOfResults": "已顯示所有結果",
+  "error": {},
+  "filter": {
+    "all": "全部",
+    "clear": "清除篩選條件",
+    "clearAll": "全部清除",
+    "clientSide": "篩選條件僅套用於已載入的結果",
+    "done": "完成",
+    "hardware": "硬體",
+    "inferenceProviders": "推論提供者",
+    "languages": "語言",
+    "libraries": "函式庫",
+    "library": "函式庫",
+    "license": "授權條款",
+    "licenses": "授權條款",
+    "mcp": "相容 MCP",
+    "options": "選項",
+    "other": "其他",
+    "params": "參數量",
+    "runningOnly": "僅顯示執行中",
+    "sdk": "SDK",
+    "status": "狀態",
+    "task": "任務",
+    "tasks": "任務",
+    "title": "篩選條件"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "按讚數",
+  "listHint": "瀏覽",
+  "params": {
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
+  },
+  "paramsBadge": "{{value}} 參數",
+  "searchPlaceholder": {
+    "dataset": "搜尋資料集…",
+    "model": "搜尋模型…",
+    "space": "搜尋 Space…"
+  },
+  "sort": {
+    "created": "最近建立",
+    "downloads": "下載次數",
+    "label": "排序方式",
+    "likes": "按讚數",
+    "trending": "熱門趨勢",
+    "updated": "最近更新"
+  },
+  "updated": "更新於 {{time}}",
+  "searchingMore": "正在搜尋更多結果…"
+}

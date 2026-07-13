@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "폴더 선택…",
+  "create": "저장소 만들기",
+  "creating": "만드는 중…",
+  "hint": "로컬 폴더로 새 저장소를 만듭니다. write-repos 권한이 필요합니다.",
+  "kind": "유형",
+  "name": "저장소 이름",
+  "namePlaceholder": "my-cool-model",
+  "noFolder": "선택된 폴더가 없습니다",
+  "selectionSummary": "파일 {{files}}개 · {{size}} · {{excluded}}개 제외",
+  "phase": {
+    "committing": "커밋 중…",
+    "hashing": "파일 해시 계산 중…",
+    "preparing": "파일 준비 중…",
+    "uploading": "업로드 중…"
+  },
+  "private": "비공개 저장소",
+  "scopeHint": "업로드는 로그인 시 부여된 쓰기 권한을 사용합니다.",
+  "signIn": "업로드하려면 로그인하세요.",
+  "title": "Hub에 업로드",
+  "warnings": {
+    "acknowledge": "이 경고를 확인했으며 계속 진행합니다.",
+    "large-upload": {
+      "body": "이 업로드는 {{size}}로, 시간이 오래 걸릴 수 있습니다.",
+      "title": "대용량 업로드"
+    },
+    "sensitive-path": {
+      "body": "{{count}}개의 경로에 자격 증명 또는 비밀 정보가 포함되어 있을 수 있습니다.",
+      "title": "민감할 수 있는 파일"
+    }
+  }
+}

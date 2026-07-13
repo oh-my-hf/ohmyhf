@@ -1,0 +1,33 @@
+{
+  "confirmDelete": {
+    "body": "Cette action libère {{size}} sur le disque. Les fichiers partagés avec d'autres révisions sont conservés. Elle est irréversible.",
+    "title": "Supprimer {{count}} révision(s) ?",
+    "title_one": "Supprimer {{count}} révision ?",
+    "title_other": "Supprimer {{count}} révisions ?"
+  },
+  "deleted": "Supprimé. {{size}} libérés.",
+  "deleteRevision": "Supprimer la révision",
+  "deleteStale": "Nettoyer les révisions sans référence",
+  "empty": {
+    "body": "Les téléchargements de cette application (ainsi que de transformers ou de la CLI) apparaîtront ici.",
+    "title": "Le cache est vide"
+  },
+  "files": "{{count}} fichiers",
+  "files_one": "{{count}} fichier",
+  "files_other": "{{count}} fichiers",
+  "location": "Emplacement du cache",
+  "noRefs": "aucune référence",
+  "reposCount": "{{count}} dépôts en cache",
+  "reposCount_one": "{{count}} dépôt en cache",
+  "reposCount_other": "{{count}} dépôts en cache",
+  "revisions": "{{count}} révisions",
+  "revisions_one": "{{count}} révision",
+  "revisions_other": "{{count}} révisions",
+  "scan": "Réanalyser",
+  "scanning": "Analyse en cours…",
+  "title": "Cache local",
+  "totalOnDisk": "{{size}} sur le disque",
+  "pinned": "épinglé",
+  "partialData": "{{size}} de données de téléchargement incomplètes",
+  "cleanPartials": "Nettoyer"
+}

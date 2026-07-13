@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "형식",
+    "modalities": "모달리티",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "크기 (행 수)",
+      "lt1k": "< 1K"
+    }
+  },
+  "downloads": "다운로드 수",
+  "empty": {
+    "body": "다른 검색어를 시도하거나 활성화된 필터를 지워 보세요.",
+    "title": "결과 없음"
+  },
+  "endOfResults": "결과의 끝입니다",
+  "error": {},
+  "filter": {
+    "all": "전체",
+    "clear": "필터 지우기",
+    "clearAll": "전체 지우기",
+    "clientSide": "필터는 불러온 결과에만 적용됩니다",
+    "done": "완료",
+    "hardware": "하드웨어",
+    "inferenceProviders": "추론 제공업체",
+    "languages": "언어",
+    "libraries": "라이브러리",
+    "library": "라이브러리",
+    "license": "라이선스",
+    "licenses": "라이선스",
+    "mcp": "MCP 호환",
+    "options": "옵션",
+    "other": "기타",
+    "params": "매개변수",
+    "runningOnly": "실행 중인 것만",
+    "sdk": "SDK",
+    "status": "상태",
+    "task": "작업",
+    "tasks": "작업",
+    "title": "필터"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "좋아요 수",
+  "listHint": "이동",
+  "params": {
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
+  },
+  "paramsBadge": "매개변수 {{value}}개",
+  "searchPlaceholder": {
+    "dataset": "데이터셋 검색…",
+    "model": "모델 검색…",
+    "space": "Space 검색…"
+  },
+  "sort": {
+    "created": "최근 생성순",
+    "downloads": "다운로드 수",
+    "label": "정렬",
+    "likes": "좋아요 수",
+    "trending": "트렌딩",
+    "updated": "최근 업데이트순"
+  },
+  "updated": "{{time}} 업데이트됨",
+  "searchingMore": "결과를 더 검색하는 중…"
+}

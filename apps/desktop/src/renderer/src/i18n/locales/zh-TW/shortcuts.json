@@ -1,0 +1,29 @@
+{
+  "back": "返回上一頁",
+  "cache": "開啟快取",
+  "datasets": "開啟資料集",
+  "downloads": "開啟下載項目",
+  "favorites": "開啟我的最愛",
+  "focusSearch": "聚焦清單搜尋欄",
+  "forward": "前往下一頁",
+  "groups": {
+    "global": "全域",
+    "list": "清單",
+    "navigation": "導覽",
+    "palette": "命令選單"
+  },
+  "help": "顯示此說明畫面",
+  "history": "開啟瀏覽紀錄",
+  "inbox": "開啟收件匣",
+  "listNav": "移動清單選取項目",
+  "palette": "命令選單／全域搜尋",
+  "paletteClose": "關閉",
+  "paletteNavigate": "瀏覽結果",
+  "paletteSelect": "選取",
+  "models": "開啟模型",
+  "papers": "開啟論文",
+  "spaces": "開啟 Space",
+  "settings": "開啟設定",
+  "title": "鍵盤快速鍵",
+  "toggleSidebar": "收合或展開側邊欄"
+}

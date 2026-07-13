@@ -1,0 +1,76 @@
+{
+  "editProfile": "編輯個人檔案",
+  "empty": {
+    "dataset": "尚無公開資料集",
+    "model": "尚無公開模型",
+    "space": "尚無公開 Space"
+  },
+  "error": {
+    "title": "無法載入此個人檔案"
+  },
+  "follow": "追蹤",
+  "followError": "無法更新追蹤狀態：{{error}}",
+  "members": "成員",
+  "orgBadge": "組織",
+  "orgsLabel": "組織",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
+  "post": {
+    "actions": "留言操作",
+    "comment": {
+      "heading": "新增留言",
+      "placeholder": "撰寫留言……支援 Markdown 格式。",
+      "posted": "留言已發佈"
+    },
+    "commentOnHub": "在 Hub 上留言",
+    "commentsOnHub": "留言功能需要 Hub 網頁工作階段——請前往「設定 → 帳戶」連接一個，或在 Hub 上開啟此貼文回覆。",
+    "error": {
+      "title": "無法載入此貼文"
+    },
+    "hide": {
+      "action": "隱藏",
+      "confirm": "隱藏留言",
+      "done": "留言已隱藏",
+      "error": "無法隱藏留言：{{error}}",
+      "hidden": "此留言已被隱藏。",
+      "hiddenWithReason": "此留言已被隱藏（標記為 {{reason}}）。",
+      "reason": "原因",
+      "selectReason": "選擇隱藏此留言的原因（選填）：",
+      "title": "隱藏留言",
+      "warning": "隱藏留言後無法復原，任何人都將無法再看到其內容。"
+    },
+    "reply": "回覆",
+    "replyInThread": "在討論串中回覆",
+    "replyPlaceholder": "回覆 {{user}}……支援 Markdown 格式。"
+  },
+  "reactions": {
+    "error": "無法更新回應：{{error}}"
+  },
+  "selfBadge": "您的個人檔案",
+  "stats": {
+    "datasets": "資料集",
+    "followers": "追蹤者",
+    "following": "追蹤中",
+    "members": "成員",
+    "models": "模型",
+    "spaces": "Space"
+  },
+  "unfollow": "取消追蹤",
+  "unwatch": "取消關注",
+  "unwatchOpenHub": "Hub 會忽略應用程式送出的取消關注操作——請在其 Hub 頁面上使用取消關注功能。",
+  "viewProfile": "檢視個人檔案",
+  "watch": "關注",
+  "watchError": "無法更新關注狀態：{{error}}",
+  "watchOnHub": "在 Hub 上開啟",
+  "watchReconnect": "開啟設定",
+  "watchSessionExpired": "Hub 忽略了此次關注變更——您的 Hub 網頁工作階段可能已過期。請前往「設定 → 帳戶」重新連接。",
+  "watchSuccess": "已開始關注——您將會收到此帳戶的 Hub 通知。",
+  "unwatchSuccess": "已停止關注此帳戶。",
+  "watchOpenHub": "Hub 會忽略應用程式送出的關注操作——請在其 Hub 頁面上使用關注儲存庫功能。",
+  "watchSyncNotApplied": "已在本機追蹤。Hub 會忽略應用程式送出的關注請求——若要同時收到此帳戶的 Hub 通知，請在其 Hub 頁面上使用「關注」按鈕。"
+}

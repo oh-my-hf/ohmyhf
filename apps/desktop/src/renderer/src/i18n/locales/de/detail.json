@@ -1,0 +1,255 @@
+{
+  "actions": {
+    "download": "Herunterladen",
+    "downloadAll": "Alle Dateien herunterladen",
+    "favorite": "Zu Favoriten hinzufügen",
+    "follow": "Repository folgen",
+    "unfavorite": "Aus Favoriten entfernen",
+    "unfollow": "Repository nicht mehr folgen"
+  },
+  "card": {
+    "empty": "Dieses Repository hat keine Card."
+  },
+  "datasetPreview": {
+    "config": "Konfiguration",
+    "next": "Nächste Seite",
+    "prev": "Vorherige Seite",
+    "range": "Zeilen {{from}}–{{to}} von {{total}}",
+    "rangeNoTotal": "Zeilen {{from}}–{{to}}",
+    "sampleNote": "Vollständige Ansicht nicht verfügbar — zeigt die Beispielvorschau des Hubs ({{count}} Zeilen).",
+    "split": "Split",
+    "unavailable": "Der Datensatz-Viewer ist für diesen Datensatz nicht verfügbar. Sie können weiterhin die Dateien durchsuchen oder ihn im Hub öffnen.",
+    "rowsError": "Zeilen konnten nicht geladen werden."
+  },
+  "discussions": {
+    "comments": "{{count}} Kommentare",
+    "create": {
+      "bodyPlaceholder": "Beschreiben Sie Ihre Diskussion oder Änderung… Markdown wird unterstützt.",
+      "created": "Thread erstellt.",
+      "discussion": "Diskussion",
+      "error": "Der Thread konnte nicht erstellt werden: {{error}}",
+      "new": "Neu",
+      "prHint": "Öffnet einen leeren Entwurfs-Pull-Request mit Ihrer Beschreibung als erstem Kommentar — pushen Sie anschließend Commits auf seinen refs/pr-Branch.",
+      "pullRequest": "Pull Request",
+      "submit": "Erstellen",
+      "title": "Neuer Thread in {{repoId}}",
+      "titlePlaceholder": "Titel"
+    },
+    "empty": "Noch keine Diskussionen.",
+    "filter": {
+      "all": "Alle",
+      "closed": "Geschlossen",
+      "open": "Offen"
+    },
+    "loadMore": "Mehr laden",
+    "pullRequest": "PR",
+    "quoteReply": "Antwort zitieren",
+    "reactionError": "Die Reaktion konnte nicht aktualisiert werden: {{error}}",
+    "reply": "Antworten",
+    "replyPlaceholder": "Eine Antwort schreiben (Markdown wird unterstützt)…",
+    "segment": {
+      "discussions": "Diskussionen",
+      "pullRequests": "Pull Requests"
+    },
+    "send": "Senden",
+    "sending": "Wird gesendet…",
+    "signInToReply": "Melden Sie sich an, um an der Diskussion teilzunehmen.",
+    "status": {
+      "closed": "Geschlossen",
+      "draft": "Entwurf",
+      "merged": "Zusammengeführt",
+      "open": "Offen"
+    }
+  },
+  "downloadFailed": "Der Download konnte nicht gestartet werden: {{error}}",
+  "downloadStarted": "Zu Downloads hinzugefügt",
+  "editor": {
+    "attach": "Datei anhängen",
+    "bold": "Fett",
+    "bulletList": "Aufzählungsliste",
+    "charCount": "Zeichenanzahl",
+    "code": "Inline-Code",
+    "italic": "Kursiv",
+    "link": "Link",
+    "mentionEmpty": "Keine Benutzer gefunden",
+    "mentionHint": "Tippen, um einen Benutzer oder eine Organisation zu erwähnen",
+    "preview": "Vorschau",
+    "previewEmpty": "Noch nichts zum Anzeigen — schreiben Sie zuerst etwas.",
+    "quote": "Zitat",
+    "uploadBrowse": "durchsuchen",
+    "uploadError": "Hochladen fehlgeschlagen: {{error}}",
+    "uploadHint": "Fügen Sie Bilder, Audio oder Video per Ziehen, Einfügen oder",
+    "uploadTooLarge": "{{name}} ist zu groß (max. 64 MB)",
+    "uploading": "Wird hochgeladen…",
+    "write": "Schreiben"
+  },
+  "favoriteRemoved": "Aus Favoriten entfernt",
+  "favoritesEmpty": {
+    "body": "Markieren Sie Repositories beim Durchsuchen mit einem Stern, um sie hier anzuheften.",
+    "title": "Noch keine Favoriten"
+  },
+  "files": {
+    "download": "Datei herunterladen",
+    "empty": "Dieses Verzeichnis ist leer.",
+    "export": "Exportieren…",
+    "exportTo": "Nach {{tool}} exportieren",
+    "lfs": "LFS",
+    "noTargets": "Keine lokalen Tools gefunden",
+    "root": "Stammverzeichnis"
+  },
+  "gate": {
+    "ask": "Dieses Repository ist zugriffsbeschränkt — fordern Sie Zugriff an, um es herunterzuladen und in der Vorschau anzuzeigen.",
+    "error": "Die Zugriffsanfrage konnte nicht gesendet werden: {{error}}",
+    "granted": "Ihnen wurde Zugriff auf dieses Repository gewährt.",
+    "needsSession": "Zum Senden einer Zugriffsanfrage ist eine Hub-Websitzung erforderlich — verbinden Sie eine unter Einstellungen → Konto.",
+    "openSettings": "Einstellungen öffnen",
+    "pending": "Ihre Zugriffsanfrage wartet auf die Prüfung durch die Autoren.",
+    "request": "Zugriff anfordern",
+    "requestBody": "Füllen Sie die von den Autoren von {{repoId}} geforderten Bedingungen aus. Ihr Benutzername und Ihre E-Mail-Adresse werden mit ihnen geteilt.",
+    "requestTitle": "Zugriff anfordern",
+    "submit": "Zustimmen und Anfrage senden",
+    "submitted": "Zugriffsanfrage gesendet."
+  },
+  "info": {
+    "created": "Erstellt",
+    "downloadsAllTime": "Downloads insgesamt",
+    "library": "Bibliothek",
+    "license": "Lizenz",
+    "params": "Parameter",
+    "sdk": "SDK",
+    "sha": "Revision",
+    "storage": "Belegter Speicher",
+    "tags": "Tags",
+    "task": "Aufgabe",
+    "updated": "Aktualisiert"
+  },
+  "like": {
+    "error": "Der Like konnte nicht aktualisiert werden: {{error}}",
+    "like": "Like",
+    "onHub": "Likes benötigen eine Hub-Websitzung — verbinden Sie eine unter Einstellungen → Konto, oder öffnen Sie das Repository im Hub, um es zu liken.",
+    "reconnect": "Einstellungen öffnen",
+    "sessionExpired": "Ihre Hub-Websitzung ist abgelaufen. Verbinden Sie sie erneut unter Einstellungen → Konto, um aus der App zu liken.",
+    "unlike": "Like entfernen"
+  },
+  "maintainer": {
+    "close": "Schließen",
+    "closeWithComment": "Kommentieren und schließen",
+    "editTitle": "Titel bearbeiten",
+    "merge": "Zusammenführen",
+    "mergeCommentPlaceholder": "Einen optionalen Kommentar hinzufügen…",
+    "mergeConfirmBody": "Dies führt den Pull Request in das Repository zusammen. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "mergeConfirmTitle": "Pull Request #{{num}} zusammenführen?",
+    "merged": "Pull Request zusammengeführt",
+    "reopen": "Wieder öffnen",
+    "reopenWithComment": "Kommentieren und wieder öffnen",
+    "statusUpdated": "Diskussionsstatus aktualisiert",
+    "titleSave": "Speichern",
+    "titleUpdated": "Titel aktualisiert"
+  },
+  "playground": {
+    "empty": "Die Antwort wird hier angezeigt.",
+    "placeholder": "Senden Sie diesem Modell über die Inferenz-API einen Prompt…",
+    "run": "Ausführen",
+    "running": "Wird ausgeführt…",
+    "signIn": "Melden Sie sich an, um den Inferenz-Playground zu nutzen.",
+    "stop": "Stoppen",
+    "unavailable": "Inferenz ist für dieses Modell nicht verfügbar: {{error}}"
+  },
+  "pr": {
+    "binary": "Binär",
+    "diffTruncated": "Dieser Diff wurde gekürzt — es wird nur ein Teil der Änderungen angezeigt.",
+    "empty": "Noch keine Pull Requests.",
+    "noDescription": "Keine Beschreibung vorhanden.",
+    "noDiff": "Keine Änderungen anzuzeigen.",
+    "refsLabel": "Merge-Richtung",
+    "renamed": "Umbenannt",
+    "statusChanged": "{{author}} hat den Status auf {{status}} geändert",
+    "tabDiscussion": "Diskussion",
+    "tabFiles": "Geänderte Dateien"
+  },
+  "preview": {
+    "colDtype": "Dtype",
+    "colShape": "Form",
+    "colTensor": "Tensor",
+    "copyRawUrl": "Raw-URL kopieren",
+    "highlightFailed": "Syntaxhervorhebung fehlgeschlagen. Zeigt reinen Text an.",
+    "highlightTooLarge": "Diese Datei ist für die Syntaxhervorhebung zu groß. Zeigt reinen Text an.",
+    "highlightUnknown": "Für {{language}} ist keine Syntaxhervorhebung verfügbar. Zeigt reinen Text an.",
+    "mediaErrorBody": "Diese Mediendatei konnte hier nicht abgespielt werden. Laden Sie sie herunter, um sie lokal zu öffnen.",
+    "mediaErrorTitle": "Diese Datei kann nicht abgespielt werden",
+    "noPreviewBody": "Dieser Dateityp kann hier nicht in der Vorschau angezeigt werden. Laden Sie ihn herunter, um ihn lokal zu prüfen.",
+    "noPreviewTitle": "Keine Vorschau verfügbar",
+    "pdfErrorBody": "Dieses PDF konnte hier nicht dargestellt werden. Laden Sie es herunter, um es lokal zu öffnen.",
+    "pdfErrorTitle": "Dieses PDF kann nicht geöffnet werden",
+    "pdfTooLargeBody": "PDFs größer als {{size}} können hier nicht in der Vorschau angezeigt werden. Laden Sie sie herunter, um sie lokal zu öffnen.",
+    "pdfPage": "Seite {{page}} von {{total}}",
+    "pickFile": "Wählen Sie eine Datei zur Vorschau aus",
+    "pickFileBody": "Wählen Sie links eine Datei aus, um ihren Inhalt hier zu sehen.",
+    "tensors": "Tensoren",
+    "totalParams": "Parameter insgesamt",
+    "truncated": "Vorschau gekürzt — zeigt die ersten {{size}}."
+  },
+  "run": {
+    "loading": "Space wird geladen…",
+    "notRunning": "Der Space befindet sich derzeit im Status „{{stage}}“ und kann hier nicht ausgeführt werden. Öffnen Sie ihn im Hub, um ihn zu wecken oder neu zu starten.",
+    "notRunningTitle": "Dieser Space läuft nicht",
+    "reload": "Neu laden"
+  },
+  "select": {
+    "body": "Wählen Sie ein Element aus der Liste aus — oder drücken Sie ⌘K, um alles zu durchsuchen.",
+    "title": "Nichts ausgewählt"
+  },
+  "tabs": {
+    "card": "Card",
+    "discussions": "Diskussionen",
+    "files": "Dateien",
+    "info": "Info",
+    "manage": "Verwalten",
+    "playground": "Playground",
+    "preview": "Vorschau",
+    "run": "Ausführen"
+  },
+  "parquetPreview": {
+    "rows_one": "{{count}} Zeile",
+    "rows_other": "{{count}} Zeilen",
+    "columns_one": "{{count}} Spalte",
+    "columns_other": "{{count}} Spalten",
+    "unsupportedCodec": "Diese Datei verwendet einen Komprimierungscodec, der nicht in der Vorschau angezeigt werden kann. Laden Sie sie herunter, um sie lokal zu öffnen.",
+    "unreadableTitle": "Diese Parquet-Datei kann nicht gelesen werden",
+    "unreadableBody": "Die Metadaten der Datei konnten nicht gelesen werden. Laden Sie sie herunter, um sie lokal zu öffnen."
+  },
+  "csvPreview": {
+    "rows_one": "{{count}} Zeile",
+    "rows_other": "{{count}} Zeilen",
+    "columns_one": "{{count}} Spalte",
+    "columns_other": "{{count}} Spalten",
+    "emptyHeader": "Spalte {{index}}"
+  },
+  "arrowPreview": {
+    "rows_one": "{{count}} Zeile",
+    "rows_other": "{{count}} Zeilen",
+    "columns_one": "{{count}} Spalte",
+    "columns_other": "{{count}} Spalten",
+    "prefixOnly": "Für die Vorschau wurden nur die ersten {{size}} dieser Datei geladen.",
+    "unreadableTitle": "Diese Arrow-Datei kann nicht gelesen werden",
+    "unreadableBody": "Die Arrow/Feather-Tabelle konnte nicht aus dem Dateipräfix geparst werden. Laden Sie sie herunter, um sie lokal zu öffnen."
+  },
+  "ggufPreview": {
+    "size": "Dateigröße",
+    "unreadableTitle": "Diese GGUF-Datei kann nicht gelesen werden",
+    "unreadableBody": "Der GGUF-Header konnte nicht geparst werden (dazu wird möglicherweise mehr als das Vorschaufenster benötigt). Laden Sie die Datei herunter, um sie lokal zu prüfen."
+  },
+  "onnxPreview": {
+    "nodes": "Knoten",
+    "size": "Dateigröße",
+    "inputs": "Eingaben",
+    "outputs": "Ausgaben",
+    "none": "Keine",
+    "graph": "Graph: {{name}}",
+    "colNode": "Knoten",
+    "colOp": "Op",
+    "tooLargeBody": "ONNX-Dateien größer als {{size}} können hier nicht in der Vorschau angezeigt werden (Gewichte sind meist eingebettet). Laden Sie die Datei herunter, um sie lokal zu prüfen.",
+    "unreadableTitle": "Diese ONNX-Datei kann nicht gelesen werden",
+    "unreadableBody": "Das ONNX-Modell-Protobuf konnte nicht dekodiert werden. Laden Sie die Datei herunter, um sie lokal zu öffnen."
+  }
+}

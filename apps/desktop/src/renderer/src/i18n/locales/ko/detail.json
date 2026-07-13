@@ -1,0 +1,249 @@
+{
+  "actions": {
+    "download": "다운로드",
+    "downloadAll": "전체 파일 다운로드",
+    "favorite": "즐겨찾기에 추가",
+    "follow": "저장소 팔로우",
+    "unfavorite": "즐겨찾기에서 제거",
+    "unfollow": "저장소 팔로우 취소"
+  },
+  "card": {
+    "empty": "이 저장소에는 카드가 없습니다."
+  },
+  "datasetPreview": {
+    "config": "구성",
+    "next": "다음 페이지",
+    "prev": "이전 페이지",
+    "range": "{{total}}개 중 {{from}}–{{to}}행",
+    "rangeNoTotal": "{{from}}–{{to}}행",
+    "sampleNote": "전체 뷰어를 사용할 수 없어 Hub의 샘플 미리보기({{count}}행)를 표시합니다.",
+    "split": "분할",
+    "unavailable": "이 데이터셋에는 데이터셋 뷰어를 사용할 수 없습니다. 파일을 직접 탐색하거나 Hub에서 열어 볼 수 있습니다.",
+    "rowsError": "행을 불러올 수 없습니다."
+  },
+  "discussions": {
+    "comments": "댓글 {{count}}개",
+    "create": {
+      "bodyPlaceholder": "토론이나 변경 사항을 설명하세요… Markdown을 지원합니다.",
+      "created": "스레드가 생성되었습니다.",
+      "discussion": "토론",
+      "error": "스레드를 생성할 수 없습니다: {{error}}",
+      "new": "새로 만들기",
+      "prHint": "작성한 설명을 첫 댓글로 하는 빈 초안 Pull Request를 엽니다 — 이후 refs/pr 브랜치에 커밋을 푸시하세요.",
+      "pullRequest": "Pull Request",
+      "submit": "만들기",
+      "title": "{{repoId}}에 새 스레드",
+      "titlePlaceholder": "제목"
+    },
+    "empty": "아직 토론이 없습니다.",
+    "filter": {
+      "all": "전체",
+      "closed": "닫힘",
+      "open": "열림"
+    },
+    "loadMore": "더 불러오기",
+    "pullRequest": "PR",
+    "quoteReply": "인용하여 답글",
+    "reactionError": "반응을 업데이트할 수 없습니다: {{error}}",
+    "reply": "답글",
+    "replyPlaceholder": "답글을 작성하세요 (Markdown 지원)…",
+    "segment": {
+      "discussions": "토론",
+      "pullRequests": "Pull Request"
+    },
+    "send": "보내기",
+    "sending": "보내는 중…",
+    "signInToReply": "토론에 참여하려면 로그인하세요.",
+    "status": {
+      "closed": "닫힘",
+      "draft": "초안",
+      "merged": "병합됨",
+      "open": "열림"
+    }
+  },
+  "downloadFailed": "다운로드를 시작할 수 없습니다: {{error}}",
+  "downloadStarted": "다운로드 목록에 추가되었습니다",
+  "editor": {
+    "attach": "파일 첨부",
+    "bold": "굵게",
+    "bulletList": "글머리 기호 목록",
+    "charCount": "문자 수",
+    "code": "인라인 코드",
+    "italic": "기울임꼴",
+    "link": "링크",
+    "mentionEmpty": "사용자를 찾을 수 없습니다",
+    "mentionHint": "입력하여 사용자나 조직을 멘션하세요",
+    "preview": "미리보기",
+    "previewEmpty": "아직 미리볼 내용이 없습니다 — 먼저 내용을 작성하세요.",
+    "quote": "인용",
+    "uploadBrowse": "찾아보기",
+    "uploadError": "업로드에 실패했습니다: {{error}}",
+    "uploadHint": "이미지, 오디오, 비디오를 드래그하거나 붙여넣거나",
+    "uploadTooLarge": "{{name}}이(가) 너무 큽니다(최대 64MB)",
+    "uploading": "업로드 중…",
+    "write": "작성"
+  },
+  "favoriteRemoved": "즐겨찾기에서 제거되었습니다",
+  "favoritesEmpty": {
+    "body": "탐색하는 동안 저장소에 별표를 표시하면 여기에 고정됩니다.",
+    "title": "아직 즐겨찾기가 없습니다"
+  },
+  "files": {
+    "download": "파일 다운로드",
+    "empty": "이 디렉터리는 비어 있습니다.",
+    "export": "내보내기…",
+    "exportTo": "{{tool}}(으)로 내보내기",
+    "lfs": "LFS",
+    "noTargets": "감지된 로컬 도구가 없습니다",
+    "root": "루트"
+  },
+  "gate": {
+    "ask": "이 저장소는 게이트로 제한되어 있습니다 — 다운로드하고 미리 보려면 액세스를 요청하세요.",
+    "error": "액세스 요청을 제출할 수 없습니다: {{error}}",
+    "granted": "이 저장소에 대한 액세스가 허용되었습니다.",
+    "needsSession": "액세스 요청을 제출하려면 Hub 웹 세션이 필요합니다 — 설정 → 계정에서 연결하세요.",
+    "openSettings": "설정 열기",
+    "pending": "액세스 요청이 작성자의 검토를 기다리고 있습니다.",
+    "request": "액세스 요청",
+    "requestBody": "{{repoId}}의 작성자가 요구하는 조건을 입력하세요. 사용자 이름과 이메일 주소가 작성자에게 공유됩니다.",
+    "requestTitle": "액세스 요청",
+    "submit": "동의하고 요청 보내기",
+    "submitted": "액세스 요청이 전송되었습니다."
+  },
+  "info": {
+    "created": "생성일",
+    "downloadsAllTime": "전체 누적 다운로드 수",
+    "library": "라이브러리",
+    "license": "라이선스",
+    "params": "매개변수",
+    "sdk": "SDK",
+    "sha": "리비전",
+    "storage": "사용된 저장 공간",
+    "tags": "태그",
+    "task": "작업",
+    "updated": "업데이트됨"
+  },
+  "like": {
+    "error": "좋아요를 업데이트할 수 없습니다: {{error}}",
+    "like": "좋아요",
+    "onHub": "좋아요를 누르려면 Hub 웹 세션이 필요합니다 — 설정 → 계정에서 연결하거나, Hub에서 저장소를 열어 좋아요를 누르세요.",
+    "reconnect": "설정 열기",
+    "sessionExpired": "Hub 웹 세션이 만료되었습니다. 앱에서 좋아요를 누르려면 설정 → 계정에서 다시 연결하세요.",
+    "unlike": "좋아요 취소"
+  },
+  "maintainer": {
+    "close": "닫기",
+    "closeWithComment": "댓글을 남기고 닫기",
+    "editTitle": "제목 편집",
+    "merge": "병합",
+    "mergeCommentPlaceholder": "선택적으로 댓글을 추가하세요…",
+    "mergeConfirmBody": "이 Pull Request를 저장소에 병합합니다. 이 작업은 되돌릴 수 없습니다.",
+    "mergeConfirmTitle": "Pull Request #{{num}}을(를) 병합하시겠습니까?",
+    "merged": "Pull Request가 병합되었습니다",
+    "reopen": "다시 열기",
+    "reopenWithComment": "댓글을 남기고 다시 열기",
+    "statusUpdated": "토론 상태가 업데이트되었습니다",
+    "titleSave": "저장",
+    "titleUpdated": "제목이 업데이트되었습니다"
+  },
+  "playground": {
+    "empty": "여기에 응답이 표시됩니다.",
+    "placeholder": "추론 API를 통해 이 모델에 프롬프트를 보내세요…",
+    "run": "실행",
+    "running": "실행 중…",
+    "signIn": "추론 플레이그라운드를 사용하려면 로그인하세요.",
+    "stop": "중지",
+    "unavailable": "이 모델은 추론을 사용할 수 없습니다: {{error}}"
+  },
+  "pr": {
+    "binary": "바이너리",
+    "diffTruncated": "이 diff는 잘렸습니다 — 변경 사항의 일부만 표시됩니다.",
+    "empty": "아직 Pull Request가 없습니다.",
+    "noDescription": "설명이 없습니다.",
+    "noDiff": "표시할 변경 사항이 없습니다.",
+    "refsLabel": "병합 방향",
+    "renamed": "이름 변경됨",
+    "statusChanged": "{{author}}이(가) 상태를 {{status}}(으)로 변경했습니다",
+    "tabDiscussion": "토론",
+    "tabFiles": "변경된 파일"
+  },
+  "preview": {
+    "colDtype": "Dtype",
+    "colShape": "Shape",
+    "colTensor": "Tensor",
+    "copyRawUrl": "원본 URL 복사",
+    "highlightFailed": "구문 강조 표시에 실패했습니다. 일반 텍스트로 표시합니다.",
+    "highlightTooLarge": "이 파일은 구문 강조 표시를 하기에 너무 큽니다. 일반 텍스트로 표시합니다.",
+    "highlightUnknown": "{{language}}에 사용할 수 있는 구문 강조 도구가 없습니다. 일반 텍스트로 표시합니다.",
+    "mediaErrorBody": "이 미디어 파일을 여기서 재생할 수 없습니다. 로컬에서 열려면 다운로드하세요.",
+    "mediaErrorTitle": "이 파일을 재생할 수 없습니다",
+    "noPreviewBody": "이 파일 형식은 여기서 미리 볼 수 없습니다. 로컬에서 확인하려면 다운로드하세요.",
+    "noPreviewTitle": "미리보기를 사용할 수 없습니다",
+    "pdfErrorBody": "이 PDF를 여기서 렌더링할 수 없습니다. 로컬에서 열려면 다운로드하세요.",
+    "pdfErrorTitle": "이 PDF를 열 수 없습니다",
+    "pdfTooLargeBody": "{{size}}보다 큰 PDF는 여기서 미리 볼 수 없습니다. 로컬에서 열려면 다운로드하세요.",
+    "pdfPage": "{{total}} 중 {{page}}페이지",
+    "pickFile": "미리 볼 파일을 선택하세요",
+    "pickFileBody": "왼쪽에서 파일을 선택하면 여기에 내용이 표시됩니다.",
+    "tensors": "Tensor",
+    "totalParams": "총 매개변수",
+    "truncated": "미리보기가 잘렸습니다 — 처음 {{size}}만 표시합니다."
+  },
+  "run": {
+    "loading": "Space를 불러오는 중…",
+    "notRunning": "이 Space는 현재 \"{{stage}}\" 상태이므로 여기서 실행할 수 없습니다. Hub에서 열어 재개하거나 다시 시작하세요.",
+    "notRunningTitle": "이 Space는 실행 중이 아닙니다",
+    "reload": "새로고침"
+  },
+  "select": {
+    "body": "목록에서 항목을 선택하거나, ⌘K를 눌러 전체 검색을 해보세요.",
+    "title": "선택된 항목이 없습니다"
+  },
+  "tabs": {
+    "card": "카드",
+    "discussions": "토론",
+    "files": "파일",
+    "info": "정보",
+    "manage": "관리",
+    "playground": "플레이그라운드",
+    "preview": "미리보기",
+    "run": "실행"
+  },
+  "parquetPreview": {
+    "rows_other": "{{count}}행",
+    "columns_other": "{{count}}열",
+    "unsupportedCodec": "이 파일은 미리 볼 수 없는 압축 코덱을 사용합니다. 로컬에서 열려면 다운로드하세요.",
+    "unreadableTitle": "이 Parquet 파일을 읽을 수 없습니다",
+    "unreadableBody": "파일 메타데이터를 읽을 수 없습니다. 로컬에서 열려면 다운로드하세요."
+  },
+  "csvPreview": {
+    "rows_other": "{{count}}행",
+    "columns_other": "{{count}}열",
+    "emptyHeader": "열 {{index}}"
+  },
+  "arrowPreview": {
+    "rows_other": "{{count}}행",
+    "columns_other": "{{count}}열",
+    "prefixOnly": "이 파일의 처음 {{size}}만 미리보기용으로 불러왔습니다.",
+    "unreadableTitle": "이 Arrow 파일을 읽을 수 없습니다",
+    "unreadableBody": "파일의 앞부분에서 Arrow/Feather 테이블을 구문 분석할 수 없습니다. 로컬에서 열려면 다운로드하세요."
+  },
+  "ggufPreview": {
+    "size": "파일 크기",
+    "unreadableTitle": "이 GGUF 파일을 읽을 수 없습니다",
+    "unreadableBody": "GGUF 헤더를 구문 분석할 수 없습니다(미리보기 범위보다 더 필요할 수 있습니다). 로컬에서 확인하려면 다운로드하세요."
+  },
+  "onnxPreview": {
+    "nodes": "노드",
+    "size": "파일 크기",
+    "inputs": "입력",
+    "outputs": "출력",
+    "none": "없음",
+    "graph": "그래프: {{name}}",
+    "colNode": "노드",
+    "colOp": "연산",
+    "tooLargeBody": "{{size}}보다 큰 ONNX 파일은 여기서 미리 볼 수 없습니다(가중치가 내장되어 있는 경우가 많습니다). 로컬에서 확인하려면 다운로드하세요.",
+    "unreadableTitle": "이 ONNX 파일을 읽을 수 없습니다",
+    "unreadableBody": "ONNX 모델 protobuf를 디코딩할 수 없습니다. 로컬에서 열려면 다운로드하세요."
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "Accepter",
+    "empty": "Aucune demande ici.",
+    "grant": "Accorder l'accès",
+    "granted": "Accès accordé",
+    "grantPlaceholder": "nom d'utilisateur",
+    "handled": "Demande mise à jour",
+    "notGated": "Activez l'accès contrôlé pour examiner les demandes d'accès.",
+    "reasonPlaceholder": "Motif du refus (facultatif)",
+    "reject": "Refuser",
+    "tab": {
+      "accepted": "Acceptées",
+      "pending": "En attente",
+      "rejected": "Refusées"
+    },
+    "title": "Demandes d'accès"
+  },
+  "actions": {
+    "duplicate": "Dupliquer",
+    "label": "Actions sur le dépôt",
+    "rename": "Renommer / déplacer"
+  },
+  "delete": {
+    "body": "Cette action supprime définitivement {{repoId}} et tous ses fichiers. Elle est irréversible.",
+    "confirmLabel": "Saisissez {{repoId}} pour confirmer",
+    "success": "Dépôt supprimé",
+    "title": "Supprimer le dépôt"
+  },
+  "duplicate": {
+    "body": "Créer une copie de {{repoId}} sous un nouvel identifiant.",
+    "label": "Identifiant du dépôt de destination",
+    "private": "Rendre la copie privée",
+    "submit": "Dupliquer",
+    "success": "Dépôt dupliqué",
+    "title": "Dupliquer le dépôt"
+  },
+  "error": {
+    "title": "Impossible de charger vos dépôts"
+  },
+  "gatedHint": {
+    "body": "Votre jeton d'accès ne comprend pas le champ d'application manage-repos ; l'administration des dépôts est donc désactivée.",
+    "title": "Autorisation manquante"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "Les dépôts que vous possédez apparaîtront ici.",
+      "title": "Aucun dépôt pour le moment"
+    },
+    "filter": {
+      "all": "Tous"
+    },
+    "title": "Mes dépôts"
+  },
+  "refs": {
+    "branchCreated": "Branche créée",
+    "branchDeleted": "Branche supprimée",
+    "branchesHint": "Créez une branche, ou supprimez-en une par son nom.",
+    "branchPlaceholder": "nom-de-branche",
+    "createBranch": "Créer une branche",
+    "createTag": "Créer un tag",
+    "deleteBranch": "Supprimer la branche",
+    "deleteTag": "Supprimer le tag",
+    "startingPointPlaceholder": "point de départ (facultatif)",
+    "tagCreated": "Tag créé",
+    "tagDeleted": "Tag supprimé",
+    "tagMessagePlaceholder": "message (facultatif)",
+    "tagPlaceholder": "nom-de-tag",
+    "tagsHint": "Créez un tag sur main, ou supprimez-en un par son nom.",
+    "title": "Branches et tags"
+  },
+  "rename": {
+    "body": "Déplacer {{repoId}} vers un nouveau nom ou un nouvel espace de noms. Tous les fichiers, mentions « j'aime » et téléchargements suivent.",
+    "label": "Nouvel identifiant de dépôt",
+    "submit": "Renommer",
+    "success": "Dépôt déplacé",
+    "title": "Renommer ou déplacer"
+  },
+  "repoIdPlaceholder": "propriétaire/nom",
+  "settings": {
+    "gated": "Accès contrôlé",
+    "gatedAuto": "Approbation automatique",
+    "gatedHint": "Exiger des utilisateurs qu'ils demandent l'accès avant de télécharger.",
+    "gatedManual": "Validation manuelle",
+    "gatedOff": "Désactivé",
+    "private": "Privé",
+    "privateHint": "Seuls vous et vos collaborateurs pouvez voir ce dépôt.",
+    "title": "Paramètres",
+    "updated": "Paramètres mis à jour"
+  },
+  "signedOut": {
+    "body": "Vos modèles, jeux de données et Spaces apparaîtront ici une fois connecté.",
+    "title": "Connectez-vous pour gérer vos dépôts"
+  },
+  "space": {
+    "descriptionPlaceholder": "description (facultatif)",
+    "keyPlaceholder": "CLÉ",
+    "logs": {
+      "build": "Build",
+      "empty": "Aucune sortie de journal.",
+      "refresh": "Actualiser les journaux",
+      "run": "Run",
+      "title": "Journaux"
+    },
+    "restart": {
+      "done": "Redémarrage demandé",
+      "factory": "Reconstruction complète",
+      "factoryHint": "La reconstruction complète efface le cache de build et reconstruit le Space depuis zéro.",
+      "restart": "Redémarrer le Space",
+      "title": "Redémarrer"
+    },
+    "secrets": {
+      "add": "Ajouter un secret",
+      "deleted": "Secret supprimé",
+      "empty": "Aucun secret défini.",
+      "saved": "Secret enregistré",
+      "title": "Secrets",
+      "writeOnly": "Les valeurs des secrets sont en écriture seule et ne sont plus jamais affichées après l'enregistrement."
+    },
+    "valuePlaceholder": "valeur",
+    "variables": {
+      "deleted": "Variable supprimée",
+      "edit": "Modifier la variable",
+      "empty": "Aucune variable définie.",
+      "save": "Enregistrer la variable",
+      "saved": "Variable enregistrée",
+      "title": "Variables"
+    }
+  },
+  "visibility": {
+    "makePrivate": "Rendre privé",
+    "makePublic": "Rendre public",
+    "protected": "Protégé",
+    "updated": "Visibilité mise à jour"
+  }
+}

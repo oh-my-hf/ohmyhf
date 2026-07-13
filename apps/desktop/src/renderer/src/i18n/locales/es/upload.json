@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "Elegir carpeta…",
+  "create": "Crear repositorio",
+  "creating": "Creando…",
+  "hint": "Cree un nuevo repositorio a partir de una carpeta local. Requiere el permiso write-repos.",
+  "kind": "Tipo",
+  "name": "Nombre del repositorio",
+  "namePlaceholder": "mi-modelo-genial",
+  "noFolder": "No se seleccionó ninguna carpeta",
+  "selectionSummary": "{{files}} archivos · {{size}} · {{excluded}} excluidos",
+  "phase": {
+    "committing": "Confirmando…",
+    "hashing": "Calculando hash de los archivos…",
+    "preparing": "Preparando archivos…",
+    "uploading": "Subiendo…"
+  },
+  "private": "Repositorio privado",
+  "scopeHint": "Las subidas usan el permiso de escritura concedido al iniciar sesión.",
+  "signIn": "Inicie sesión para subir archivos.",
+  "title": "Subir al Hub",
+  "warnings": {
+    "acknowledge": "Revisé esta advertencia y quiero continuar.",
+    "large-upload": {
+      "body": "Esta subida es de {{size}} y puede tardar mucho tiempo.",
+      "title": "Subida grande"
+    },
+    "sensitive-path": {
+      "body": "{{count}} ruta(s) pueden contener credenciales o secretos.",
+      "title": "Archivos potencialmente sensibles"
+    }
+  }
+}

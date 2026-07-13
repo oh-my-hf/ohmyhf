@@ -1,0 +1,24 @@
+{
+  "authors": "저자",
+  "comment": {
+    "heading": "이 논문에 댓글 달기",
+    "placeholder": "댓글을 작성하세요 (Markdown 지원)…",
+    "posted": "댓글이 게시되었습니다"
+  },
+  "empty": "아직 불러온 논문이 없습니다.",
+  "listError": "Daily Papers를 불러올 수 없습니다",
+  "detailError": "이 논문을 불러올 수 없습니다",
+  "retryMore": "더 불러오기 재시도",
+  "published": "{{time}} 게시됨",
+  "readOnArxiv": "arXiv에서 읽기",
+  "readOnHub": "Hub에서 열기",
+  "title": "Daily Papers",
+  "upvote": {
+    "add": "추천",
+    "error": "추천을 업데이트할 수 없습니다: {{error}}",
+    "onHub": "추천하려면 Hub 웹 세션이 필요합니다 — 설정 → 계정에서 연결하거나 Hub에서 열어 보세요.",
+    "remove": "추천 취소",
+    "sessionExpired": "Hub 웹 세션이 만료되었습니다. 앱에서 추천하려면 설정 → 계정에서 다시 연결하세요."
+  },
+  "upvotes": "추천 수"
+}

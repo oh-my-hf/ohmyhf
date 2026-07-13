@@ -1,0 +1,32 @@
+{
+  "clear": "Effacer l'historique",
+  "clearFilters": "Effacer les filtres",
+  "cleared": "Historique de navigation effacé",
+  "confirm": {
+    "body": "Cette action supprime définitivement les {{count}} entrées de l'historique stockées sur cet appareil.",
+    "confirm": "Effacer l'historique",
+    "error": "Impossible d'effacer l'historique. Réessayez.",
+    "title": "Effacer l'historique de navigation ?"
+  },
+  "count": "{{count}} au total",
+  "empty": {
+    "body": "Les dépôts que vous ouvrez apparaîtront ici pour un accès rapide.",
+    "title": "Aucun historique de navigation pour le moment"
+  },
+  "error": {
+    "body": "Votre historique de navigation local n'a pas pu être chargé.",
+    "title": "Impossible de charger l'historique"
+  },
+  "filter": {
+    "all": "Tous types"
+  },
+  "filterLabel": "Filtrer par type de dépôt",
+  "filteredEmpty": {
+    "body": "Essayez un autre identifiant de dépôt ou un autre type.",
+    "title": "Aucun historique correspondant"
+  },
+  "searchLabel": "Rechercher dans l'historique de navigation par identifiant de dépôt",
+  "searchPlaceholder": "Rechercher un identifiant de dépôt…",
+  "showing": "Affichage de {{shown}} sur {{total}}",
+  "title": "Historique de navigation"
+}

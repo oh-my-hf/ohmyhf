@@ -1,0 +1,33 @@
+{
+  "confirmDelete": {
+    "body": "Esto libera {{size}} en disco. Los archivos compartidos con otras revisiones se conservan. Esta acción no se puede deshacer.",
+    "title": "¿Eliminar {{count}} revisión(es)?",
+    "title_one": "¿Eliminar {{count}} revisión?",
+    "title_other": "¿Eliminar {{count}} revisiones?"
+  },
+  "deleted": "Eliminado. Se liberaron {{size}}.",
+  "deleteRevision": "Eliminar revisión",
+  "deleteStale": "Limpiar revisiones sin referencias",
+  "empty": {
+    "body": "Aquí aparecerán las descargas de esta aplicación (y de transformers o la CLI).",
+    "title": "La caché está vacía"
+  },
+  "files": "{{count}} archivos",
+  "files_one": "{{count}} archivo",
+  "files_other": "{{count}} archivos",
+  "location": "Ubicación de la caché",
+  "noRefs": "sin referencias",
+  "reposCount": "{{count}} repositorios en caché",
+  "reposCount_one": "{{count}} repositorio en caché",
+  "reposCount_other": "{{count}} repositorios en caché",
+  "revisions": "{{count}} revisiones",
+  "revisions_one": "{{count}} revisión",
+  "revisions_other": "{{count}} revisiones",
+  "scan": "Reescanear",
+  "scanning": "Escaneando…",
+  "title": "Caché local",
+  "totalOnDisk": "{{size}} en disco",
+  "pinned": "fijado",
+  "partialData": "{{size}} de datos de descarga incompletos",
+  "cleanPartials": "Limpiar"
+}

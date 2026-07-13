@@ -1,0 +1,29 @@
+{
+  "back": "Zurückgehen",
+  "cache": "Cache öffnen",
+  "datasets": "Datensätze öffnen",
+  "downloads": "Downloads öffnen",
+  "favorites": "Favoriten öffnen",
+  "focusSearch": "Fokus auf die Listensuche setzen",
+  "forward": "Vorwärtsgehen",
+  "groups": {
+    "global": "Global",
+    "list": "Listen",
+    "navigation": "Navigation",
+    "palette": "Befehlspalette"
+  },
+  "help": "Diese Übersicht anzeigen",
+  "history": "Browserverlauf öffnen",
+  "inbox": "Posteingang öffnen",
+  "listNav": "Listenauswahl bewegen",
+  "palette": "Befehlspalette / globale Suche",
+  "paletteClose": "Schließen",
+  "paletteNavigate": "Ergebnisse durchgehen",
+  "paletteSelect": "Auswählen",
+  "models": "Modelle öffnen",
+  "papers": "Paper öffnen",
+  "spaces": "Spaces öffnen",
+  "settings": "Einstellungen öffnen",
+  "title": "Tastenkombinationen",
+  "toggleSidebar": "Seitenleiste ein- oder ausklappen"
+}

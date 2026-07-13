@@ -1,0 +1,24 @@
+{
+  "authors": "Auteurs",
+  "comment": {
+    "heading": "Commenter cet article",
+    "placeholder": "Écrivez un commentaire (Markdown pris en charge)…",
+    "posted": "Commentaire publié"
+  },
+  "empty": "Aucun article chargé pour le moment.",
+  "listError": "Impossible de charger les Daily Papers",
+  "detailError": "Impossible de charger cet article",
+  "retryMore": "Réessayer de charger plus",
+  "published": "Publié {{time}}",
+  "readOnArxiv": "Lire sur arXiv",
+  "readOnHub": "Ouvrir sur le Hub",
+  "title": "Daily Papers",
+  "upvote": {
+    "add": "Voter",
+    "error": "Impossible de mettre à jour le vote : {{error}}",
+    "onHub": "Voter nécessite une session web du Hub — connectez-en une dans Paramètres → Compte, ou ouvrez-le sur le Hub.",
+    "remove": "Retirer le vote",
+    "sessionExpired": "Votre session web du Hub a expiré. Reconnectez-la dans Paramètres → Compte pour voter depuis l'application."
+  },
+  "upvotes": "Votes"
+}

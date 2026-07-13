@@ -1,0 +1,35 @@
+{
+  "export": {
+    "comfyuiMissing": "Aucune installation de ComfyUI détectée. Définissez COMFYUI_PATH ou installez ComfyUI dans votre dossier personnel.",
+    "copied": "Exporté vers {{path}}.",
+    "failed": "Échec de l'export : {{error}}",
+    "invalidPath": "Chemin de fichier invalide : {{file}}",
+    "notInCache": "{{file}} n'est pas encore dans le cache local — téléchargez-le d'abord.",
+    "ollamaDone": "Modèle Ollama {{name}} créé.",
+    "ollamaFailed": "Échec de l'import Ollama : {{error}}",
+    "ollamaMissing": "Ollama est introuvable. Installez-le depuis ollama.com et réessayez.",
+    "targetsError": "Les cibles d'export n'ont pas pu être détectées"
+  },
+  "task": {
+    "canceled": "Tâche annulée.",
+    "done": "Tâche terminée.",
+    "failed": "Échec de la tâche.",
+    "phase": {
+      "copying": "Copie du fichier…",
+      "preparing": "Préparation de l'export…",
+      "running": "Export en cours…"
+    }
+  },
+  "upload": {
+    "done": "{{repo}} envoyé vers le Hub.",
+    "emptyFolder": "Le dossier sélectionné ne contient aucun fichier à envoyer.",
+    "failed": "Échec de l'envoi : {{error}}",
+    "ignoreUnreadable": "Le fichier .gitignore ou .hfignore du dossier ne peut pas être lu en toute sécurité.",
+    "invalidPath": "Le dossier contient un nom de fichier qui ne peut pas être représenté en toute sécurité sur le Hub.",
+    "needWriteScope": "Votre session n'a pas d'accès en écriture. Déconnectez-vous puis reconnectez-vous pour accorder la permission d'écriture.",
+    "selectionStale": "Le dossier sélectionné a changé. Sélectionnez-le à nouveau avant l'envoi.",
+    "signInFirst": "Connectez-vous à votre compte Hugging Face avant d'envoyer.",
+    "specialFile": "Le dossier contient un socket, un FIFO, un périphérique ou un autre fichier spécial et ne peut pas être envoyé en toute sécurité.",
+    "tooManyFiles": "Le dossier contient trop de fichiers — la limite actuelle est de {{max}}."
+  }
+}

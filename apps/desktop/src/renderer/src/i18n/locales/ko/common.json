@@ -1,0 +1,58 @@
+{
+  "appName": "Oh My HuggingFace",
+  "back": "뒤로",
+  "cancel": "취소",
+  "close": "닫기",
+  "confirm": "확인",
+  "copied": "복사됨",
+  "copy": "복사",
+  "delete": "삭제",
+  "dismiss": "닫기",
+  "error": {
+    "generic": "문제가 발생했습니다",
+    "network": "Hugging Face API에 연결할 수 없습니다"
+  },
+  "gated": "게이트 제한됨",
+  "goBack": "뒤로",
+  "goForward": "앞으로",
+  "imageViewer": "이미지 뷰어",
+  "kind": {
+    "dataset": "데이터셋",
+    "model": "모델",
+    "paper": "논문",
+    "space": "Space"
+  },
+  "language": {
+    "system": "시스템 언어",
+    "en": "English",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    "de": "Deutsch",
+    "es": "Español",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pt-BR": "Português (Brasil)"
+  },
+  "loading": "불러오는 중…",
+  "progress": {
+    "indeterminate": "진행 중"
+  },
+  "open": "열기",
+  "openOnHub": "Hub에서 열기",
+  "private": "비공개",
+  "remove": "제거",
+  "retry": "다시 시도",
+  "running": "실행 중",
+  "showInFolder": "폴더에서 보기",
+  "theme": {
+    "dark": "다크",
+    "label": "테마",
+    "light": "라이트",
+    "system": "시스템"
+  },
+  "undo": "실행 취소",
+  "unofficial": "비공식",
+  "zoomImage": "이미지 뷰어 열기",
+  "zoomImageNamed": "{{name}}의 이미지 뷰어 열기"
+}

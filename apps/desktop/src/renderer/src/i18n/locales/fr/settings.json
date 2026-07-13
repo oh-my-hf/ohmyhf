@@ -1,0 +1,242 @@
+{
+  "about": {
+    "disclaimer": "Cette application n'est ni affiliée à, ni approuvée par, ni sponsorisée par Hugging Face, Inc. « Hugging Face » est une marque de Hugging Face, Inc., utilisée ici uniquement pour désigner le service auquel cette application se connecte.",
+    "github": "Code source sur GitHub",
+    "license": "Distribué sous licence Apache-2.0",
+    "privacy": "Confidentialité : tout reste sur votre machine. Aucune télémétrie, aucune analyse d'usage. Votre jeton est chiffré avec le trousseau de votre système d'exploitation et stocké localement.",
+    "title": "À propos",
+    "unofficialTitle": "NON OFFICIEL",
+    "updates": {
+      "available": "La version {{version}} est disponible sur GitHub Releases.",
+      "check": "Vérifier les mises à jour",
+      "checkAgain": "Vérifier à nouveau",
+      "checking": "Vérification des mises à jour sur GitHub Releases…",
+      "description": "Les mises à jour sont vérifiées par rapport à la dernière GitHub Release publiée.",
+      "download": "Télécharger la mise à jour",
+      "downloadProgress": "{{transferred}} sur {{total}}",
+      "downloading": "Téléchargement de la version {{version}} — {{percent}} %",
+      "downloadingButton": "Téléchargement {{percent}} %",
+      "errors": {
+        "configuration": "Les métadonnées de mise à jour de la GitHub Release ne sont pas disponibles.",
+        "network": "Impossible de joindre GitHub Releases. Vérifiez votre connexion et réessayez.",
+        "permission": "Le programme de mise à jour n'a pas la permission d'installer cette mise à jour.",
+        "unknown": "La mise à jour n'a pas pu être terminée. Réessayez ou installez-la depuis GitHub Releases.",
+        "verification": "La mise à jour n'a pas pu être vérifiée ; elle n'a donc pas été installée."
+      },
+      "manual": "La version {{version}} est disponible. Cette build non signée doit être mise à jour manuellement.",
+      "openReleases": "Ouvrir GitHub Releases",
+      "progressLabel": "Progression du téléchargement de la mise à jour",
+      "ready": "La version {{version}} est prête. Redémarrez l'application pour l'installer.",
+      "restartAndInstall": "Redémarrer et installer",
+      "retry": "Réessayer",
+      "retryInstall": "Réessayer l'installation",
+      "title": "Mises à jour de l'application",
+      "toastAvailable": "La version {{version}} est disponible.",
+      "toastReady": "La version {{version}} est prête à être installée.",
+      "unsupported": "Les mises à jour intégrées ne sont disponibles que dans les builds installées.",
+      "upToDate": "Vous utilisez la dernière version.",
+      "view": "Afficher"
+    },
+    "version": "Version {{version}}"
+  },
+  "account": {
+    "billing": {
+      "empty": "Aucune utilisation enregistrée pour la période en cours.",
+      "gated": "L'utilisation de facturation nécessite la permission read-billing. Réautorisez pour l'accorder.",
+      "period": "{{start}} – {{end}}",
+      "title": "Utilisation facturée",
+      "unauthorized": "Le Hub n'a pas autorisé ce jeton à lire l'utilisation de facturation."
+    },
+    "hub": {
+      "missingScopes": "Permissions manquantes : {{scopes}}. Réautorisez pour les accorder.",
+      "reauthorize": "Réautoriser",
+      "roleLabels": {
+        "fineGrained": "Portée fine",
+        "read": "Lecture",
+        "write": "Écriture"
+      },
+      "scopes": "Permissions accordées",
+      "scopesUnknown": "Les permissions accordées à cette session sont inconnues. Réautorisez pour les actualiser.",
+      "title": "Compte Hub",
+      "tokenHint": "Connecté avec un jeton d'accès utilisateur. Ce que cette application peut faire est déterminé par les permissions propres du jeton sur le Hub — y compris la boîte de réception des notifications du Hub, que la connexion par navigateur ne peut pas atteindre.",
+      "tokenSession": "Jeton d'accès"
+    },
+    "scopeLabels": {
+      "inference-api": "API d'inférence",
+      "jobs": "Gérer les tâches",
+      "manage-repos": "Gérer les dépôts",
+      "openid": "Identité de connexion",
+      "profile": "Lire le profil",
+      "read-billing": "Lire la facturation",
+      "read-collections": "Lire les collections",
+      "read-repos": "Lire les dépôts",
+      "webhooks": "Gérer les webhooks",
+      "write-collections": "Écrire les collections",
+      "write-discussions": "Publier des discussions",
+      "write-repos": "Écrire les dépôts"
+    },
+    "title": "Compte"
+  },
+  "appearance": {
+    "accent": "Couleur d'accentuation",
+    "accentOptions": {
+      "blue": "Bleu",
+      "default": "Par défaut",
+      "green": "Vert",
+      "orange": "Orange",
+      "violet": "Violet"
+    },
+    "browsePageSize": "Taille de page d'exploration",
+    "browsePageSizeOption": "{{count}} par page",
+    "defaultHome": "Accueil par défaut",
+    "defaultSort": "Tri par défaut",
+    "density": "Densité",
+    "densityOptions": {
+      "comfortable": "Confortable",
+      "compact": "Compacte"
+    },
+    "fontScale": "Taille du texte",
+    "fontScaleDecrease": "Réduire la taille du texte",
+    "fontScaleIncrease": "Augmenter la taille du texte",
+    "historyLimit": "Limite de l'historique",
+    "historyLimitOption": "{{count}} éléments",
+    "homeOptions": {
+      "datasets": "Jeux de données",
+      "home": "Fil d'accueil",
+      "models": "Modèles",
+      "papers": "Articles",
+      "spaces": "Spaces"
+    },
+    "language": "Langue",
+    "openTarget": {
+      "app": "Dans l'application",
+      "browser": "Navigateur système"
+    },
+    "repoOpenTarget": "Ouvrir les favoris et l'historique",
+    "sidebarCollapsed": "Réduire la barre latérale par défaut",
+    "title": "Apparence",
+    "uiScale": "Échelle de l'interface",
+    "uiScaleDecrease": "Réduire l'échelle de l'interface",
+    "uiScaleIncrease": "Augmenter l'échelle de l'interface"
+  },
+  "desktop": {
+    "closeHintMac": "Fermer la fenêtre masque l'application dans la barre de menus. Quittez depuis le menu de la barre ou le Dock pour fermer complètement.",
+    "closeHintOther": "Fermer la fenêtre masque l'application dans la zone de notification. Quittez depuis le menu de la zone de notification pour fermer complètement.",
+    "closeToTray": "Réduire dans la zone de notification en fermant",
+    "launchAtLogin": "Lancer au démarrage",
+    "launchAtLoginHint": "Démarrer Oh My HuggingFace lors de votre connexion à cet ordinateur.",
+    "title": "Bureau"
+  },
+  "downloads": {
+    "cacheDir": "Répertoire de cache HF",
+    "cacheDirDefault": "Par défaut du système",
+    "choose": "Choisir…",
+    "concurrency": "Téléchargements parallèles",
+    "reset": "Réinitialiser",
+    "speedLimit": "Limite de vitesse",
+    "speedPerSecond": "{{value}}/s",
+    "title": "Téléchargements",
+    "unlimited": "Illimitée"
+  },
+  "groups": {
+    "about": "À propos",
+    "account": "Compte",
+    "connection": "Connexion",
+    "data": "Données",
+    "interface": "Interface",
+    "system": "Système"
+  },
+  "network": {
+    "apply": "Appliquer",
+    "description": "Remplacez l'URL de base de l'API du Hub et acheminez éventuellement le trafic via un proxy HTTP(S). Laissez vide pour utiliser les valeurs par défaut.",
+    "downloadWarning": "Les téléchargements en cours peuvent conserver le point de terminaison ou le proxy précédent jusqu'à ce qu'ils soient mis en pause puis repris.",
+    "hubEndpoint": "Point de terminaison du Hub",
+    "invalidUrl": "Saisissez une URL http:// ou https:// valide, ou laissez vide.",
+    "proxyUrl": "Proxy HTTP(S)",
+    "reset": "Réinitialiser par défaut",
+    "resetEndpoint": "Point de terminaison du Hub réinitialisé par défaut.",
+    "resetProxy": "Proxy effacé.",
+    "saved": "Paramètres réseau enregistrés.",
+    "test": "Tester la connexion",
+    "testFail": "Échec de la connexion : {{error}}",
+    "testOk": "Connexion au Hub réussie.",
+    "title": "Réseau"
+  },
+  "notifications": {
+    "enabled": "Notifications système",
+    "minutes": "{{count}} min",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "pollInterval": "Vérifier les abonnements toutes les",
+    "title": "Notifications"
+  },
+  "privacy": {
+    "cache": {
+      "open": "Ouvrir le gestionnaire de cache",
+      "path": "Emplacement",
+      "retry": "Réessayer",
+      "scanFailed": "Impossible d'analyser le cache.",
+      "size": "Taille totale",
+      "title": "Cache HF"
+    },
+    "local": {
+      "clear": "Effacer les données locales…",
+      "confirm": "Effacer les données",
+      "confirmBody": "Choisissez ce qu'il faut retirer sur cet appareil :",
+      "confirmTitle": "Effacer les données locales ?",
+      "description": "Efface les favoris, l'historique, les enregistrements de téléchargement, les abonnements et la boîte de réception sélectionnés sur cet appareil. Ne supprime pas les fichiers de modèles ou de jeux de données du cache HF.",
+      "items": {
+        "downloads": "Enregistrements des tâches de téléchargement",
+        "favorites": "Favoris",
+        "follows": "Comptes suivis",
+        "history": "Historique de navigation",
+        "inbox": "Boîte de réception locale",
+        "otherKv": "Autres données locales de l'application"
+      },
+      "signOutAlso": "Se déconnecter aussi du Hub",
+      "success": "Données locales effacées.",
+      "successSignedOut": "Données locales effacées. Vous avez été déconnecté.",
+      "title": "Données locales de l'application"
+    },
+    "title": "Confidentialité et données",
+    "transfer": {
+      "description": "Exportez ou importez les paramètres d'apparence et de préférences au format JSON. N'inclut pas les jetons de compte ni les données de bibliothèque. Le répertoire de cache sur cette machine est conservé lors de l'import.",
+      "export": "Exporter les paramètres…",
+      "exportSuccess": "Paramètres exportés.",
+      "import": "Importer les paramètres…",
+      "importSuccess": "Paramètres importés.",
+      "title": "Transfert des paramètres"
+    }
+  },
+  "profile": {
+    "avatar": "Avatar",
+    "avatarHint": "PNG, JPEG ou WebP, jusqu'à 10 Mo.",
+    "avatarUpload": "Envoyer une image",
+    "bluesky": "Nom d'utilisateur Bluesky",
+    "details": "Centres d'intérêt en IA et ML",
+    "error": "Impossible d'enregistrer le profil : {{error}}",
+    "fullname": "Nom complet",
+    "github": "Nom d'utilisateur GitHub",
+    "homepage": "Site web",
+    "homepagePlaceholder": "https://",
+    "linkedin": "Profil LinkedIn",
+    "loadError": "Impossible de charger votre profil : {{error}}",
+    "needsSession": "Modifier votre profil public nécessite une session web du Hub — connectez-en une dans Compte.",
+    "openAccount": "Aller au compte",
+    "primaryOrg": "Organisation principale",
+    "primaryOrgHint": "Seules les organisations Team / Enterprise / Plus peuvent être définies comme principales. Le menu regroupe les options disponibles et indisponibles.",
+    "primaryOrgNone": "Aucune",
+    "primaryOrgNonePaid": "Aucune de vos organisations n'a de forfait payant ; une organisation principale ne peut donc pas encore être définie.",
+    "primaryOrgGroupAvailable": "Disponibles",
+    "primaryOrgGroupUnavailable": "Indisponibles (forfait payant requis)",
+    "primaryOrgOptionAvailable": "{{name}} ({{plan}})",
+    "primaryOrgOptionUnavailable": "{{name}} — indisponible",
+    "primaryOrgSummary": "{{available}} disponible(s) · {{unavailable}} indisponible(s)",
+    "save": "Enregistrer les modifications",
+    "saved": "Profil enregistré",
+    "title": "Profil public",
+    "twitter": "Nom d'utilisateur Twitter",
+    "avatarTooLarge": "Cette image est trop volumineuse — les avatars sont limités à 10 Mo."
+  },
+  "title": "Paramètres"
+}

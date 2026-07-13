@@ -1,0 +1,41 @@
+{
+  "compose": {
+    "error": "無法發佈貼文：{{error}}",
+    "new": "新貼文",
+    "placeholder": "與社群分享最新動態……支援 Markdown 格式。",
+    "posted": "貼文已發佈",
+    "submit": "發佈",
+    "unavailable": "無法發佈：{{reason}}",
+    "unavailableFallback": "您的帳戶尚未加入發文測試計畫。"
+  },
+  "feed": {
+    "acted": {
+      "discussion": "<author>{{actor}}</author> 於 <repo>{{repo}}</repo>",
+      "liked": "<author>{{actor}}</author> 按了讚",
+      "published": "<author>{{actor}}</author> 已發佈",
+      "untitledDiscussion": "未命名",
+      "updated": "<author>{{actor}}</author> 已更新"
+    },
+    "empty": "這裡還沒有內容",
+    "emptyBody": "來自 Hub 的活動將會顯示在這裡。",
+    "emptyFollowing": "您尚未追蹤任何人",
+    "emptyFollowingBody": "從收件匣追蹤使用者與組織，即可在這裡看到他們最新的模型與資料集。",
+    "manageFollows": "管理追蹤項目",
+    "updated": "<author>{{author}}</author> 已更新 <repo>{{repo}}</repo>",
+    "error": "無法載入動態消息"
+  },
+  "kind": {
+    "post": "貼文"
+  },
+  "reactions": {
+    "onHub": "在 Hub 上回應",
+    "react": "新增回應",
+    "toggle": "以 {{emoji}} 回應"
+  },
+  "title": "首頁",
+  "trending": {
+    "all": "全部",
+    "empty": "目前沒有熱門項目",
+    "title": "熱門趨勢"
+  }
+}

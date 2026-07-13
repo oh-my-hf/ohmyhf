@@ -1,0 +1,87 @@
+{
+  "bell": {
+    "empty": "Keine neuen Benachrichtigungen",
+    "title": "Benachrichtigungen",
+    "viewAll": "Alle Benachrichtigungen anzeigen"
+  },
+  "checked": "{{count}} neue(s) Element(e)",
+  "checked_one": "{{count}} neues Element",
+  "checked_other": "{{count}} neue Elemente",
+  "checking": "Wird geprüft…",
+  "checkNow": "Jetzt prüfen",
+  "clear": "Posteingang leeren",
+  "empty": {
+    "body": "Folgen Sie Benutzern, Organisationen, Repositories oder dem Daily-Papers-Digest, und Updates landen hier.",
+    "title": "Sie sind auf dem neuesten Stand"
+  },
+  "follows": {
+    "add": "Folgen",
+    "empty": "Sie folgen noch nichts.",
+    "loadError": "Gefolgte Quellen konnten nicht geladen werden",
+    "targetLabel": "Benutzer, Organisation oder Repository, dem gefolgt werden soll",
+    "imported": "{{count}} Konto(en), denen Sie im Hub folgen, importiert",
+    "imported_one": "{{count}} Konto, dem Sie im Hub folgen, importiert",
+    "imported_other": "{{count}} Konten, denen Sie im Hub folgen, importiert",
+    "importFromHub": "Von Hugging Face importieren",
+    "papers": "Daily-Papers-Digest",
+    "placeholder": "Benutzername, Organisation oder model:org/name",
+    "removed": "{{target}} nicht mehr gefolgt",
+    "title": "Gefolgt",
+    "type": {
+      "org": "Organisation",
+      "papers": "Paper",
+      "repo": "Repository",
+      "user": "Benutzer"
+    }
+  },
+  "hub": {
+    "clearAll": "Alle löschen",
+    "loadError": "Hub-Benachrichtigungen konnten nicht geladen werden",
+    "confirmClear": {
+      "body": "Dies entfernt endgültig alle Benachrichtigungen aus Ihrem Hugging-Face-Posteingang.",
+      "confirm": "Alle löschen",
+      "title": "Alle Hub-Benachrichtigungen löschen?"
+    },
+    "empty": {
+      "body": "Benachrichtigungen zu Diskussionen, Pull Requests und Beiträgen im Hub werden hier angezeigt.",
+      "title": "Keine Hub-Benachrichtigungen"
+    },
+    "kind": {
+      "org": "Organisation",
+      "other": "Sonstiges",
+      "paper": "Paper",
+      "post": "Beitrag",
+      "repo": "Repository"
+    },
+    "pageNext": "Nächste Seite",
+    "pageOf": "Seite {{page}} von {{pages}}",
+    "pagePrev": "Vorherige Seite",
+    "signIn": {
+      "action": "Kontoeinstellungen öffnen",
+      "body": "Verbinden Sie Ihr Hugging-Face-Konto, um den Benachrichtigungsposteingang mit dem Hub zu synchronisieren.",
+      "title": "Melden Sie sich an, um Hub-Benachrichtigungen zu sehen"
+    },
+    "unauthorized": {
+      "action": "Im Hub öffnen",
+      "body": "Dieser Zugriffstoken kann Hub-Benachrichtigungen nicht lesen (ein schreibgeschützter oder unzureichend feingranularer Token). Erstellen Sie einen Schreib- oder feingranularen Token mit Zugriff auf Benachrichtigungen, oder sehen Sie sie im Hub an.",
+      "title": "Hub-Benachrichtigungen nicht verfügbar",
+      "tokenAction": "Token verwalten"
+    }
+  },
+  "kind": {
+    "new-repo": "Neu",
+    "paper": "Paper",
+    "repo-update": "Aktualisiert"
+  },
+  "markAllRead": "Alle als gelesen markieren",
+  "local": {
+    "loadError": "Der lokale Posteingang konnte nicht geladen werden"
+  },
+  "unreadCount": "{{count}} ungelesenes Element",
+  "unreadCount_other": "{{count}} ungelesene Elemente",
+  "tabs": {
+    "hub": "Hub-Benachrichtigungen",
+    "local": "Abonnierter Feed"
+  },
+  "title": "Posteingang"
+}

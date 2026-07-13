@@ -1,0 +1,50 @@
+{
+  "actions": {
+    "cancel": "Cancelar",
+    "openFolder": "Mostrar en la carpeta",
+    "pause": "Pausar",
+    "remove": "Quitar de la lista",
+    "resume": "Reanudar"
+  },
+  "bulk": {
+    "clearCompleted": "Borrar completadas",
+    "pauseAll": "Pausar todo",
+    "resumeAll": "Reanudar todo"
+  },
+  "commands": {
+    "actions": "Acciones",
+    "downloadCurrentRepository": "Descargar {{repo}}",
+    "downloadRepository": "Descargar repositorio",
+    "downloadSelectedFile": "Descargar {{file}}",
+    "searchPlaceholder": "Buscar modelos, conjuntos de datos y Spaces para descargar…",
+    "started": "Descarga iniciada",
+    "starting": "Iniciando descarga…",
+    "typeToSearch": "Escriba el nombre de un repositorio para iniciar una descarga."
+  },
+  "confirmRemove": {
+    "body": "Esta descarga aún está en curso. Al quitarla se cancela la transferencia y se elimina de la lista.",
+    "confirm": "Cancelar y quitar",
+    "title": "¿Quitar descarga activa?"
+  },
+  "count_one": "{{count}} tarea",
+  "count_other": "{{count}} tareas",
+  "empty": {
+    "body": "Encuentre un modelo que le guste y pulse Descargar; los archivos se guardan en la caché estándar de HF, listos para transformers, llama.cpp y similares.",
+    "title": "Aún no hay descargas"
+  },
+  "files": "{{done}}/{{total}} archivos",
+  "removed": "Entrada de descarga eliminada",
+  "revision": "Revisión {{revision}}",
+  "speed": "{{speed}}/s",
+  "status": {
+    "canceled": "Cancelada",
+    "completed": "Completada",
+    "error": "Fallida",
+    "paused": "Pausada",
+    "queued": "En cola",
+    "running": "Descargando"
+  },
+  "title": "Descargas",
+  "verified": "sha256 verificado",
+  "checksumsVerified": "sumas de comprobación verificadas"
+}

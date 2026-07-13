@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "形式",
+    "modalities": "モダリティ",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "サイズ(行数)",
+      "lt1k": "< 1K"
+    }
+  },
+  "downloads": "ダウンロード数",
+  "empty": {
+    "body": "検索条件を変えるか、適用中のフィルタを解除してください。",
+    "title": "結果がありません"
+  },
+  "endOfResults": "検索結果の末尾です",
+  "error": {},
+  "filter": {
+    "all": "すべて",
+    "clear": "フィルタを解除",
+    "clearAll": "すべて解除",
+    "clientSide": "フィルタは読み込み済みの結果にのみ適用されます",
+    "done": "完了",
+    "hardware": "ハードウェア",
+    "inferenceProviders": "推論プロバイダー",
+    "languages": "言語",
+    "libraries": "ライブラリ",
+    "library": "ライブラリ",
+    "license": "ライセンス",
+    "licenses": "ライセンス",
+    "mcp": "MCP対応",
+    "options": "オプション",
+    "other": "その他",
+    "params": "パラメータ数",
+    "runningOnly": "実行中のみ",
+    "sdk": "SDK",
+    "status": "ステータス",
+    "task": "タスク",
+    "tasks": "タスク",
+    "title": "フィルタ"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "いいね数",
+  "listHint": "移動",
+  "params": {
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
+  },
+  "paramsBadge": "パラメータ数 {{value}}",
+  "searchPlaceholder": {
+    "dataset": "データセットを検索…",
+    "model": "モデルを検索…",
+    "space": "Spaceを検索…"
+  },
+  "sort": {
+    "created": "作成日が新しい順",
+    "downloads": "ダウンロード数",
+    "label": "並べ替え",
+    "likes": "いいね数",
+    "trending": "トレンド",
+    "updated": "更新日が新しい順"
+  },
+  "updated": "{{time}}に更新",
+  "searchingMore": "さらに結果を検索しています…"
+}

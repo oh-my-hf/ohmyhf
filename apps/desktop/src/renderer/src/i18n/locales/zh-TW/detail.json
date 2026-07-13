@@ -1,0 +1,249 @@
+{
+  "actions": {
+    "download": "下載",
+    "downloadAll": "下載所有檔案",
+    "favorite": "加入我的最愛",
+    "follow": "追蹤此儲存庫",
+    "unfavorite": "從我的最愛移除",
+    "unfollow": "取消追蹤此儲存庫"
+  },
+  "card": {
+    "empty": "此儲存庫沒有說明卡片。"
+  },
+  "datasetPreview": {
+    "config": "組態",
+    "next": "下一頁",
+    "prev": "上一頁",
+    "range": "第 {{from}}–{{to}} 列，共 {{total}} 列",
+    "rangeNoTotal": "第 {{from}}–{{to}} 列",
+    "sampleNote": "完整檢視器目前無法使用——顯示的是 Hub 的範例預覽（{{count}} 列）。",
+    "split": "分割",
+    "unavailable": "此資料集無法使用資料集檢視器。您仍可瀏覽其檔案，或在 Hub 上開啟它。",
+    "rowsError": "無法載入資料列。"
+  },
+  "discussions": {
+    "comments": "{{count}} 則留言",
+    "create": {
+      "bodyPlaceholder": "描述您的討論或變更內容……支援 Markdown 格式。",
+      "created": "討論串已建立。",
+      "discussion": "討論",
+      "error": "無法建立討論串：{{error}}",
+      "new": "新增",
+      "prHint": "會開啟一個空白的 pull request 草稿，並將您的說明作為第一則留言——之後可推送提交到其 refs/pr 分支。",
+      "pullRequest": "Pull Request",
+      "submit": "建立",
+      "title": "在 {{repoId}} 中建立新討論串",
+      "titlePlaceholder": "標題"
+    },
+    "empty": "目前尚無討論。",
+    "filter": {
+      "all": "全部",
+      "closed": "已關閉",
+      "open": "開啟中"
+    },
+    "loadMore": "載入更多",
+    "pullRequest": "PR",
+    "quoteReply": "引用回覆",
+    "reactionError": "無法更新回應：{{error}}",
+    "reply": "回覆",
+    "replyPlaceholder": "撰寫回覆內容（支援 Markdown）…",
+    "segment": {
+      "discussions": "討論",
+      "pullRequests": "Pull Request"
+    },
+    "send": "傳送",
+    "sending": "傳送中…",
+    "signInToReply": "登入以參與討論。",
+    "status": {
+      "closed": "已關閉",
+      "draft": "草稿",
+      "merged": "已合併",
+      "open": "開啟中"
+    }
+  },
+  "downloadFailed": "無法開始下載：{{error}}",
+  "downloadStarted": "已新增到下載清單",
+  "editor": {
+    "attach": "附加檔案",
+    "bold": "粗體",
+    "bulletList": "項目符號清單",
+    "charCount": "字元數",
+    "code": "行內程式碼",
+    "italic": "斜體",
+    "link": "連結",
+    "mentionEmpty": "找不到使用者",
+    "mentionHint": "輸入以提及使用者或組織",
+    "preview": "預覽",
+    "previewEmpty": "尚無內容可預覽——請先輸入一些文字。",
+    "quote": "引用",
+    "uploadBrowse": "瀏覽",
+    "uploadError": "上傳失敗：{{error}}",
+    "uploadHint": "可拖曳、貼上圖片、音訊或影片，或",
+    "uploadTooLarge": "{{name}} 太大了（上限為 64 MB）",
+    "uploading": "上傳中…",
+    "write": "撰寫"
+  },
+  "favoriteRemoved": "已從我的最愛移除",
+  "favoritesEmpty": {
+    "body": "瀏覽時將儲存庫加星號，即可在此釘選收藏。",
+    "title": "尚無最愛項目"
+  },
+  "files": {
+    "download": "下載檔案",
+    "empty": "此目錄是空的。",
+    "export": "匯出…",
+    "exportTo": "匯出到 {{tool}}",
+    "lfs": "LFS",
+    "noTargets": "未偵測到本機工具",
+    "root": "根目錄"
+  },
+  "gate": {
+    "ask": "此儲存庫受到限制——請求存取權限以下載並預覽內容。",
+    "error": "無法送出存取請求：{{error}}",
+    "granted": "您已獲授予此儲存庫的存取權限。",
+    "needsSession": "送出存取請求需要 Hub 網頁工作階段——請前往「設定 → 帳戶」連接一個。",
+    "openSettings": "開啟設定",
+    "pending": "您的存取請求正等待作者審核。",
+    "request": "請求存取權限",
+    "requestBody": "請填寫 {{repoId}} 作者所要求的條件。您的使用者名稱與電子郵件地址將會分享給他們。",
+    "requestTitle": "請求存取權限",
+    "submit": "同意並送出請求",
+    "submitted": "存取請求已送出。"
+  },
+  "info": {
+    "created": "建立時間",
+    "downloadsAllTime": "累計下載次數",
+    "library": "函式庫",
+    "license": "授權條款",
+    "params": "參數量",
+    "sdk": "SDK",
+    "sha": "修訂版本",
+    "storage": "已使用儲存空間",
+    "tags": "標籤",
+    "task": "任務",
+    "updated": "更新時間"
+  },
+  "like": {
+    "error": "無法更新按讚狀態：{{error}}",
+    "like": "按讚",
+    "onHub": "按讚需要 Hub 網頁工作階段——請前往「設定 → 帳戶」連接一個，或在 Hub 上開啟此儲存庫按讚。",
+    "reconnect": "開啟設定",
+    "sessionExpired": "您的 Hub 網頁工作階段已過期。請前往「設定 → 帳戶」重新連接，以在應用程式內按讚。",
+    "unlike": "取消按讚"
+  },
+  "maintainer": {
+    "close": "關閉",
+    "closeWithComment": "留言並關閉",
+    "editTitle": "編輯標題",
+    "merge": "合併",
+    "mergeCommentPlaceholder": "新增選填的留言…",
+    "mergeConfirmBody": "這會將此 pull request 合併到儲存庫中，此操作無法復原。",
+    "mergeConfirmTitle": "合併 Pull Request #{{num}}？",
+    "merged": "Pull Request 已合併",
+    "reopen": "重新開啟",
+    "reopenWithComment": "留言並重新開啟",
+    "statusUpdated": "討論狀態已更新",
+    "titleSave": "儲存",
+    "titleUpdated": "標題已更新"
+  },
+  "playground": {
+    "empty": "回應內容將顯示在這裡。",
+    "placeholder": "透過推論 API 向此模型傳送提示…",
+    "run": "執行",
+    "running": "執行中…",
+    "signIn": "登入以使用推論遊樂場。",
+    "stop": "停止",
+    "unavailable": "此模型目前無法使用推論功能：{{error}}"
+  },
+  "pr": {
+    "binary": "二進位",
+    "diffTruncated": "此差異內容已被截斷——僅顯示部分變更。",
+    "empty": "尚無 Pull Request。",
+    "noDescription": "未提供描述。",
+    "noDiff": "沒有變更可顯示。",
+    "refsLabel": "合併方向",
+    "renamed": "已重新命名",
+    "statusChanged": "{{author}} 將狀態變更為 {{status}}",
+    "tabDiscussion": "討論",
+    "tabFiles": "變更的檔案"
+  },
+  "preview": {
+    "colDtype": "資料型別",
+    "colShape": "形狀",
+    "colTensor": "張量",
+    "copyRawUrl": "複製原始網址",
+    "highlightFailed": "語法標示失敗，改以純文字顯示。",
+    "highlightTooLarge": "此檔案太大，無法進行語法標示，改以純文字顯示。",
+    "highlightUnknown": "沒有可用於 {{language}} 的語法標示工具，改以純文字顯示。",
+    "mediaErrorBody": "此媒體檔案無法在此播放，請下載後於本機開啟。",
+    "mediaErrorTitle": "無法播放此檔案",
+    "noPreviewBody": "此檔案類型無法在此預覽，請下載後於本機檢視。",
+    "noPreviewTitle": "無法預覽",
+    "pdfErrorBody": "此 PDF 無法在此顯示，請下載後於本機開啟。",
+    "pdfErrorTitle": "無法開啟此 PDF",
+    "pdfTooLargeBody": "超過 {{size}} 的 PDF 無法在此預覽，請下載後於本機開啟。",
+    "pdfPage": "第 {{page}} 頁，共 {{total}} 頁",
+    "pickFile": "選擇要預覽的檔案",
+    "pickFileBody": "在左側選擇一個檔案以檢視其內容。",
+    "tensors": "張量",
+    "totalParams": "總參數量",
+    "truncated": "預覽已截斷——僅顯示前 {{size}}。"
+  },
+  "run": {
+    "loading": "正在載入此 Space…",
+    "notRunning": "此 Space 目前處於「{{stage}}」狀態，因此無法在此執行。請在 Hub 上開啟以喚醒或重新啟動它。",
+    "notRunningTitle": "此 Space 未在執行中",
+    "reload": "重新載入"
+  },
+  "select": {
+    "body": "從清單中選取一個項目——或按 ⌘K 搜尋所有內容。",
+    "title": "尚未選取任何項目"
+  },
+  "tabs": {
+    "card": "說明卡片",
+    "discussions": "討論",
+    "files": "檔案",
+    "info": "資訊",
+    "manage": "管理",
+    "playground": "遊樂場",
+    "preview": "預覽",
+    "run": "執行"
+  },
+  "parquetPreview": {
+    "rows_other": "{{count}} 列",
+    "columns_other": "{{count}} 欄",
+    "unsupportedCodec": "此檔案使用的壓縮編碼無法預覽，請下載後於本機開啟。",
+    "unreadableTitle": "無法讀取此 Parquet 檔案",
+    "unreadableBody": "無法讀取此檔案的中繼資料，請下載後於本機開啟。"
+  },
+  "csvPreview": {
+    "rows_other": "{{count}} 列",
+    "columns_other": "{{count}} 欄",
+    "emptyHeader": "第 {{index}} 欄"
+  },
+  "arrowPreview": {
+    "rows_other": "{{count}} 列",
+    "columns_other": "{{count}} 欄",
+    "prefixOnly": "預覽僅載入此檔案的前 {{size}}。",
+    "unreadableTitle": "無法讀取此 Arrow 檔案",
+    "unreadableBody": "無法從檔案開頭剖析 Arrow/Feather 資料表，請下載後於本機開啟。"
+  },
+  "ggufPreview": {
+    "size": "檔案大小",
+    "unreadableTitle": "無法讀取此 GGUF 檔案",
+    "unreadableBody": "無法剖析 GGUF 標頭（可能超出預覽視窗範圍），請下載後於本機檢視。"
+  },
+  "onnxPreview": {
+    "nodes": "節點",
+    "size": "檔案大小",
+    "inputs": "輸入",
+    "outputs": "輸出",
+    "none": "無",
+    "graph": "圖形：{{name}}",
+    "colNode": "節點",
+    "colOp": "運算",
+    "tooLargeBody": "超過 {{size}} 的 ONNX 檔案無法在此預覽（權重通常內嵌其中），請下載後於本機檢視。",
+    "unreadableTitle": "無法讀取此 ONNX 檔案",
+    "unreadableBody": "無法解碼此 ONNX 模型的 protobuf 內容，請下載後於本機開啟。"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "back": "Ir atrás",
+  "cache": "Abrir caché",
+  "datasets": "Abrir conjuntos de datos",
+  "downloads": "Abrir descargas",
+  "favorites": "Abrir favoritos",
+  "focusSearch": "Enfocar la búsqueda de la lista",
+  "forward": "Ir adelante",
+  "groups": {
+    "global": "Global",
+    "list": "Listas",
+    "navigation": "Navegación",
+    "palette": "Paleta de comandos"
+  },
+  "help": "Mostrar esta superposición",
+  "history": "Abrir historial de navegación",
+  "inbox": "Abrir bandeja de entrada",
+  "listNav": "Mover selección de la lista",
+  "palette": "Paleta de comandos / búsqueda global",
+  "paletteClose": "Cerrar",
+  "paletteNavigate": "Navegar por los resultados",
+  "paletteSelect": "Seleccionar",
+  "models": "Abrir modelos",
+  "papers": "Abrir artículos",
+  "spaces": "Abrir Spaces",
+  "settings": "Abrir configuración",
+  "title": "Atajos de teclado",
+  "toggleSidebar": "Contraer o expandir la barra lateral"
+}

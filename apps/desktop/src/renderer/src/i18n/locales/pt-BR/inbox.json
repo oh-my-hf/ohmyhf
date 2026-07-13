@@ -1,0 +1,87 @@
+{
+  "bell": {
+    "empty": "Nenhuma notificação nova",
+    "title": "Notificações",
+    "viewAll": "Ver todas as notificações"
+  },
+  "checked": "{{count}} item(ns) novo(s)",
+  "checked_one": "{{count}} item novo",
+  "checked_other": "{{count}} itens novos",
+  "checking": "Verificando…",
+  "checkNow": "Verificar agora",
+  "clear": "Limpar caixa de entrada",
+  "empty": {
+    "body": "Siga usuários, organizações, repositórios ou o resumo dos Artigos Diários e as atualizações aparecerão aqui.",
+    "title": "Você está em dia"
+  },
+  "follows": {
+    "add": "Seguir",
+    "empty": "Você ainda não segue nada.",
+    "loadError": "Não foi possível carregar as fontes seguidas",
+    "targetLabel": "Usuário, organização ou repositório a seguir",
+    "imported": "Importada(s) {{count}} conta(s) que você segue no Hub",
+    "imported_one": "Importada {{count}} conta que você segue no Hub",
+    "imported_other": "Importadas {{count}} contas que você segue no Hub",
+    "importFromHub": "Importar do Hugging Face",
+    "papers": "Resumo dos Artigos Diários",
+    "placeholder": "usuário, organização ou modelo:org/nome",
+    "removed": "Deixou de seguir {{target}}",
+    "title": "Seguindo",
+    "type": {
+      "org": "Organização",
+      "papers": "Artigos",
+      "repo": "Repositório",
+      "user": "Usuário"
+    }
+  },
+  "hub": {
+    "clearAll": "Limpar tudo",
+    "loadError": "Não foi possível carregar as notificações do Hub",
+    "confirmClear": {
+      "body": "Isso remove permanentemente todas as notificações da sua caixa de entrada do Hugging Face.",
+      "confirm": "Limpar tudo",
+      "title": "Limpar todas as notificações do Hub?"
+    },
+    "empty": {
+      "body": "Notificações de discussões, pull requests e posts no Hub aparecerão aqui.",
+      "title": "Nenhuma notificação do Hub"
+    },
+    "kind": {
+      "org": "Organização",
+      "other": "Outro",
+      "paper": "Artigo",
+      "post": "Post",
+      "repo": "Repositório"
+    },
+    "pageNext": "Próxima página",
+    "pageOf": "Página {{page}} de {{pages}}",
+    "pagePrev": "Página anterior",
+    "signIn": {
+      "action": "Abrir configurações da conta",
+      "body": "Conecte sua conta do Hugging Face para sincronizar a caixa de entrada de notificações do Hub.",
+      "title": "Entre para ver as notificações do Hub"
+    },
+    "unauthorized": {
+      "action": "Abrir no Hub",
+      "body": "Este token de acesso não pode ler as notificações do Hub (um token somente leitura ou de granularidade fina insuficiente). Crie um token de escrita ou de granularidade fina com acesso a notificações, ou veja-as no Hub.",
+      "title": "Notificações do Hub indisponíveis",
+      "tokenAction": "Gerenciar tokens"
+    }
+  },
+  "kind": {
+    "new-repo": "Novo",
+    "paper": "Artigo",
+    "repo-update": "Atualizado"
+  },
+  "markAllRead": "Marcar tudo como lido",
+  "local": {
+    "loadError": "Não foi possível carregar a caixa de entrada local"
+  },
+  "unreadCount": "{{count}} item não lido",
+  "unreadCount_other": "{{count}} itens não lidos",
+  "tabs": {
+    "hub": "Notificações do Hub",
+    "local": "Feed de seguidos"
+  },
+  "title": "Caixa de entrada"
+}

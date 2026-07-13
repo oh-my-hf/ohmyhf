@@ -1,0 +1,58 @@
+{
+  "appName": "Oh My HuggingFace",
+  "back": "戻る",
+  "cancel": "キャンセル",
+  "close": "閉じる",
+  "confirm": "確認",
+  "copied": "コピーしました",
+  "copy": "コピー",
+  "delete": "削除",
+  "dismiss": "閉じる",
+  "error": {
+    "generic": "問題が発生しました",
+    "network": "Hugging Face APIに接続できませんでした"
+  },
+  "gated": "承認制",
+  "goBack": "戻る",
+  "goForward": "進む",
+  "imageViewer": "画像ビューア",
+  "kind": {
+    "dataset": "データセット",
+    "model": "モデル",
+    "paper": "論文",
+    "space": "Space"
+  },
+  "language": {
+    "system": "システム言語",
+    "en": "English",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    "de": "Deutsch",
+    "es": "Español",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pt-BR": "Português (Brasil)"
+  },
+  "loading": "読み込み中…",
+  "progress": {
+    "indeterminate": "処理中"
+  },
+  "open": "開く",
+  "openOnHub": "Hubで開く",
+  "private": "非公開",
+  "remove": "削除",
+  "retry": "再試行",
+  "running": "実行中",
+  "showInFolder": "フォルダに表示",
+  "theme": {
+    "dark": "ダーク",
+    "label": "テーマ",
+    "light": "ライト",
+    "system": "システム"
+  },
+  "undo": "元に戻す",
+  "unofficial": "非公式",
+  "zoomImage": "画像ビューアを開く",
+  "zoomImageNamed": "{{name}}の画像ビューアを開く"
+}

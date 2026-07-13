@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "Format",
+    "modalities": "Modalitäten",
+    "size": {
+      "100kTo1m": "100 Tsd. – 1 Mio.",
+      "100mTo1b": "100 Mio. – 1 Mrd.",
+      "10kTo100k": "10 Tsd. – 100 Tsd.",
+      "10mTo100m": "10 Mio. – 100 Mio.",
+      "1kTo10k": "1 Tsd. – 10 Tsd.",
+      "1mTo10m": "1 Mio. – 10 Mio.",
+      "gt1t": "> 1 Bio.",
+      "label": "Größe (Zeilen)",
+      "lt1k": "< 1 Tsd."
+    }
+  },
+  "downloads": "Downloads",
+  "empty": {
+    "body": "Versuchen Sie eine andere Suche oder entfernen Sie die aktiven Filter.",
+    "title": "Keine Ergebnisse"
+  },
+  "endOfResults": "Ende der Ergebnisse",
+  "error": {},
+  "filter": {
+    "all": "Alle",
+    "clear": "Filter zurücksetzen",
+    "clearAll": "Alle zurücksetzen",
+    "clientSide": "Filter wirken nur auf geladene Ergebnisse",
+    "done": "Fertig",
+    "hardware": "Hardware",
+    "inferenceProviders": "Inferenzanbieter",
+    "languages": "Sprachen",
+    "libraries": "Bibliotheken",
+    "library": "Bibliothek",
+    "license": "Lizenz",
+    "licenses": "Lizenzen",
+    "mcp": "MCP-kompatibel",
+    "options": "Optionen",
+    "other": "Andere",
+    "params": "Parameter",
+    "runningOnly": "Nur laufende",
+    "sdk": "SDK",
+    "status": "Status",
+    "task": "Aufgabe",
+    "tasks": "Aufgaben",
+    "title": "Filter"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "Likes",
+  "listHint": "navigieren",
+  "params": {
+    "1to7b": "1 Mrd. – 7 Mrd.",
+    "7to30b": "7 Mrd. – 30 Mrd.",
+    "gt30b": "> 30 Mrd.",
+    "lt1b": "< 1 Mrd."
+  },
+  "paramsBadge": "{{value}} Parameter",
+  "searchPlaceholder": {
+    "dataset": "Datensätze durchsuchen…",
+    "model": "Modelle durchsuchen…",
+    "space": "Spaces durchsuchen…"
+  },
+  "sort": {
+    "created": "Kürzlich erstellt",
+    "downloads": "Downloads",
+    "label": "Sortieren",
+    "likes": "Likes",
+    "trending": "Im Trend",
+    "updated": "Kürzlich aktualisiert"
+  },
+  "updated": "Aktualisiert {{time}}",
+  "searchingMore": "Weitere Ergebnisse werden gesucht…"
+}

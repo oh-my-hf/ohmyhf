@@ -1,0 +1,68 @@
+{
+  "create": "새 컬렉션",
+  "created": "컬렉션이 생성되었습니다",
+  "createDialog": {
+    "description": "설명 (선택 사항)",
+    "namespace": "소유자",
+    "private": "비공개",
+    "submit": "만들기",
+    "title": "컬렉션 만들기",
+    "titleLabel": "제목",
+    "titlePlaceholder": "나만의 멋진 컬렉션"
+  },
+  "detail": {
+    "deleted": "컬렉션이 삭제되었습니다",
+    "deleteDialog": {
+      "body": "컬렉션이 영구적으로 삭제됩니다(항목은 Hub에 그대로 남습니다). 확인하려면 컬렉션 슬러그를 입력하세요.",
+      "confirmPlaceholder": "확인하려면 슬러그를 입력하세요",
+      "title": "컬렉션을 삭제하시겠습니까?"
+    },
+    "edit": "편집",
+    "editDialog": {
+      "save": "저장",
+      "title": "컬렉션 편집"
+    },
+    "empty": {
+      "body": "각 페이지에서 모델, 데이터셋, Space, 논문을 추가하세요.",
+      "title": "이 컬렉션은 비어 있습니다"
+    },
+    "error": {
+      "title": "이 컬렉션을 불러올 수 없습니다"
+    },
+    "itemRemoved": "항목이 제거되었습니다",
+    "note": {
+      "dialogTitle": "항목 메모",
+      "edit": "메모 편집",
+      "placeholder": "이 항목에 대한 메모를 추가하세요…",
+      "save": "저장",
+      "saved": "메모가 저장되었습니다"
+    },
+    "removeItem": "컬렉션에서 제거",
+    "signedOutBody": "이 컬렉션은 비공개일 수 있습니다. 보려면 로그인하세요.",
+    "updated": "컬렉션이 업데이트되었습니다"
+  },
+  "empty": {
+    "body": "컬렉션을 만들어 모델, 데이터셋, Space, 논문을 정리해 보세요.",
+    "title": "아직 컬렉션이 없습니다"
+  },
+  "error": {
+    "title": "컬렉션을 불러올 수 없습니다"
+  },
+  "itemCount_other": "항목 {{count}}개",
+  "itemRemoved": "컬렉션에서 제거되었습니다",
+  "kind": {
+    "collection": "컬렉션"
+  },
+  "menu": {
+    "added": "{{title}}에 추가됨",
+    "createNew": "새 컬렉션…",
+    "empty": "아직 컬렉션이 없습니다",
+    "trigger": "컬렉션에 추가"
+  },
+  "scopeHint": "토큰에 write-collections 권한 범위가 없습니다. 컬렉션을 편집하려면 다시 로그인하세요.",
+  "signedOut": {
+    "body": "컬렉션으로 Hugging Face 프로필에서 모델, 데이터셋, Space, 논문을 그룹으로 관리할 수 있습니다.",
+    "title": "컬렉션을 보려면 로그인하세요"
+  },
+  "title": "컬렉션"
+}

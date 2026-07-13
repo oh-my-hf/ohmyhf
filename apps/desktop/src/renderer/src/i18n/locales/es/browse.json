@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "Formato",
+    "modalities": "Modalidades",
+    "size": {
+      "100kTo1m": "100K – 1M",
+      "100mTo1b": "100M – 1B",
+      "10kTo100k": "10K – 100K",
+      "10mTo100m": "10M – 100M",
+      "1kTo10k": "1K – 10K",
+      "1mTo10m": "1M – 10M",
+      "gt1t": "> 1T",
+      "label": "Tamaño (filas)",
+      "lt1k": "< 1K"
+    }
+  },
+  "downloads": "Descargas",
+  "empty": {
+    "body": "Pruebe una búsqueda diferente o borre los filtros activos.",
+    "title": "Sin resultados"
+  },
+  "endOfResults": "Fin de los resultados",
+  "error": {},
+  "filter": {
+    "all": "Todos",
+    "clear": "Borrar filtros",
+    "clearAll": "Borrar todo",
+    "clientSide": "los filtros solo se aplican a los resultados cargados",
+    "done": "Hecho",
+    "hardware": "Hardware",
+    "inferenceProviders": "Proveedores de inferencia",
+    "languages": "Idiomas",
+    "libraries": "Bibliotecas",
+    "library": "Biblioteca",
+    "license": "Licencia",
+    "licenses": "Licencias",
+    "mcp": "Compatible con MCP",
+    "options": "Opciones",
+    "other": "Otro",
+    "params": "Parámetros",
+    "runningOnly": "Solo en ejecución",
+    "sdk": "SDK",
+    "status": "Estado",
+    "task": "Tarea",
+    "tasks": "Tareas",
+    "title": "Filtros"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "Me gusta",
+  "listHint": "navegar",
+  "params": {
+    "1to7b": "1B – 7B",
+    "7to30b": "7B – 30B",
+    "gt30b": "> 30B",
+    "lt1b": "< 1B"
+  },
+  "paramsBadge": "{{value}} parámetros",
+  "searchPlaceholder": {
+    "dataset": "Buscar conjuntos de datos…",
+    "model": "Buscar modelos…",
+    "space": "Buscar Spaces…"
+  },
+  "sort": {
+    "created": "Creado recientemente",
+    "downloads": "Descargas",
+    "label": "Ordenar",
+    "likes": "Me gusta",
+    "trending": "Tendencia",
+    "updated": "Actualizado recientemente"
+  },
+  "updated": "Actualizado {{time}}",
+  "searchingMore": "Buscando más resultados…"
+}

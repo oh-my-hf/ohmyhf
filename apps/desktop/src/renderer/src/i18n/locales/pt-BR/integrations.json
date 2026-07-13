@@ -1,0 +1,35 @@
+{
+  "export": {
+    "comfyuiMissing": "Nenhuma instalação do ComfyUI foi detectada. Defina COMFYUI_PATH ou instale o ComfyUI na sua pasta pessoal.",
+    "copied": "Exportado para {{path}}.",
+    "failed": "Falha na exportação: {{error}}",
+    "invalidPath": "Caminho de arquivo inválido: {{file}}",
+    "notInCache": "{{file}} ainda não está no cache local — baixe-o primeiro.",
+    "ollamaDone": "Modelo Ollama {{name}} criado.",
+    "ollamaFailed": "Falha na importação do Ollama: {{error}}",
+    "ollamaMissing": "O Ollama não foi encontrado. Instale-o em ollama.com e tente novamente.",
+    "targetsError": "Não foi possível detectar os destinos de exportação"
+  },
+  "task": {
+    "canceled": "Tarefa cancelada.",
+    "done": "Tarefa concluída.",
+    "failed": "A tarefa falhou.",
+    "phase": {
+      "copying": "Copiando arquivo…",
+      "preparing": "Preparando exportação…",
+      "running": "Executando exportação…"
+    }
+  },
+  "upload": {
+    "done": "{{repo}} enviado para o Hub.",
+    "emptyFolder": "A pasta selecionada não contém arquivos que possam ser enviados.",
+    "failed": "Falha no envio: {{error}}",
+    "ignoreUnreadable": "O .gitignore ou .hfignore da pasta não pode ser lido com segurança.",
+    "invalidPath": "A pasta contém um nome de arquivo que não pode ser representado com segurança no Hub.",
+    "needWriteScope": "Sua sessão não tem acesso de escrita. Saia e entre novamente para conceder permissão de escrita.",
+    "selectionStale": "A pasta selecionada foi alterada. Escolha-a novamente antes de enviar.",
+    "signInFirst": "Entre na sua conta do Hugging Face antes de enviar.",
+    "specialFile": "A pasta contém um socket, FIFO, dispositivo ou outro arquivo especial e não pode ser enviada com segurança.",
+    "tooManyFiles": "A pasta tem arquivos demais — o limite atual é {{max}}."
+  }
+}

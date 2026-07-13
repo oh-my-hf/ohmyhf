@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "承認",
+    "empty": "リクエストはありません。",
+    "grant": "アクセスを許可",
+    "granted": "アクセスを許可しました",
+    "grantPlaceholder": "ユーザー名",
+    "handled": "リクエストを更新しました",
+    "notGated": "アクセスリクエストを確認するには、承認制アクセスを有効にしてください。",
+    "reasonPlaceholder": "却下理由(任意)",
+    "reject": "却下",
+    "tab": {
+      "accepted": "承認済み",
+      "pending": "保留中",
+      "rejected": "却下済み"
+    },
+    "title": "アクセスリクエスト"
+  },
+  "actions": {
+    "duplicate": "複製",
+    "label": "リポジトリ操作",
+    "rename": "名前変更 / 移動"
+  },
+  "delete": {
+    "body": "{{repoId}}とそのすべてのファイルを完全に削除します。この操作は取り消せません。",
+    "confirmLabel": "確認のため{{repoId}}と入力してください",
+    "success": "リポジトリを削除しました",
+    "title": "リポジトリを削除"
+  },
+  "duplicate": {
+    "body": "{{repoId}}のコピーを新しいIDで作成します。",
+    "label": "複製先のリポジトリID",
+    "private": "コピーを非公開にする",
+    "submit": "複製",
+    "success": "リポジトリを複製しました",
+    "title": "リポジトリを複製"
+  },
+  "error": {
+    "title": "リポジトリを読み込めませんでした"
+  },
+  "gatedHint": {
+    "body": "アクセストークンにmanage-reposスコープが含まれていないため、リポジトリ管理は無効です。",
+    "title": "権限が不足しています"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "所有しているリポジトリがここに表示されます。",
+      "title": "まだリポジトリがありません"
+    },
+    "filter": {
+      "all": "すべて"
+    },
+    "title": "自分のリポジトリ"
+  },
+  "refs": {
+    "branchCreated": "ブランチを作成しました",
+    "branchDeleted": "ブランチを削除しました",
+    "branchesHint": "ブランチを作成するか、名前を指定して削除します。",
+    "branchPlaceholder": "branch-name",
+    "createBranch": "ブランチを作成",
+    "createTag": "タグを作成",
+    "deleteBranch": "ブランチを削除",
+    "deleteTag": "タグを削除",
+    "startingPointPlaceholder": "起点(任意)",
+    "tagCreated": "タグを作成しました",
+    "tagDeleted": "タグを削除しました",
+    "tagMessagePlaceholder": "メッセージ(任意)",
+    "tagPlaceholder": "tag-name",
+    "tagsHint": "mainにタグを作成するか、名前を指定して削除します。",
+    "title": "ブランチとタグ"
+  },
+  "rename": {
+    "body": "{{repoId}}を新しい名前または名前空間に移動します。すべてのファイル、いいね、ダウンロード数も引き継がれます。",
+    "label": "新しいリポジトリID",
+    "submit": "名前を変更",
+    "success": "リポジトリを移動しました",
+    "title": "名前変更 / 移動"
+  },
+  "repoIdPlaceholder": "owner/name",
+  "settings": {
+    "gated": "承認制アクセス",
+    "gatedAuto": "自動承認",
+    "gatedHint": "ダウンロード前にユーザーへアクセスリクエストを要求します。",
+    "gatedManual": "手動レビュー",
+    "gatedOff": "オフ",
+    "private": "非公開",
+    "privateHint": "このリポジトリは自分と共同作業者のみが閲覧できます。",
+    "title": "設定",
+    "updated": "設定を更新しました"
+  },
+  "signedOut": {
+    "body": "サインインすると、自分のモデル、データセット、Spaceがここに表示されます。",
+    "title": "サインインしてリポジトリを管理"
+  },
+  "space": {
+    "descriptionPlaceholder": "説明(任意)",
+    "keyPlaceholder": "KEY",
+    "logs": {
+      "build": "ビルド",
+      "empty": "ログの出力はありません。",
+      "refresh": "ログを更新",
+      "run": "実行",
+      "title": "ログ"
+    },
+    "restart": {
+      "done": "再起動をリクエストしました",
+      "factory": "ファクトリー再構築",
+      "factoryHint": "ファクトリー再構築はビルドキャッシュを消去し、Spaceを最初から再構築します。",
+      "restart": "Spaceを再起動",
+      "title": "再起動"
+    },
+    "secrets": {
+      "add": "シークレットを追加",
+      "deleted": "シークレットを削除しました",
+      "empty": "シークレットは設定されていません。",
+      "saved": "シークレットを保存しました",
+      "title": "シークレット",
+      "writeOnly": "シークレットの値は書き込み専用で、保存後は二度と表示されません。"
+    },
+    "valuePlaceholder": "値",
+    "variables": {
+      "deleted": "変数を削除しました",
+      "edit": "変数を編集",
+      "empty": "変数は設定されていません。",
+      "save": "変数を保存",
+      "saved": "変数を保存しました",
+      "title": "変数"
+    }
+  },
+  "visibility": {
+    "makePrivate": "非公開にする",
+    "makePublic": "公開する",
+    "protected": "保護対象",
+    "updated": "公開範囲を更新しました"
+  }
+}

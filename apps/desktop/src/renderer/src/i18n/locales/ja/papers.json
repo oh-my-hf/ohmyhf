@@ -1,0 +1,24 @@
+{
+  "authors": "著者",
+  "comment": {
+    "heading": "この論文にコメントする",
+    "placeholder": "コメントを入力(Markdown対応)…",
+    "posted": "コメントを投稿しました"
+  },
+  "empty": "まだ論文が読み込まれていません。",
+  "listError": "Daily Papersを読み込めませんでした",
+  "detailError": "この論文を読み込めませんでした",
+  "retryMore": "さらに読み込むを再試行",
+  "published": "{{time}}に公開",
+  "readOnArxiv": "arXivで読む",
+  "readOnHub": "Hubで開く",
+  "title": "Daily Papers",
+  "upvote": {
+    "add": "アップボート",
+    "error": "アップボートを更新できませんでした: {{error}}",
+    "onHub": "アップボートにはHub Webセッションが必要です — 設定 → アカウントで接続するか、Hubで開いてください。",
+    "remove": "アップボートを取り消す",
+    "sessionExpired": "Hub Webセッションの有効期限が切れました。アプリからアップボートするには、設定 → アカウントで再接続してください。"
+  },
+  "upvotes": "アップボート数"
+}

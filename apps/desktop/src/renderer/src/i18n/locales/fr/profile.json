@@ -1,0 +1,76 @@
+{
+  "editProfile": "Modifier le profil",
+  "empty": {
+    "dataset": "Aucun jeu de données public pour le moment",
+    "model": "Aucun modèle public pour le moment",
+    "space": "Aucun Space public pour le moment"
+  },
+  "error": {
+    "title": "Impossible de charger ce profil"
+  },
+  "follow": "Suivre",
+  "followError": "Impossible de mettre à jour l'abonnement : {{error}}",
+  "members": "Membres",
+  "orgBadge": "Organisation",
+  "orgsLabel": "Organisations",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
+  "post": {
+    "actions": "Actions sur le commentaire",
+    "comment": {
+      "heading": "Ajouter un commentaire",
+      "placeholder": "Écrivez un commentaire… Le Markdown est pris en charge.",
+      "posted": "Commentaire publié"
+    },
+    "commentOnHub": "Commenter sur le Hub",
+    "commentsOnHub": "Les commentaires sur les publications nécessitent une session web du Hub — connectez-en une dans Paramètres → Compte, ou ouvrez la publication sur le Hub pour répondre.",
+    "error": {
+      "title": "Impossible de charger cette publication"
+    },
+    "hide": {
+      "action": "Masquer",
+      "confirm": "Masquer le commentaire",
+      "done": "Commentaire masqué",
+      "error": "Impossible de masquer le commentaire : {{error}}",
+      "hidden": "Ce commentaire a été masqué.",
+      "hiddenWithReason": "Ce commentaire a été masqué (marqué comme {{reason}}).",
+      "reason": "Motif",
+      "selectReason": "Sélectionnez un motif pour masquer ce commentaire (facultatif) :",
+      "title": "Masquer le commentaire",
+      "warning": "Le masquage d'un commentaire est irréversible. Plus personne ne pourra en voir le contenu."
+    },
+    "reply": "Répondre",
+    "replyInThread": "Répondre dans le fil",
+    "replyPlaceholder": "Répondre à {{user}}… Le Markdown est pris en charge."
+  },
+  "reactions": {
+    "error": "Impossible de mettre à jour la réaction : {{error}}"
+  },
+  "selfBadge": "Votre profil",
+  "stats": {
+    "datasets": "Jeux de données",
+    "followers": "Abonnés",
+    "following": "Abonnements",
+    "members": "Membres",
+    "models": "Modèles",
+    "spaces": "Spaces"
+  },
+  "unfollow": "Ne plus suivre",
+  "unwatch": "Ne plus surveiller",
+  "unwatchOpenHub": "Le Hub ignore les demandes « Ne plus surveiller » venant des applications — utilisez Ne plus surveiller sur sa page Hub.",
+  "viewProfile": "Voir le profil",
+  "watch": "Surveiller",
+  "watchError": "Impossible de mettre à jour la surveillance : {{error}}",
+  "watchOnHub": "Ouvrir sur le Hub",
+  "watchReconnect": "Ouvrir les paramètres",
+  "watchSessionExpired": "Le Hub a ignoré ce changement de surveillance — votre session web du Hub a peut-être expiré. Reconnectez-la dans Paramètres → Compte.",
+  "watchSuccess": "Surveillance activée — vous recevrez les notifications du Hub pour ce compte.",
+  "unwatchSuccess": "Surveillance de ce compte arrêtée.",
+  "watchOpenHub": "Le Hub ignore les demandes « Surveiller » venant des applications — utilisez Surveiller les dépôts sur sa page Hub.",
+  "watchSyncNotApplied": "Suivi en local. Le Hub ignore les demandes de surveillance venant des applications — pour aussi recevoir les notifications du Hub pour ce compte, utilisez le bouton Surveiller sur sa page Hub."
+}

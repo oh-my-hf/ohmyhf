@@ -1,0 +1,50 @@
+{
+  "actions": {
+    "cancel": "Abbrechen",
+    "openFolder": "Im Ordner anzeigen",
+    "pause": "Pausieren",
+    "remove": "Aus Liste entfernen",
+    "resume": "Fortsetzen"
+  },
+  "bulk": {
+    "clearCompleted": "Abgeschlossene entfernen",
+    "pauseAll": "Alle pausieren",
+    "resumeAll": "Alle fortsetzen"
+  },
+  "commands": {
+    "actions": "Aktionen",
+    "downloadCurrentRepository": "{{repo}} herunterladen",
+    "downloadRepository": "Repository herunterladen",
+    "downloadSelectedFile": "{{file}} herunterladen",
+    "searchPlaceholder": "Modelle, Datensätze und Spaces zum Herunterladen suchen…",
+    "started": "Download gestartet",
+    "starting": "Download wird gestartet…",
+    "typeToSearch": "Geben Sie einen Repository-Namen ein, um einen Download zu starten."
+  },
+  "confirmRemove": {
+    "body": "Dieser Download läuft noch. Beim Entfernen wird die Übertragung abgebrochen und aus der Liste entfernt.",
+    "confirm": "Abbrechen und entfernen",
+    "title": "Aktiven Download entfernen?"
+  },
+  "count_one": "{{count}} Aufgabe",
+  "count_other": "{{count}} Aufgaben",
+  "empty": {
+    "body": "Suchen Sie ein Modell, das Ihnen gefällt, und klicken Sie auf Herunterladen — Dateien landen im Standard-HF-Cache, bereit für transformers, llama.cpp und ähnliche Tools.",
+    "title": "Noch keine Downloads"
+  },
+  "files": "{{done}}/{{total}} Dateien",
+  "removed": "Downloadeintrag entfernt",
+  "revision": "Revision {{revision}}",
+  "speed": "{{speed}}/s",
+  "status": {
+    "canceled": "Abgebrochen",
+    "completed": "Abgeschlossen",
+    "error": "Fehlgeschlagen",
+    "paused": "Pausiert",
+    "queued": "In Warteschlange",
+    "running": "Wird heruntergeladen"
+  },
+  "title": "Downloads",
+  "verified": "sha256 verifiziert",
+  "checksumsVerified": "Prüfsummen verifiziert"
+}

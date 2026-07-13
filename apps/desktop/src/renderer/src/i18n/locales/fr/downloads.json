@@ -1,0 +1,50 @@
+{
+  "actions": {
+    "cancel": "Annuler",
+    "openFolder": "Afficher dans le dossier",
+    "pause": "Mettre en pause",
+    "remove": "Retirer de la liste",
+    "resume": "Reprendre"
+  },
+  "bulk": {
+    "clearCompleted": "Effacer les téléchargements terminés",
+    "pauseAll": "Tout mettre en pause",
+    "resumeAll": "Tout reprendre"
+  },
+  "commands": {
+    "actions": "Actions",
+    "downloadCurrentRepository": "Télécharger {{repo}}",
+    "downloadRepository": "Télécharger le dépôt",
+    "downloadSelectedFile": "Télécharger {{file}}",
+    "searchPlaceholder": "Rechercher des modèles, jeux de données et Spaces à télécharger…",
+    "started": "Téléchargement démarré",
+    "starting": "Démarrage du téléchargement…",
+    "typeToSearch": "Saisissez un nom de dépôt pour démarrer un téléchargement."
+  },
+  "confirmRemove": {
+    "body": "Ce téléchargement est encore en cours. Le retirer annule le transfert et le supprime de la liste.",
+    "confirm": "Annuler et retirer",
+    "title": "Retirer le téléchargement en cours ?"
+  },
+  "count_one": "{{count}} tâche",
+  "count_other": "{{count}} tâches",
+  "empty": {
+    "body": "Trouvez un modèle qui vous plaît et cliquez sur Télécharger — les fichiers arrivent dans le cache HF standard, prêts pour transformers, llama.cpp et compagnie.",
+    "title": "Aucun téléchargement pour le moment"
+  },
+  "files": "{{done}}/{{total}} fichiers",
+  "removed": "Entrée de téléchargement supprimée",
+  "revision": "Révision {{revision}}",
+  "speed": "{{speed}}/s",
+  "status": {
+    "canceled": "Annulé",
+    "completed": "Terminé",
+    "error": "Échoué",
+    "paused": "En pause",
+    "queued": "En file d'attente",
+    "running": "Téléchargement en cours"
+  },
+  "title": "Téléchargements",
+  "verified": "sha256 vérifié",
+  "checksumsVerified": "sommes de contrôle vérifiées"
+}

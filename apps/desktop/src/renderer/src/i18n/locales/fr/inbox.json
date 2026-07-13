@@ -1,0 +1,87 @@
+{
+  "bell": {
+    "empty": "Aucune nouvelle notification",
+    "title": "Notifications",
+    "viewAll": "Voir toutes les notifications"
+  },
+  "checked": "{{count}} nouvel élément(s)",
+  "checked_one": "{{count}} nouvel élément",
+  "checked_other": "{{count}} nouveaux éléments",
+  "checking": "Vérification…",
+  "checkNow": "Vérifier maintenant",
+  "clear": "Vider la boîte de réception",
+  "empty": {
+    "body": "Suivez des utilisateurs, des organisations, des dépôts ou le résumé Daily Papers, et les mises à jour arriveront ici.",
+    "title": "Vous êtes à jour"
+  },
+  "follows": {
+    "add": "Suivre",
+    "empty": "Vous ne suivez rien pour le moment.",
+    "loadError": "Impossible de charger les sources suivies",
+    "targetLabel": "Utilisateur, organisation ou dépôt à suivre",
+    "imported": "{{count}} compte(s) que vous suivez sur le Hub ont été importé(s)",
+    "imported_one": "{{count}} compte que vous suivez sur le Hub a été importé",
+    "imported_other": "{{count}} comptes que vous suivez sur le Hub ont été importés",
+    "importFromHub": "Importer depuis Hugging Face",
+    "papers": "Résumé Daily Papers",
+    "placeholder": "nom d'utilisateur, organisation, ou model:org/nom",
+    "removed": "Ne suit plus {{target}}",
+    "title": "Abonnements",
+    "type": {
+      "org": "Organisation",
+      "papers": "Articles",
+      "repo": "Dépôt",
+      "user": "Utilisateur"
+    }
+  },
+  "hub": {
+    "clearAll": "Tout effacer",
+    "loadError": "Impossible de charger les notifications du Hub",
+    "confirmClear": {
+      "body": "Cette action supprime définitivement toutes les notifications de votre boîte de réception Hugging Face.",
+      "confirm": "Tout effacer",
+      "title": "Effacer toutes les notifications du Hub ?"
+    },
+    "empty": {
+      "body": "Les notifications des discussions, pull requests et publications du Hub apparaîtront ici.",
+      "title": "Aucune notification du Hub"
+    },
+    "kind": {
+      "org": "Organisation",
+      "other": "Autre",
+      "paper": "Article",
+      "post": "Publication",
+      "repo": "Dépôt"
+    },
+    "pageNext": "Page suivante",
+    "pageOf": "Page {{page}} sur {{pages}}",
+    "pagePrev": "Page précédente",
+    "signIn": {
+      "action": "Ouvrir les paramètres du compte",
+      "body": "Connectez votre compte Hugging Face pour synchroniser la boîte de réception des notifications depuis le Hub.",
+      "title": "Connectez-vous pour voir les notifications du Hub"
+    },
+    "unauthorized": {
+      "action": "Ouvrir sur le Hub",
+      "body": "Ce jeton d'accès ne peut pas lire les notifications du Hub (jeton en lecture seule ou jeton à portée fine insuffisante). Créez un jeton en écriture ou à portée fine avec l'accès aux notifications, ou consultez-les sur le Hub.",
+      "title": "Notifications du Hub indisponibles",
+      "tokenAction": "Gérer les jetons"
+    }
+  },
+  "kind": {
+    "new-repo": "Nouveau",
+    "paper": "Article",
+    "repo-update": "Mis à jour"
+  },
+  "markAllRead": "Tout marquer comme lu",
+  "local": {
+    "loadError": "Impossible de charger la boîte de réception locale"
+  },
+  "unreadCount": "{{count}} élément non lu",
+  "unreadCount_other": "{{count}} éléments non lus",
+  "tabs": {
+    "hub": "Notifications du Hub",
+    "local": "Fil des abonnements"
+  },
+  "title": "Boîte de réception"
+}

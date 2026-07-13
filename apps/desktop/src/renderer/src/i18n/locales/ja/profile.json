@@ -1,0 +1,76 @@
+{
+  "editProfile": "プロフィールを編集",
+  "empty": {
+    "dataset": "公開データセットはまだありません",
+    "model": "公開モデルはまだありません",
+    "space": "公開Spaceはまだありません"
+  },
+  "error": {
+    "title": "このプロフィールを読み込めませんでした"
+  },
+  "follow": "フォロー",
+  "followError": "フォローを更新できませんでした: {{error}}",
+  "members": "メンバー",
+  "orgBadge": "組織",
+  "orgsLabel": "組織",
+  "plan": {
+    "academia": "アカデミア",
+    "enterprise": "エンタープライズ",
+    "enterprisePlus": "エンタープライズプラス",
+    "pro": "PRO",
+    "team": "チーム"
+  },
+  "post": {
+    "actions": "コメント操作",
+    "comment": {
+      "heading": "コメントを追加",
+      "placeholder": "コメントを入力… Markdownに対応しています。",
+      "posted": "コメントを投稿しました"
+    },
+    "commentOnHub": "Hubでコメントする",
+    "commentsOnHub": "投稿へのコメントにはHub Webセッションが必要です — 設定 → アカウントで接続するか、Hubで投稿を開いて返信してください。",
+    "error": {
+      "title": "この投稿を読み込めませんでした"
+    },
+    "hide": {
+      "action": "非表示",
+      "confirm": "コメントを非表示にする",
+      "done": "コメントを非表示にしました",
+      "error": "コメントを非表示にできませんでした: {{error}}",
+      "hidden": "このコメントは非表示になっています。",
+      "hiddenWithReason": "このコメントは非表示になっています({{reason}}としてマークされました)。",
+      "reason": "理由",
+      "selectReason": "このコメントを非表示にする理由を選択してください(任意):",
+      "title": "コメントを非表示にする",
+      "warning": "コメントの非表示は取り消せません。内容は誰にも見えなくなります。"
+    },
+    "reply": "返信",
+    "replyInThread": "スレッド内で返信",
+    "replyPlaceholder": "{{user}}に返信… Markdownに対応しています。"
+  },
+  "reactions": {
+    "error": "リアクションを更新できませんでした: {{error}}"
+  },
+  "selfBadge": "あなたのプロフィール",
+  "stats": {
+    "datasets": "データセット",
+    "followers": "フォロワー",
+    "following": "フォロー中",
+    "members": "メンバー",
+    "models": "モデル",
+    "spaces": "Space"
+  },
+  "unfollow": "フォロー解除",
+  "unwatch": "ウォッチ解除",
+  "unwatchOpenHub": "Hubはアプリからのウォッチ解除を無視します — Hubのページでウォッチ解除を行ってください。",
+  "viewProfile": "プロフィールを表示",
+  "watch": "ウォッチ",
+  "watchError": "ウォッチを更新できませんでした: {{error}}",
+  "watchOnHub": "Hubで開く",
+  "watchReconnect": "設定を開く",
+  "watchSessionExpired": "Hubがこのウォッチの変更を無視しました — Hub Webセッションの有効期限が切れている可能性があります。設定 → アカウントで再接続してください。",
+  "watchSuccess": "ウォッチ中です — このアカウントのHub通知を受け取れます。",
+  "unwatchSuccess": "このアカウントのウォッチを停止しました。",
+  "watchOpenHub": "Hubはアプリからのウォッチを無視します — Hubのページでリポジトリのウォッチを行ってください。",
+  "watchSyncNotApplied": "ローカルでフォローしました。Hubはアプリからのウォッチリクエストを無視します — このアカウントのHub通知も受け取るには、Hubのページのウォッチボタンを使用してください。"
+}

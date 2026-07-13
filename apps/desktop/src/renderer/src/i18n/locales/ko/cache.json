@@ -1,0 +1,29 @@
+{
+  "confirmDelete": {
+    "body": "디스크에서 {{size}}가 확보됩니다. 다른 리비전과 공유되는 파일은 유지됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "title": "리비전 {{count}}개를 삭제하시겠습니까?",
+    "title_other": "리비전 {{count}}개를 삭제하시겠습니까?"
+  },
+  "deleted": "삭제되었습니다. {{size}}가 확보되었습니다.",
+  "deleteRevision": "리비전 삭제",
+  "deleteStale": "참조 없는 리비전 정리",
+  "empty": {
+    "body": "이 앱(및 transformers, CLI)의 다운로드 항목이 여기에 표시됩니다.",
+    "title": "캐시가 비어 있습니다"
+  },
+  "files": "파일 {{count}}개",
+  "files_other": "파일 {{count}}개",
+  "location": "캐시 위치",
+  "noRefs": "참조 없음",
+  "reposCount": "캐시된 저장소 {{count}}개",
+  "reposCount_other": "캐시된 저장소 {{count}}개",
+  "revisions": "리비전 {{count}}개",
+  "revisions_other": "리비전 {{count}}개",
+  "scan": "다시 스캔",
+  "scanning": "스캔 중…",
+  "title": "로컬 캐시",
+  "totalOnDisk": "디스크에서 {{size}}",
+  "pinned": "고정됨",
+  "partialData": "미완료 다운로드 데이터 {{size}}",
+  "cleanPartials": "정리"
+}

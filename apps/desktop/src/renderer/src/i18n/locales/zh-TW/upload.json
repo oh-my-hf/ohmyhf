@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "選擇資料夾…",
+  "create": "建立儲存庫",
+  "creating": "建立中…",
+  "hint": "從本機資料夾建立新的儲存庫，需要 write-repos 權限範圍。",
+  "kind": "類型",
+  "name": "儲存庫名稱",
+  "namePlaceholder": "my-cool-model",
+  "noFolder": "尚未選擇資料夾",
+  "selectionSummary": "{{files}} 個檔案．{{size}}．已排除 {{excluded}} 個",
+  "phase": {
+    "committing": "正在提交…",
+    "hashing": "正在計算檔案雜湊值…",
+    "preparing": "正在準備檔案…",
+    "uploading": "正在上傳…"
+  },
+  "private": "私人儲存庫",
+  "scopeHint": "上傳作業會使用登入時授予的寫入權限。",
+  "signIn": "登入以進行上傳。",
+  "title": "上傳到 Hub",
+  "warnings": {
+    "acknowledge": "我已檢視此警告，並希望繼續。",
+    "large-upload": {
+      "body": "此次上傳大小為 {{size}}，可能需要較長時間。",
+      "title": "大型上傳"
+    },
+    "sensitive-path": {
+      "body": "{{count}} 個路徑可能包含憑證或機密資訊。",
+      "title": "可能含有敏感資料的檔案"
+    }
+  }
+}

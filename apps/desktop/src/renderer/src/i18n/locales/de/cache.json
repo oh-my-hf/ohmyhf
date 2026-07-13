@@ -1,0 +1,33 @@
+{
+  "confirmDelete": {
+    "body": "Dadurch werden {{size}} Speicherplatz freigegeben. Dateien, die mit anderen Revisionen geteilt werden, bleiben erhalten. Dies kann nicht rückgängig gemacht werden.",
+    "title": "{{count}} Revision(en) löschen?",
+    "title_one": "{{count}} Revision löschen?",
+    "title_other": "{{count}} Revisionen löschen?"
+  },
+  "deleted": "Gelöscht. {{size}} freigegeben.",
+  "deleteRevision": "Revision löschen",
+  "deleteStale": "Revisionen ohne Referenzen bereinigen",
+  "empty": {
+    "body": "Downloads aus dieser App (sowie aus transformers oder der CLI) werden hier angezeigt.",
+    "title": "Cache ist leer"
+  },
+  "files": "{{count}} Dateien",
+  "files_one": "{{count}} Datei",
+  "files_other": "{{count}} Dateien",
+  "location": "Cache-Speicherort",
+  "noRefs": "keine Referenzen",
+  "reposCount": "{{count}} zwischengespeicherte Repositories",
+  "reposCount_one": "{{count}} zwischengespeichertes Repository",
+  "reposCount_other": "{{count}} zwischengespeicherte Repositories",
+  "revisions": "{{count}} Revisionen",
+  "revisions_one": "{{count}} Revision",
+  "revisions_other": "{{count}} Revisionen",
+  "scan": "Erneut scannen",
+  "scanning": "Wird gescannt…",
+  "title": "Lokaler Cache",
+  "totalOnDisk": "{{size}} auf der Festplatte",
+  "pinned": "angeheftet",
+  "partialData": "{{size}} unvollständige Downloaddaten",
+  "cleanPartials": "Bereinigen"
+}

@@ -1,0 +1,76 @@
+{
+  "editProfile": "Editar perfil",
+  "empty": {
+    "dataset": "Nenhum conjunto de dados público ainda",
+    "model": "Nenhum modelo público ainda",
+    "space": "Nenhum Space público ainda"
+  },
+  "error": {
+    "title": "Não foi possível carregar este perfil"
+  },
+  "follow": "Seguir",
+  "followError": "Não foi possível atualizar quem você segue: {{error}}",
+  "members": "Membros",
+  "orgBadge": "Organização",
+  "orgsLabel": "Organizações",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
+  "post": {
+    "actions": "Ações do comentário",
+    "comment": {
+      "heading": "Adicionar um comentário",
+      "placeholder": "Escreva um comentário… Markdown é compatível.",
+      "posted": "Comentário publicado"
+    },
+    "commentOnHub": "Comentar no Hub",
+    "commentsOnHub": "Comentar em posts exige uma sessão web do Hub — conecte uma em Configurações → Conta, ou abra o post no Hub para responder.",
+    "error": {
+      "title": "Não foi possível carregar este post"
+    },
+    "hide": {
+      "action": "Ocultar",
+      "confirm": "Ocultar comentário",
+      "done": "Comentário ocultado",
+      "error": "Não foi possível ocultar o comentário: {{error}}",
+      "hidden": "Este comentário foi ocultado.",
+      "hiddenWithReason": "Este comentário foi ocultado (marcado como {{reason}}).",
+      "reason": "Motivo",
+      "selectReason": "Selecione um motivo para ocultar este comentário (opcional):",
+      "title": "Ocultar comentário",
+      "warning": "Ocultar um comentário não pode ser desfeito. Ninguém mais poderá ver o conteúdo dele."
+    },
+    "reply": "Responder",
+    "replyInThread": "Responder no tópico",
+    "replyPlaceholder": "Responder a {{user}}… Markdown é compatível."
+  },
+  "reactions": {
+    "error": "Não foi possível atualizar a reação: {{error}}"
+  },
+  "selfBadge": "Seu perfil",
+  "stats": {
+    "datasets": "Conjuntos de dados",
+    "followers": "Seguidores",
+    "following": "Seguindo",
+    "members": "Membros",
+    "models": "Modelos",
+    "spaces": "Spaces"
+  },
+  "unfollow": "Deixar de seguir",
+  "unwatch": "Parar de monitorar",
+  "unwatchOpenHub": "O Hub ignora o Parar de monitorar feito por aplicativos — use Parar de monitorar na página do Hub.",
+  "viewProfile": "Ver perfil",
+  "watch": "Monitorar",
+  "watchError": "Não foi possível atualizar o monitoramento: {{error}}",
+  "watchOnHub": "Abrir no Hub",
+  "watchReconnect": "Abrir configurações",
+  "watchSessionExpired": "O Hub ignorou essa alteração de monitoramento — sua sessão web do Hub pode ter expirado. Reconecte-a em Configurações → Conta.",
+  "watchSuccess": "Monitorando — você receberá notificações do Hub para esta conta.",
+  "unwatchSuccess": "Você parou de monitorar esta conta.",
+  "watchOpenHub": "O Hub ignora o Monitorar feito por aplicativos — use Monitorar repositórios na página do Hub.",
+  "watchSyncNotApplied": "Seguido localmente. O Hub ignora solicitações de monitoramento de aplicativos — para também receber notificações do Hub para esta conta, use o botão Monitorar na página dela no Hub."
+}

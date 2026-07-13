@@ -1,0 +1,77 @@
+{
+  "datasetFilter": {
+    "format": "Formato",
+    "modalities": "Modalidades",
+    "size": {
+      "100kTo1m": "100 mil – 1 mi",
+      "100mTo1b": "100 mi – 1 bi",
+      "10kTo100k": "10 mil – 100 mil",
+      "10mTo100m": "10 mi – 100 mi",
+      "1kTo10k": "1 mil – 10 mil",
+      "1mTo10m": "1 mi – 10 mi",
+      "gt1t": "> 1 tri",
+      "label": "Tamanho (linhas)",
+      "lt1k": "< 1 mil"
+    }
+  },
+  "downloads": "Downloads",
+  "empty": {
+    "body": "Tente uma busca diferente ou limpe os filtros ativos.",
+    "title": "Nenhum resultado"
+  },
+  "endOfResults": "Fim dos resultados",
+  "error": {},
+  "filter": {
+    "all": "Todos",
+    "clear": "Limpar filtros",
+    "clearAll": "Limpar tudo",
+    "clientSide": "os filtros são aplicados apenas aos resultados carregados",
+    "done": "Concluído",
+    "hardware": "Hardware",
+    "inferenceProviders": "Provedores de inferência",
+    "languages": "Idiomas",
+    "libraries": "Bibliotecas",
+    "library": "Biblioteca",
+    "license": "Licença",
+    "licenses": "Licenças",
+    "mcp": "Compatível com MCP",
+    "options": "Opções",
+    "other": "Outro",
+    "params": "Parâmetros",
+    "runningOnly": "Somente em execução",
+    "sdk": "SDK",
+    "status": "Status",
+    "task": "Tarefa",
+    "tasks": "Tarefas",
+    "title": "Filtros"
+  },
+  "hardware": {
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "zerogpu": "ZeroGPU"
+  },
+  "likes": "Curtidas",
+  "listHint": "navegar",
+  "params": {
+    "1to7b": "1 bi – 7 bi",
+    "7to30b": "7 bi – 30 bi",
+    "gt30b": "> 30 bi",
+    "lt1b": "< 1 bi"
+  },
+  "paramsBadge": "{{value}} parâmetros",
+  "searchPlaceholder": {
+    "dataset": "Pesquisar conjuntos de dados…",
+    "model": "Pesquisar modelos…",
+    "space": "Pesquisar Spaces…"
+  },
+  "sort": {
+    "created": "Criados recentemente",
+    "downloads": "Downloads",
+    "label": "Ordenar",
+    "likes": "Curtidas",
+    "trending": "Em alta",
+    "updated": "Atualizados recentemente"
+  },
+  "updated": "Atualizado {{time}}",
+  "searchingMore": "Pesquisando mais resultados…"
+}

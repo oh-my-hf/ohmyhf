@@ -175,6 +175,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 /** UI locale resolved from settings + system locale; used by i18n and formatters. */
 export function resolveLocale(settings: AppSettings, appInfo: AppInfo | null): string {
   if (settings.locale !== 'system') return settings.locale
-  const sys = appInfo?.systemLocale ?? navigator.language
-  return sys.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
+  const sys = (appInfo?.systemLocale ?? navigator.language).toLowerCase()
+  if (sys.startsWith('zh')) {
+    return sys.includes('hant') || sys.includes('-tw') || sys.includes('-hk') || sys.includes('-mo')
+      ? 'zh-TW'
+      : 'zh-CN'
+  }
+  if (sys.startsWith('ja')) return 'ja'
+  if (sys.startsWith('ko')) return 'ko'
+  if (sys.startsWith('de')) return 'de'
+  if (sys.startsWith('es')) return 'es'
+  if (sys.startsWith('fr')) return 'fr'
+  if (sys.startsWith('pt')) return 'pt-BR'
+  return 'en'
 }

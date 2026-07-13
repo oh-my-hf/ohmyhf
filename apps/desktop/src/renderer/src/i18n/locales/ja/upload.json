@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "フォルダを選択…",
+  "create": "リポジトリを作成",
+  "creating": "作成中…",
+  "hint": "ローカルフォルダから新しいリポジトリを作成します。write-reposスコープが必要です。",
+  "kind": "種類",
+  "name": "リポジトリ名",
+  "namePlaceholder": "my-cool-model",
+  "noFolder": "フォルダが選択されていません",
+  "selectionSummary": "{{files}}ファイル ・ {{size}} ・ {{excluded}}件除外",
+  "phase": {
+    "committing": "コミット中…",
+    "hashing": "ファイルをハッシュ化中…",
+    "preparing": "ファイルを準備中…",
+    "uploading": "アップロード中…"
+  },
+  "private": "非公開リポジトリ",
+  "scopeHint": "アップロードにはサインイン時に付与された書き込み権限を使用します。",
+  "signIn": "アップロードするにはサインインしてください。",
+  "title": "Hubにアップロード",
+  "warnings": {
+    "acknowledge": "この警告を確認し、続行します。",
+    "large-upload": {
+      "body": "このアップロードは{{size}}あり、長時間かかる場合があります。",
+      "title": "大容量アップロード"
+    },
+    "sensitive-path": {
+      "body": "{{count}}件のパスに認証情報や機密情報が含まれている可能性があります。",
+      "title": "機密ファイルの可能性"
+    }
+  }
+}

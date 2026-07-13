@@ -1,0 +1,25 @@
+{
+  "add": "新增",
+  "addPlaceholder": "以 ID 新增模型，例如 meta-llama/Llama-3-8B…",
+  "attr": {
+    "downloads": "下載次數",
+    "library": "函式庫",
+    "license": "授權條款",
+    "likes": "按讚數",
+    "params": "參數量",
+    "tags": "標籤",
+    "task": "任務",
+    "updated": "更新時間"
+  },
+  "benchmarks": {
+    "none": "這些模型的 model-index 中繼資料中找不到基準測試分數。",
+    "title": "基準測試"
+  },
+  "benchmarksTodo": "基準測試分數（來自 model-index 中繼資料）已列入未來規劃。",
+  "empty": "搜尋並新增模型以進行比較。",
+  "hint": "同時並排比較 2 到 4 個模型。",
+  "max": "最多可比較 4 個模型。",
+  "remove": "移除",
+  "title": "比較模型",
+  "invalidId": "請輸入有效的模型 ID，例如 gpt2 或 meta-llama/Llama-3-8B。"
+}

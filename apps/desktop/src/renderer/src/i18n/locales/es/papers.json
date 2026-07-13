@@ -1,0 +1,24 @@
+{
+  "authors": "Autores",
+  "comment": {
+    "heading": "Comentar este artículo",
+    "placeholder": "Escriba un comentario (se admite Markdown)…",
+    "posted": "Comentario publicado"
+  },
+  "empty": "Aún no se han cargado artículos.",
+  "listError": "No se pudieron cargar los Daily Papers",
+  "detailError": "No se pudo cargar este artículo",
+  "retryMore": "Reintentar cargar más",
+  "published": "Publicado {{time}}",
+  "readOnArxiv": "Leer en arXiv",
+  "readOnHub": "Abrir en el Hub",
+  "title": "Daily Papers",
+  "upvote": {
+    "add": "Votar a favor",
+    "error": "No se pudo actualizar el voto: {{error}}",
+    "onHub": "Votar a favor requiere una sesión web del Hub; conecte una en Configuración → Cuenta, o ábralo en el Hub.",
+    "remove": "Quitar voto a favor",
+    "sessionExpired": "Su sesión web del Hub ha caducado. Vuelva a conectarla en Configuración → Cuenta para votar a favor desde la aplicación."
+  },
+  "upvotes": "Votos a favor"
+}

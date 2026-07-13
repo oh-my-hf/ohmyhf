@@ -1,0 +1,32 @@
+{
+  "clear": "Borrar historial",
+  "clearFilters": "Borrar filtros",
+  "cleared": "Historial de navegación borrado",
+  "confirm": {
+    "body": "Esto elimina permanentemente las {{count}} entradas del historial almacenadas en este dispositivo.",
+    "confirm": "Borrar historial",
+    "error": "No se pudo borrar el historial. Inténtelo de nuevo.",
+    "title": "¿Borrar historial de navegación?"
+  },
+  "count": "{{count}} en total",
+  "empty": {
+    "body": "Los repositorios que abra aparecerán aquí para un acceso rápido.",
+    "title": "Aún no hay historial de navegación"
+  },
+  "error": {
+    "body": "No se pudo cargar su historial de navegación local.",
+    "title": "No se pudo cargar el historial"
+  },
+  "filter": {
+    "all": "Todos los tipos"
+  },
+  "filterLabel": "Filtrar por tipo de repositorio",
+  "filteredEmpty": {
+    "body": "Pruebe con otro id de repositorio o tipo.",
+    "title": "No hay coincidencias en el historial"
+  },
+  "searchLabel": "Buscar en el historial de navegación por id de repositorio",
+  "searchPlaceholder": "Buscar id de repositorio…",
+  "showing": "Mostrando {{shown}} de {{total}}",
+  "title": "Historial de navegación"
+}

@@ -1,0 +1,32 @@
+{
+  "clear": "Verlauf löschen",
+  "clearFilters": "Filter zurücksetzen",
+  "cleared": "Browserverlauf gelöscht",
+  "confirm": {
+    "body": "Dies entfernt endgültig alle {{count}} auf diesem Gerät gespeicherten Verlaufseinträge.",
+    "confirm": "Verlauf löschen",
+    "error": "Der Verlauf konnte nicht gelöscht werden. Versuchen Sie es erneut.",
+    "title": "Browserverlauf löschen?"
+  },
+  "count": "{{count}} insgesamt",
+  "empty": {
+    "body": "Repositories, die Sie öffnen, erscheinen hier für schnellen Zugriff.",
+    "title": "Noch kein Browserverlauf"
+  },
+  "error": {
+    "body": "Ihr lokaler Browserverlauf konnte nicht geladen werden.",
+    "title": "Verlauf konnte nicht geladen werden"
+  },
+  "filter": {
+    "all": "Alle Typen"
+  },
+  "filterLabel": "Nach Repository-Typ filtern",
+  "filteredEmpty": {
+    "body": "Versuchen Sie eine andere Repository-ID oder einen anderen Typ.",
+    "title": "Kein passender Verlauf"
+  },
+  "searchLabel": "Browserverlauf nach Repository-ID durchsuchen",
+  "searchPlaceholder": "Repository-ID suchen…",
+  "showing": "Zeigt {{shown}} von {{total}}",
+  "title": "Browserverlauf"
+}

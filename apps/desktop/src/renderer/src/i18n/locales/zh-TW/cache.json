@@ -1,0 +1,29 @@
+{
+  "confirmDelete": {
+    "body": "這會釋放 {{size}} 的磁碟空間。與其他修訂版本共用的檔案將會保留，此操作無法復原。",
+    "title": "刪除 {{count}} 個修訂版本？",
+    "title_other": "刪除 {{count}} 個修訂版本？"
+  },
+  "deleted": "已刪除，釋放了 {{size}}。",
+  "deleteRevision": "刪除修訂版本",
+  "deleteStale": "清理無參照的修訂版本",
+  "empty": {
+    "body": "來自此應用程式（以及 transformers 或 CLI）的下載內容會顯示在這裡。",
+    "title": "快取是空的"
+  },
+  "files": "{{count}} 個檔案",
+  "files_other": "{{count}} 個檔案",
+  "location": "快取位置",
+  "noRefs": "無參照",
+  "reposCount": "{{count}} 個已快取的儲存庫",
+  "reposCount_other": "{{count}} 個已快取的儲存庫",
+  "revisions": "{{count}} 個修訂版本",
+  "revisions_other": "{{count}} 個修訂版本",
+  "scan": "重新掃描",
+  "scanning": "掃描中…",
+  "title": "本機快取",
+  "totalOnDisk": "磁碟佔用 {{size}}",
+  "pinned": "已釘選",
+  "partialData": "{{size}} 未完成的下載資料",
+  "cleanPartials": "清理"
+}

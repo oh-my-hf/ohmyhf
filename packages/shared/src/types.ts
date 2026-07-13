@@ -1,6 +1,16 @@
 /** Domain types shared between the main process, preload, and renderer. */
 
-export const SUPPORTED_LOCALES = ['en', 'zh-CN'] as const
+export const SUPPORTED_LOCALES = [
+  'en',
+  'zh-CN',
+  'zh-TW',
+  'ja',
+  'ko',
+  'de',
+  'es',
+  'fr',
+  'pt-BR'
+] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export type RepoKind = 'model' | 'dataset' | 'space'

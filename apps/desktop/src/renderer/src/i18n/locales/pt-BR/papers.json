@@ -1,0 +1,24 @@
+{
+  "authors": "Autores",
+  "comment": {
+    "heading": "Comentar neste artigo",
+    "placeholder": "Escreva um comentário (Markdown é compatível)…",
+    "posted": "Comentário publicado"
+  },
+  "empty": "Nenhum artigo carregado ainda.",
+  "listError": "Não foi possível carregar os Artigos Diários",
+  "detailError": "Não foi possível carregar este artigo",
+  "retryMore": "Tentar carregar mais novamente",
+  "published": "Publicado {{time}}",
+  "readOnArxiv": "Ler no arXiv",
+  "readOnHub": "Abrir no Hub",
+  "title": "Artigos Diários",
+  "upvote": {
+    "add": "Votar a favor",
+    "error": "Não foi possível atualizar o voto: {{error}}",
+    "onHub": "Votar a favor exige uma sessão web do Hub — conecte uma em Configurações → Conta, ou abra no Hub.",
+    "remove": "Remover voto a favor",
+    "sessionExpired": "Sua sessão web do Hub expirou. Reconecte-a em Configurações → Conta para votar a favor a partir do aplicativo."
+  },
+  "upvotes": "Votos a favor"
+}

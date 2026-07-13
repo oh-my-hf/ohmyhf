@@ -1,0 +1,58 @@
+{
+  "appName": "Oh My HuggingFace",
+  "back": "返回",
+  "cancel": "取消",
+  "close": "關閉",
+  "confirm": "確認",
+  "copied": "已複製",
+  "copy": "複製",
+  "delete": "刪除",
+  "dismiss": "關閉",
+  "error": {
+    "generic": "發生錯誤",
+    "network": "無法連線至 Hugging Face API"
+  },
+  "gated": "受限",
+  "goBack": "返回",
+  "goForward": "前進",
+  "imageViewer": "圖片檢視器",
+  "kind": {
+    "dataset": "資料集",
+    "model": "模型",
+    "paper": "論文",
+    "space": "Space"
+  },
+  "language": {
+    "system": "系統語言",
+    "en": "English",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    "de": "Deutsch",
+    "es": "Español",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pt-BR": "Português (Brasil)"
+  },
+  "loading": "載入中…",
+  "progress": {
+    "indeterminate": "進行中"
+  },
+  "open": "開啟",
+  "openOnHub": "在 Hub 上開啟",
+  "private": "私人",
+  "remove": "移除",
+  "retry": "重試",
+  "running": "執行中",
+  "showInFolder": "在資料夾中顯示",
+  "theme": {
+    "dark": "深色",
+    "label": "主題",
+    "light": "淺色",
+    "system": "系統"
+  },
+  "undo": "復原",
+  "unofficial": "非官方",
+  "zoomImage": "開啟圖片檢視器",
+  "zoomImageNamed": "開啟 {{name}} 的圖片檢視器"
+}

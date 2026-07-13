@@ -1,0 +1,41 @@
+{
+  "compose": {
+    "error": "Der Beitrag konnte nicht veröffentlicht werden: {{error}}",
+    "new": "Neuer Beitrag",
+    "placeholder": "Teilen Sie ein Update mit der Community… Markdown wird unterstützt.",
+    "posted": "Beitrag veröffentlicht",
+    "submit": "Veröffentlichen",
+    "unavailable": "Veröffentlichen nicht verfügbar: {{reason}}",
+    "unavailableFallback": "Ihr Konto ist noch nicht in der Beta für Beiträge freigeschaltet."
+  },
+  "feed": {
+    "acted": {
+      "discussion": "<author>{{actor}}</author> in <repo>{{repo}}</repo>",
+      "liked": "<author>{{actor}}</author> hat geliked",
+      "published": "<author>{{actor}}</author> hat veröffentlicht",
+      "untitledDiscussion": "Ohne Titel",
+      "updated": "<author>{{actor}}</author> hat aktualisiert"
+    },
+    "empty": "Hier ist noch nichts",
+    "emptyBody": "Aktivitäten aus dem Hub werden hier angezeigt.",
+    "emptyFollowing": "Sie folgen noch niemandem",
+    "emptyFollowingBody": "Folgen Sie Benutzern und Organisationen im Posteingang, um hier deren neueste Modelle und Datensätze zu sehen.",
+    "manageFollows": "Abonnements verwalten",
+    "updated": "<author>{{author}}</author> hat <repo>{{repo}}</repo> aktualisiert",
+    "error": "Der Feed konnte nicht geladen werden"
+  },
+  "kind": {
+    "post": "Beitrag"
+  },
+  "reactions": {
+    "onHub": "Im Hub reagieren",
+    "react": "Reaktion hinzufügen",
+    "toggle": "Mit {{emoji}} reagieren"
+  },
+  "title": "Home",
+  "trending": {
+    "all": "Alle",
+    "empty": "Derzeit nichts im Trend",
+    "title": "Trends"
+  }
+}

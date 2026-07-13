@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "Escolher pasta…",
+  "create": "Criar repositório",
+  "creating": "Criando…",
+  "hint": "Crie um novo repositório a partir de uma pasta local. Requer o escopo write-repos.",
+  "kind": "Tipo",
+  "name": "Nome do repositório",
+  "namePlaceholder": "meu-modelo-legal",
+  "noFolder": "Nenhuma pasta selecionada",
+  "selectionSummary": "{{files}} arquivos · {{size}} · {{excluded}} excluídos",
+  "phase": {
+    "committing": "Fazendo commit…",
+    "hashing": "Calculando hash dos arquivos…",
+    "preparing": "Preparando arquivos…",
+    "uploading": "Enviando…"
+  },
+  "private": "Repositório privado",
+  "scopeHint": "Os envios usam a permissão de escrita concedida no login.",
+  "signIn": "Entre para enviar.",
+  "title": "Enviar para o Hub",
+  "warnings": {
+    "acknowledge": "Revisei este aviso e quero continuar.",
+    "large-upload": {
+      "body": "Este envio tem {{size}} e pode demorar bastante.",
+      "title": "Envio grande"
+    },
+    "sensitive-path": {
+      "body": "{{count}} caminho(s) podem conter credenciais ou segredos.",
+      "title": "Arquivos potencialmente sensíveis"
+    }
+  }
+}

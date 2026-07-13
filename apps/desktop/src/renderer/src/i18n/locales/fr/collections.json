@@ -1,0 +1,69 @@
+{
+  "create": "Nouvelle collection",
+  "created": "Collection créée",
+  "createDialog": {
+    "description": "Description (facultatif)",
+    "namespace": "Propriétaire",
+    "private": "Privée",
+    "submit": "Créer",
+    "title": "Créer une collection",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "Ma superbe collection"
+  },
+  "detail": {
+    "deleted": "Collection supprimée",
+    "deleteDialog": {
+      "body": "Cette action supprime définitivement la collection (ses éléments restent sur le Hub). Saisissez le slug de la collection pour confirmer.",
+      "confirmPlaceholder": "Saisissez le slug pour confirmer",
+      "title": "Supprimer la collection ?"
+    },
+    "edit": "Modifier",
+    "editDialog": {
+      "save": "Enregistrer",
+      "title": "Modifier la collection"
+    },
+    "empty": {
+      "body": "Ajoutez des modèles, jeux de données, Spaces ou articles depuis leurs pages.",
+      "title": "Cette collection est vide"
+    },
+    "error": {
+      "title": "Impossible de charger cette collection"
+    },
+    "itemRemoved": "Élément supprimé",
+    "note": {
+      "dialogTitle": "Note sur l'élément",
+      "edit": "Modifier la note",
+      "placeholder": "Ajoutez une note sur cet élément…",
+      "save": "Enregistrer",
+      "saved": "Note enregistrée"
+    },
+    "removeItem": "Retirer de la collection",
+    "signedOutBody": "Cette collection est peut-être privée. Connectez-vous pour la consulter.",
+    "updated": "Collection mise à jour"
+  },
+  "empty": {
+    "body": "Créez une collection pour organiser modèles, jeux de données, Spaces et articles.",
+    "title": "Aucune collection pour le moment"
+  },
+  "error": {
+    "title": "Impossible de charger les collections"
+  },
+  "itemCount_one": "{{count}} élément",
+  "itemCount_other": "{{count}} éléments",
+  "itemRemoved": "Retiré de la collection",
+  "kind": {
+    "collection": "Collection"
+  },
+  "menu": {
+    "added": "Ajouté à {{title}}",
+    "createNew": "Nouvelle collection…",
+    "empty": "Aucune collection pour le moment",
+    "trigger": "Ajouter à une collection"
+  },
+  "scopeHint": "Il manque à votre jeton le champ d'application write-collections ; reconnectez-vous pour modifier les collections.",
+  "signedOut": {
+    "body": "Les collections regroupent des modèles, jeux de données, Spaces et articles sur votre profil Hugging Face.",
+    "title": "Connectez-vous pour voir vos collections"
+  },
+  "title": "Collections"
+}

@@ -1,0 +1,25 @@
+{
+  "add": "Añadir",
+  "addPlaceholder": "Añadir un modelo por id, p. ej. meta-llama/Llama-3-8B…",
+  "attr": {
+    "downloads": "Descargas",
+    "library": "Biblioteca",
+    "license": "Licencia",
+    "likes": "Me gusta",
+    "params": "Parámetros",
+    "tags": "Etiquetas",
+    "task": "Tarea",
+    "updated": "Actualizado"
+  },
+  "benchmarks": {
+    "none": "No se encontraron puntuaciones de referencia en los metadatos model-index de estos modelos.",
+    "title": "Puntos de referencia"
+  },
+  "benchmarksTodo": "Las puntuaciones de referencia (de los metadatos model-index) están en la hoja de ruta.",
+  "empty": "Busque y añada modelos para compararlos.",
+  "hint": "Compare de 2 a 4 modelos en paralelo.",
+  "max": "Puede comparar hasta 4 modelos.",
+  "remove": "Quitar",
+  "title": "Comparar modelos",
+  "invalidId": "Introduzca un id de modelo válido, p. ej. gpt2 o meta-llama/Llama-3-8B."
+}

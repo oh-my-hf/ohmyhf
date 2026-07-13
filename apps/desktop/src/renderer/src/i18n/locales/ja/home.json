@@ -1,0 +1,41 @@
+{
+  "compose": {
+    "error": "投稿を公開できませんでした: {{error}}",
+    "new": "新しい投稿",
+    "placeholder": "コミュニティに近況を共有… Markdownに対応しています。",
+    "posted": "投稿を公開しました",
+    "submit": "公開",
+    "unavailable": "投稿できません: {{reason}}",
+    "unavailableFallback": "あなたのアカウントはまだ投稿ベータの対象になっていません。"
+  },
+  "feed": {
+    "acted": {
+      "discussion": "<repo>{{repo}}</repo>で<author>{{actor}}</author>",
+      "liked": "<author>{{actor}}</author>がいいねしました",
+      "published": "<author>{{actor}}</author>が公開しました",
+      "untitledDiscussion": "無題",
+      "updated": "<author>{{actor}}</author>が更新しました"
+    },
+    "empty": "まだ何もありません",
+    "emptyBody": "Hubのアクティビティがここに表示されます。",
+    "emptyFollowing": "まだ誰もフォローしていません",
+    "emptyFollowingBody": "受信箱からユーザーや組織をフォローすると、最新のモデルやデータセットがここに表示されます。",
+    "manageFollows": "フォローを管理",
+    "updated": "<author>{{author}}</author>が<repo>{{repo}}</repo>を更新しました",
+    "error": "フィードを読み込めませんでした"
+  },
+  "kind": {
+    "post": "投稿"
+  },
+  "reactions": {
+    "onHub": "Hubでリアクション",
+    "react": "リアクションを追加",
+    "toggle": "{{emoji}}でリアクション"
+  },
+  "title": "ホーム",
+  "trending": {
+    "all": "すべて",
+    "empty": "現在トレンドはありません",
+    "title": "トレンド"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "create": "新しいコレクション",
+  "created": "コレクションを作成しました",
+  "createDialog": {
+    "description": "説明(任意)",
+    "namespace": "所有者",
+    "private": "非公開",
+    "submit": "作成",
+    "title": "コレクションを作成",
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "My awesome collection"
+  },
+  "detail": {
+    "deleted": "コレクションを削除しました",
+    "deleteDialog": {
+      "body": "コレクションを完全に削除します(コレクション内のアイテムはHub上に残ります)。確認のためコレクションのスラッグを入力してください。",
+      "confirmPlaceholder": "確認のためスラッグを入力",
+      "title": "コレクションを削除しますか?"
+    },
+    "edit": "編集",
+    "editDialog": {
+      "save": "保存",
+      "title": "コレクションを編集"
+    },
+    "empty": {
+      "body": "各ページからモデル、データセット、Space、論文を追加してください。",
+      "title": "このコレクションは空です"
+    },
+    "error": {
+      "title": "このコレクションを読み込めませんでした"
+    },
+    "itemRemoved": "アイテムを削除しました",
+    "note": {
+      "dialogTitle": "アイテムのメモ",
+      "edit": "メモを編集",
+      "placeholder": "このアイテムについてメモを追加…",
+      "save": "保存",
+      "saved": "メモを保存しました"
+    },
+    "removeItem": "コレクションから削除",
+    "signedOutBody": "このコレクションは非公開の可能性があります。表示するにはサインインしてください。",
+    "updated": "コレクションを更新しました"
+  },
+  "empty": {
+    "body": "コレクションを作成して、モデル、データセット、Space、論文を整理しましょう。",
+    "title": "まだコレクションがありません"
+  },
+  "error": {
+    "title": "コレクションを読み込めませんでした"
+  },
+  "itemCount_other": "{{count}}件のアイテム",
+  "itemRemoved": "コレクションから削除しました",
+  "kind": {
+    "collection": "コレクション"
+  },
+  "menu": {
+    "added": "{{title}}に追加しました",
+    "createNew": "新しいコレクション…",
+    "empty": "まだコレクションがありません",
+    "trigger": "コレクションに追加"
+  },
+  "scopeHint": "トークンにwrite-collectionsスコープがありません。コレクションを編集するには再度サインインしてください。",
+  "signedOut": {
+    "body": "コレクションは、あなたのHugging Faceプロフィール上でモデル、データセット、Space、論文をグループ化します。",
+    "title": "サインインしてコレクションを表示"
+  },
+  "title": "コレクション"
+}

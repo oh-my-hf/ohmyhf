@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "Choisir un dossier…",
+  "create": "Créer le dépôt",
+  "creating": "Création en cours…",
+  "hint": "Créez un nouveau dépôt à partir d'un dossier local. Nécessite le champ d'application write-repos.",
+  "kind": "Type",
+  "name": "Nom du dépôt",
+  "namePlaceholder": "mon-super-modele",
+  "noFolder": "Aucun dossier sélectionné",
+  "selectionSummary": "{{files}} fichiers · {{size}} · {{excluded}} exclus",
+  "phase": {
+    "committing": "Validation…",
+    "hashing": "Hachage des fichiers…",
+    "preparing": "Préparation des fichiers…",
+    "uploading": "Envoi en cours…"
+  },
+  "private": "Dépôt privé",
+  "scopeHint": "Les envois utilisent la permission d'écriture accordée à la connexion.",
+  "signIn": "Connectez-vous pour envoyer des fichiers.",
+  "title": "Envoyer vers le Hub",
+  "warnings": {
+    "acknowledge": "J'ai examiné cet avertissement et je souhaite continuer.",
+    "large-upload": {
+      "body": "Cet envoi représente {{size}} et peut prendre du temps.",
+      "title": "Envoi volumineux"
+    },
+    "sensitive-path": {
+      "body": "{{count}} chemin(s) susceptibles de contenir des identifiants ou des secrets.",
+      "title": "Fichiers potentiellement sensibles"
+    }
+  }
+}

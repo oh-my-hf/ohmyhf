@@ -1,0 +1,35 @@
+{
+  "export": {
+    "comfyuiMissing": "Es wurde keine ComfyUI-Installation gefunden. Legen Sie COMFYUI_PATH fest oder installieren Sie ComfyUI in Ihrem Home-Ordner.",
+    "copied": "Nach {{path}} exportiert.",
+    "failed": "Export fehlgeschlagen: {{error}}",
+    "invalidPath": "Ungültiger Dateipfad: {{file}}",
+    "notInCache": "{{file}} befindet sich noch nicht im lokalen Cache — laden Sie es zuerst herunter.",
+    "ollamaDone": "Ollama-Modell {{name}} erstellt.",
+    "ollamaFailed": "Ollama-Import fehlgeschlagen: {{error}}",
+    "ollamaMissing": "Ollama wurde nicht gefunden. Installieren Sie es von ollama.com und versuchen Sie es erneut.",
+    "targetsError": "Exportziele konnten nicht ermittelt werden"
+  },
+  "task": {
+    "canceled": "Aufgabe abgebrochen.",
+    "done": "Aufgabe abgeschlossen.",
+    "failed": "Aufgabe fehlgeschlagen.",
+    "phase": {
+      "copying": "Datei wird kopiert…",
+      "preparing": "Export wird vorbereitet…",
+      "running": "Export wird ausgeführt…"
+    }
+  },
+  "upload": {
+    "done": "{{repo}} in den Hub hochgeladen.",
+    "emptyFolder": "Der ausgewählte Ordner enthält keine hochladbaren Dateien.",
+    "failed": "Hochladen fehlgeschlagen: {{error}}",
+    "ignoreUnreadable": "Die .gitignore- oder .hfignore-Datei des Ordners kann nicht sicher gelesen werden.",
+    "invalidPath": "Der Ordner enthält einen Dateinamen, der im Hub nicht sicher dargestellt werden kann.",
+    "needWriteScope": "Ihre Sitzung hat keinen Schreibzugriff. Melden Sie sich ab und wieder an, um Schreibrechte zu gewähren.",
+    "selectionStale": "Der ausgewählte Ordner hat sich geändert. Wählen Sie ihn vor dem Hochladen erneut aus.",
+    "signInFirst": "Melden Sie sich bei Ihrem Hugging-Face-Konto an, bevor Sie hochladen.",
+    "specialFile": "Der Ordner enthält einen Socket, FIFO, ein Gerät oder eine andere Spezialdatei und kann nicht sicher hochgeladen werden.",
+    "tooManyFiles": "Der Ordner enthält zu viele Dateien — das aktuelle Limit liegt bei {{max}}."
+  }
+}

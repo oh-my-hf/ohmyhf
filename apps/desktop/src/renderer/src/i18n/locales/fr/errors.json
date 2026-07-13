@@ -1,0 +1,19 @@
+{
+  "auth": "Cette action nécessite une connexion. Ajoutez votre jeton Hugging Face dans les Paramètres, puis réessayez.",
+  "gated": "Ce dépôt est à accès contrôlé. Demandez l'accès sur le Hub — une fois qu'il est accordé, réessayez.",
+  "network": "Impossible de joindre l'API Hugging Face. Vérifiez votre connexion et vos paramètres de proxy, puis réessayez.",
+  "notFound": "Introuvable sur le Hub — il a peut-être été déplacé, renommé ou rendu privé.",
+  "rateLimit": "L'API Hugging Face limite le débit des requêtes. L'application patiente et réessaie automatiquement — veuillez patienter un instant avant de réessayer.",
+  "unknown": "Un problème est survenu. Veuillez réessayer.",
+  "server": "L'API Hugging Face a renvoyé une erreur serveur. Veuillez réessayer dans un instant.",
+  "query": {
+    "title": "Impossible de charger ce contenu"
+  },
+  "boundary": {
+    "title": "Cette vue s'est arrêtée de façon inattendue",
+    "body": "Rechargez l'application pour restaurer la vue. Si le problème persiste, copiez les détails anonymisés pour un rapport de bug."
+  },
+  "details": "Détails techniques (anonymisés)",
+  "copyDetails": "Copier les détails",
+  "reload": "Recharger l'application"
+}

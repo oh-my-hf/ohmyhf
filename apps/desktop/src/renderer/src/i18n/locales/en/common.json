@@ -23,9 +23,16 @@
     "space": "Space"
   },
   "language": {
+    "de": "Deutsch",
     "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pt-BR": "Português (Brasil)",
     "system": "System language",
-    "zh-CN": "简体中文"
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文"
   },
   "loading": "Loading…",
   "progress": {

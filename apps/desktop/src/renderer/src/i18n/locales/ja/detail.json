@@ -1,0 +1,249 @@
+{
+  "actions": {
+    "download": "ダウンロード",
+    "downloadAll": "すべてのファイルをダウンロード",
+    "favorite": "お気に入りに追加",
+    "follow": "リポジトリをフォロー",
+    "unfavorite": "お気に入りから削除",
+    "unfollow": "リポジトリのフォローを解除"
+  },
+  "card": {
+    "empty": "このリポジトリにはカードがありません。"
+  },
+  "datasetPreview": {
+    "config": "コンフィグ",
+    "next": "次のページ",
+    "prev": "前のページ",
+    "range": "{{total}}件中 {{from}}–{{to}}行",
+    "rangeNoTotal": "{{from}}–{{to}}行",
+    "sampleNote": "フルビューアは利用できません — Hubのサンプルプレビュー({{count}}行)を表示しています。",
+    "split": "分割",
+    "unavailable": "このデータセットではデータセットビューアを利用できません。ファイルを閲覧するか、Hubで開くことができます。",
+    "rowsError": "行を読み込めませんでした。"
+  },
+  "discussions": {
+    "comments": "コメント{{count}}件",
+    "create": {
+      "bodyPlaceholder": "ディスカッションや変更内容を記述してください… Markdownに対応しています。",
+      "created": "スレッドを作成しました。",
+      "discussion": "ディスカッション",
+      "error": "スレッドを作成できませんでした: {{error}}",
+      "new": "新規作成",
+      "prHint": "説明を最初のコメントとして、空のドラフトプルリクエストを開きます — その後、refs/prブランチにコミットをプッシュしてください。",
+      "pullRequest": "プルリクエスト",
+      "submit": "作成",
+      "title": "{{repoId}}に新しいスレッドを作成",
+      "titlePlaceholder": "タイトル"
+    },
+    "empty": "まだディスカッションはありません。",
+    "filter": {
+      "all": "すべて",
+      "closed": "クローズ済み",
+      "open": "オープン"
+    },
+    "loadMore": "もっと読み込む",
+    "pullRequest": "PR",
+    "quoteReply": "引用して返信",
+    "reactionError": "リアクションを更新できませんでした: {{error}}",
+    "reply": "返信",
+    "replyPlaceholder": "返信を入力(Markdown対応)…",
+    "segment": {
+      "discussions": "ディスカッション",
+      "pullRequests": "プルリクエスト"
+    },
+    "send": "送信",
+    "sending": "送信中…",
+    "signInToReply": "サインインしてディスカッションに参加してください。",
+    "status": {
+      "closed": "クローズ済み",
+      "draft": "ドラフト",
+      "merged": "マージ済み",
+      "open": "オープン"
+    }
+  },
+  "downloadFailed": "ダウンロードを開始できませんでした: {{error}}",
+  "downloadStarted": "ダウンロードに追加しました",
+  "editor": {
+    "attach": "ファイルを添付",
+    "bold": "太字",
+    "bulletList": "箇条書き",
+    "charCount": "文字数",
+    "code": "インラインコード",
+    "italic": "斜体",
+    "link": "リンク",
+    "mentionEmpty": "ユーザーが見つかりません",
+    "mentionHint": "入力してユーザーまたは組織をメンション",
+    "preview": "プレビュー",
+    "previewEmpty": "プレビューする内容がまだありません — まず何か入力してください。",
+    "quote": "引用",
+    "uploadBrowse": "参照",
+    "uploadError": "アップロードに失敗しました: {{error}}",
+    "uploadHint": "画像、音声、動画をドラッグ、ペースト、または",
+    "uploadTooLarge": "{{name}}は大きすぎます(最大64MB)",
+    "uploading": "アップロード中…",
+    "write": "書く"
+  },
+  "favoriteRemoved": "お気に入りから削除しました",
+  "favoritesEmpty": {
+    "body": "閲覧中にリポジトリにスターを付けると、ここに固定表示されます。",
+    "title": "まだお気に入りがありません"
+  },
+  "files": {
+    "download": "ファイルをダウンロード",
+    "empty": "このディレクトリは空です。",
+    "export": "エクスポート…",
+    "exportTo": "{{tool}}にエクスポート",
+    "lfs": "LFS",
+    "noTargets": "ローカルツールが見つかりません",
+    "root": "root"
+  },
+  "gate": {
+    "ask": "このリポジトリは承認制です — ダウンロードとプレビューにはアクセスをリクエストしてください。",
+    "error": "アクセスリクエストを送信できませんでした: {{error}}",
+    "granted": "このリポジトリへのアクセスが許可されました。",
+    "needsSession": "アクセスリクエストの送信にはHub Webセッションが必要です — 設定 → アカウントで接続してください。",
+    "openSettings": "設定を開く",
+    "pending": "アクセスリクエストは作成者のレビュー待ちです。",
+    "request": "アクセスをリクエスト",
+    "requestBody": "{{repoId}}の作成者が求める条件を入力してください。あなたのユーザー名とメールアドレスが共有されます。",
+    "requestTitle": "アクセスをリクエスト",
+    "submit": "同意してリクエストを送信",
+    "submitted": "アクセスリクエストを送信しました。"
+  },
+  "info": {
+    "created": "作成日",
+    "downloadsAllTime": "累計ダウンロード数",
+    "library": "ライブラリ",
+    "license": "ライセンス",
+    "params": "パラメータ数",
+    "sdk": "SDK",
+    "sha": "リビジョン",
+    "storage": "使用ストレージ",
+    "tags": "タグ",
+    "task": "タスク",
+    "updated": "更新日"
+  },
+  "like": {
+    "error": "いいねを更新できませんでした: {{error}}",
+    "like": "いいね",
+    "onHub": "いいねにはHub Webセッションが必要です — 設定 → アカウントで接続するか、Hubでリポジトリを開いていいねしてください。",
+    "reconnect": "設定を開く",
+    "sessionExpired": "Hub Webセッションの有効期限が切れました。アプリからいいねするには、設定 → アカウントで再接続してください。",
+    "unlike": "いいねを取り消す"
+  },
+  "maintainer": {
+    "close": "クローズ",
+    "closeWithComment": "コメントしてクローズ",
+    "editTitle": "タイトルを編集",
+    "merge": "マージ",
+    "mergeCommentPlaceholder": "コメントを追加(任意)…",
+    "mergeConfirmBody": "このプルリクエストをリポジトリにマージします。この操作は取り消せません。",
+    "mergeConfirmTitle": "プルリクエスト #{{num}} をマージしますか?",
+    "merged": "プルリクエストをマージしました",
+    "reopen": "再オープン",
+    "reopenWithComment": "コメントして再オープン",
+    "statusUpdated": "ディスカッションのステータスを更新しました",
+    "titleSave": "保存",
+    "titleUpdated": "タイトルを更新しました"
+  },
+  "playground": {
+    "empty": "ここに応答が表示されます。",
+    "placeholder": "推論APIを通じてこのモデルにプロンプトを送信…",
+    "run": "実行",
+    "running": "実行中…",
+    "signIn": "推論プレイグラウンドを使用するにはサインインしてください。",
+    "stop": "停止",
+    "unavailable": "このモデルの推論は利用できません: {{error}}"
+  },
+  "pr": {
+    "binary": "バイナリ",
+    "diffTruncated": "この差分は切り詰められています — 変更内容の一部のみが表示されています。",
+    "empty": "まだプルリクエストはありません。",
+    "noDescription": "説明はありません。",
+    "noDiff": "表示する変更はありません。",
+    "refsLabel": "マージ方向",
+    "renamed": "名前変更",
+    "statusChanged": "{{author}}がステータスを{{status}}に変更しました",
+    "tabDiscussion": "ディスカッション",
+    "tabFiles": "変更されたファイル"
+  },
+  "preview": {
+    "colDtype": "Dtype",
+    "colShape": "形状",
+    "colTensor": "テンソル",
+    "copyRawUrl": "raw URLをコピー",
+    "highlightFailed": "シンタックスハイライトに失敗しました。プレーンテキストで表示します。",
+    "highlightTooLarge": "このファイルはシンタックスハイライトを適用するには大きすぎます。プレーンテキストで表示します。",
+    "highlightUnknown": "{{language}}用のシンタックスハイライターがありません。プレーンテキストで表示します。",
+    "mediaErrorBody": "このメディアファイルはここで再生できませんでした。ダウンロードしてローカルで開いてください。",
+    "mediaErrorTitle": "このファイルを再生できません",
+    "noPreviewBody": "このファイル形式はここではプレビューできません。ダウンロードしてローカルで確認してください。",
+    "noPreviewTitle": "プレビューは利用できません",
+    "pdfErrorBody": "このPDFはここでレンダリングできませんでした。ダウンロードしてローカルで開いてください。",
+    "pdfErrorTitle": "このPDFを開けません",
+    "pdfTooLargeBody": "{{size}}を超えるPDFはここではプレビューできません。ダウンロードしてローカルで開いてください。",
+    "pdfPage": "{{total}}ページ中{{page}}ページ目",
+    "pickFile": "プレビューするファイルを選択",
+    "pickFileBody": "左側でファイルを選択すると、ここに内容が表示されます。",
+    "tensors": "テンソル",
+    "totalParams": "総パラメータ数",
+    "truncated": "プレビューは切り詰められています — 先頭{{size}}のみ表示しています。"
+  },
+  "run": {
+    "loading": "Spaceを読み込み中…",
+    "notRunning": "このSpaceは現在「{{stage}}」状態のため、ここでは実行できません。Hubで開いてスリープ解除または再起動してください。",
+    "notRunningTitle": "このSpaceは実行されていません",
+    "reload": "再読み込み"
+  },
+  "select": {
+    "body": "リストからアイテムを選択するか、⌘Kですべて検索してください。",
+    "title": "何も選択されていません"
+  },
+  "tabs": {
+    "card": "カード",
+    "discussions": "ディスカッション",
+    "files": "ファイル",
+    "info": "情報",
+    "manage": "管理",
+    "playground": "プレイグラウンド",
+    "preview": "プレビュー",
+    "run": "実行"
+  },
+  "parquetPreview": {
+    "rows_other": "{{count}}行",
+    "columns_other": "{{count}}列",
+    "unsupportedCodec": "このファイルはプレビューできない圧縮コーデックを使用しています。ダウンロードしてローカルで開いてください。",
+    "unreadableTitle": "このParquetファイルを読み込めません",
+    "unreadableBody": "ファイルのメタデータを読み込めませんでした。ダウンロードしてローカルで開いてください。"
+  },
+  "csvPreview": {
+    "rows_other": "{{count}}行",
+    "columns_other": "{{count}}列",
+    "emptyHeader": "列{{index}}"
+  },
+  "arrowPreview": {
+    "rows_other": "{{count}}行",
+    "columns_other": "{{count}}列",
+    "prefixOnly": "プレビュー用にこのファイルの先頭{{size}}のみが読み込まれました。",
+    "unreadableTitle": "このArrowファイルを読み込めません",
+    "unreadableBody": "ファイルの先頭部分からArrow/Featherテーブルを解析できませんでした。ダウンロードしてローカルで開いてください。"
+  },
+  "ggufPreview": {
+    "size": "ファイルサイズ",
+    "unreadableTitle": "このGGUFファイルを読み込めません",
+    "unreadableBody": "GGUFヘッダーを解析できませんでした(プレビューウィンドウより多くのデータが必要な可能性があります)。ダウンロードしてローカルで確認してください。"
+  },
+  "onnxPreview": {
+    "nodes": "ノード",
+    "size": "ファイルサイズ",
+    "inputs": "入力",
+    "outputs": "出力",
+    "none": "なし",
+    "graph": "グラフ: {{name}}",
+    "colNode": "ノード",
+    "colOp": "演算",
+    "tooLargeBody": "{{size}}を超えるONNXファイルはここではプレビューできません(重みが埋め込まれていることが多いためです)。ダウンロードしてローカルで確認してください。",
+    "unreadableTitle": "このONNXファイルを読み込めません",
+    "unreadableBody": "ONNXモデルのprotobufをデコードできませんでした。ダウンロードしてローカルで開いてください。"
+  }
+}

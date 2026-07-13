@@ -1,0 +1,25 @@
+{
+  "add": "追加",
+  "addPlaceholder": "モデルIDを追加(例: meta-llama/Llama-3-8B…)",
+  "attr": {
+    "downloads": "ダウンロード数",
+    "library": "ライブラリ",
+    "license": "ライセンス",
+    "likes": "いいね数",
+    "params": "パラメータ数",
+    "tags": "タグ",
+    "task": "タスク",
+    "updated": "更新日"
+  },
+  "benchmarks": {
+    "none": "これらのモデルのmodel-indexメタデータにベンチマークスコアは見つかりませんでした。",
+    "title": "ベンチマーク"
+  },
+  "benchmarksTodo": "ベンチマークスコア(model-indexメタデータから)は今後実装予定です。",
+  "empty": "モデルを検索して比較に追加してください。",
+  "hint": "2〜4つのモデルを並べて比較できます。",
+  "max": "比較できるのは最大4つのモデルまでです。",
+  "remove": "削除",
+  "title": "モデルを比較",
+  "invalidId": "有効なモデルIDを入力してください(例: gpt2 または meta-llama/Llama-3-8B)。"
+}

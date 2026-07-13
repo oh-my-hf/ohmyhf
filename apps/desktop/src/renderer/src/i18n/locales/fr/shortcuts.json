@@ -1,0 +1,29 @@
+{
+  "back": "Reculer",
+  "cache": "Ouvrir le cache",
+  "datasets": "Ouvrir les jeux de données",
+  "downloads": "Ouvrir les téléchargements",
+  "favorites": "Ouvrir les favoris",
+  "focusSearch": "Focaliser la recherche de la liste",
+  "forward": "Avancer",
+  "groups": {
+    "global": "Global",
+    "list": "Listes",
+    "navigation": "Navigation",
+    "palette": "Palette de commandes"
+  },
+  "help": "Afficher cette aide",
+  "history": "Ouvrir l'historique de navigation",
+  "inbox": "Ouvrir la boîte de réception",
+  "listNav": "Déplacer la sélection dans la liste",
+  "palette": "Palette de commandes / recherche globale",
+  "paletteClose": "Fermer",
+  "paletteNavigate": "Parcourir les résultats",
+  "paletteSelect": "Sélectionner",
+  "models": "Ouvrir les modèles",
+  "papers": "Ouvrir les articles",
+  "spaces": "Ouvrir les Spaces",
+  "settings": "Ouvrir les paramètres",
+  "title": "Raccourcis clavier",
+  "toggleSidebar": "Réduire ou déployer la barre latérale"
+}

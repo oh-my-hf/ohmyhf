@@ -1,0 +1,32 @@
+{
+  "clear": "清除瀏覽紀錄",
+  "clearFilters": "清除篩選條件",
+  "cleared": "瀏覽紀錄已清除",
+  "confirm": {
+    "body": "這會永久移除此裝置上儲存的全部 {{count}} 筆瀏覽紀錄。",
+    "confirm": "清除瀏覽紀錄",
+    "error": "無法清除瀏覽紀錄，請再試一次。",
+    "title": "清除瀏覽紀錄？"
+  },
+  "count": "共 {{count}} 筆",
+  "empty": {
+    "body": "您開啟過的儲存庫會顯示在這裡，方便快速存取。",
+    "title": "尚無瀏覽紀錄"
+  },
+  "error": {
+    "body": "無法載入您本機的瀏覽紀錄。",
+    "title": "無法載入瀏覽紀錄"
+  },
+  "filter": {
+    "all": "所有類型"
+  },
+  "filterLabel": "依儲存庫類型篩選",
+  "filteredEmpty": {
+    "body": "請嘗試其他儲存庫 ID 或類型。",
+    "title": "沒有符合的紀錄"
+  },
+  "searchLabel": "依儲存庫 ID 搜尋瀏覽紀錄",
+  "searchPlaceholder": "搜尋儲存庫 ID…",
+  "showing": "顯示 {{total}} 筆中的 {{shown}} 筆",
+  "title": "瀏覽紀錄"
+}

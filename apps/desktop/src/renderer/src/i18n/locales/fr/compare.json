@@ -1,0 +1,25 @@
+{
+  "add": "Ajouter",
+  "addPlaceholder": "Ajoutez un modèle par son identifiant, par ex. meta-llama/Llama-3-8B…",
+  "attr": {
+    "downloads": "Téléchargements",
+    "library": "Bibliothèque",
+    "license": "Licence",
+    "likes": "Mentions « j'aime »",
+    "params": "Paramètres",
+    "tags": "Tags",
+    "task": "Tâche",
+    "updated": "Mis à jour"
+  },
+  "benchmarks": {
+    "none": "Aucun score de benchmark trouvé dans les métadonnées model-index de ces modèles.",
+    "title": "Benchmarks"
+  },
+  "benchmarksTodo": "Les scores de benchmark (à partir des métadonnées model-index) sont sur la feuille de route.",
+  "empty": "Recherchez et ajoutez des modèles à comparer.",
+  "hint": "Comparez 2 à 4 modèles côte à côte.",
+  "max": "Vous pouvez comparer jusqu'à 4 modèles.",
+  "remove": "Retirer",
+  "title": "Comparer des modèles",
+  "invalidId": "Saisissez un identifiant de modèle valide, par ex. gpt2 ou meta-llama/Llama-3-8B."
+}

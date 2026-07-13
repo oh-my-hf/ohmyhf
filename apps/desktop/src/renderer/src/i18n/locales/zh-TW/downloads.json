@@ -1,0 +1,49 @@
+{
+  "actions": {
+    "cancel": "取消",
+    "openFolder": "在資料夾中顯示",
+    "pause": "暫停",
+    "remove": "從清單中移除",
+    "resume": "繼續"
+  },
+  "bulk": {
+    "clearCompleted": "清除已完成項目",
+    "pauseAll": "全部暫停",
+    "resumeAll": "全部繼續"
+  },
+  "commands": {
+    "actions": "動作",
+    "downloadCurrentRepository": "下載 {{repo}}",
+    "downloadRepository": "下載儲存庫",
+    "downloadSelectedFile": "下載 {{file}}",
+    "searchPlaceholder": "搜尋要下載的模型、資料集與 Space…",
+    "started": "下載已開始",
+    "starting": "正在開始下載…",
+    "typeToSearch": "輸入儲存庫名稱以開始下載。"
+  },
+  "confirmRemove": {
+    "body": "此下載作業仍在進行中。移除將取消傳輸並從清單中刪除。",
+    "confirm": "取消並移除",
+    "title": "移除進行中的下載？"
+  },
+  "count_other": "{{count}} 項工作",
+  "empty": {
+    "body": "找到喜歡的模型後點選下載——檔案會存放在標準的 HF 快取中，可供 transformers、llama.cpp 等工具使用。",
+    "title": "尚無下載項目"
+  },
+  "files": "{{done}}/{{total}} 個檔案",
+  "removed": "下載項目已移除",
+  "revision": "修訂版本 {{revision}}",
+  "speed": "{{speed}}/s",
+  "status": {
+    "canceled": "已取消",
+    "completed": "已完成",
+    "error": "失敗",
+    "paused": "已暫停",
+    "queued": "佇列中",
+    "running": "下載中"
+  },
+  "title": "下載項目",
+  "verified": "已驗證 sha256",
+  "checksumsVerified": "已驗證校驗碼"
+}

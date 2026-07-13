@@ -1,0 +1,24 @@
+{
+  "authors": "作者",
+  "comment": {
+    "heading": "留言評論此論文",
+    "placeholder": "撰寫留言（支援 Markdown）…",
+    "posted": "留言已發佈"
+  },
+  "empty": "尚未載入任何論文。",
+  "listError": "無法載入每日論文",
+  "detailError": "無法載入此論文",
+  "retryMore": "重試載入更多",
+  "published": "發佈於 {{time}}",
+  "readOnArxiv": "在 arXiv 上閱讀",
+  "readOnHub": "在 Hub 上開啟",
+  "title": "每日論文",
+  "upvote": {
+    "add": "推薦",
+    "error": "無法更新推薦狀態：{{error}}",
+    "onHub": "推薦需要 Hub 網頁工作階段——請前往「設定 → 帳戶」連接一個，或在 Hub 上開啟。",
+    "remove": "取消推薦",
+    "sessionExpired": "您的 Hub 網頁工作階段已過期。請前往「設定 → 帳戶」重新連接，以在應用程式內推薦。"
+  },
+  "upvotes": "推薦數"
+}

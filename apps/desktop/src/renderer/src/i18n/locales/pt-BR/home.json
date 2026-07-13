@@ -1,0 +1,41 @@
+{
+  "compose": {
+    "error": "Não foi possível publicar o post: {{error}}",
+    "new": "Novo post",
+    "placeholder": "Compartilhe uma novidade com a comunidade… Markdown é compatível.",
+    "posted": "Post publicado",
+    "submit": "Publicar",
+    "unavailable": "Publicação indisponível: {{reason}}",
+    "unavailableFallback": "sua conta ainda não está no beta de publicações."
+  },
+  "feed": {
+    "acted": {
+      "discussion": "<author>{{actor}}</author> em <repo>{{repo}}</repo>",
+      "liked": "<author>{{actor}}</author> curtiu",
+      "published": "<author>{{actor}}</author> publicou",
+      "untitledDiscussion": "Sem título",
+      "updated": "<author>{{actor}}</author> atualizou"
+    },
+    "empty": "Nada por aqui ainda",
+    "emptyBody": "A atividade do Hub aparecerá aqui.",
+    "emptyFollowing": "Você ainda não está seguindo ninguém",
+    "emptyFollowingBody": "Siga usuários e organizações na Caixa de entrada para ver seus modelos e conjuntos de dados mais recentes aqui.",
+    "manageFollows": "Gerenciar seguidos",
+    "updated": "<author>{{author}}</author> atualizou <repo>{{repo}}</repo>",
+    "error": "Não foi possível carregar o feed"
+  },
+  "kind": {
+    "post": "Post"
+  },
+  "reactions": {
+    "onHub": "Reagir no Hub",
+    "react": "Adicionar uma reação",
+    "toggle": "Reagir com {{emoji}}"
+  },
+  "title": "Início",
+  "trending": {
+    "all": "Todos",
+    "empty": "Nada em alta no momento",
+    "title": "Em alta"
+  }
+}

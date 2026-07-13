@@ -1,0 +1,241 @@
+{
+  "about": {
+    "disclaimer": "本應用程式與 Hugging Face, Inc. 沒有任何關聯，亦未獲其認可或贊助。「Hugging Face」為 Hugging Face, Inc. 的商標，此處使用僅為指稱本應用程式所連接的服務。",
+    "github": "GitHub 上的原始碼",
+    "license": "採用 Apache-2.0 授權",
+    "privacy": "隱私權：所有內容都保留在您的電腦上，沒有遙測、沒有分析追蹤。您的權杖會以作業系統的鑰匙圈加密後儲存在本機。",
+    "title": "關於",
+    "unofficialTitle": "非官方",
+    "updates": {
+      "available": "GitHub Releases 上已有 {{version}} 版本可供更新。",
+      "check": "檢查更新",
+      "checkAgain": "再次檢查",
+      "checking": "正在檢查 GitHub Releases 是否有更新…",
+      "description": "更新會依照最新發佈的 GitHub Release 進行檢查。",
+      "download": "下載更新",
+      "downloadProgress": "已下載 {{transferred}}，共 {{total}}",
+      "downloading": "正在下載 {{version}} 版本——{{percent}}%",
+      "downloadingButton": "下載中 {{percent}}%",
+      "errors": {
+        "configuration": "GitHub Release 更新中繼資料目前無法使用。",
+        "network": "無法連線至 GitHub Releases，請檢查您的網路連線後再試一次。",
+        "permission": "更新程式沒有安裝此更新的權限。",
+        "unknown": "無法完成更新，請再試一次，或改從 GitHub Releases 手動安裝。",
+        "verification": "此更新無法通過驗證，因此未進行安裝。"
+      },
+      "manual": "已有 {{version}} 版本可供更新。此未簽章版本必須手動更新。",
+      "openReleases": "開啟 GitHub Releases",
+      "progressLabel": "更新下載進度",
+      "ready": "{{version}} 版本已就緒，重新啟動應用程式即可完成安裝。",
+      "restartAndInstall": "重新啟動並安裝",
+      "retry": "重試",
+      "retryInstall": "重試安裝",
+      "title": "應用程式更新",
+      "toastAvailable": "已有 {{version}} 版本可供更新。",
+      "toastReady": "{{version}} 版本已可供安裝。",
+      "unsupported": "應用程式內更新功能僅在已安裝的版本中提供。",
+      "upToDate": "您目前使用的已是最新版本。",
+      "view": "檢視"
+    },
+    "version": "版本 {{version}}"
+  },
+  "account": {
+    "billing": {
+      "empty": "本期尚無使用量紀錄。",
+      "gated": "帳單使用量需要 read-billing 權限，請重新授權以取得此權限。",
+      "period": "{{start}} – {{end}}",
+      "title": "帳單使用量",
+      "unauthorized": "Hub 未授權此權杖讀取帳單使用量。"
+    },
+    "hub": {
+      "missingScopes": "缺少權限：{{scopes}}。請重新授權以取得這些權限。",
+      "reauthorize": "重新授權",
+      "roleLabels": {
+        "fineGrained": "細粒度",
+        "read": "讀取",
+        "write": "寫入"
+      },
+      "scopes": "已授予的權限",
+      "scopesUnknown": "此工作階段獲授予的權限未知，請重新授權以重新整理。",
+      "title": "Hub 帳戶",
+      "tokenHint": "您以使用者存取權杖登入。此應用程式可執行的操作取決於該權杖在 Hub 上自身的權限——包括瀏覽器登入無法存取的 Hub 通知收件匣。",
+      "tokenSession": "存取權杖"
+    },
+    "scopeLabels": {
+      "inference-api": "推論 API",
+      "jobs": "管理工作",
+      "manage-repos": "管理儲存庫",
+      "openid": "登入身分",
+      "profile": "讀取個人檔案",
+      "read-billing": "讀取帳單",
+      "read-collections": "讀取收藏集",
+      "read-repos": "讀取儲存庫",
+      "webhooks": "管理 Webhook",
+      "write-collections": "寫入收藏集",
+      "write-discussions": "發表討論",
+      "write-repos": "寫入儲存庫"
+    },
+    "title": "帳戶"
+  },
+  "appearance": {
+    "accent": "強調色",
+    "accentOptions": {
+      "blue": "藍色",
+      "default": "預設",
+      "green": "綠色",
+      "orange": "橘色",
+      "violet": "紫羅蘭色"
+    },
+    "browsePageSize": "瀏覽頁面大小",
+    "browsePageSizeOption": "每頁 {{count}} 筆",
+    "defaultHome": "預設首頁",
+    "defaultSort": "預設排序方式",
+    "density": "密度",
+    "densityOptions": {
+      "comfortable": "寬鬆",
+      "compact": "緊湊"
+    },
+    "fontScale": "文字大小",
+    "fontScaleDecrease": "縮小文字",
+    "fontScaleIncrease": "放大文字",
+    "historyLimit": "紀錄上限",
+    "historyLimitOption": "{{count}} 筆",
+    "homeOptions": {
+      "datasets": "資料集",
+      "home": "首頁動態消息",
+      "models": "模型",
+      "papers": "論文",
+      "spaces": "Space"
+    },
+    "language": "語言",
+    "openTarget": {
+      "app": "在應用程式內",
+      "browser": "系統瀏覽器"
+    },
+    "repoOpenTarget": "開啟我的最愛與瀏覽紀錄",
+    "sidebarCollapsed": "預設收合側邊欄",
+    "title": "外觀",
+    "uiScale": "介面縮放",
+    "uiScaleDecrease": "縮小介面",
+    "uiScaleIncrease": "放大介面"
+  },
+  "desktop": {
+    "closeHintMac": "關閉視窗會將應用程式隱藏到選單列的圖示中。請從該圖示的選單或 Dock 列結束以完全退出。",
+    "closeHintOther": "關閉視窗會將應用程式隱藏到系統匣。請從系統匣選單結束以完全退出。",
+    "closeToTray": "關閉時縮小到系統匣",
+    "launchAtLogin": "登入時啟動",
+    "launchAtLoginHint": "在您登入這台電腦時自動啟動 Oh My HuggingFace。",
+    "title": "桌面"
+  },
+  "downloads": {
+    "cacheDir": "HF 快取目錄",
+    "cacheDirDefault": "系統預設",
+    "choose": "選擇…",
+    "concurrency": "同時下載數",
+    "reset": "重設",
+    "speedLimit": "速度限制",
+    "speedPerSecond": "{{value}}/s",
+    "title": "下載",
+    "unlimited": "無限制"
+  },
+  "groups": {
+    "about": "關於",
+    "account": "帳戶",
+    "connection": "連線",
+    "data": "資料",
+    "interface": "介面",
+    "system": "系統"
+  },
+  "network": {
+    "apply": "套用",
+    "description": "覆寫 Hub API 基礎網址，並可選擇透過 HTTP(S) 代理伺服器轉送流量。留空則使用預設值。",
+    "downloadWarning": "進行中的下載可能會沿用先前的端點或代理伺服器，直到暫停後再繼續。",
+    "hubEndpoint": "Hub 端點",
+    "invalidUrl": "請輸入有效的 http:// 或 https:// 網址，或留空。",
+    "proxyUrl": "HTTP(S) 代理伺服器",
+    "reset": "重設為預設值",
+    "resetEndpoint": "Hub 端點已重設為預設值。",
+    "resetProxy": "代理伺服器已清除。",
+    "saved": "網路設定已儲存。",
+    "test": "測試連線",
+    "testFail": "連線失敗：{{error}}",
+    "testOk": "已成功連線至 Hub。",
+    "title": "網路"
+  },
+  "notifications": {
+    "enabled": "系統通知",
+    "minutes": "{{count}} 分鐘",
+    "minutes_other": "{{count}} 分鐘",
+    "pollInterval": "追蹤項目檢查頻率",
+    "title": "通知"
+  },
+  "privacy": {
+    "cache": {
+      "open": "開啟快取管理員",
+      "path": "位置",
+      "retry": "重試",
+      "scanFailed": "無法掃描快取。",
+      "size": "總大小",
+      "title": "HF 快取"
+    },
+    "local": {
+      "clear": "清除本機資料…",
+      "confirm": "清除資料",
+      "confirmBody": "選擇要從此裝置移除的內容：",
+      "confirmTitle": "清除本機資料？",
+      "description": "清除此裝置上所選的我的最愛、瀏覽紀錄、下載紀錄、追蹤項目與收件匣。不會刪除 HF 快取中的模型或資料集檔案。",
+      "items": {
+        "downloads": "下載工作紀錄",
+        "favorites": "我的最愛",
+        "follows": "已追蹤的帳戶",
+        "history": "瀏覽紀錄",
+        "inbox": "本機收件匣",
+        "otherKv": "其他本機應用程式資料"
+      },
+      "signOutAlso": "同時登出 Hub",
+      "success": "本機資料已清除。",
+      "successSignedOut": "本機資料已清除，您已登出。",
+      "title": "應用程式本機資料"
+    },
+    "title": "隱私與資料",
+    "transfer": {
+      "description": "以 JSON 格式匯出或匯入外觀與偏好設定，不包含帳戶權杖或資源庫資料。匯入時會保留此機器上的快取目錄設定。",
+      "export": "匯出設定…",
+      "exportSuccess": "設定已匯出。",
+      "import": "匯入設定…",
+      "importSuccess": "設定已匯入。",
+      "title": "設定轉移"
+    }
+  },
+  "profile": {
+    "avatar": "大頭貼",
+    "avatarHint": "PNG、JPEG 或 WebP 格式，最大 10 MB。",
+    "avatarUpload": "上傳圖片",
+    "bluesky": "Bluesky 使用者名稱",
+    "details": "AI 與機器學習興趣",
+    "error": "無法儲存個人檔案：{{error}}",
+    "fullname": "全名",
+    "github": "GitHub 使用者名稱",
+    "homepage": "個人網站",
+    "homepagePlaceholder": "https://",
+    "linkedin": "LinkedIn 個人檔案",
+    "loadError": "無法載入您的個人檔案：{{error}}",
+    "needsSession": "編輯您的公開個人檔案需要 Hub 網頁工作階段——請在「帳戶」中連接一個。",
+    "openAccount": "前往帳戶",
+    "primaryOrg": "主要組織",
+    "primaryOrgHint": "僅有 Team／Enterprise／Plus 方案的組織可設為主要組織。選單會將可用與不可用的選項分組顯示。",
+    "primaryOrgNone": "無",
+    "primaryOrgNonePaid": "您的組織中沒有任何一個採用付費方案，因此目前無法設定主要組織。",
+    "primaryOrgGroupAvailable": "可用",
+    "primaryOrgGroupUnavailable": "不可用（需要付費方案）",
+    "primaryOrgOptionAvailable": "{{name}}（{{plan}}）",
+    "primaryOrgOptionUnavailable": "{{name}}——不可用",
+    "primaryOrgSummary": "{{available}} 個可用．{{unavailable}} 個不可用",
+    "save": "儲存變更",
+    "saved": "個人檔案已儲存",
+    "title": "公開個人檔案",
+    "twitter": "Twitter 使用者名稱",
+    "avatarTooLarge": "此圖片太大——大頭貼上限為 10 MB。"
+  },
+  "title": "設定"
+}

@@ -1,0 +1,41 @@
+{
+  "compose": {
+    "error": "Impossible de publier : {{error}}",
+    "new": "Nouvelle publication",
+    "placeholder": "Partagez une actualité avec la communauté… Le Markdown est pris en charge.",
+    "posted": "Publication effectuée",
+    "submit": "Publier",
+    "unavailable": "Publication indisponible : {{reason}}",
+    "unavailableFallback": "votre compte ne fait pas encore partie du programme bêta de publication."
+  },
+  "feed": {
+    "acted": {
+      "discussion": "<author>{{actor}}</author> dans <repo>{{repo}}</repo>",
+      "liked": "<author>{{actor}}</author> a aimé",
+      "published": "<author>{{actor}}</author> a publié",
+      "untitledDiscussion": "Sans titre",
+      "updated": "<author>{{actor}}</author> a mis à jour"
+    },
+    "empty": "Rien ici pour le moment",
+    "emptyBody": "L'activité du Hub apparaîtra ici.",
+    "emptyFollowing": "Vous ne suivez personne pour le moment",
+    "emptyFollowingBody": "Suivez des utilisateurs et des organisations depuis la boîte de réception pour voir ici leurs derniers modèles et jeux de données.",
+    "manageFollows": "Gérer les abonnements",
+    "updated": "<author>{{author}}</author> a mis à jour <repo>{{repo}}</repo>",
+    "error": "Impossible de charger le fil d'actualité"
+  },
+  "kind": {
+    "post": "Publication"
+  },
+  "reactions": {
+    "onHub": "Réagir sur le Hub",
+    "react": "Ajouter une réaction",
+    "toggle": "Réagir avec {{emoji}}"
+  },
+  "title": "Accueil",
+  "trending": {
+    "all": "Tout",
+    "empty": "Rien de tendance pour le moment",
+    "title": "Tendances"
+  }
+}

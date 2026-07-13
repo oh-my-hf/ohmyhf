@@ -1,0 +1,32 @@
+{
+  "chooseFolder": "Ordner auswählen…",
+  "create": "Repository erstellen",
+  "creating": "Wird erstellt…",
+  "hint": "Erstellen Sie ein neues Repository aus einem lokalen Ordner. Erfordert die Berechtigung write-repos.",
+  "kind": "Typ",
+  "name": "Repository-Name",
+  "namePlaceholder": "mein-tolles-modell",
+  "noFolder": "Kein Ordner ausgewählt",
+  "selectionSummary": "{{files}} Dateien · {{size}} · {{excluded}} ausgeschlossen",
+  "phase": {
+    "committing": "Wird gecommittet…",
+    "hashing": "Dateien werden gehasht…",
+    "preparing": "Dateien werden vorbereitet…",
+    "uploading": "Wird hochgeladen…"
+  },
+  "private": "Privates Repository",
+  "scopeHint": "Uploads verwenden die bei der Anmeldung gewährte Schreibberechtigung.",
+  "signIn": "Melden Sie sich an, um hochzuladen.",
+  "title": "In den Hub hochladen",
+  "warnings": {
+    "acknowledge": "Ich habe diese Warnung gelesen und möchte fortfahren.",
+    "large-upload": {
+      "body": "Dieser Upload ist {{size}} groß und kann lange dauern.",
+      "title": "Großer Upload"
+    },
+    "sensitive-path": {
+      "body": "{{count}} Pfad(e) könnten Zugangsdaten oder Secrets enthalten.",
+      "title": "Möglicherweise sensible Dateien"
+    }
+  }
+}

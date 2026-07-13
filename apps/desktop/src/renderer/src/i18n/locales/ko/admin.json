@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "수락",
+    "empty": "요청이 없습니다.",
+    "grant": "액세스 허용",
+    "granted": "액세스가 허용되었습니다",
+    "grantPlaceholder": "사용자 이름",
+    "handled": "요청이 업데이트되었습니다",
+    "notGated": "액세스 요청을 검토하려면 게이트 액세스를 활성화하세요.",
+    "reasonPlaceholder": "거절 사유 (선택 사항)",
+    "reject": "거절",
+    "tab": {
+      "accepted": "수락됨",
+      "pending": "대기 중",
+      "rejected": "거절됨"
+    },
+    "title": "액세스 요청"
+  },
+  "actions": {
+    "duplicate": "복제",
+    "label": "저장소 작업",
+    "rename": "이름 변경 / 이동"
+  },
+  "delete": {
+    "body": "{{repoId}}와(과) 그 안의 모든 파일이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "confirmLabel": "확인하려면 {{repoId}}를 입력하세요",
+    "success": "저장소가 삭제되었습니다",
+    "title": "저장소 삭제"
+  },
+  "duplicate": {
+    "body": "새 ID로 {{repoId}}의 복사본을 만듭니다.",
+    "label": "대상 저장소 ID",
+    "private": "복사본을 비공개로 설정",
+    "submit": "복제",
+    "success": "저장소가 복제되었습니다",
+    "title": "저장소 복제"
+  },
+  "error": {
+    "title": "저장소를 불러올 수 없습니다"
+  },
+  "gatedHint": {
+    "body": "액세스 토큰에 manage-repos 권한 범위가 포함되어 있지 않아 저장소 관리가 비활성화되어 있습니다.",
+    "title": "권한 없음"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "소유한 저장소가 여기에 표시됩니다.",
+      "title": "아직 저장소가 없습니다"
+    },
+    "filter": {
+      "all": "전체"
+    },
+    "title": "내 저장소"
+  },
+  "refs": {
+    "branchCreated": "브랜치가 생성되었습니다",
+    "branchDeleted": "브랜치가 삭제되었습니다",
+    "branchesHint": "브랜치를 생성하거나 이름으로 삭제하세요.",
+    "branchPlaceholder": "branch-name",
+    "createBranch": "브랜치 생성",
+    "createTag": "태그 생성",
+    "deleteBranch": "브랜치 삭제",
+    "deleteTag": "태그 삭제",
+    "startingPointPlaceholder": "시작 지점 (선택 사항)",
+    "tagCreated": "태그가 생성되었습니다",
+    "tagDeleted": "태그가 삭제되었습니다",
+    "tagMessagePlaceholder": "메시지 (선택 사항)",
+    "tagPlaceholder": "tag-name",
+    "tagsHint": "main에 태그를 생성하거나 이름으로 삭제하세요.",
+    "title": "브랜치 및 태그"
+  },
+  "rename": {
+    "body": "{{repoId}}를 새 이름 또는 네임스페이스로 이동합니다. 모든 파일, 좋아요, 다운로드 수도 함께 이동합니다.",
+    "label": "새 저장소 ID",
+    "submit": "이름 변경",
+    "success": "저장소가 이동되었습니다",
+    "title": "이름 변경 또는 이동"
+  },
+  "repoIdPlaceholder": "owner/name",
+  "settings": {
+    "gated": "게이트 액세스",
+    "gatedAuto": "자동 승인",
+    "gatedHint": "다운로드 전에 사용자가 액세스를 요청하도록 요구합니다.",
+    "gatedManual": "수동 검토",
+    "gatedOff": "끄기",
+    "private": "비공개",
+    "privateHint": "본인과 공동 작업자만 이 저장소를 볼 수 있습니다.",
+    "title": "설정",
+    "updated": "설정이 업데이트되었습니다"
+  },
+  "signedOut": {
+    "body": "로그인하면 여기에 본인의 모델, 데이터셋, Space가 표시됩니다.",
+    "title": "저장소를 관리하려면 로그인하세요"
+  },
+  "space": {
+    "descriptionPlaceholder": "설명 (선택 사항)",
+    "keyPlaceholder": "KEY",
+    "logs": {
+      "build": "빌드",
+      "empty": "로그 출력이 없습니다.",
+      "refresh": "로그 새로고침",
+      "run": "실행",
+      "title": "로그"
+    },
+    "restart": {
+      "done": "재시작이 요청되었습니다",
+      "factory": "전체 재빌드",
+      "factoryHint": "공장 초기화 재빌드는 빌드 캐시를 지우고 Space를 처음부터 다시 빌드합니다.",
+      "restart": "Space 재시작",
+      "title": "재시작"
+    },
+    "secrets": {
+      "add": "비밀 값 추가",
+      "deleted": "비밀 값이 삭제되었습니다",
+      "empty": "설정된 비밀 값이 없습니다.",
+      "saved": "비밀 값이 저장되었습니다",
+      "title": "비밀 값",
+      "writeOnly": "비밀 값은 쓰기 전용이며, 저장 후에는 다시 표시되지 않습니다."
+    },
+    "valuePlaceholder": "값",
+    "variables": {
+      "deleted": "변수가 삭제되었습니다",
+      "edit": "변수 편집",
+      "empty": "설정된 변수가 없습니다.",
+      "save": "변수 저장",
+      "saved": "변수가 저장되었습니다",
+      "title": "변수"
+    }
+  },
+  "visibility": {
+    "makePrivate": "비공개로 전환",
+    "makePublic": "공개로 전환",
+    "protected": "보호됨",
+    "updated": "공개 범위가 업데이트되었습니다"
+  }
+}

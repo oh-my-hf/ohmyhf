@@ -1,0 +1,69 @@
+{
+  "create": "Nueva colección",
+  "created": "Colección creada",
+  "createDialog": {
+    "description": "Descripción (opcional)",
+    "namespace": "Propietario",
+    "private": "Privada",
+    "submit": "Crear",
+    "title": "Crear colección",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Mi colección increíble"
+  },
+  "detail": {
+    "deleted": "Colección eliminada",
+    "deleteDialog": {
+      "body": "Esto elimina permanentemente la colección (sus elementos permanecen en el Hub). Escriba el slug de la colección para confirmar.",
+      "confirmPlaceholder": "Escriba el slug para confirmar",
+      "title": "¿Eliminar colección?"
+    },
+    "edit": "Editar",
+    "editDialog": {
+      "save": "Guardar",
+      "title": "Editar colección"
+    },
+    "empty": {
+      "body": "Añada modelos, conjuntos de datos, Spaces o artículos desde sus páginas.",
+      "title": "Esta colección está vacía"
+    },
+    "error": {
+      "title": "No se pudo cargar esta colección"
+    },
+    "itemRemoved": "Elemento eliminado",
+    "note": {
+      "dialogTitle": "Nota del elemento",
+      "edit": "Editar nota",
+      "placeholder": "Añada una nota sobre este elemento…",
+      "save": "Guardar",
+      "saved": "Nota guardada"
+    },
+    "removeItem": "Quitar de la colección",
+    "signedOutBody": "Esta colección puede ser privada. Inicie sesión para verla.",
+    "updated": "Colección actualizada"
+  },
+  "empty": {
+    "body": "Cree una colección para organizar modelos, conjuntos de datos, Spaces y artículos.",
+    "title": "Aún no hay colecciones"
+  },
+  "error": {
+    "title": "No se pudieron cargar las colecciones"
+  },
+  "itemCount_one": "{{count}} elemento",
+  "itemCount_other": "{{count}} elementos",
+  "itemRemoved": "Eliminado de la colección",
+  "kind": {
+    "collection": "Colección"
+  },
+  "menu": {
+    "added": "Añadido a {{title}}",
+    "createNew": "Nueva colección…",
+    "empty": "Aún no hay colecciones",
+    "trigger": "Añadir a colección"
+  },
+  "scopeHint": "A su token le falta el permiso write-collections; vuelva a iniciar sesión para editar colecciones.",
+  "signedOut": {
+    "body": "Las colecciones agrupan modelos, conjuntos de datos, Spaces y artículos en su perfil de Hugging Face.",
+    "title": "Inicie sesión para ver sus colecciones"
+  },
+  "title": "Colecciones"
+}

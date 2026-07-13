@@ -1,0 +1,69 @@
+{
+  "create": "Neue Sammlung",
+  "created": "Sammlung erstellt",
+  "createDialog": {
+    "description": "Beschreibung (optional)",
+    "namespace": "Besitzer",
+    "private": "Privat",
+    "submit": "Erstellen",
+    "title": "Sammlung erstellen",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Meine großartige Sammlung"
+  },
+  "detail": {
+    "deleted": "Sammlung gelöscht",
+    "deleteDialog": {
+      "body": "Dies löscht die Sammlung endgültig (ihre Elemente bleiben im Hub erhalten). Geben Sie den Sammlungs-Slug ein, um zu bestätigen.",
+      "confirmPlaceholder": "Slug zur Bestätigung eingeben",
+      "title": "Sammlung löschen?"
+    },
+    "edit": "Bearbeiten",
+    "editDialog": {
+      "save": "Speichern",
+      "title": "Sammlung bearbeiten"
+    },
+    "empty": {
+      "body": "Fügen Sie Modelle, Datensätze, Spaces oder Paper von ihren Seiten aus hinzu.",
+      "title": "Diese Sammlung ist leer"
+    },
+    "error": {
+      "title": "Diese Sammlung konnte nicht geladen werden"
+    },
+    "itemRemoved": "Element entfernt",
+    "note": {
+      "dialogTitle": "Notiz zum Element",
+      "edit": "Notiz bearbeiten",
+      "placeholder": "Eine Notiz zu diesem Element hinzufügen…",
+      "save": "Speichern",
+      "saved": "Notiz gespeichert"
+    },
+    "removeItem": "Aus Sammlung entfernen",
+    "signedOutBody": "Diese Sammlung ist möglicherweise privat. Melden Sie sich an, um sie anzuzeigen.",
+    "updated": "Sammlung aktualisiert"
+  },
+  "empty": {
+    "body": "Erstellen Sie eine Sammlung, um Modelle, Datensätze, Spaces und Paper zu organisieren.",
+    "title": "Noch keine Sammlungen"
+  },
+  "error": {
+    "title": "Sammlungen konnten nicht geladen werden"
+  },
+  "itemCount_one": "{{count}} Element",
+  "itemCount_other": "{{count}} Elemente",
+  "itemRemoved": "Aus Sammlung entfernt",
+  "kind": {
+    "collection": "Sammlung"
+  },
+  "menu": {
+    "added": "Zu {{title}} hinzugefügt",
+    "createNew": "Neue Sammlung…",
+    "empty": "Noch keine Sammlungen",
+    "trigger": "Zu Sammlung hinzufügen"
+  },
+  "scopeHint": "Ihrem Token fehlt die Berechtigung write-collections; melden Sie sich erneut an, um Sammlungen zu bearbeiten.",
+  "signedOut": {
+    "body": "Sammlungen gruppieren Modelle, Datensätze, Spaces und Paper auf Ihrem Hugging-Face-Profil.",
+    "title": "Melden Sie sich an, um Ihre Sammlungen zu sehen"
+  },
+  "title": "Sammlungen"
+}

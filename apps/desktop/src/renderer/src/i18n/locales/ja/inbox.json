@@ -1,0 +1,85 @@
+{
+  "bell": {
+    "empty": "新しい通知はありません",
+    "title": "通知",
+    "viewAll": "すべての通知を表示"
+  },
+  "checked": "新着{{count}}件",
+  "checked_other": "新着{{count}}件",
+  "checking": "確認中…",
+  "checkNow": "今すぐ確認",
+  "clear": "受信箱をクリア",
+  "empty": {
+    "body": "ユーザー、組織、リポジトリ、またはDaily Papersダイジェストをフォローすると、更新情報がここに届きます。",
+    "title": "すべて確認済みです"
+  },
+  "follows": {
+    "add": "フォロー",
+    "empty": "まだ何もフォローしていません。",
+    "loadError": "フォロー中のソースを読み込めませんでした",
+    "targetLabel": "フォローするユーザー、組織、またはリポジトリ",
+    "imported": "Hubでフォローしているアカウントを{{count}}件インポートしました",
+    "imported_other": "Hubでフォローしているアカウントを{{count}}件インポートしました",
+    "importFromHub": "Hugging Faceからインポート",
+    "papers": "Daily Papersダイジェスト",
+    "placeholder": "ユーザー名、組織、または model:org/name",
+    "removed": "{{target}}のフォローを解除しました",
+    "title": "フォロー中",
+    "type": {
+      "org": "組織",
+      "papers": "論文",
+      "repo": "リポジトリ",
+      "user": "ユーザー"
+    }
+  },
+  "hub": {
+    "clearAll": "すべてクリア",
+    "loadError": "Hubの通知を読み込めませんでした",
+    "confirmClear": {
+      "body": "Hugging Faceの受信箱にあるすべての通知を完全に削除します。",
+      "confirm": "すべてクリア",
+      "title": "Hubの通知をすべてクリアしますか?"
+    },
+    "empty": {
+      "body": "Hub上のディスカッション、プルリクエスト、投稿の通知がここに表示されます。",
+      "title": "Hub通知はありません"
+    },
+    "kind": {
+      "org": "組織",
+      "other": "その他",
+      "paper": "論文",
+      "post": "投稿",
+      "repo": "リポジトリ"
+    },
+    "pageNext": "次のページ",
+    "pageOf": "{{pages}}ページ中{{page}}ページ目",
+    "pagePrev": "前のページ",
+    "signIn": {
+      "action": "アカウント設定を開く",
+      "body": "Hugging Faceアカウントを接続すると、Hubの通知受信箱と同期できます。",
+      "title": "サインインしてHub通知を表示"
+    },
+    "unauthorized": {
+      "action": "Hubで開く",
+      "body": "このアクセストークンではHub通知を読み取れません(読み取り専用または権限不足のfine-grainedトークンです)。通知アクセス権を持つwriteトークンまたはfine-grainedトークンを作成するか、Hubで通知を確認してください。",
+      "title": "Hub通知は利用できません",
+      "tokenAction": "トークンを管理"
+    }
+  },
+  "kind": {
+    "new-repo": "新規",
+    "paper": "論文",
+    "repo-update": "更新"
+  },
+  "markAllRead": "すべて既読にする",
+  "local": {
+    "loadError": "ローカル受信箱を読み込めませんでした"
+  },
+  "unreadCount": "未読{{count}}件",
+  "unreadCount_other": "未読{{count}}件",
+  "tabs": {
+    "hub": "Hub通知",
+    "local": "フォロー中のフィード"
+  },
+  "title": "受信箱"
+}

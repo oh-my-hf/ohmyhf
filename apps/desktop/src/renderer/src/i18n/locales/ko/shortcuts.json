@@ -1,0 +1,29 @@
+{
+  "back": "뒤로 가기",
+  "cache": "캐시 열기",
+  "datasets": "데이터셋 열기",
+  "downloads": "다운로드 열기",
+  "favorites": "즐겨찾기 열기",
+  "focusSearch": "목록 검색으로 포커스 이동",
+  "forward": "앞으로 가기",
+  "groups": {
+    "global": "전역",
+    "list": "목록",
+    "navigation": "탐색",
+    "palette": "명령어 팔레트"
+  },
+  "help": "이 오버레이 표시",
+  "history": "탐색 기록 열기",
+  "inbox": "받은 편지함 열기",
+  "listNav": "목록 선택 이동",
+  "palette": "명령어 팔레트 / 전체 검색",
+  "paletteClose": "닫기",
+  "paletteNavigate": "결과 탐색",
+  "paletteSelect": "선택",
+  "models": "모델 열기",
+  "papers": "논문 열기",
+  "spaces": "Space 열기",
+  "settings": "설정 열기",
+  "title": "키보드 단축키",
+  "toggleSidebar": "사이드바 접기 또는 펼치기"
+}

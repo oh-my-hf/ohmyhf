@@ -1,0 +1,76 @@
+{
+  "editProfile": "Profil bearbeiten",
+  "empty": {
+    "dataset": "Noch keine öffentlichen Datensätze",
+    "model": "Noch keine öffentlichen Modelle",
+    "space": "Noch keine öffentlichen Spaces"
+  },
+  "error": {
+    "title": "Dieses Profil konnte nicht geladen werden"
+  },
+  "follow": "Folgen",
+  "followError": "Folgen konnte nicht aktualisiert werden: {{error}}",
+  "members": "Mitglieder",
+  "orgBadge": "Organisation",
+  "orgsLabel": "Organisationen",
+  "plan": {
+    "academia": "Academia",
+    "enterprise": "Enterprise",
+    "enterprisePlus": "Enterprise Plus",
+    "pro": "PRO",
+    "team": "Team"
+  },
+  "post": {
+    "actions": "Kommentaraktionen",
+    "comment": {
+      "heading": "Kommentar hinzufügen",
+      "placeholder": "Einen Kommentar schreiben… Markdown wird unterstützt.",
+      "posted": "Kommentar veröffentlicht"
+    },
+    "commentOnHub": "Im Hub kommentieren",
+    "commentsOnHub": "Kommentare zu Beiträgen benötigen eine Hub-Websitzung — verbinden Sie eine unter Einstellungen → Konto, oder öffnen Sie den Beitrag im Hub, um zu antworten.",
+    "error": {
+      "title": "Dieser Beitrag konnte nicht geladen werden"
+    },
+    "hide": {
+      "action": "Ausblenden",
+      "confirm": "Kommentar ausblenden",
+      "done": "Kommentar ausgeblendet",
+      "error": "Der Kommentar konnte nicht ausgeblendet werden: {{error}}",
+      "hidden": "Dieser Kommentar wurde ausgeblendet.",
+      "hiddenWithReason": "Dieser Kommentar wurde ausgeblendet (markiert als {{reason}}).",
+      "reason": "Grund",
+      "selectReason": "Wählen Sie einen Grund, um diesen Kommentar auszublenden (optional):",
+      "title": "Kommentar ausblenden",
+      "warning": "Das Ausblenden eines Kommentars kann nicht rückgängig gemacht werden. Niemand wird seinen Inhalt danach noch sehen können."
+    },
+    "reply": "Antworten",
+    "replyInThread": "Im Thread antworten",
+    "replyPlaceholder": "Auf {{user}} antworten… Markdown wird unterstützt."
+  },
+  "reactions": {
+    "error": "Die Reaktion konnte nicht aktualisiert werden: {{error}}"
+  },
+  "selfBadge": "Ihr Profil",
+  "stats": {
+    "datasets": "Datensätze",
+    "followers": "Follower",
+    "following": "Gefolgt",
+    "members": "Mitglieder",
+    "models": "Modelle",
+    "spaces": "Spaces"
+  },
+  "unfollow": "Nicht mehr folgen",
+  "unwatch": "Nicht mehr beobachten",
+  "unwatchOpenHub": "Der Hub ignoriert „Nicht mehr beobachten“ aus Apps — verwenden Sie „Nicht mehr beobachten“ auf der zugehörigen Hub-Seite.",
+  "viewProfile": "Profil anzeigen",
+  "watch": "Beobachten",
+  "watchError": "Beobachten konnte nicht aktualisiert werden: {{error}}",
+  "watchOnHub": "Im Hub öffnen",
+  "watchReconnect": "Einstellungen öffnen",
+  "watchSessionExpired": "Der Hub hat diese Änderung der Beobachtung ignoriert — Ihre Hub-Websitzung ist möglicherweise abgelaufen. Verbinden Sie sie erneut unter Einstellungen → Konto.",
+  "watchSuccess": "Wird beobachtet — Sie erhalten Hub-Benachrichtigungen für dieses Konto.",
+  "unwatchSuccess": "Beobachtung dieses Kontos beendet.",
+  "watchOpenHub": "Der Hub ignoriert „Beobachten“ aus Apps — verwenden Sie „Repositories beobachten“ auf der zugehörigen Hub-Seite.",
+  "watchSyncNotApplied": "Lokal gefolgt. Der Hub ignoriert Beobachtungsanfragen aus Apps — um für dieses Konto auch Hub-Benachrichtigungen zu erhalten, verwenden Sie die Schaltfläche „Beobachten“ auf der zugehörigen Hub-Seite."
+}

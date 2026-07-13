@@ -1,0 +1,19 @@
+{
+  "auth": "Hierfür ist eine Anmeldung erforderlich. Fügen Sie Ihr Hugging-Face-Token in den Einstellungen hinzu und versuchen Sie es erneut.",
+  "gated": "Dieses Repository ist zugriffsbeschränkt. Fordern Sie Zugriff im Hub an — sobald er gewährt wurde, versuchen Sie es erneut.",
+  "network": "Die Hugging Face API konnte nicht erreicht werden. Prüfen Sie Ihre Verbindungs- und Proxy-Einstellungen und versuchen Sie es erneut.",
+  "notFound": "Im Hub nicht gefunden — es wurde möglicherweise verschoben, umbenannt oder auf privat gesetzt.",
+  "rateLimit": "Die Hugging Face API begrenzt derzeit Anfragen. Die App wartet automatisch und versucht es erneut — bitte warten Sie einen Moment, bevor Sie es erneut versuchen.",
+  "unknown": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+  "server": "Die Hugging Face API hat einen Serverfehler zurückgegeben. Bitte versuchen Sie es in Kürze erneut.",
+  "query": {
+    "title": "Dieser Inhalt konnte nicht geladen werden"
+  },
+  "boundary": {
+    "title": "Diese Ansicht wurde unerwartet beendet",
+    "body": "Laden Sie die App neu, um die Ansicht wiederherzustellen. Falls das Problem weiterhin besteht, kopieren Sie die geschwärzten Details für einen Fehlerbericht."
+  },
+  "details": "Technische Details (geschwärzt)",
+  "copyDetails": "Details kopieren",
+  "reload": "App neu laden"
+}

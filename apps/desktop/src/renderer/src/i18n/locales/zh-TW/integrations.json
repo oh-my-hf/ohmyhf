@@ -1,0 +1,35 @@
+{
+  "export": {
+    "comfyuiMissing": "未偵測到 ComfyUI 安裝。請設定 COMFYUI_PATH，或將 ComfyUI 安裝在您的家目錄中。",
+    "copied": "已匯出至 {{path}}。",
+    "failed": "匯出失敗：{{error}}",
+    "invalidPath": "無效的檔案路徑：{{file}}",
+    "notInCache": "{{file}} 尚未存在於本機快取中——請先下載它。",
+    "ollamaDone": "已建立 Ollama 模型 {{name}}。",
+    "ollamaFailed": "Ollama 匯入失敗：{{error}}",
+    "ollamaMissing": "找不到 Ollama。請從 ollama.com 安裝後再試一次。",
+    "targetsError": "無法偵測匯出目標"
+  },
+  "task": {
+    "canceled": "工作已取消。",
+    "done": "工作已完成。",
+    "failed": "工作失敗。",
+    "phase": {
+      "copying": "正在複製檔案…",
+      "preparing": "正在準備匯出…",
+      "running": "正在執行匯出…"
+    }
+  },
+  "upload": {
+    "done": "已將 {{repo}} 上傳到 Hub。",
+    "emptyFolder": "所選資料夾內沒有可上傳的檔案。",
+    "failed": "上傳失敗：{{error}}",
+    "ignoreUnreadable": "此資料夾的 .gitignore 或 .hfignore 無法安全讀取。",
+    "invalidPath": "此資料夾內含有無法在 Hub 上安全呈現的檔案名稱。",
+    "needWriteScope": "您的工作階段沒有寫入權限。請登出後重新登入以授予寫入權限。",
+    "selectionStale": "所選資料夾已變更，請在上傳前重新選擇一次。",
+    "signInFirst": "請先登入您的 Hugging Face 帳戶再上傳。",
+    "specialFile": "此資料夾內含有 socket、FIFO、裝置或其他特殊檔案，無法安全上傳。",
+    "tooManyFiles": "此資料夾內的檔案數量過多——目前上限為 {{max}}。"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "back": "戻る",
+  "cache": "キャッシュを開く",
+  "datasets": "データセットを開く",
+  "downloads": "ダウンロードを開く",
+  "favorites": "お気に入りを開く",
+  "focusSearch": "リスト検索にフォーカス",
+  "forward": "進む",
+  "groups": {
+    "global": "全般",
+    "list": "リスト",
+    "navigation": "ナビゲーション",
+    "palette": "コマンドパレット"
+  },
+  "help": "このオーバーレイを表示",
+  "history": "閲覧履歴を開く",
+  "inbox": "受信箱を開く",
+  "listNav": "リストの選択を移動",
+  "palette": "コマンドパレット / 全体検索",
+  "paletteClose": "閉じる",
+  "paletteNavigate": "結果を移動",
+  "paletteSelect": "選択",
+  "models": "モデルを開く",
+  "papers": "論文を開く",
+  "spaces": "Spaceを開く",
+  "settings": "設定を開く",
+  "title": "キーボードショートカット",
+  "toggleSidebar": "サイドバーの折りたたみ/展開"
+}

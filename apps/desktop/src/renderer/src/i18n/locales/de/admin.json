@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "Annehmen",
+    "empty": "Hier sind keine Anfragen vorhanden.",
+    "grant": "Zugriff gewähren",
+    "granted": "Zugriff gewährt",
+    "grantPlaceholder": "Benutzername",
+    "handled": "Anfrage aktualisiert",
+    "notGated": "Aktivieren Sie die Zugriffsbeschränkung, um Zugriffsanfragen zu prüfen.",
+    "reasonPlaceholder": "Ablehnungsgrund (optional)",
+    "reject": "Ablehnen",
+    "tab": {
+      "accepted": "Angenommen",
+      "pending": "Ausstehend",
+      "rejected": "Abgelehnt"
+    },
+    "title": "Zugriffsanfragen"
+  },
+  "actions": {
+    "duplicate": "Duplizieren",
+    "label": "Repository-Aktionen",
+    "rename": "Umbenennen / verschieben"
+  },
+  "delete": {
+    "body": "Dies löscht {{repoId}} und alle zugehörigen Dateien endgültig. Dies kann nicht rückgängig gemacht werden.",
+    "confirmLabel": "Geben Sie {{repoId}} zur Bestätigung ein",
+    "success": "Repository gelöscht",
+    "title": "Repository löschen"
+  },
+  "duplicate": {
+    "body": "Erstellen Sie eine Kopie von {{repoId}} unter einer neuen ID.",
+    "label": "Ziel-Repository-ID",
+    "private": "Kopie privat machen",
+    "submit": "Duplizieren",
+    "success": "Repository dupliziert",
+    "title": "Repository duplizieren"
+  },
+  "error": {
+    "title": "Ihre Repositories konnten nicht geladen werden"
+  },
+  "gatedHint": {
+    "body": "Ihr Zugriffstoken enthält nicht die Berechtigung manage-repos, daher ist die Repository-Verwaltung deaktiviert.",
+    "title": "Fehlende Berechtigung"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "Repositories, die Ihnen gehören, werden hier angezeigt.",
+      "title": "Noch keine Repositories"
+    },
+    "filter": {
+      "all": "Alle"
+    },
+    "title": "Meine Repositories"
+  },
+  "refs": {
+    "branchCreated": "Branch erstellt",
+    "branchDeleted": "Branch gelöscht",
+    "branchesHint": "Erstellen Sie einen Branch oder löschen Sie einen anhand seines Namens.",
+    "branchPlaceholder": "branch-name",
+    "createBranch": "Branch erstellen",
+    "createTag": "Tag erstellen",
+    "deleteBranch": "Branch löschen",
+    "deleteTag": "Tag löschen",
+    "startingPointPlaceholder": "Ausgangspunkt (optional)",
+    "tagCreated": "Tag erstellt",
+    "tagDeleted": "Tag gelöscht",
+    "tagMessagePlaceholder": "Nachricht (optional)",
+    "tagPlaceholder": "tag-name",
+    "tagsHint": "Erstellen Sie einen Tag auf main oder löschen Sie einen anhand seines Namens.",
+    "title": "Branches & Tags"
+  },
+  "rename": {
+    "body": "Verschieben Sie {{repoId}} zu einem neuen Namen oder Namespace. Alle Dateien, Likes und Downloads werden mit verschoben.",
+    "label": "Neue Repository-ID",
+    "submit": "Umbenennen",
+    "success": "Repository verschoben",
+    "title": "Umbenennen oder verschieben"
+  },
+  "repoIdPlaceholder": "besitzer/name",
+  "settings": {
+    "gated": "Zugriffsbeschränkung",
+    "gatedAuto": "Automatische Genehmigung",
+    "gatedHint": "Benutzer müssen vor dem Herunterladen Zugriff anfordern.",
+    "gatedManual": "Manuelle Prüfung",
+    "gatedOff": "Aus",
+    "private": "Privat",
+    "privateHint": "Nur Sie und Mitarbeiter können dieses Repository sehen.",
+    "title": "Einstellungen",
+    "updated": "Einstellungen aktualisiert"
+  },
+  "signedOut": {
+    "body": "Ihre Modelle, Datensätze und Spaces werden hier angezeigt, sobald Sie angemeldet sind.",
+    "title": "Melden Sie sich an, um Ihre Repositories zu verwalten"
+  },
+  "space": {
+    "descriptionPlaceholder": "Beschreibung (optional)",
+    "keyPlaceholder": "SCHLÜSSEL",
+    "logs": {
+      "build": "Build",
+      "empty": "Keine Protokollausgabe.",
+      "refresh": "Protokolle aktualisieren",
+      "run": "Run",
+      "title": "Protokolle"
+    },
+    "restart": {
+      "done": "Neustart angefordert",
+      "factory": "Vollständiger Neuaufbau",
+      "factoryHint": "Der vollständige Neuaufbau löscht den Build-Cache und erstellt den Space von Grund auf neu.",
+      "restart": "Space neu starten",
+      "title": "Neu starten"
+    },
+    "secrets": {
+      "add": "Secret hinzufügen",
+      "deleted": "Secret gelöscht",
+      "empty": "Keine Secrets festgelegt.",
+      "saved": "Secret gespeichert",
+      "title": "Secrets",
+      "writeOnly": "Secret-Werte sind nur schreibbar und werden nach dem Speichern nie wieder angezeigt."
+    },
+    "valuePlaceholder": "Wert",
+    "variables": {
+      "deleted": "Variable gelöscht",
+      "edit": "Variable bearbeiten",
+      "empty": "Keine Variablen festgelegt.",
+      "save": "Variable speichern",
+      "saved": "Variable gespeichert",
+      "title": "Variablen"
+    }
+  },
+  "visibility": {
+    "makePrivate": "Privat machen",
+    "makePublic": "Öffentlich machen",
+    "protected": "Geschützt",
+    "updated": "Sichtbarkeit aktualisiert"
+  }
+}

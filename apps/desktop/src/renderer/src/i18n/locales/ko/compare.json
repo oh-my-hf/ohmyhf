@@ -1,0 +1,25 @@
+{
+  "add": "추가",
+  "addPlaceholder": "모델 ID로 추가하세요. 예: meta-llama/Llama-3-8B…",
+  "attr": {
+    "downloads": "다운로드 수",
+    "library": "라이브러리",
+    "license": "라이선스",
+    "likes": "좋아요 수",
+    "params": "매개변수",
+    "tags": "태그",
+    "task": "작업",
+    "updated": "업데이트됨"
+  },
+  "benchmarks": {
+    "none": "이 모델들의 model-index 메타데이터에서 벤치마크 점수를 찾을 수 없습니다.",
+    "title": "벤치마크"
+  },
+  "benchmarksTodo": "벤치마크 점수(model-index 메타데이터 기반)는 로드맵에 포함되어 있습니다.",
+  "empty": "비교할 모델을 검색하여 추가하세요.",
+  "hint": "모델을 2~4개까지 나란히 비교하세요.",
+  "max": "최대 4개의 모델까지 비교할 수 있습니다.",
+  "remove": "제거",
+  "title": "모델 비교",
+  "invalidId": "유효한 모델 ID를 입력하세요. 예: gpt2 또는 meta-llama/Llama-3-8B."
+}

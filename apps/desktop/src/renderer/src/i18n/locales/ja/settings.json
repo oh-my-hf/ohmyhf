@@ -1,0 +1,241 @@
+{
+  "about": {
+    "disclaimer": "本アプリケーションはHugging Face, Inc.と提携、承認、またはスポンサー関係にあるものではありません。「Hugging Face」はHugging Face, Inc.の商標であり、ここでは本アプリケーションが接続するサービスを指す目的でのみ使用しています。",
+    "github": "GitHubのソースコード",
+    "license": "Apache-2.0ライセンスの下で提供されています",
+    "privacy": "プライバシー: すべてはお使いのマシン上に保存されます。テレメトリや分析は行いません。トークンはOSのキーチェーンで暗号化され、ローカルに保存されます。",
+    "title": "情報",
+    "unofficialTitle": "非公式",
+    "updates": {
+      "available": "バージョン{{version}}がGitHub Releasesで利用可能です。",
+      "check": "更新を確認",
+      "checkAgain": "再確認",
+      "checking": "GitHub Releasesで更新を確認中…",
+      "description": "更新は最新の公開済みGitHub Releaseと照合して確認されます。",
+      "download": "更新をダウンロード",
+      "downloadProgress": "{{total}}中{{transferred}}",
+      "downloading": "バージョン{{version}}をダウンロード中 — {{percent}}%",
+      "downloadingButton": "ダウンロード中 {{percent}}%",
+      "errors": {
+        "configuration": "GitHub Releaseの更新メタデータが利用できません。",
+        "network": "GitHub Releasesに接続できませんでした。接続を確認してもう一度お試しください。",
+        "permission": "アップデーターにこの更新をインストールする権限がありません。",
+        "unknown": "更新を完了できませんでした。もう一度試すか、GitHub Releasesからインストールしてください。",
+        "verification": "更新を検証できなかったため、インストールされませんでした。"
+      },
+      "manual": "バージョン{{version}}が利用可能です。この署名なしビルドは手動で更新する必要があります。",
+      "openReleases": "GitHub Releasesを開く",
+      "progressLabel": "更新のダウンロード進捗",
+      "ready": "バージョン{{version}}の準備ができました。インストールするにはアプリを再起動してください。",
+      "restartAndInstall": "再起動してインストール",
+      "retry": "再試行",
+      "retryInstall": "インストールを再試行",
+      "title": "アプリの更新",
+      "toastAvailable": "バージョン{{version}}が利用可能です。",
+      "toastReady": "バージョン{{version}}のインストール準備ができました。",
+      "unsupported": "アプリ内更新はインストール済みビルドでのみ利用できます。",
+      "upToDate": "最新バージョンを使用しています。",
+      "view": "表示"
+    },
+    "version": "バージョン{{version}}"
+  },
+  "account": {
+    "billing": {
+      "empty": "現在の期間の使用状況は記録されていません。",
+      "gated": "課金使用状況にはread-billing権限が必要です。再認可して権限を付与してください。",
+      "period": "{{start}} – {{end}}",
+      "title": "課金使用状況",
+      "unauthorized": "Hubはこのトークンに課金使用状況の読み取りを許可していません。"
+    },
+    "hub": {
+      "missingScopes": "権限が不足しています: {{scopes}}。再認可して権限を付与してください。",
+      "reauthorize": "再認可",
+      "roleLabels": {
+        "fineGrained": "細粒度",
+        "read": "読み取り",
+        "write": "書き込み"
+      },
+      "scopes": "付与された権限",
+      "scopesUnknown": "このセッションに付与された権限は不明です。再認可して更新してください。",
+      "title": "Hubアカウント",
+      "tokenHint": "User Access Tokenでサインインしています。このアプリで可能な操作は、Hub上のトークン自身の権限によって決まります — ブラウザサインインでは到達できないHub通知受信箱も含みます。",
+      "tokenSession": "アクセストークン"
+    },
+    "scopeLabels": {
+      "inference-api": "推論API",
+      "jobs": "ジョブを管理",
+      "manage-repos": "リポジトリを管理",
+      "openid": "サインインID",
+      "profile": "プロフィールを読み取り",
+      "read-billing": "課金情報を読み取り",
+      "read-collections": "コレクションを読み取り",
+      "read-repos": "リポジトリを読み取り",
+      "webhooks": "Webhookを管理",
+      "write-collections": "コレクションに書き込み",
+      "write-discussions": "ディスカッションに投稿",
+      "write-repos": "リポジトリに書き込み"
+    },
+    "title": "アカウント"
+  },
+  "appearance": {
+    "accent": "アクセントカラー",
+    "accentOptions": {
+      "blue": "ブルー",
+      "default": "デフォルト",
+      "green": "グリーン",
+      "orange": "オレンジ",
+      "violet": "バイオレット"
+    },
+    "browsePageSize": "ブラウズのページサイズ",
+    "browsePageSizeOption": "{{count}}件/ページ",
+    "defaultHome": "デフォルトのホーム",
+    "defaultSort": "デフォルトの並べ替え",
+    "density": "密度",
+    "densityOptions": {
+      "comfortable": "ゆったり",
+      "compact": "コンパクト"
+    },
+    "fontScale": "文字サイズ",
+    "fontScaleDecrease": "文字サイズを縮小",
+    "fontScaleIncrease": "文字サイズを拡大",
+    "historyLimit": "履歴の上限",
+    "historyLimitOption": "{{count}}件",
+    "homeOptions": {
+      "datasets": "データセット",
+      "home": "ホームフィード",
+      "models": "モデル",
+      "papers": "論文",
+      "spaces": "Space"
+    },
+    "language": "言語",
+    "openTarget": {
+      "app": "アプリ内",
+      "browser": "システムブラウザ"
+    },
+    "repoOpenTarget": "お気に入りと履歴を開く",
+    "sidebarCollapsed": "デフォルトでサイドバーを折りたたむ",
+    "title": "外観",
+    "uiScale": "インターフェースの拡大率",
+    "uiScaleDecrease": "インターフェースの拡大率を縮小",
+    "uiScaleIncrease": "インターフェースの拡大率を拡大"
+  },
+  "desktop": {
+    "closeHintMac": "ウィンドウを閉じるとアプリはメニューバーのトレイに格納されます。完全に終了するには、トレイメニューまたはDockから終了してください。",
+    "closeHintOther": "ウィンドウを閉じるとアプリはシステムトレイに格納されます。完全に終了するには、トレイメニューから終了してください。",
+    "closeToTray": "トレイに格納して閉じる",
+    "launchAtLogin": "ログイン時に起動",
+    "launchAtLoginHint": "このコンピュータにサインインしたときにOh My HuggingFaceを起動します。",
+    "title": "デスクトップ"
+  },
+  "downloads": {
+    "cacheDir": "HFキャッシュディレクトリ",
+    "cacheDirDefault": "システムデフォルト",
+    "choose": "選択…",
+    "concurrency": "並列ダウンロード数",
+    "reset": "リセット",
+    "speedLimit": "速度制限",
+    "speedPerSecond": "{{value}}/秒",
+    "title": "ダウンロード",
+    "unlimited": "無制限"
+  },
+  "groups": {
+    "about": "情報",
+    "account": "アカウント",
+    "connection": "接続",
+    "data": "データ",
+    "interface": "インターフェース",
+    "system": "システム"
+  },
+  "network": {
+    "apply": "適用",
+    "description": "Hub APIのベースURLを上書きし、必要に応じてHTTP(S)プロキシ経由でトラフィックをルーティングします。デフォルトを使用する場合は空欄のままにしてください。",
+    "downloadWarning": "進行中のダウンロードは、一時停止して再開するまで以前のエンドポイントやプロキシを使い続ける場合があります。",
+    "hubEndpoint": "Hubエンドポイント",
+    "invalidUrl": "有効なhttp://またはhttps://のURLを入力するか、空欄のままにしてください。",
+    "proxyUrl": "HTTP(S)プロキシ",
+    "reset": "デフォルトにリセット",
+    "resetEndpoint": "Hubエンドポイントをデフォルトにリセットしました。",
+    "resetProxy": "プロキシをクリアしました。",
+    "saved": "ネットワーク設定を保存しました。",
+    "test": "接続をテスト",
+    "testFail": "接続に失敗しました: {{error}}",
+    "testOk": "Hubへの接続に成功しました。",
+    "title": "ネットワーク"
+  },
+  "notifications": {
+    "enabled": "システム通知",
+    "minutes": "{{count}}分",
+    "minutes_other": "{{count}}分",
+    "pollInterval": "フォローを確認する間隔",
+    "title": "通知"
+  },
+  "privacy": {
+    "cache": {
+      "open": "キャッシュマネージャーを開く",
+      "path": "場所",
+      "retry": "再試行",
+      "scanFailed": "キャッシュをスキャンできませんでした。",
+      "size": "合計サイズ",
+      "title": "HFキャッシュ"
+    },
+    "local": {
+      "clear": "ローカルデータをクリア…",
+      "confirm": "データをクリア",
+      "confirmBody": "このデバイスから削除する項目を選択してください:",
+      "confirmTitle": "ローカルデータをクリアしますか?",
+      "description": "選択したお気に入り、履歴、ダウンロード記録、フォロー、受信箱をこのデバイスから削除します。HFキャッシュ内のモデルやデータセットのファイルは削除されません。",
+      "items": {
+        "downloads": "ダウンロードタスクの記録",
+        "favorites": "お気に入り",
+        "follows": "フォロー中のアカウント",
+        "history": "閲覧履歴",
+        "inbox": "ローカル受信箱",
+        "otherKv": "その他のローカルアプリデータ"
+      },
+      "signOutAlso": "Hubからもサインアウトする",
+      "success": "ローカルデータをクリアしました。",
+      "successSignedOut": "ローカルデータをクリアしました。サインアウトしました。",
+      "title": "アプリのローカルデータ"
+    },
+    "title": "プライバシーとデータ",
+    "transfer": {
+      "description": "外観と設定をJSONとしてエクスポートまたはインポートします。アカウントトークンやライブラリデータは含まれません。インポート時、このマシンのキャッシュディレクトリは保持されます。",
+      "export": "設定をエクスポート…",
+      "exportSuccess": "設定をエクスポートしました。",
+      "import": "設定をインポート…",
+      "importSuccess": "設定をインポートしました。",
+      "title": "設定の転送"
+    }
+  },
+  "profile": {
+    "avatar": "アバター",
+    "avatarHint": "PNG、JPEG、またはWebP、最大10MB。",
+    "avatarUpload": "画像をアップロード",
+    "bluesky": "Blueskyユーザー名",
+    "details": "AI & MLへの興味関心",
+    "error": "プロフィールを保存できませんでした: {{error}}",
+    "fullname": "フルネーム",
+    "github": "GitHubユーザー名",
+    "homepage": "ホームページ",
+    "homepagePlaceholder": "https://",
+    "linkedin": "LinkedInプロフィール",
+    "loadError": "プロフィールを読み込めませんでした: {{error}}",
+    "needsSession": "公開プロフィールの編集にはHub Webセッションが必要です — アカウントで接続してください。",
+    "openAccount": "アカウントへ移動",
+    "primaryOrg": "主な組織",
+    "primaryOrgHint": "主な組織として設定できるのはTeam / Enterprise / Plusの組織のみです。メニューは設定可能なオプションと不可能なオプションをグループ分けして表示します。",
+    "primaryOrgNone": "なし",
+    "primaryOrgNonePaid": "有料プランの組織がないため、主な組織はまだ設定できません。",
+    "primaryOrgGroupAvailable": "設定可能",
+    "primaryOrgGroupUnavailable": "設定不可(有料プランが必要)",
+    "primaryOrgOptionAvailable": "{{name}}({{plan}})",
+    "primaryOrgOptionUnavailable": "{{name}} — 設定不可",
+    "primaryOrgSummary": "設定可能 {{available}} 件 ・ 設定不可 {{unavailable}} 件",
+    "save": "変更を保存",
+    "saved": "プロフィールを保存しました",
+    "title": "公開プロフィール",
+    "twitter": "Twitterユーザー名",
+    "avatarTooLarge": "画像が大きすぎます — アバターは10MBまでに制限されています。"
+  },
+  "title": "設定"
+}

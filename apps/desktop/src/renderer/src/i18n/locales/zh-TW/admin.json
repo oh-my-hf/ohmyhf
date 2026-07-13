@@ -1,0 +1,136 @@
+{
+  "access": {
+    "accept": "接受",
+    "empty": "目前沒有任何請求。",
+    "grant": "授予存取權限",
+    "granted": "已授予存取權限",
+    "grantPlaceholder": "使用者名稱",
+    "handled": "請求已更新",
+    "notGated": "啟用受限存取才能檢視存取請求。",
+    "reasonPlaceholder": "拒絕原因（選填）",
+    "reject": "拒絕",
+    "tab": {
+      "accepted": "已接受",
+      "pending": "待處理",
+      "rejected": "已拒絕"
+    },
+    "title": "存取請求"
+  },
+  "actions": {
+    "duplicate": "複製",
+    "label": "儲存庫操作",
+    "rename": "重新命名／移動"
+  },
+  "delete": {
+    "body": "這會永久刪除 {{repoId}} 及其所有檔案，且無法復原。",
+    "confirmLabel": "請輸入 {{repoId}} 以確認",
+    "success": "儲存庫已刪除",
+    "title": "刪除儲存庫"
+  },
+  "duplicate": {
+    "body": "以新的 ID 建立 {{repoId}} 的副本。",
+    "label": "目標儲存庫 ID",
+    "private": "將副本設為私人",
+    "submit": "複製",
+    "success": "儲存庫已複製",
+    "title": "複製儲存庫"
+  },
+  "error": {
+    "title": "無法載入您的儲存庫"
+  },
+  "gatedHint": {
+    "body": "您的存取權杖未包含 manage-repos 權限範圍，因此儲存庫管理功能已停用。",
+    "title": "缺少權限"
+  },
+  "myRepos": {
+    "empty": {
+      "body": "您擁有的儲存庫會顯示在這裡。",
+      "title": "尚無儲存庫"
+    },
+    "filter": {
+      "all": "全部"
+    },
+    "title": "我的儲存庫"
+  },
+  "refs": {
+    "branchCreated": "分支已建立",
+    "branchDeleted": "分支已刪除",
+    "branchesHint": "建立分支，或依名稱刪除分支。",
+    "branchPlaceholder": "分支名稱",
+    "createBranch": "建立分支",
+    "createTag": "建立標籤",
+    "deleteBranch": "刪除分支",
+    "deleteTag": "刪除標籤",
+    "startingPointPlaceholder": "起始點（選填）",
+    "tagCreated": "標籤已建立",
+    "tagDeleted": "標籤已刪除",
+    "tagMessagePlaceholder": "訊息（選填）",
+    "tagPlaceholder": "標籤名稱",
+    "tagsHint": "在 main 上建立標籤，或依名稱刪除標籤。",
+    "title": "分支與標籤"
+  },
+  "rename": {
+    "body": "將 {{repoId}} 移動到新的名稱或命名空間。所有檔案、按讚數與下載數都會一併移動。",
+    "label": "新的儲存庫 ID",
+    "submit": "重新命名",
+    "success": "儲存庫已移動",
+    "title": "重新命名或移動"
+  },
+  "repoIdPlaceholder": "擁有者/名稱",
+  "settings": {
+    "gated": "受限存取",
+    "gatedAuto": "自動核准",
+    "gatedHint": "要求使用者在下載前先提出存取請求。",
+    "gatedManual": "人工審核",
+    "gatedOff": "關閉",
+    "private": "私人",
+    "privateHint": "僅有您與協作者可以看到此儲存庫。",
+    "title": "設定",
+    "updated": "設定已更新"
+  },
+  "signedOut": {
+    "body": "登入後，您的模型、資料集與 Space 會顯示在這裡。",
+    "title": "登入以管理您的儲存庫"
+  },
+  "space": {
+    "descriptionPlaceholder": "描述（選填）",
+    "keyPlaceholder": "KEY",
+    "logs": {
+      "build": "建置",
+      "empty": "沒有日誌輸出。",
+      "refresh": "重新整理日誌",
+      "run": "執行",
+      "title": "日誌"
+    },
+    "restart": {
+      "done": "已請求重新啟動",
+      "factory": "原廠重建",
+      "factoryHint": "原廠重建會清除建置快取，並從頭重新建置此 Space。",
+      "restart": "重新啟動 Space",
+      "title": "重新啟動"
+    },
+    "secrets": {
+      "add": "新增密鑰",
+      "deleted": "密鑰已刪除",
+      "empty": "尚未設定任何密鑰。",
+      "saved": "密鑰已儲存",
+      "title": "密鑰",
+      "writeOnly": "密鑰值僅能寫入，儲存後便不會再顯示。"
+    },
+    "valuePlaceholder": "值",
+    "variables": {
+      "deleted": "變數已刪除",
+      "edit": "編輯變數",
+      "empty": "尚未設定任何變數。",
+      "save": "儲存變數",
+      "saved": "變數已儲存",
+      "title": "變數"
+    }
+  },
+  "visibility": {
+    "makePrivate": "設為私人",
+    "makePublic": "設為公開",
+    "protected": "受保護",
+    "updated": "可見性已更新"
+  }
+}
