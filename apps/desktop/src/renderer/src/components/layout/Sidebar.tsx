@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
@@ -39,63 +39,54 @@ function SidebarLink({
   item,
   label,
   badgeLabel,
-  collapsed
+  collapsed,
+  active
 }: {
   item: NavItem
   label: string
   badgeLabel?: string
   collapsed: boolean
+  active: boolean
 }): React.JSX.Element {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {/* `end`: highlight only on the page itself — a detail page under it
-            (/models/owner/name) is its own view and gets no sidebar box. */}
         <NavLink
           to={item.to}
-          end
+          aria-current={active ? 'page' : undefined}
           aria-label={collapsed ? [label, badgeLabel].filter(Boolean).join(', ') : undefined}
-          className={({ isActive }) =>
-            cn(
-              'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
-              collapsed ? 'justify-center' : 'justify-start',
-              isActive ? 'text-ink-strong' : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
-            )
-          }
-        >
-          {({ isActive }) => (
-            <>
-              {isActive && (
-                <span
-                  className="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-full bg-select"
-                  aria-hidden
-                />
-              )}
-              <item.icon className={cn('size-4 shrink-0', isActive && 'text-select')} aria-hidden />
-              {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
-              {item.badge ? (
-                collapsed ? (
-                  <>
-                    <span
-                      className="absolute top-1 right-1 size-1.5 rounded-full bg-brand"
-                      aria-hidden
-                    />
-                    <span className="sr-only">{badgeLabel}</span>
-                  </>
-                ) : (
-                  <>
-                    <span
-                      aria-hidden
-                      className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink"
-                    >
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </span>
-                    <span className="sr-only">{badgeLabel}</span>
-                  </>
-                )
-              ) : null}
-            </>
+          className={cn(
+            'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
+            collapsed ? 'justify-center' : 'justify-start',
+            active ? 'text-ink-strong' : 'text-ink-muted hover:bg-panel-2 hover:text-ink'
           )}
+        >
+          {active && (
+            <span
+              className="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-full bg-select"
+              aria-hidden
+            />
+          )}
+          <item.icon className={cn('size-4 shrink-0', active && 'text-select')} aria-hidden />
+          {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+          {item.badge ? (
+            collapsed ? (
+              <>
+                <span className="absolute top-1 right-1 size-1.5 rounded-full bg-brand" aria-hidden />
+                <span className="sr-only">{badgeLabel}</span>
+              </>
+            ) : (
+              <>
+                <span
+                  aria-hidden
+                  className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink"
+                >
+                  {item.badge > 99 ? '99+' : item.badge}
+                </span>
+                <span className="sr-only">{badgeLabel}</span>
+              </>
+            )
+          ) : null}
         </NavLink>
       </TooltipTrigger>
       <TooltipContent side="right" className={collapsed ? undefined : 'hidden'}>
@@ -103,6 +94,20 @@ function SidebarLink({
       </TooltipContent>
     </Tooltip>
   )
+}
+
+/**
+ * A section stays highlighted while browsing anything under it (e.g. Models
+ * stays lit on /models/owner/name), not just on the list page itself. Home
+ * ("/") is the fallback: it lights up for any route no other sidebar item
+ * claims (post pages, user profiles, search) instead of matching everything.
+ */
+function isNavItemActive(item: NavItem, pathname: string, allItems: NavItem[]): boolean {
+  const matches = (to: string): boolean => pathname === to || pathname.startsWith(`${to}/`)
+  if (item.to === '/') {
+    return !allItems.some((other) => other.to !== '/' && matches(other.to))
+  }
+  return matches(item.to)
 }
 
 export function Sidebar(): React.JSX.Element {
@@ -114,6 +119,7 @@ export function Sidebar(): React.JSX.Element {
   const manualCollapsed = useAppStore((s) => s.sidebarCollapsed)
   const narrow = useMediaQuery('(max-width: 859.98px)')
   const collapsed = manualCollapsed || narrow
+  const pathname = useLocation().pathname
 
   const downloads = useQuery({
     queryKey: ['downloads'],
@@ -155,6 +161,7 @@ export function Sidebar(): React.JSX.Element {
     { to: '/compare', labelKey: 'compare', icon: Columns3 },
     { to: '/upload', labelKey: 'upload', icon: UploadCloud }
   ]
+  const allNavItems = [...browse, ...library]
 
   return (
     <aside
@@ -178,6 +185,7 @@ export function Sidebar(): React.JSX.Element {
               label={t(item.labelKey)}
               badgeLabel={item.badge ? t('badgeCount', { count: item.badge }) : undefined}
               collapsed={collapsed}
+              active={isNavItemActive(item, pathname, allNavItems)}
             />
           ))}
         </div>
@@ -194,6 +202,7 @@ export function Sidebar(): React.JSX.Element {
               label={t(item.labelKey)}
               badgeLabel={item.badge ? t('badgeCount', { count: item.badge }) : undefined}
               collapsed={collapsed}
+              active={isNavItemActive(item, pathname, allNavItems)}
             />
           ))}
         </div>
