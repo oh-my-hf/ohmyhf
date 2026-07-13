@@ -18,7 +18,11 @@ import {
   Trash2,
   X
 } from 'lucide-react'
-import type { CollectionItem } from '@oh-my-huggingface/shared'
+import {
+  hubCollectionUrl,
+  normalizeHubEndpoint,
+  type CollectionItem
+} from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { hubThemeColor } from '@/lib/theme-colors'
@@ -83,6 +87,7 @@ export function CollectionDetail({
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editTitle, setEditTitle] = useState('')
@@ -94,7 +99,7 @@ export function CollectionDetail({
   const [noteText, setNoteText] = useState('')
 
   const collection = useQuery({
-    queryKey: ['collection', slug],
+    queryKey: ['collection', slug, endpointKey],
     queryFn: () => invoke('hub:collection', { slug }),
     enabled: slug !== ''
   })
@@ -272,7 +277,7 @@ export function CollectionDetail({
                     <UpvoteButton
                       upvotes={data.upvotes ?? 0}
                       initialUpvoted={data.isUpvoted}
-                      hubUrl={`https://huggingface.co/collections/${slug}`}
+                      hubUrl={hubCollectionUrl(slug, settings.hubEndpoint)}
                       size="sm"
                       onToggle={(next) =>
                         invoke('hub:collectionUpvoteSet', { slug, upvoted: next })

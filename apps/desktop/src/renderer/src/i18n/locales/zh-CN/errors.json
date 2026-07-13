@@ -5,5 +5,15 @@
   "notFound": "在 Hub 上找不到该内容——它可能已被移动、重命名或设为私有。",
   "rateLimit": "Hugging Face API 已限流。应用会自动退避并重试，请稍候再试。",
   "unknown": "出错了，请重试。",
-  "server": "Hugging Face API 返回服务器错误，请稍后重试。"
+  "server": "Hugging Face API 返回服务器错误，请稍后重试。",
+  "query": {
+    "title": "无法加载此内容"
+  },
+  "boundary": {
+    "title": "此页面意外停止运行",
+    "body": "请重新加载应用以恢复页面。如果问题持续，可复制已脱敏的详情用于问题反馈。"
+  },
+  "details": "技术详情（已脱敏）",
+  "copyDetails": "复制详情",
+  "reload": "重新加载应用"
 }

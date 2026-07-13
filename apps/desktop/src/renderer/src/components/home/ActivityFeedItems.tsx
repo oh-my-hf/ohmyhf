@@ -1,14 +1,23 @@
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { Boxes, Database, GitPullRequest, LayoutGrid, MessageSquare } from 'lucide-react'
-import type { ActivityDiscussion, ActivityItem, RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
+import type {
+  ActivityDiscussion,
+  ActivityItem,
+  RepoKind,
+  RepoSummary
+} from '@oh-my-huggingface/shared'
 import { formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { UserLink } from '@/components/profile/UserLink'
 import { PostCard } from '@/components/home/FeedItems'
 
-const KIND_PATH: Record<RepoKind, string> = { model: 'models', dataset: 'datasets', space: 'spaces' }
+const KIND_PATH: Record<RepoKind, string> = {
+  model: 'models',
+  dataset: 'datasets',
+  space: 'spaces'
+}
 const KIND_ICON: Record<RepoKind, React.ComponentType<{ className?: string }>> = {
   model: Boxes,
   dataset: Database,
@@ -139,7 +148,9 @@ function DiscussionActivityCard({
       <button
         type="button"
         onClick={() =>
-          navigate(`/${KIND_PATH[discussion.repoKind]}/${discussion.repoId}/discussions/${discussion.num}`)
+          navigate(
+            `/${KIND_PATH[discussion.repoKind]}/${discussion.repoId}/discussions/${discussion.num}`
+          )
         }
         className="group flex w-full items-center gap-2.5 rounded-md border border-border-card bg-bg/40 p-2.5 text-left transition-colors duration-150 outline-none hover:border-border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
       >

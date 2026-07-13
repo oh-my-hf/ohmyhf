@@ -4,11 +4,10 @@
  * notifications. Runs entirely in the main process on a timer; each poll is a
  * handful of cached API calls.
  */
-import { Notification } from 'electron'
 import type { Follow, InboxItem, RepoKind } from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import type { Library } from './library'
-import type { MainI18n } from './i18n'
+import type { NotificationService } from './notifications'
 import type { SettingsStore } from './settings'
 
 const ROUTE_PREFIX: Record<RepoKind, string> = {
@@ -27,9 +26,8 @@ export class FollowsPoller {
     private readonly library: Library,
     private readonly hub: HubClient,
     private readonly settings: SettingsStore,
-    private readonly i18n: MainI18n,
     private readonly broadcastInbox: (items: InboxItem[]) => void,
-    private readonly onNotificationClick: (route: string) => void
+    private readonly notifications: NotificationService
   ) {}
 
   start(): void {
@@ -158,17 +156,23 @@ export class FollowsPoller {
   }
 
   private notify(added: number, items: InboxItem[]): void {
-    if (!this.settings.get().notificationsEnabled || !Notification.isSupported()) return
     const first = items[0]
     const single = added === 1 && first
-    const notification = new Notification({
-      title: single
-        ? this.i18n.t('notifications.inboxSingle', { title: first.title })
-        : this.i18n.t('notifications.inboxUpdates', { count: added }),
-      body: single ? first.body : ''
-    })
-    notification.on('click', () => this.onNotificationClick(single ? first.route : '/inbox'))
-    notification.show()
+    if (single) {
+      this.notifications.show(
+        'notifications.inboxSingle',
+        'notifications.inboxSingleBody',
+        { title: first.title },
+        first.route
+      )
+      return
+    }
+    this.notifications.show(
+      'notifications.inboxUpdates',
+      'notifications.inboxUpdatesBody',
+      { count: added },
+      '/inbox'
+    )
   }
 }
 

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Lightbox } from '@/components/ui/lightbox'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 const PAGE_SIZE = 25
 
@@ -29,17 +30,24 @@ function ParquetCell({
   value: unknown
   onZoom: (src: string) => void
 }): React.JSX.Element {
+  const { t } = useTranslation('common')
   if (value instanceof Uint8Array && value.byteLength <= MAX_THUMBNAIL_BYTES) {
     const mime = imageMimeOfBytes(value)
     if (mime) {
       const src = bytesToDataUri(value, mime)
       return (
-        <img
-          src={src}
-          alt=""
-          className="max-h-16 max-w-32 cursor-zoom-in rounded border border-border-card bg-white object-contain"
+        <button
+          type="button"
+          aria-label={t('common:zoomImage')}
+          className="max-h-16 max-w-32 cursor-zoom-in rounded outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           onClick={() => onZoom(src)}
-        />
+        >
+          <img
+            src={src}
+            alt=""
+            className="max-h-16 max-w-32 rounded border border-border-card bg-white object-contain"
+          />
+        </button>
       )
     }
   }
@@ -119,6 +127,7 @@ export function ParquetPreview({
   downloading
 }: ParquetPreviewProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpointKey = useHubEndpointKey()
   const [page, setPage] = useState(0)
   const [lightbox, setLightbox] = useState<string>()
 
@@ -126,7 +135,7 @@ export function ParquetPreview({
 
   // Footer read only: schema + row count, no page data decompressed.
   const info = useQuery<ParquetInfo>({
-    queryKey: ['parquetMeta', kind, repoId, path, size],
+    queryKey: ['parquetMeta', kind, repoId, path, size, endpointKey],
     queryFn: async () => {
       const { parquetMetadataAsync, parquetSchema } = await import('hyparquet')
       const metadata = await parquetMetadataAsync(file)
@@ -138,7 +147,7 @@ export function ParquetPreview({
   })
 
   const rows = useQuery<Record<string, unknown>[]>({
-    queryKey: ['parquetRows', kind, repoId, path, size, page],
+    queryKey: ['parquetRows', kind, repoId, path, size, page, endpointKey],
     enabled: info.isSuccess,
     placeholderData: keepPreviousData,
     retry: false,

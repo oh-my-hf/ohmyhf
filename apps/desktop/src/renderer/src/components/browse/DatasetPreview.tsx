@@ -14,11 +14,14 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { hubRepoUrl, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
+import { useAppStore } from '@/stores/app'
 
 const PAGE_SIZE = 25
 
 function Unavailable({ repoId }: { repoId: string }): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
       <Database className="size-8 text-ink-faint" aria-hidden />
@@ -28,7 +31,7 @@ function Unavailable({ repoId }: { repoId: string }): React.JSX.Element {
       <Button
         variant="secondary"
         size="sm"
-        onClick={() => openExternal(`https://huggingface.co/datasets/${repoId}`)}
+        onClick={() => openExternal(hubRepoUrl('dataset', repoId, endpoint))}
       >
         <ExternalLink className="size-3.5" aria-hidden />
         {t('common:openOnHub')}
@@ -104,8 +107,10 @@ function RowsTable({
  */
 function SampleFallback({ repoId }: { repoId: string }): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
+  const endpointKey = normalizeHubEndpoint(endpoint)
   const sample = useQuery({
-    queryKey: ['datasetSampleRows', repoId],
+    queryKey: ['datasetSampleRows', repoId, endpointKey],
     queryFn: () => invoke('hub:datasetSampleRows', { repoId }),
     retry: false
   })
@@ -128,12 +133,14 @@ function SampleFallback({ repoId }: { repoId: string }): React.JSX.Element {
 
 export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
+  const endpointKey = normalizeHubEndpoint(endpoint)
   const [config, setConfig] = useState<string | null>(null)
   const [split, setSplit] = useState<string | null>(null)
   const [page, setPage] = useState(0)
 
   const splits = useQuery({
-    queryKey: ['datasetSplits', repoId],
+    queryKey: ['datasetSplits', repoId, endpointKey],
     queryFn: () => invoke('hub:datasetSplits', { repoId }),
     retry: false
   })
@@ -150,7 +157,7 @@ export function DatasetPreview({ repoId }: { repoId: string }): React.JSX.Elemen
   const activeSplit = split && splitOptions.includes(split) ? split : splitOptions[0]
 
   const rows = useQuery({
-    queryKey: ['datasetRows', repoId, activeConfig, activeSplit, page],
+    queryKey: ['datasetRows', repoId, activeConfig, activeSplit, page, endpointKey],
     queryFn: () =>
       invoke('hub:datasetRows', {
         repoId,

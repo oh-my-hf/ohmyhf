@@ -2,9 +2,12 @@ import './assets/main.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from '@/App'
+import { BootstrapFailure } from '@/components/errors/BootstrapFailure'
 import { initI18n } from '@/i18n'
 import { invoke } from '@/lib/ipc'
 import { resolveLocale, useAppStore } from '@/stores/app'
+
+const root = createRoot(document.getElementById('root')!)
 
 async function bootstrap(): Promise<void> {
   // Settings, app info, and auth state come from the main process before first paint,
@@ -26,11 +29,18 @@ async function bootstrap(): Promise<void> {
   })
   await initI18n(resolveLocale(settings, appInfo))
 
-  createRoot(document.getElementById('root')!).render(
+  root.render(
     <StrictMode>
       <App />
     </StrictMode>
   )
 }
 
-void bootstrap()
+void bootstrap().catch((error: unknown) => {
+  console.error('Renderer bootstrap failed', error)
+  root.render(
+    <StrictMode>
+      <BootstrapFailure error={error} />
+    </StrictMode>
+  )
+})

@@ -20,11 +20,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { pushUndo, useToasts } from '@/components/ui/toaster'
 import { HubNotificationsPanel } from '@/components/inbox/HubNotificationsPanel'
+import { QueryErrorState } from '@/components/errors/QueryErrorState'
 import { useWatchSync } from '@/hooks/use-watch-sync'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { describeError } from '@/lib/errors'
 
 const FOLLOW_ICON: Record<FollowTargetType, React.ComponentType<{ className?: string }>> = {
   user: User,
@@ -110,18 +113,21 @@ function LocalFollowsFeed(): React.JSX.Element {
 
   const markRead = useMutation({
     mutationFn: (ids: string[]) => invoke('inbox:markRead', { ids }),
-    onSuccess: (items) => queryClient.setQueryData(['inbox'], items)
+    onSuccess: (items) => queryClient.setQueryData(['inbox'], items),
+    onError: (err) => push(describeError(t, err), 'error')
   })
   const clear = useMutation({
     mutationFn: () => invoke('inbox:clear', undefined),
-    onSuccess: (items) => queryClient.setQueryData(['inbox'], items)
+    onSuccess: (items) => queryClient.setQueryData(['inbox'], items),
+    onError: (err) => push(describeError(t, err), 'error')
   })
   const pollNow = useMutation({
     mutationFn: () => invoke('inbox:pollNow', undefined),
     onSuccess: ({ added }) => {
       push(t('inbox:checked', { count: added }), 'info')
       void queryClient.invalidateQueries({ queryKey: ['inbox'] })
-    }
+    },
+    onError: (err) => push(describeError(t, err), 'error')
   })
   // Users and orgs get the Hub watch write-through (same as UserPage); repo
   // and papers follows stay local-only — the watch endpoint wants 24-hex ids
@@ -135,7 +141,8 @@ function LocalFollowsFeed(): React.JSX.Element {
       queryClient.setQueryData(['follows'], list)
       if (syncable(args.type))
         syncWatch('add', [{ username: args.target, isOrg: args.type === 'org' }])
-    }
+    },
+    onError: (err) => push(describeError(t, err), 'error')
   })
   const removeFollow = useMutation({
     mutationFn: (follow: { id: string; type: FollowTargetType; target: string }) =>
@@ -155,10 +162,11 @@ function LocalFollowsFeed(): React.JSX.Element {
               if (syncable(follow.type))
                 syncWatch('add', [{ username: follow.target, isOrg: follow.type === 'org' }])
             })
-            .catch((err: Error) => push(err.message, 'error'))
+            .catch((err: Error) => push(describeError(t, err), 'error'))
         }
       })
-    }
+    },
+    onError: (err) => push(describeError(t, err), 'error')
   })
 
   // Pull the REAL Hugging Face following list of the signed-in account into the
@@ -191,7 +199,7 @@ function LocalFollowsFeed(): React.JSX.Element {
       return added
     },
     onSuccess: (added) => push(t('inbox:follows.imported', { count: added ?? 0 }), 'success'),
-    onError: (err) => push(err.message, 'error')
+    onError: (err) => push(describeError(t, err), 'error')
   })
 
   const submitFollow = (): void => {
@@ -221,7 +229,10 @@ function LocalFollowsFeed(): React.JSX.Element {
       <section className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2 px-5 pb-2">
           {unread.length > 0 && (
-            <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
+            <span
+              aria-label={t('inbox:unreadCount', { count: unread.length })}
+              className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink"
+            >
               {unread.length}
             </span>
           )}
@@ -252,46 +263,67 @@ function LocalFollowsFeed(): React.JSX.Element {
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2">
-          {inbox.data?.length === 0 && (
-            <EmptyState icon={Inbox} title={t('inbox:empty.title')} body={t('inbox:empty.body')} />
-          )}
-          {inbox.data?.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => openItem(item)}
-              className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
-            >
-              <span
-                className={cn(
-                  'mt-[7px] size-1.5 shrink-0 rounded-full',
-                  item.readAt ? 'bg-transparent' : 'bg-brand'
-                )}
-                aria-hidden
-              />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
-                  <Badge variant="outline" className="min-w-14 justify-center">
-                    {t(`inbox:kind.${item.kind}`)}
-                  </Badge>
+          {inbox.isPending ? (
+            <div className="flex flex-col gap-1 p-1">
+              {Array.from({ length: 6 }, (_, index) => (
+                <Skeleton key={index} className="h-14" />
+              ))}
+            </div>
+          ) : inbox.isError ? (
+            <QueryErrorState
+              error={inbox.error}
+              onRetry={() => void inbox.refetch()}
+              title={t('inbox:local.loadError')}
+              className="h-full"
+            />
+          ) : (
+            <>
+              {inbox.data.length === 0 ? (
+                <EmptyState
+                  icon={Inbox}
+                  title={t('inbox:empty.title')}
+                  body={t('inbox:empty.body')}
+                />
+              ) : null}
+              {inbox.data.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => openItem(item)}
+                  className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 outline-none hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
+                >
                   <span
                     className={cn(
-                      'min-w-0 truncate text-[13px] font-medium',
-                      item.readAt ? 'text-ink' : 'text-ink-strong'
+                      'mt-[7px] size-1.5 shrink-0 rounded-full',
+                      item.readAt ? 'bg-transparent' : 'bg-brand'
                     )}
-                  >
-                    {item.title}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <Badge variant="outline" className="min-w-14 justify-center">
+                        {t(`inbox:kind.${item.kind}`)}
+                      </Badge>
+                      <span
+                        className={cn(
+                          'min-w-0 truncate text-[13px] font-medium',
+                          item.readAt ? 'text-ink' : 'text-ink-strong'
+                        )}
+                      >
+                        {item.title}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 line-clamp-2 block text-[12px] text-ink-muted">
+                      {item.body}
+                    </span>
                   </span>
-                </span>
-                <span className="mt-0.5 line-clamp-2 block text-[12px] text-ink-muted">
-                  {item.body}
-                </span>
-              </span>
-              <span className="nums shrink-0 text-[11px] text-ink-faint">
-                {formatRelativeTime(item.createdAt, locale)}
-              </span>
-            </button>
-          ))}
+                  <span className="nums shrink-0 text-[11px] text-ink-faint">
+                    {formatRelativeTime(item.createdAt, locale)}
+                  </span>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       </section>
 
@@ -300,72 +332,91 @@ function LocalFollowsFeed(): React.JSX.Element {
           <Bell className="size-4 text-ink-faint" aria-hidden />
           {t('inbox:follows.title')}
         </h2>
-        {me && (
-          <Button
-            variant="secondary"
-            size="sm"
-            loading={importFromHub.isPending}
-            onClick={() => importFromHub.mutate()}
-          >
-            <CloudDownload className="size-3.5" aria-hidden />
-            {t('inbox:follows.importFromHub')}
-          </Button>
+        {follows.isPending ? (
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-7" />
+            <Skeleton className="h-8" />
+            <Skeleton className="h-6" />
+          </div>
+        ) : follows.isError ? (
+          <QueryErrorState
+            error={follows.error}
+            onRetry={() => void follows.refetch()}
+            title={t('inbox:follows.loadError')}
+            compact
+            className="min-h-0 px-0"
+          />
+        ) : (
+          <>
+            {me ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={importFromHub.isPending}
+                onClick={() => importFromHub.mutate()}
+              >
+                <CloudDownload className="size-3.5" aria-hidden />
+                {t('inbox:follows.importFromHub')}
+              </Button>
+            ) : null}
+            <div className="flex gap-1.5">
+              <Input
+                value={target}
+                aria-label={t('inbox:follows.targetLabel')}
+                onChange={(e) => setTarget(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitFollow()}
+                placeholder={t('inbox:follows.placeholder')}
+              />
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label={t('inbox:follows.add')}
+                disabled={target.trim() === ''}
+                onClick={submitFollow}
+              >
+                <Plus className="size-4" aria-hidden />
+              </Button>
+            </div>
+            <label className="flex items-center justify-between gap-2 text-[13px]">
+              {t('inbox:follows.papers')}
+              <Switch
+                checked={Boolean(papersFollow)}
+                onCheckedChange={(checked) => {
+                  if (checked) addFollow.mutate({ type: 'papers', target: 'daily' })
+                  else if (papersFollow) removeFollow.mutate(papersFollow)
+                }}
+              />
+            </label>
+            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+              {follows.data.filter((follow) => follow.type !== 'papers').length === 0 ? (
+                <p className="text-[12px] text-ink-faint">{t('inbox:follows.empty')}</p>
+              ) : null}
+              {follows.data
+                .filter((follow) => follow.type !== 'papers')
+                .map((follow) => {
+                  const Icon = FOLLOW_ICON[follow.type]
+                  return (
+                    <div
+                      key={follow.id}
+                      className="flex h-6 shrink-0 items-center gap-1.5 rounded-lg border bg-linear-to-b from-btn-from to-btn-to pr-0.5 pl-2"
+                    >
+                      <Icon className="size-3 shrink-0 text-ink-faint" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate text-[12px]">{follow.target}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-ink-faint"
+                        aria-label={t('common:remove')}
+                        onClick={() => removeFollow.mutate(follow)}
+                      >
+                        <X className="size-3" aria-hidden />
+                      </Button>
+                    </div>
+                  )
+                })}
+            </div>
+          </>
         )}
-        <div className="flex gap-1.5">
-          <Input
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submitFollow()}
-            placeholder={t('inbox:follows.placeholder')}
-          />
-          <Button
-            variant="secondary"
-            size="icon"
-            aria-label={t('inbox:follows.add')}
-            disabled={target.trim() === ''}
-            onClick={submitFollow}
-          >
-            <Plus className="size-4" aria-hidden />
-          </Button>
-        </div>
-        <label className="flex items-center justify-between gap-2 text-[13px]">
-          {t('inbox:follows.papers')}
-          <Switch
-            checked={Boolean(papersFollow)}
-            onCheckedChange={(checked) => {
-              if (checked) addFollow.mutate({ type: 'papers', target: 'daily' })
-              else if (papersFollow) removeFollow.mutate(papersFollow)
-            }}
-          />
-        </label>
-        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-          {follows.data?.filter((f) => f.type !== 'papers').length === 0 && (
-            <p className="text-[12px] text-ink-faint">{t('inbox:follows.empty')}</p>
-          )}
-          {follows.data
-            ?.filter((f) => f.type !== 'papers')
-            .map((follow) => {
-              const Icon = FOLLOW_ICON[follow.type]
-              return (
-                <div
-                  key={follow.id}
-                  className="flex h-6 shrink-0 items-center gap-1.5 rounded-lg border bg-linear-to-b from-btn-from to-btn-to pr-0.5 pl-2"
-                >
-                  <Icon className="size-3 shrink-0 text-ink-faint" aria-hidden />
-                  <span className="min-w-0 flex-1 truncate text-[12px]">{follow.target}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 text-ink-faint"
-                    aria-label={t('common:remove')}
-                    onClick={() => removeFollow.mutate(follow)}
-                  >
-                    <X className="size-3" aria-hidden />
-                  </Button>
-                </div>
-              )
-            })}
-        </div>
       </aside>
     </div>
   )

@@ -13,8 +13,14 @@ function trayIcon(): NativeImage {
   if (source.isEmpty()) return nativeImage.createEmpty()
   // 16pt with an explicit @2x representation; a bare 16px resize is blurry on Retina.
   const icon = nativeImage.createEmpty()
-  icon.addRepresentation({ scaleFactor: 1, buffer: source.resize({ width: 16, height: 16 }).toPNG() })
-  icon.addRepresentation({ scaleFactor: 2, buffer: source.resize({ width: 32, height: 32 }).toPNG() })
+  icon.addRepresentation({
+    scaleFactor: 1,
+    buffer: source.resize({ width: 16, height: 16 }).toPNG()
+  })
+  icon.addRepresentation({
+    scaleFactor: 2,
+    buffer: source.resize({ width: 32, height: 32 }).toPNG()
+  })
   return icon
 }
 

@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell } from 'lucide-react'
-import type { HubNotification, InboxItem } from '@oh-my-huggingface/shared'
+import {
+  normalizeHubEndpoint,
+  type HubNotification,
+  type InboxItem
+} from '@oh-my-huggingface/shared'
 import { isAuthError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
@@ -54,6 +58,7 @@ export function NotificationBell(): React.JSX.Element {
   const appInfo = useAppStore((s) => s.appInfo)
   const auth = useAppStore((s) => s.auth)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const signedIn = auth.status === 'signedIn'
   const [open, setOpen] = useState(false)
 
@@ -64,7 +69,7 @@ export function NotificationBell(): React.JSX.Element {
   // opens. Auth gaps are a capability issue, not a transient failure — don't
   // hammer, and a failure simply contributes no Hub rows.
   const hub = useQuery({
-    queryKey: ['hub-notifications', 0],
+    queryKey: ['hub-notifications', 0, endpointKey],
     queryFn: () => invoke('hub:notifications', { page: 0 }),
     enabled: signedIn,
     placeholderData: keepPreviousData,

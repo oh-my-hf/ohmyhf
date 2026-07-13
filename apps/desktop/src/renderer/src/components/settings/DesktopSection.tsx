@@ -35,9 +35,7 @@ export function DesktopSection(): React.JSX.Element {
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="font-medium text-ink-strong">{t('settings:desktop.closeToTray')}</span>
             <span className="text-[12px] text-ink-muted">
-              {isMac
-                ? t('settings:desktop.closeHintMac')
-                : t('settings:desktop.closeHintOther')}
+              {isMac ? t('settings:desktop.closeHintMac') : t('settings:desktop.closeHintOther')}
             </span>
           </div>
           <Switch

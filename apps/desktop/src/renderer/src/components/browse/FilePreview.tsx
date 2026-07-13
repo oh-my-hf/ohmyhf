@@ -28,6 +28,8 @@ import { NotebookView } from '@/components/browse/NotebookView'
 import { OnnxPreview } from '@/components/browse/OnnxPreview'
 import { ParquetPreview } from '@/components/browse/ParquetPreview'
 import { PdfPreview } from '@/components/browse/PdfPreview'
+import { useAppStore } from '@/stores/app'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 /** Text previews cap the transfer; anything past this shows the truncation bar. */
 const MAX_TEXT_BYTES = 512 * 1024
@@ -122,8 +124,9 @@ function TextPreview({
   onDownload: () => void
   downloading: boolean
 }): React.JSX.Element {
+  const endpointKey = useHubEndpointKey()
   const text = useQuery({
-    queryKey: ['fileText', kind, repoId, path],
+    queryKey: ['fileText', kind, repoId, path, endpointKey],
     queryFn: () => invoke('hub:fileText', { kind, repoId, path, maxBytes: MAX_TEXT_BYTES }),
     retry: false
   })
@@ -169,8 +172,9 @@ function NotebookPreview({
   onDownload: () => void
   downloading: boolean
 }): React.JSX.Element {
+  const endpointKey = useHubEndpointKey()
   const file = useQuery({
-    queryKey: ['fileText', kind, repoId, path, MAX_NOTEBOOK_BYTES],
+    queryKey: ['fileText', kind, repoId, path, MAX_NOTEBOOK_BYTES, endpointKey],
     queryFn: () => invoke('hub:fileText', { kind, repoId, path, maxBytes: MAX_NOTEBOOK_BYTES }),
     retry: false
   })
@@ -215,8 +219,9 @@ function SafetensorsPreview({
   path: string
 }): React.JSX.Element {
   const { t } = useTranslation('detail')
+  const endpointKey = useHubEndpointKey()
   const header = useQuery({
-    queryKey: ['safetensors', kind, repoId, path],
+    queryKey: ['safetensors', kind, repoId, path, endpointKey],
     queryFn: () => invoke('hub:safetensorsHeader', { kind, repoId, path }),
     retry: false
   })
@@ -308,9 +313,11 @@ export function FilePreview({
 }: FilePreviewProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
   const push = useToasts((s) => s.push)
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
+  const endpointKey = useHubEndpointKey()
   const fileKind = fileKindOf(entry.path)
   const name = entry.path.split('/').at(-1) ?? entry.path
-  const rawUrl = resolveUrl(kind, repoId, entry.path)
+  const rawUrl = resolveUrl(kind, repoId, entry.path, 'main', endpoint)
 
   const copyRawUrl = (): void => {
     void navigator.clipboard.writeText(rawUrl).then(() => push(t('common:copied'), 'success'))
@@ -338,7 +345,7 @@ export function FilePreview({
               the main process's auth; the copy button keeps the shareable
               https resolve URL. */}
           <img
-            src={repoFileUrl(kind, repoId, entry.path)}
+            src={repoFileUrl(kind, repoId, entry.path, 'main', endpoint)}
             alt={name}
             className="max-h-full max-w-full rounded-md border object-contain"
           />
@@ -387,6 +394,7 @@ export function FilePreview({
     case 'pdf':
       body = (
         <PdfPreview
+          key={`${endpointKey}:${kind}:${repoId}:${entry.path}:${entry.size}`}
           kind={kind}
           repoId={repoId}
           path={entry.path}
@@ -474,7 +482,7 @@ export function FilePreview({
                 variant="ghost"
                 size="icon"
                 aria-label={t('common:openOnHub')}
-                onClick={() => openExternal(hubBlobUrl(kind, repoId, entry.path))}
+                onClick={() => openExternal(hubBlobUrl(kind, repoId, entry.path, 'main', endpoint))}
               >
                 <ExternalLink className="size-4" aria-hidden />
               </Button>

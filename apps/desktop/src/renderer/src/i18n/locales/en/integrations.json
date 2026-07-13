@@ -4,19 +4,32 @@
     "copied": "Exported to {{path}}.",
     "failed": "Export failed: {{error}}",
     "invalidPath": "Invalid file path: {{file}}",
-    "notImplemented": "This export is not implemented yet.",
     "notInCache": "{{file}} is not in the local cache yet — download it first.",
     "ollamaDone": "Created Ollama model {{name}}.",
     "ollamaFailed": "Ollama import failed: {{error}}",
-    "ollamaMissing": "Ollama was not found. Install it from ollama.com and try again."
+    "ollamaMissing": "Ollama was not found. Install it from ollama.com and try again.",
+    "targetsError": "Export targets could not be detected"
+  },
+  "task": {
+    "canceled": "Task canceled.",
+    "done": "Task completed.",
+    "failed": "Task failed.",
+    "phase": {
+      "copying": "Copying file…",
+      "preparing": "Preparing export…",
+      "running": "Running export…"
+    }
   },
   "upload": {
     "done": "Uploaded {{repo}} to the Hub.",
     "emptyFolder": "The selected folder contains no uploadable files.",
     "failed": "Upload failed: {{error}}",
+    "ignoreUnreadable": "The folder's .gitignore or .hfignore cannot be read safely.",
+    "invalidPath": "The folder contains a file name that cannot be represented safely on the Hub.",
     "needWriteScope": "Your session does not have write access. Sign out and sign in again to grant write permission.",
-    "notImplemented": "The upload pipeline is not implemented yet.",
+    "selectionStale": "The selected folder changed. Choose it again before uploading.",
     "signInFirst": "Sign in to your Hugging Face account before uploading.",
+    "specialFile": "The folder contains a socket, FIFO, device, or other special file and cannot be uploaded safely.",
     "tooManyFiles": "The folder has too many files — the current limit is {{max}}."
   }
 }

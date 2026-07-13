@@ -1,4 +1,5 @@
 import { Menu, app, dialog, shell, type MenuItemConstructorOptions } from 'electron'
+import { NAVIGATION_SHORTCUTS } from '@oh-my-huggingface/shared'
 import type { MainI18n } from './i18n'
 
 const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
@@ -7,6 +8,14 @@ const REPO_URL = 'https://github.com/oh-my-hf/ohmyhf'
 export function buildMenu(i18n: MainI18n, navigate: (route: string) => void): void {
   const t = (key: string): string => i18n.t(key)
   const isMac = process.platform === 'darwin'
+  const goItems = NAVIGATION_SHORTCUTS.flatMap<MenuItemConstructorOptions>((item, index) => [
+    ...(index === 4 ? [{ type: 'separator' as const }] : []),
+    {
+      label: t(item.menuKey),
+      accelerator: `CmdOrCtrl+${item.key}`,
+      click: () => navigate(item.route)
+    }
+  ])
 
   const showAbout = (): void => {
     void dialog.showMessageBox({
@@ -69,29 +78,7 @@ export function buildMenu(i18n: MainI18n, navigate: (route: string) => void): vo
     },
     {
       label: t('menu.go'),
-      submenu: [
-        { label: t('menu.models'), accelerator: 'CmdOrCtrl+1', click: () => navigate('/models') },
-        {
-          label: t('menu.datasets'),
-          accelerator: 'CmdOrCtrl+2',
-          click: () => navigate('/datasets')
-        },
-        { label: t('menu.spaces'), accelerator: 'CmdOrCtrl+3', click: () => navigate('/spaces') },
-        { label: t('menu.papers'), accelerator: 'CmdOrCtrl+4', click: () => navigate('/papers') },
-        { type: 'separator' },
-        {
-          label: t('menu.favorites'),
-          accelerator: 'CmdOrCtrl+5',
-          click: () => navigate('/favorites')
-        },
-        {
-          label: t('menu.downloads'),
-          accelerator: 'CmdOrCtrl+6',
-          click: () => navigate('/downloads')
-        },
-        { label: t('menu.cache'), accelerator: 'CmdOrCtrl+7', click: () => navigate('/cache') },
-        { label: t('menu.inbox'), accelerator: 'CmdOrCtrl+8', click: () => navigate('/inbox') }
-      ]
+      submenu: goItems
     },
     {
       label: t('menu.view'),

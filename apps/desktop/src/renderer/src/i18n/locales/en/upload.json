@@ -7,7 +7,9 @@
   "name": "Repository name",
   "namePlaceholder": "my-cool-model",
   "noFolder": "No folder selected",
+  "selectionSummary": "{{files}} files · {{size}} · {{excluded}} excluded",
   "phase": {
+    "committing": "Committing…",
     "hashing": "Hashing files…",
     "preparing": "Preparing files…",
     "uploading": "Uploading…"
@@ -15,5 +17,16 @@
   "private": "Private repository",
   "scopeHint": "Uploads use the write permission granted at sign-in.",
   "signIn": "Sign in to upload.",
-  "title": "Upload to the Hub"
+  "title": "Upload to the Hub",
+  "warnings": {
+    "acknowledge": "I reviewed this warning and want to continue.",
+    "large-upload": {
+      "body": "This upload is {{size}} and may take a long time.",
+      "title": "Large upload"
+    },
+    "sensitive-path": {
+      "body": "{{count}} path(s) may contain credentials or secrets.",
+      "title": "Potentially sensitive files"
+    }
+  }
 }

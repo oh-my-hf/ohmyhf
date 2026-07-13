@@ -7,8 +7,10 @@ import type {
   RepoSummary,
   UserSearchResult
 } from '@oh-my-huggingface/shared'
+import { normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { useDebounced } from '@/hooks/use-debounced'
+import { useAppStore } from '@/stores/app'
 
 const STALE_TIME = 60_000
 
@@ -28,9 +30,10 @@ export function useGlobalSearch(query: string): GlobalSearchResults {
   const trimmed = query.trim()
   const q = useDebounced(trimmed, 200)
   const enabled = q !== ''
+  const endpointKey = normalizeHubEndpoint(useAppStore((s) => s.settings.hubEndpoint))
 
   const repoQuery = (kind: RepoKind) => ({
-    queryKey: ['globalSearch', kind, q],
+    queryKey: ['globalSearch', kind, q, endpointKey],
     queryFn: () =>
       invoke('hub:search', { query: { kind, search: q, sort: 'trending' as const, limit: 5 } }),
     staleTime: STALE_TIME,
@@ -43,25 +46,25 @@ export function useGlobalSearch(query: string): GlobalSearchResults {
       repoQuery('dataset'),
       repoQuery('space'),
       {
-        queryKey: ['globalSearch', 'user', q],
+        queryKey: ['globalSearch', 'user', q, endpointKey],
         queryFn: () => invoke('hub:searchUsers', { query: q }),
         staleTime: STALE_TIME,
         enabled
       },
       {
-        queryKey: ['globalSearch', 'org', q],
+        queryKey: ['globalSearch', 'org', q, endpointKey],
         queryFn: () => invoke('hub:searchOrgs', { query: q }),
         staleTime: STALE_TIME,
         enabled
       },
       {
-        queryKey: ['globalSearch', 'paper', q],
+        queryKey: ['globalSearch', 'paper', q, endpointKey],
         queryFn: () => invoke('hub:searchPapers', { query: q }),
         staleTime: STALE_TIME,
         enabled
       },
       {
-        queryKey: ['globalSearch', 'collection', q],
+        queryKey: ['globalSearch', 'collection', q, endpointKey],
         queryFn: () => invoke('hub:searchCollections', { query: q }),
         staleTime: STALE_TIME,
         enabled
@@ -79,7 +82,6 @@ export function useGlobalSearch(query: string): GlobalSearchResults {
     orgs: orgs.data ?? [],
     papers: papers.data ?? [],
     collections: collections.data ?? [],
-    isLoading:
-      trimmed !== '' && (trimmed !== q || asyncQueries.some((r) => r.isLoading))
+    isLoading: trimmed !== '' && (trimmed !== q || asyncQueries.some((r) => r.isLoading))
   }
 }

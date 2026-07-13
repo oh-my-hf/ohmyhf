@@ -122,7 +122,9 @@ export function PrivacySection(): React.JSX.Element {
             ) : report.isError ? (
               <span className="text-ink-muted">{t('settings:privacy.cache.scanFailed')}</span>
             ) : (
-              <span className="nums text-ink-muted">{formatBytes(report.data?.totalSize ?? 0)}</span>
+              <span className="nums text-ink-muted">
+                {formatBytes(report.data?.totalSize ?? 0)}
+              </span>
             )}
           </div>
         </div>

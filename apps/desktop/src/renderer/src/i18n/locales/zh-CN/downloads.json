@@ -11,6 +11,16 @@
     "pauseAll": "全部暂停",
     "resumeAll": "全部继续"
   },
+  "commands": {
+    "actions": "操作",
+    "downloadCurrentRepository": "下载 {{repo}}",
+    "downloadRepository": "下载仓库",
+    "downloadSelectedFile": "下载 {{file}}",
+    "searchPlaceholder": "搜索要下载的模型、数据集或 Space…",
+    "started": "下载已开始",
+    "starting": "正在启动下载…",
+    "typeToSearch": "输入仓库名称以开始下载。"
+  },
   "confirmRemove": {
     "body": "该下载仍在进行中。移除会取消传输，并将其从列表中删除。",
     "confirm": "取消并移除",

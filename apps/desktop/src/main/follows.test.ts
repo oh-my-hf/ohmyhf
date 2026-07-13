@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import { FollowsPoller } from './follows'
 import type { Library } from './library'
-import type { MainI18n } from './i18n'
+import type { NotificationService } from './notifications'
 import type { SettingsStore } from './settings'
 
 vi.mock('electron', () => ({
@@ -48,18 +48,11 @@ describe('FollowsPoller scheduling', () => {
     listFollows,
     listInbox: () => []
   } as unknown as Library
-  const i18n = { t: (key: string) => key } as unknown as MainI18n
+  const notifications = { show: () => {} } as unknown as NotificationService
   let poller: FollowsPoller
 
   function makePoller(store: SettingsStore): FollowsPoller {
-    return new FollowsPoller(
-      library,
-      {} as HubClient,
-      store,
-      i18n,
-      () => {},
-      () => {}
-    )
+    return new FollowsPoller(library, {} as HubClient, store, () => {}, notifications)
   }
 
   beforeEach(() => {

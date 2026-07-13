@@ -59,3 +59,43 @@ export function isHubSessionRequired(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err)
   return message.includes(HUB_SESSION_REQUIRED_CODE)
 }
+
+const MAX_ERROR_DETAILS_LENGTH = 2_000
+
+/**
+ * Produce diagnostics that are safe to show or copy from a recovery screen.
+ * Renderer errors can contain tokens, authenticated URLs, and absolute user
+ * paths in their stack, none of which should be echoed into support reports.
+ */
+export function sanitizeErrorDetails(err: unknown): string {
+  let raw: string
+  if (err instanceof Error) raw = err.stack ?? err.message
+  else if (typeof err === 'string') raw = err
+  else {
+    try {
+      raw = JSON.stringify(err) || String(err)
+    } catch {
+      raw = String(err)
+    }
+  }
+
+  const sanitized = raw
+    .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer <redacted>')
+    .replace(/\bhf_[A-Za-z0-9]{8,}\b/g, '<redacted-token>')
+    .replace(
+      /([?&](?:access_?token|auth|cookie|key|password|secret|session|token)=)[^&#\s]+/gi,
+      '$1<redacted>'
+    )
+    .replace(
+      /(["'](?:access_?token|auth|cookie|key|password|secret|session|token)["']\s*:\s*["'])[^"']+/gi,
+      '$1<redacted>'
+    )
+    .replace(/file:\/\/\/[^\s)\]}]+/gi, 'file:///<path>')
+    .replace(/\/(?:Users|home|private|tmp)\/[^\s)\]}]+/g, '/<path>')
+    .replace(/\b[A-Za-z]:\\[^\s)\]}]+/g, '<path>')
+    .trim()
+
+  return sanitized.length > MAX_ERROR_DETAILS_LENGTH
+    ? `${sanitized.slice(0, MAX_ERROR_DETAILS_LENGTH)}\n…`
+    : sanitized
+}

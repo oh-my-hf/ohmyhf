@@ -10,6 +10,7 @@ import {
   FileText,
   FolderGit2,
   HardDrive,
+  History,
   Home,
   Inbox,
   LayoutGrid,
@@ -25,6 +26,7 @@ import { useAppStore } from '@/stores/app'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
+import { normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 
 interface NavItem {
   to: string
@@ -36,10 +38,12 @@ interface NavItem {
 function SidebarLink({
   item,
   label,
+  badgeLabel,
   collapsed
 }: {
   item: NavItem
   label: string
+  badgeLabel?: string
   collapsed: boolean
 }): React.JSX.Element {
   return (
@@ -50,6 +54,7 @@ function SidebarLink({
         <NavLink
           to={item.to}
           end
+          aria-label={collapsed ? [label, badgeLabel].filter(Boolean).join(', ') : undefined}
           className={({ isActive }) =>
             cn(
               'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
@@ -70,14 +75,23 @@ function SidebarLink({
               {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
               {item.badge ? (
                 collapsed ? (
-                  <span
-                    className="absolute top-1 right-1 size-1.5 rounded-full bg-brand"
-                    aria-hidden
-                  />
+                  <>
+                    <span
+                      className="absolute top-1 right-1 size-1.5 rounded-full bg-brand"
+                      aria-hidden
+                    />
+                    <span className="sr-only">{badgeLabel}</span>
+                  </>
                 ) : (
-                  <span className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink">
-                    {item.badge > 99 ? '99+' : item.badge}
-                  </span>
+                  <>
+                    <span
+                      aria-hidden
+                      className="nums inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-brand-ink"
+                    >
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                    <span className="sr-only">{badgeLabel}</span>
+                  </>
                 )
               ) : null}
             </>
@@ -94,6 +108,7 @@ function SidebarLink({
 export function Sidebar(): React.JSX.Element {
   const { t } = useTranslation(['nav', 'auth', 'common'])
   const auth = useAppStore((s) => s.auth)
+  const endpointKey = normalizeHubEndpoint(useAppStore((s) => s.settings.hubEndpoint))
   const settingsOpen = useAppStore((s) => s.settingsOpen)
   const openSettings = useAppStore((s) => s.openSettings)
   const manualCollapsed = useAppStore((s) => s.sidebarCollapsed)
@@ -110,7 +125,7 @@ export function Sidebar(): React.JSX.Element {
   // mirror it so the two observers agree.
   const signedIn = auth.status === 'signedIn'
   const hubNotifications = useQuery({
-    queryKey: ['hub-notifications', 0],
+    queryKey: ['hub-notifications', 0, endpointKey],
     queryFn: () => invoke('hub:notifications', { page: 0 }),
     enabled: signedIn,
     placeholderData: keepPreviousData,
@@ -131,6 +146,7 @@ export function Sidebar(): React.JSX.Element {
   ]
   const library: NavItem[] = [
     { to: '/favorites', labelKey: 'favorites', icon: Star },
+    { to: '/history', labelKey: 'history', icon: History },
     { to: '/my-repos', labelKey: 'myRepos', icon: FolderGit2 },
     { to: '/collections', labelKey: 'collections', icon: Bookmark },
     { to: '/downloads', labelKey: 'downloads', icon: ArrowDownToLine, badge: activeDownloads },
@@ -142,6 +158,7 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <aside
+      aria-label={t('navigation')}
       className={cn(
         'flex shrink-0 flex-col border-r border-border-card bg-panel',
         collapsed ? 'w-12' : 'w-52'
@@ -155,7 +172,13 @@ export function Sidebar(): React.JSX.Element {
             </div>
           )}
           {browse.map((item) => (
-            <SidebarLink key={item.to} item={item} label={t(item.labelKey)} collapsed={collapsed} />
+            <SidebarLink
+              key={item.to}
+              item={item}
+              label={t(item.labelKey)}
+              badgeLabel={item.badge ? t('badgeCount', { count: item.badge }) : undefined}
+              collapsed={collapsed}
+            />
           ))}
         </div>
         <div className="flex flex-col gap-0.5">
@@ -165,7 +188,13 @@ export function Sidebar(): React.JSX.Element {
             </div>
           )}
           {library.map((item) => (
-            <SidebarLink key={item.to} item={item} label={t(item.labelKey)} collapsed={collapsed} />
+            <SidebarLink
+              key={item.to}
+              item={item}
+              label={t(item.labelKey)}
+              badgeLabel={item.badge ? t('badgeCount', { count: item.badge }) : undefined}
+              collapsed={collapsed}
+            />
           ))}
         </div>
       </nav>
@@ -175,6 +204,8 @@ export function Sidebar(): React.JSX.Element {
           <TooltipTrigger asChild>
             <button
               type="button"
+              aria-label={collapsed ? t('settings') : undefined}
+              aria-pressed={settingsOpen}
               onClick={() => openSettings()}
               className={cn(
                 'group relative flex h-8 items-center gap-2.5 rounded-lg border border-transparent px-2 text-[13px] font-medium transition-colors duration-150',
@@ -203,6 +234,13 @@ export function Sidebar(): React.JSX.Element {
         </Tooltip>
         <button
           type="button"
+          aria-label={
+            collapsed
+              ? auth.status === 'signedIn'
+                ? t('accountSignedIn', { name: auth.user.name })
+                : t('auth:signedOut')
+              : undefined
+          }
           onClick={() => openSettings('account')}
           className={cn(
             'mt-0.5 flex h-9 items-center gap-2.5 rounded-lg text-[13px] text-ink-muted transition-colors duration-150 hover:text-ink',

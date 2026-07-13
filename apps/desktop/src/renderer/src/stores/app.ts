@@ -1,5 +1,12 @@
 import { create } from 'zustand'
-import type { AppInfo, AppSettings, AuthState, RepoKind, RepoSort } from '@oh-my-huggingface/shared'
+import type {
+  AppInfo,
+  AppSettings,
+  AuthState,
+  RepoKind,
+  RepoSort,
+  SettingsPatch
+} from '@oh-my-huggingface/shared'
 import { DEFAULT_SETTINGS } from '@oh-my-huggingface/shared'
 import type { SpaceHardware } from '@/lib/catalog'
 import type { ParamBucket } from '@/lib/utils'
@@ -70,7 +77,7 @@ interface AppState {
   shortcutsOpen: boolean
 
   setSettings: (settings: AppSettings) => void
-  updateSettings: (patch: Partial<AppSettings>) => Promise<void>
+  updateSettings: (patch: SettingsPatch) => Promise<void>
   setAuth: (auth: AuthState) => void
   setPaletteOpen: (open: boolean) => void
   setFilters: (kind: RepoKind, patch: Partial<BrowseFilters>) => void

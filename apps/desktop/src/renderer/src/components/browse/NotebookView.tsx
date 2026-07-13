@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import type { NotebookCell, NotebookOutput, ParsedNotebook } from '@/lib/notebook'
 import { CodeBlock } from '@/components/browse/CodeBlock'
@@ -36,6 +37,8 @@ function OutputBlock({
   output: NotebookOutput
   onZoom: (src: string) => void
 }): React.JSX.Element | null {
+  const { t } = useTranslation('common')
+
   switch (output.kind) {
     case 'stream':
       return (
@@ -61,12 +64,18 @@ function OutputBlock({
       )
     case 'image':
       return (
-        <img
-          src={output.image.dataUri}
-          alt=""
-          className="max-w-full cursor-zoom-in rounded-md border border-border-card bg-white"
+        <button
+          type="button"
+          aria-label={t('zoomImage')}
+          className="block max-w-full cursor-zoom-in rounded-md bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           onClick={() => onZoom(output.image.dataUri)}
-        />
+        >
+          <img
+            src={output.image.dataUri}
+            alt=""
+            className="max-w-full rounded-md border border-border-card bg-white"
+          />
+        </button>
       )
     case 'html':
       // Rendered through the same sanitizing pipeline as model cards (raw HTML

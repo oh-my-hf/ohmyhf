@@ -17,6 +17,7 @@ import type {
   TokenSignInResult,
   UserProfile
 } from '@oh-my-huggingface/shared'
+import { hubRelativeUrl } from '@oh-my-huggingface/shared'
 import type { HubClient } from '@oh-my-huggingface/hub-api'
 import { isForbidden, isUnauthorized } from '@oh-my-huggingface/hub-api'
 import type { AppDatabase } from './db'
@@ -512,7 +513,7 @@ export class AuthManager {
       this.setState(
         this.signedInState({
           ...user,
-          avatarUrl: bustAvatarCache(user.avatarUrl)
+          avatarUrl: bustAvatarCache(user.avatarUrl, this.client.baseUrl)
         })
       )
     } catch (err) {
@@ -538,10 +539,10 @@ export class AuthManager {
 }
 
 /** Append ?v= so Chromium does not keep a stale Hub /avatars/… image. */
-function bustAvatarCache(url: string | undefined): string | undefined {
+function bustAvatarCache(url: string | undefined, endpoint?: string | null): string | undefined {
   if (!url) return undefined
   try {
-    const abs = url.startsWith('/') ? `https://huggingface.co${url}` : url
+    const abs = hubRelativeUrl(url, endpoint)
     const parsed = new URL(abs)
     if (!parsed.pathname.includes('/avatars/')) return abs
     parsed.searchParams.set('v', String(Date.now()))

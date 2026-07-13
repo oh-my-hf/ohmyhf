@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 const MAX_ONNX_BYTES = 8 * 1024 * 1024
 
@@ -30,9 +31,10 @@ export function OnnxPreview({
   downloading
 }: OnnxPreviewProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpointKey = useHubEndpointKey()
 
   const model = useQuery({
-    queryKey: ['onnxPreview', kind, repoId, path, size],
+    queryKey: ['onnxPreview', kind, repoId, path, size, endpointKey],
     retry: false,
     queryFn: async () => {
       if (size > MAX_ONNX_BYTES) {
@@ -86,13 +88,17 @@ export function OnnxPreview({
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b px-4 py-3">
         <div>
-          <div className="text-[11px] font-medium text-ink-faint">{t('detail:onnxPreview.nodes')}</div>
+          <div className="text-[11px] font-medium text-ink-faint">
+            {t('detail:onnxPreview.nodes')}
+          </div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {data.nodeCount}
           </div>
         </div>
         <div>
-          <div className="text-[11px] font-medium text-ink-faint">{t('detail:onnxPreview.size')}</div>
+          <div className="text-[11px] font-medium text-ink-faint">
+            {t('detail:onnxPreview.size')}
+          </div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {formatBytes(size)}
           </div>

@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
 import { MANAGE_REPOS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 /** Secret/variable keys must look like environment variable names. */
 const KEY_PATTERN = /^[a-zA-Z][_a-zA-Z0-9]*$/
@@ -72,6 +73,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = useHubEndpointKey()
 
   const canManage = !scopeMissing(auth, MANAGE_REPOS_SCOPE)
 
@@ -81,7 +83,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
   const [secretDescription, setSecretDescription] = useState('')
 
   const secrets = useQuery({
-    queryKey: ['space-secrets', repoId],
+    queryKey: ['space-secrets', repoId, endpointKey],
     queryFn: () => invoke('hub:spaceSecrets', { repoId })
   })
 
@@ -121,7 +123,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
   const [variableDescription, setVariableDescription] = useState('')
 
   const variables = useQuery({
-    queryKey: ['space-variables', repoId],
+    queryKey: ['space-variables', repoId, endpointKey],
     queryFn: () => invoke('hub:spaceVariables', { repoId })
   })
 
@@ -159,7 +161,7 @@ export function SpaceOpsPanel({ repoId }: { repoId: string }): React.JSX.Element
   const [logType, setLogType] = useState<LogType>('run')
 
   const logs = useQuery({
-    queryKey: ['space-logs', repoId, logType],
+    queryKey: ['space-logs', repoId, logType, endpointKey],
     queryFn: () => invoke('hub:spaceLogs', { repoId, logType }),
     staleTime: 0
   })

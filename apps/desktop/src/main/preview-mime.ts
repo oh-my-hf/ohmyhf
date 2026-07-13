@@ -32,7 +32,10 @@ function extensionOf(path: string): string {
  * Best-effort Content-Type for omhf-file streaming. Prefer a concrete Hub
  * header; fall back by path extension when it is missing or generic.
  */
-export function mimeForOmhfFile(path: string, contentType: string | null | undefined): string | null {
+export function mimeForOmhfFile(
+  path: string,
+  contentType: string | null | undefined
+): string | null {
   const raw = contentType?.split(';')[0]?.trim().toLowerCase()
   if (raw && raw !== 'application/octet-stream' && raw !== 'binary/octet-stream') {
     return raw

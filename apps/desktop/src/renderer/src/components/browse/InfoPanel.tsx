@@ -12,13 +12,19 @@ export function InfoPanel({ detail }: { detail: RepoDetail }): React.JSX.Element
 
   const rows: Array<[string, React.ReactNode]> = []
   if (detail.paramCount !== undefined)
-    rows.push([t('info.params'), <span className="font-mono">{formatParams(detail.paramCount)}</span>])
+    rows.push([
+      t('info.params'),
+      <span className="font-mono">{formatParams(detail.paramCount)}</span>
+    ])
   if (detail.license) rows.push([t('info.license'), detail.license])
   if (detail.pipelineTag) rows.push([t('info.task'), detail.pipelineTag])
   if (detail.libraryName) rows.push([t('info.library'), detail.libraryName])
   if (detail.sdk) rows.push([t('info.sdk'), detail.sdk])
   if (detail.sha)
-    rows.push([t('info.sha'), <span className="font-mono text-[12px]">{detail.sha.slice(0, 12)}</span>])
+    rows.push([
+      t('info.sha'),
+      <span className="font-mono text-[12px]">{detail.sha.slice(0, 12)}</span>
+    ])
   if (detail.lastModified) rows.push([t('info.updated'), formatDate(detail.lastModified, locale)])
   if (detail.createdAt) rows.push([t('info.created'), formatDate(detail.createdAt, locale)])
   if (detail.usedStorage !== undefined && detail.usedStorage > 0)

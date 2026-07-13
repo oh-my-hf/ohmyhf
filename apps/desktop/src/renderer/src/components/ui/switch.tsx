@@ -1,10 +1,7 @@
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { cn } from '@/lib/utils'
 
-export function Switch({
-  className,
-  ...props
-}: SwitchPrimitive.SwitchProps): React.JSX.Element {
+export function Switch({ className, ...props }: SwitchPrimitive.SwitchProps): React.JSX.Element {
   return (
     <SwitchPrimitive.Root
       className={cn(

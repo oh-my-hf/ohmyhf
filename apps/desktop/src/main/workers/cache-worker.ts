@@ -148,7 +148,6 @@ function scanRepo(cacheDir: string, repoFolder: string): CachedRepo | null {
   return {
     id: parsed.repoId,
     kind: parsed.kind,
-    path: repoPath,
     sizeOnDisk: blobSize + nonBlobSize + partialSize,
     revisions,
     partialSize,

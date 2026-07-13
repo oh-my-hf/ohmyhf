@@ -9,10 +9,12 @@ import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { QueryErrorState } from '@/components/errors/QueryErrorState'
 import { useToasts } from '@/components/ui/toaster'
 import { CommentComposer } from '@/components/community/CommentComposer'
 import { UpvoteButton } from '@/components/community/UpvoteButton'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { hubPaperUrl, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 
 const ROW_HEIGHT = 64
 
@@ -23,10 +25,11 @@ export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Ele
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const push = useToasts((s) => s.push)
 
   const paper = useQuery({
-    queryKey: ['paper', paperId],
+    queryKey: ['paper', paperId, endpointKey],
     queryFn: () => invoke('hub:paper', { paperId }),
     enabled: paperId !== ''
   })
@@ -39,6 +42,17 @@ export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Ele
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-40" />
       </div>
+    )
+  }
+
+  if (paper.isError && selected === undefined) {
+    return (
+      <QueryErrorState
+        error={paper.error}
+        onRetry={() => void paper.refetch()}
+        title={t('papers:detailError')}
+        className="h-full"
+      />
     )
   }
 
@@ -56,7 +70,7 @@ export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Ele
         {auth.status === 'signedIn' && (
           <UpvoteButton
             upvotes={selected.upvotes}
-            hubUrl={`https://huggingface.co/papers/${selected.id}`}
+            hubUrl={hubPaperUrl(selected.id, settings.hubEndpoint)}
             onToggle={(next) =>
               invoke('hub:paperUpvoteSet', { paperId: selected.id, upvoted: next })
             }
@@ -112,7 +126,7 @@ export function PaperDetailPane({ paperId }: { paperId: string }): React.JSX.Ele
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => openExternal(`https://huggingface.co/papers/${selected.id}`)}
+          onClick={() => openExternal(hubPaperUrl(selected.id, settings.hubEndpoint))}
         >
           <ExternalLink className="size-3.5" aria-hidden />
           {t('papers:readOnHub')}
@@ -143,10 +157,21 @@ export function PapersPage(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const parentRef = useRef<HTMLDivElement>(null)
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['papers'],
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError
+  } = useInfiniteQuery({
+    queryKey: ['papers', endpointKey],
     queryFn: ({ pageParam }) => invoke('hub:papers', pageParam ? { cursor: pageParam } : {}),
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? null
@@ -154,6 +179,8 @@ export function PapersPage(): React.JSX.Element {
 
   const papers = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
+  // TanStack Virtual exposes imperative functions that React Compiler cannot memoize safely.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: papers.length + (hasNextPage ? 1 : 0),
     getScrollElement: () => parentRef.current,
@@ -163,10 +190,23 @@ export function PapersPage(): React.JSX.Element {
   const virtualItems = virtualizer.getVirtualItems()
   useEffect(() => {
     const last = virtualItems.at(-1)
-    if (last && last.index >= papers.length - 1 && hasNextPage && !isFetchingNextPage) {
+    if (
+      last &&
+      last.index >= papers.length - 1 &&
+      hasNextPage &&
+      !isFetchingNextPage &&
+      !isFetchNextPageError
+    ) {
       void fetchNextPage()
     }
-  }, [virtualItems, papers.length, hasNextPage, isFetchingNextPage, fetchNextPage])
+  }, [
+    virtualItems,
+    papers.length,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage
+  ])
 
   return (
     <div className="flex h-full min-w-0">
@@ -180,6 +220,16 @@ export function PapersPage(): React.JSX.Element {
               <Skeleton key={i} className="h-14" />
             ))}
           </div>
+        ) : isError && data === undefined ? (
+          <QueryErrorState
+            error={error}
+            onRetry={() => void refetch()}
+            title={t('papers:listError')}
+            compact
+            className="min-h-0 flex-1"
+          />
+        ) : papers.length === 0 ? (
+          <EmptyState icon={FileText} title={t('papers:empty')} className="flex-1" />
         ) : (
           <div ref={parentRef} className="min-h-0 flex-1 overflow-y-auto">
             <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
@@ -192,7 +242,13 @@ export function PapersPage(): React.JSX.Element {
                       className="absolute inset-x-0 flex items-center justify-center text-[12px] text-ink-faint"
                       style={{ top: row.start, height: ROW_HEIGHT }}
                     >
-                      {t('common:loading')}
+                      {isFetchNextPageError ? (
+                        <Button variant="ghost" size="sm" onClick={() => void fetchNextPage()}>
+                          {t('papers:retryMore')}
+                        </Button>
+                      ) : (
+                        t('common:loading')
+                      )}
                     </div>
                   )
                 }
@@ -201,6 +257,7 @@ export function PapersPage(): React.JSX.Element {
                   <button
                     key={paper.id}
                     type="button"
+                    aria-current={isSelected ? 'true' : undefined}
                     onClick={() => navigate(`/papers/${paper.id}`)}
                     className={cn(
                       'absolute inset-x-1 flex flex-col justify-center gap-1 rounded-md px-2.5 text-left transition-colors duration-100',

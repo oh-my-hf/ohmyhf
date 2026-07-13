@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToasts } from '@/components/ui/toaster'
 import { resolveLocale, useAppStore } from '@/stores/app'
 import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
+import { normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 
 /** My collections: card grid + create dialog (/collections). */
 export function CollectionsPage(): React.JSX.Element {
@@ -36,6 +37,7 @@ export function CollectionsPage(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
 
   const me = auth.status === 'signedIn' ? auth.user.name : undefined
   const orgs = auth.status === 'signedIn' ? auth.user.orgs : []
@@ -49,7 +51,7 @@ export function CollectionsPage(): React.JSX.Element {
   const owner = namespace === '' ? (me ?? '') : namespace
 
   const collections = useQuery({
-    queryKey: ['collections', me],
+    queryKey: ['collections', me, endpointKey],
     queryFn: () => invoke('hub:collections', { owner: me ?? '' }),
     enabled: me !== undefined
   })

@@ -7,7 +7,9 @@
   "name": "仓库名称",
   "namePlaceholder": "my-cool-model",
   "noFolder": "未选择文件夹",
+  "selectionSummary": "{{files}} 个文件 · {{size}} · 已排除 {{excluded}} 项",
   "phase": {
+    "committing": "正在提交…",
     "hashing": "正在计算文件哈希…",
     "preparing": "正在准备文件…",
     "uploading": "正在上传…"
@@ -15,5 +17,16 @@
   "private": "私有仓库",
   "scopeHint": "上传使用登录时授予的写入权限。",
   "signIn": "登录后即可上传。",
-  "title": "上传到 Hub"
+  "title": "上传到 Hub",
+  "warnings": {
+    "acknowledge": "我已检查此警告并确认继续。",
+    "large-upload": {
+      "body": "本次上传大小为 {{size}}，可能需要较长时间。",
+      "title": "大型上传"
+    },
+    "sensitive-path": {
+      "body": "检测到 {{count}} 个路径可能包含凭据或密钥。",
+      "title": "可能包含敏感文件"
+    }
+  }
 }

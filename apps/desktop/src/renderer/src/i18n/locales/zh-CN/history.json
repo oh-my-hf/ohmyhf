@@ -1,0 +1,32 @@
+{
+  "clear": "清空历史",
+  "clearFilters": "清除筛选",
+  "cleared": "浏览历史已清空",
+  "confirm": {
+    "body": "此操作会永久移除存储在此设备上的全部 {{count}} 条历史记录。",
+    "confirm": "清空历史",
+    "error": "无法清空历史记录，请重试。",
+    "title": "清空浏览历史？"
+  },
+  "count": "共 {{count}} 条",
+  "empty": {
+    "body": "打开过的仓库会显示在这里，方便快速再次访问。",
+    "title": "还没有浏览历史"
+  },
+  "error": {
+    "body": "无法加载本地浏览历史。",
+    "title": "历史记录加载失败"
+  },
+  "filter": {
+    "all": "全部类型"
+  },
+  "filterLabel": "按仓库类型筛选",
+  "filteredEmpty": {
+    "body": "请尝试其他仓库 ID 或类型。",
+    "title": "没有匹配的历史记录"
+  },
+  "searchLabel": "按仓库 ID 搜索浏览历史",
+  "searchPlaceholder": "搜索仓库 ID…",
+  "showing": "显示 {{shown}} / {{total}} 条",
+  "title": "浏览历史"
+}

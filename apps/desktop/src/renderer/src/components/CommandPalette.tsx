@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Command } from 'cmdk'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownToLine,
   ArrowUpDown,
@@ -13,17 +14,21 @@ import {
   Filter,
   HardDrive,
   Heart,
+  History,
   Inbox,
   Keyboard,
   Library,
   LayoutGrid,
   Loader2,
   Moon,
+  Pause,
+  Play,
   Search,
   Settings,
   Star,
   Sun,
   SunMoon,
+  Trash2,
   UploadCloud,
   User
 } from 'lucide-react'
@@ -32,11 +37,14 @@ import { LIBRARIES, LICENSES, PARAM_BUCKETS, TASKS } from '@/lib/catalog'
 import type { ParamBucket } from '@/lib/utils'
 import { formatCount } from '@/lib/utils'
 import { openRepo } from '@/lib/repo-open'
+import { invoke } from '@/lib/ipc'
 import { Kbd } from '@/components/ui/kbd'
+import { useToasts } from '@/components/ui/toaster'
+import { useCommandActionStore } from '@/hooks/use-command-actions'
 import { useGlobalSearch } from '@/hooks/use-global-search'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
-type Page = 'root' | 'task' | 'library' | 'license' | 'params' | 'sort'
+type Page = 'root' | 'download' | 'task' | 'library' | 'license' | 'params' | 'sort'
 
 // Key glyphs for the footer hint bar (not user copy; the labels are localized).
 const KEY_UP = '↑'
@@ -87,15 +95,17 @@ const SEARCH_GROUPS = [
 function RepoResultItem({
   repo,
   locale,
+  disabled = false,
   onSelect
 }: {
   repo: RepoSummary
   locale: string
+  disabled?: boolean
   onSelect: () => void
 }): React.JSX.Element {
   const Icon = KIND_ICON[repo.kind]
   return (
-    <Command.Item value={`${repo.kind}:${repo.id}`} onSelect={onSelect}>
+    <Command.Item value={`${repo.kind}:${repo.id}`} disabled={disabled} onSelect={onSelect}>
       <Icon className="size-4 shrink-0 text-ink-faint" aria-hidden />
       <span className="min-w-0 flex-1 truncate font-mono text-ink-strong">{repo.id}</span>
       <span className="nums flex shrink-0 items-center gap-2 text-[11px] text-ink-faint">
@@ -113,7 +123,7 @@ function RepoResultItem({
 }
 
 export function CommandPalette(): React.JSX.Element {
-  const { t } = useTranslation(['nav', 'browse', 'common'])
+  const { t } = useTranslation(['nav', 'browse', 'common', 'downloads', 'errors'])
   const open = useAppStore((s) => s.paletteOpen)
   const setOpen = useAppStore((s) => s.setPaletteOpen)
   const setFilters = useAppStore((s) => s.setFilters)
@@ -124,10 +134,15 @@ export function CommandPalette(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const queryClient = useQueryClient()
+  const push = useToasts((state) => state.push)
+  const actionScopes = useCommandActionStore((state) => state.scopes)
+  const contextActions = [...actionScopes.values()].flat()
   const navigate = useNavigate()
   const location = useLocation()
   const [page, setPage] = useState<Page>('root')
   const [value, setValue] = useState('')
+  const [runningActionId, setRunningActionId] = useState<string | null>(null)
 
   const browseKind: RepoKind =
     Object.entries(KIND_BY_PATH).find(([path]) => location.pathname.startsWith(path))?.[1] ??
@@ -137,7 +152,31 @@ export function CommandPalette(): React.JSX.Element {
   const needle = query.toLowerCase()
   const matches = (label: string): boolean => needle === '' || label.toLowerCase().includes(needle)
 
-  const search = useGlobalSearch(page === 'root' ? value : '')
+  const search = useGlobalSearch(page === 'root' || page === 'download' ? value : '')
+  const downloads = useQuery({
+    queryKey: ['downloads'],
+    queryFn: () => invoke('downloads:list', undefined),
+    staleTime: Infinity
+  })
+  const startDownload = useMutation({
+    mutationFn: (repo: RepoSummary) =>
+      invoke('downloads:start', { request: { kind: repo.kind, repoId: repo.id } }),
+    onSuccess: (tasks) => {
+      queryClient.setQueryData(['downloads'], tasks)
+      push(t('downloads:commands.started'), 'success')
+      setOpen(false)
+      setPage('root')
+      setValue('')
+    },
+    onError: (error) => push(error.message, 'error')
+  })
+  const bulkDownload = useMutation({
+    mutationFn: (
+      channel: 'downloads:pauseAll' | 'downloads:resumeAll' | 'downloads:clearCompleted'
+    ) => invoke(channel, undefined),
+    onSuccess: (tasks) => queryClient.setQueryData(['downloads'], tasks),
+    onError: (error) => push(error.message, 'error')
+  })
 
   const onOpenChange = useCallback(
     (next: boolean): void => {
@@ -145,6 +184,7 @@ export function CommandPalette(): React.JSX.Element {
       if (!next) {
         setPage('root')
         setValue('')
+        setRunningActionId(null)
       }
     },
     [setOpen]
@@ -167,6 +207,23 @@ export function CommandPalette(): React.JSX.Element {
     setValue('')
   }
 
+  const runContextAction = (action: (typeof contextActions)[number]): void => {
+    if (runningActionId) return
+    setRunningActionId(action.id)
+    void Promise.resolve()
+      .then(() => action.run())
+      .then(() => {
+        setOpen(false)
+        setPage('root')
+        setValue('')
+      })
+      .catch((error: unknown) => {
+        // Keep the palette open so the same command can be retried.
+        push(error instanceof Error ? error.message : String(error), 'error')
+      })
+      .finally(() => setRunningActionId(null))
+  }
+
   const applyFilter = (kind: RepoKind, patch: Parameters<typeof setFilters>[1]): void =>
     closeAnd(() => {
       setFilters(kind, patch)
@@ -179,6 +236,7 @@ export function CommandPalette(): React.JSX.Element {
     { to: '/spaces', label: t('nav:spaces'), icon: LayoutGrid },
     { to: '/papers', label: t('nav:papers'), icon: FileText },
     { to: '/favorites', label: t('nav:favorites'), icon: Star },
+    { to: '/history', label: t('nav:history'), icon: History },
     { to: '/downloads', label: t('nav:downloads'), icon: ArrowDownToLine },
     { to: '/cache', label: t('nav:cache'), icon: HardDrive },
     { to: '/inbox', label: t('nav:inbox'), icon: Inbox },
@@ -211,13 +269,16 @@ export function CommandPalette(): React.JSX.Element {
   const showSettings = matches(t('nav:settings'))
   const showClear = matches(t('browse:filter.clear'))
   const showShortcuts = matches(t('nav:shortcuts'))
+  const showDownload = matches(t('downloads:commands.downloadRepository'))
   const staticCount =
     visibleNav.length +
     visibleFilterPages.length +
     visibleThemes.length +
     (showSettings ? 1 : 0) +
     (showClear ? 1 : 0) +
-    (showShortcuts ? 1 : 0)
+    (showShortcuts ? 1 : 0) +
+    (showDownload ? 1 : 0) +
+    contextActions.filter((action) => matches(action.label)).length
 
   const asyncCount =
     search.models.length +
@@ -229,7 +290,21 @@ export function CommandPalette(): React.JSX.Element {
     search.collections.length
   // Root: only surface Empty once every hub query settled with nothing and no static row matched.
   const showEmpty =
-    page !== 'root' || needle === '' || (!search.isLoading && asyncCount === 0 && staticCount === 0)
+    page === 'root'
+      ? needle === '' || (!search.isLoading && asyncCount === 0 && staticCount === 0)
+      : page === 'download'
+        ? needle !== '' &&
+          !search.isLoading &&
+          search.models.length + search.datasets.length + search.spaces.length === 0
+        : true
+
+  const hasResumable = downloads.data?.some(
+    (task) => task.status === 'paused' || (task.status === 'error' && task.resumable)
+  )
+  const hasActive = downloads.data?.some(
+    (task) => task.status === 'running' || task.status === 'queued'
+  )
+  const hasCompleted = downloads.data?.some((task) => task.status === 'completed')
 
   const searchKinds: RepoKind[] = [browseKind, ...ALL_KINDS.filter((k) => k !== browseKind)]
 
@@ -248,13 +323,26 @@ export function CommandPalette(): React.JSX.Element {
           value={value}
           onValueChange={setValue}
           onKeyDown={(e) => {
+            if (e.key === 'Escape' && page !== 'root') {
+              e.preventDefault()
+              e.stopPropagation()
+              setPage('root')
+              setValue('')
+              return
+            }
             // Footer hint: '?' on an empty input jumps to the shortcuts dialog.
             if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey && value === '') {
               e.preventDefault()
               closeAnd(() => setShortcutsOpen(true))
             }
           }}
-          placeholder={page === 'root' ? t('nav:globalSearch') : t('nav:search')}
+          placeholder={
+            page === 'root'
+              ? t('nav:globalSearch')
+              : page === 'download'
+                ? t('downloads:commands.searchPlaceholder')
+                : t('nav:search')
+          }
           className="h-11 w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint"
         />
       </div>
@@ -414,6 +502,60 @@ export function CommandPalette(): React.JSX.Element {
                 </Command.Item>
               ))}
 
+            {(contextActions.some((action) => matches(action.label)) || showDownload) && (
+              <Command.Group heading={t('downloads:commands.actions')}>
+                {contextActions
+                  .filter((action) => matches(action.label))
+                  .map((action) => (
+                    <Command.Item
+                      key={action.id}
+                      disabled={action.disabled || runningActionId !== null}
+                      onSelect={() => runContextAction(action)}
+                    >
+                      {action.icon ? (
+                        <action.icon className="size-4 text-ink-faint" aria-hidden />
+                      ) : (
+                        <ArrowDownToLine className="size-4 text-ink-faint" aria-hidden />
+                      )}
+                      {action.label}
+                    </Command.Item>
+                  ))}
+                {showDownload && (
+                  <Command.Item onSelect={() => enterPage('download')}>
+                    <ArrowDownToLine className="size-4 text-ink-faint" aria-hidden />
+                    {t('downloads:commands.downloadRepository')}…
+                  </Command.Item>
+                )}
+                {hasActive && matches(t('downloads:bulk.pauseAll')) && (
+                  <Command.Item
+                    disabled={bulkDownload.isPending}
+                    onSelect={() => bulkDownload.mutate('downloads:pauseAll')}
+                  >
+                    <Pause className="size-4 text-ink-faint" aria-hidden />
+                    {t('downloads:bulk.pauseAll')}
+                  </Command.Item>
+                )}
+                {hasResumable && matches(t('downloads:bulk.resumeAll')) && (
+                  <Command.Item
+                    disabled={bulkDownload.isPending}
+                    onSelect={() => bulkDownload.mutate('downloads:resumeAll')}
+                  >
+                    <Play className="size-4 text-ink-faint" aria-hidden />
+                    {t('downloads:bulk.resumeAll')}
+                  </Command.Item>
+                )}
+                {hasCompleted && matches(t('downloads:bulk.clearCompleted')) && (
+                  <Command.Item
+                    disabled={bulkDownload.isPending}
+                    onSelect={() => bulkDownload.mutate('downloads:clearCompleted')}
+                  >
+                    <Trash2 className="size-4 text-ink-faint" aria-hidden />
+                    {t('downloads:bulk.clearCompleted')}
+                  </Command.Item>
+                )}
+              </Command.Group>
+            )}
+
             {(visibleNav.length > 0 || showSettings) && (
               <Command.Group heading={t('nav:browse')}>
                 {visibleNav.map((item) => (
@@ -464,6 +606,47 @@ export function CommandPalette(): React.JSX.Element {
                 <Keyboard className="size-4 text-ink-faint" aria-hidden />
                 {t('nav:shortcuts')}
               </Command.Item>
+            )}
+          </>
+        )}
+
+        {page === 'download' && (
+          <>
+            {needle === '' && (
+              <div className="px-3 py-6 text-center text-[13px] text-ink-muted">
+                {t('downloads:commands.typeToSearch')}
+              </div>
+            )}
+            {needle !== '' && search.isLoading && (
+              <Command.Loading>
+                <div className="flex items-center gap-2.5 px-2 py-2 text-[13px] text-ink-muted">
+                  <Loader2 className="size-4 shrink-0 animate-spin text-ink-faint" aria-hidden />
+                  {t('nav:searching')}
+                </div>
+              </Command.Loading>
+            )}
+            {needle !== '' &&
+              !search.isLoading &&
+              SEARCH_GROUPS.map(([group, kind]) =>
+                search[group].length > 0 ? (
+                  <Command.Group key={`download:${group}`} heading={t(KIND_LABEL_KEY[kind])}>
+                    {search[group].map((repo) => (
+                      <RepoResultItem
+                        key={repo.id}
+                        repo={repo}
+                        locale={locale}
+                        disabled={startDownload.isPending}
+                        onSelect={() => startDownload.mutate(repo)}
+                      />
+                    ))}
+                  </Command.Group>
+                ) : null
+              )}
+            {startDownload.isPending && (
+              <div className="flex items-center gap-2 px-2 py-2 text-[12px] text-ink-muted">
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                {t('downloads:commands.starting')}
+              </div>
             )}
           </>
         )}

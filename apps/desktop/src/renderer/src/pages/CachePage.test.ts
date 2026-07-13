@@ -14,7 +14,6 @@ function repo(revisions: CachedRevision[]): CachedRepo {
   return {
     id: 'org/name',
     kind: 'model',
-    path: '/cache/models--org--name',
     sizeOnDisk: 0,
     revisions
   }

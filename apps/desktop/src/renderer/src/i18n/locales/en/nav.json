@@ -1,5 +1,8 @@
 {
   "account": "Account",
+  "accountSignedIn": "Account: {{name}}",
+  "badgeCount": "{{count}} item",
+  "badgeCount_other": "{{count}} items",
   "browse": "Browse",
   "cache": "Cache",
   "collections": "Collections",
@@ -10,10 +13,12 @@
   "favorites": "Favorites",
   "globalSearch": "Search models, datasets, spaces, users, orgs, papers, collections…",
   "home": "Home",
+  "history": "History",
   "inbox": "Inbox",
   "library": "Library",
   "models": "Models",
   "myRepos": "My repos",
+  "navigation": "Primary navigation",
   "organizations": "Organizations",
   "palette": {
     "close": "Close",
@@ -31,6 +36,8 @@
     "emptyQueryTitle": "Search the Hub",
     "emptyQueryBody": "Enter a query in the command palette, or add ?q= to the URL.",
     "all": "All",
+    "errorTitle": "Search unavailable",
+    "partialError": "Some sources couldn't be searched ({{types}}). Results from the other sources are still shown.",
     "viewMore": "View more",
     "loadMore": "Load more"
   },

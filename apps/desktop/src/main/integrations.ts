@@ -6,7 +6,7 @@
  * namespace so every surface stays localized. Implementations live under
  * `./integrations/`; this facade keeps the wiring surface for ipc.ts stable.
  */
-export type { Broadcast, ExportDeps, InferenceDeps, UploadDeps } from './integrations/types'
+export type { Broadcast, ExportDeps, InferenceDeps } from './integrations/types'
 export { detectExportTargets, runExport } from './integrations/export'
 export { createRepoAndUpload } from './integrations/upload'
 export { cancelInference, runInference, runInferenceStream } from './integrations/inference'

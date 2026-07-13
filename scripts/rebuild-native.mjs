@@ -24,6 +24,6 @@ if (!has('electron/package.json') || !has('better-sqlite3/package.json')) {
 const result = spawnSync('npx', ['electron-rebuild', '-f', '-w', 'better-sqlite3'], {
   cwd: root,
   stdio: 'inherit',
-  shell: true,
+  shell: true
 })
 process.exit(result.status ?? 1)

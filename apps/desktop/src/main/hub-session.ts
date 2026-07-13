@@ -8,8 +8,7 @@
 import { BrowserWindow, session } from 'electron'
 
 export type HubSessionCapture =
-  | { ok: true; cookie: string }
-  | { ok: false; error: 'canceled' | 'timeout' }
+  { ok: true; cookie: string } | { ok: false; error: 'canceled' | 'timeout' }
 
 /** Give the user plenty of room for passwords, 2FA, and SSO round-trips. */
 const DEFAULT_TIMEOUT_MS = 10 * 60_000
@@ -130,7 +129,10 @@ function start(opts: {
     win.webContents.on('did-navigate', sweep)
     // The user closing the window is a cancel, not an error.
     win.on('closed', () => finish({ ok: false, error: 'canceled' }))
-    timer = setTimeout(() => finish({ ok: false, error: 'timeout' }), opts.timeoutMs ?? DEFAULT_TIMEOUT_MS)
+    timer = setTimeout(
+      () => finish({ ok: false, error: 'timeout' }),
+      opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    )
     timer.unref?.()
 
     // The default-session proxy (proxy.ts) does not apply to custom

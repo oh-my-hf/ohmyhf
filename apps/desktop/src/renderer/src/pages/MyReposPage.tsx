@@ -11,7 +11,7 @@ import {
   ShieldAlert,
   UserX
 } from 'lucide-react'
-import type { MyRepoEntry, RepoKind } from '@oh-my-huggingface/shared'
+import { normalizeHubEndpoint, type MyRepoEntry, type RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatBytes, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -61,6 +61,7 @@ export function MyReposPage(): React.JSX.Element {
   const appInfo = useAppStore((s) => s.appInfo)
   const auth = useAppStore((s) => s.auth)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
 
   const [filter, setFilter] = useState<KindFilter>('all')
   const [dialog, setDialog] = useState<{ type: RepoDialogKind; repo: MyRepoEntry } | null>(null)
@@ -69,7 +70,7 @@ export function MyReposPage(): React.JSX.Element {
   const canManage = !scopeMissing(auth, MANAGE_REPOS_SCOPE)
 
   const repos = useQuery({
-    queryKey: ['my-repos'],
+    queryKey: ['my-repos', endpointKey],
     queryFn: () => invoke('hub:myRepos', undefined),
     enabled: signedIn
   })

@@ -20,9 +20,7 @@ export function ShortcutsHelpDialog(): React.JSX.Element {
         <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-5">
           {SHORTCUT_GROUPS.map((group) => (
             <section key={group} className="flex flex-col gap-2">
-              <h3 className="text-[12px] font-semibold text-ink-faint">
-                {t(`groups.${group}`)}
-              </h3>
+              <h3 className="text-[12px] font-semibold text-ink-faint">{t(`groups.${group}`)}</h3>
               <dl className="flex flex-col gap-1.5">
                 {defs
                   .filter((def) => def.group === group)

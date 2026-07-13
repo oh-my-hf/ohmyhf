@@ -85,7 +85,14 @@ describe('HubClient.whoAmIWithToken / mapWhoAmIAuth', () => {
     expect(init.headers.Authorization).toBe('Bearer hf_candidate')
     expect(init.signal).toBeInstanceOf(AbortSignal)
     expect(detailed).toEqual({
-      user: { name: 'me', fullname: 'Me', email: undefined, avatarUrl: undefined, isPro: undefined, orgs: [] },
+      user: {
+        name: 'me',
+        fullname: 'Me',
+        email: undefined,
+        avatarUrl: undefined,
+        isPro: undefined,
+        orgs: []
+      },
       tokenDisplayName: 'my-laptop',
       tokenRole: 'write'
     })
@@ -102,11 +109,20 @@ describe('HubClient.whoAmIWithToken / mapWhoAmIAuth', () => {
 
   it('tolerates a payload with no auth block (mirror endpoints omit it)', () => {
     expect(mapWhoAmIAuth({ name: 'me' }, 'https://huggingface.co')).toEqual({
-      user: { name: 'me', fullname: undefined, email: undefined, avatarUrl: undefined, isPro: undefined, orgs: [] },
+      user: {
+        name: 'me',
+        fullname: undefined,
+        email: undefined,
+        avatarUrl: undefined,
+        isPro: undefined,
+        orgs: []
+      },
       tokenDisplayName: undefined,
       tokenRole: undefined
     })
-    expect(mapWhoAmIAuth({ name: 'me', auth: {} }, 'https://huggingface.co').tokenRole).toBeUndefined()
+    expect(
+      mapWhoAmIAuth({ name: 'me', auth: {} }, 'https://huggingface.co').tokenRole
+    ).toBeUndefined()
     expect(
       mapWhoAmIAuth({ name: 'me', auth: { accessToken: {} } }, 'https://huggingface.co')
         .tokenDisplayName
@@ -115,14 +131,25 @@ describe('HubClient.whoAmIWithToken / mapWhoAmIAuth', () => {
 
   it('absolutizes the relative avatar path the Hub returns for the signed-in user', () => {
     const { user } = mapWhoAmIAuth(
-      { name: 'me', avatarUrl: '/avatars/abc.svg', orgs: [{ name: 'acme', avatarUrl: '/avatars/org.svg' }] },
+      {
+        name: 'me',
+        avatarUrl: '/avatars/abc.svg',
+        orgs: [{ name: 'acme', avatarUrl: '/avatars/org.svg' }]
+      },
       'https://huggingface.co'
     )
     expect(user.avatarUrl).toBe('https://huggingface.co/avatars/abc.svg')
     expect(user.orgs[0]!.avatarUrl).toBe('https://huggingface.co/avatars/org.svg')
   })
-})
 
+  it('preserves a path-prefixed custom endpoint for relative Hub assets', () => {
+    const { user } = mapWhoAmIAuth(
+      { name: 'me', avatarUrl: '/avatars/abc.svg' },
+      'https://hub.example.test/hf'
+    )
+    expect(user.avatarUrl).toBe('https://hub.example.test/hf/avatars/abc.svg')
+  })
+})
 
 describe('HubClient.getUserOverview', () => {
   it('maps user, bio, orgs and absolutizes relative avatar URLs', async () => {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { codeLanguageOf, fileKindOf, mimeForPreview } from './file-kinds'
+import {
+  codeLanguageOf,
+  fileKindOf,
+  mimeForPreview,
+  normalizeShikiLanguage,
+  SHIKI_LANGUAGE_IDS
+} from './file-kinds'
 
 describe('fileKindOf', () => {
   it('classifies markdown, images, and special formats', () => {
@@ -34,6 +40,9 @@ describe('fileKindOf', () => {
     expect(fileKindOf('Gemfile')).toBe('text')
     expect(fileKindOf('CMakeLists.txt')).toBe('text')
     expect(fileKindOf('src/utils.py')).toBe('text')
+    expect(fileKindOf('.env.local')).toBe('text')
+    expect(fileKindOf('build.ps1')).toBe('text')
+    expect(fileKindOf('Program.cs')).toBe('text')
   })
 
   it('falls back to binary for unknown extensions', () => {
@@ -54,11 +63,41 @@ describe('codeLanguageOf', () => {
     expect(codeLanguageOf('Dockerfile')).toBe('docker')
     expect(codeLanguageOf('Gemfile')).toBe('ruby')
     expect(codeLanguageOf('CMakeLists.txt')).toBe('cmake')
+    expect(codeLanguageOf('build.bat')).toBe('batch')
+    expect(codeLanguageOf('build.ps1')).toBe('powershell')
+    expect(codeLanguageOf('service.log')).toBe('log')
+    expect(codeLanguageOf('.env.production')).toBe('dotenv')
+    expect(codeLanguageOf('shell.nu')).toBe('nushell')
+    expect(codeLanguageOf('Program.cs')).toBe('csharp')
+    expect(codeLanguageOf('AppDelegate.m')).toBe('objective-c')
   })
 
   it('returns undefined for plain text without a language', () => {
     expect(codeLanguageOf('notes.txt')).toBeUndefined()
     expect(codeLanguageOf('LICENSE')).toBeUndefined()
+    expect(codeLanguageOf('.dockerignore')).toBeUndefined()
+  })
+})
+
+describe('normalizeShikiLanguage', () => {
+  it('normalizes Markdown and notebook aliases with punctuation', () => {
+    expect(normalizeShikiLanguage('python3')).toBe('python')
+    expect(normalizeShikiLanguage('IPython')).toBe('python')
+    expect(normalizeShikiLanguage('C++')).toBe('cpp')
+    expect(normalizeShikiLanguage('c#')).toBe('csharp')
+    expect(normalizeShikiLanguage('objective-c')).toBe('objective-c')
+    expect(normalizeShikiLanguage('shell-session')).toBe('shellsession')
+    expect(normalizeShikiLanguage('language-TS')).toBe('typescript')
+  })
+
+  it('rejects unknown and explicit plain-text languages', () => {
+    expect(normalizeShikiLanguage('brainfuck-custom')).toBeUndefined()
+    expect(normalizeShikiLanguage('text')).toBeUndefined()
+    expect(normalizeShikiLanguage(undefined)).toBeUndefined()
+  })
+
+  it('keeps every declared language unique', () => {
+    expect(new Set(SHIKI_LANGUAGE_IDS).size).toBe(SHIKI_LANGUAGE_IDS.length)
   })
 })
 

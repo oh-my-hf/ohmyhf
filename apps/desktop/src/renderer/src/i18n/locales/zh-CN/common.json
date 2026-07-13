@@ -28,6 +28,10 @@
     "zh-CN": "简体中文"
   },
   "loading": "加载中…",
+  "progress": {
+    "indeterminate": "正在进行"
+  },
+  "open": "打开",
   "openOnHub": "在 Hub 打开",
   "private": "私有",
   "remove": "移除",
@@ -41,5 +45,7 @@
     "system": "跟随系统"
   },
   "undo": "撤销",
-  "unofficial": "非官方"
+  "unofficial": "非官方",
+  "zoomImage": "打开图片查看器",
+  "zoomImageNamed": "打开“{{name}}”的图片查看器"
 }

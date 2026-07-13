@@ -1,8 +1,92 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Throttle, gitBlobSha1OfFile } from './download-worker'
+import {
+  Throttle,
+  assertExpectedCommit,
+  assertSafeCacheKey,
+  assertSafeRepoFilePath,
+  gitBlobSha1OfFile,
+  prepareSafeCacheDirectories
+} from './download-worker'
+
+const roots: string[] = []
+
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
+})
+
+describe('assertExpectedCommit', () => {
+  const COMMIT_A = '0123456789abcdef0123456789abcdef01234567'
+
+  it('accepts the exact commit attested by the manager', () => {
+    expect(assertExpectedCommit(COMMIT_A.toUpperCase(), COMMIT_A)).toBe(COMMIT_A)
+  })
+
+  it('rejects branch drift before the response can select a snapshot path', () => {
+    expect(() =>
+      assertExpectedCommit('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', COMMIT_A)
+    ).toThrow('commit-mismatch')
+  })
+
+  it('rejects missing and malformed commit headers', () => {
+    expect(() => assertExpectedCommit('', COMMIT_A)).toThrow('commit-mismatch')
+    expect(() => assertExpectedCommit('../snapshots/escape', COMMIT_A)).toThrow('commit-mismatch')
+  })
+})
+
+describe('cache path inputs', () => {
+  it('accepts standard git and LFS object ids', () => {
+    expect(assertSafeCacheKey('A'.repeat(40))).toBe('a'.repeat(40))
+    expect(assertSafeCacheKey('b'.repeat(64))).toBe('b'.repeat(64))
+    expect(() => assertSafeRepoFilePath('nested/model.py')).not.toThrow()
+  })
+
+  it('rejects server-controlled cache path traversal', () => {
+    expect(() => assertSafeCacheKey('../../outside')).toThrow('invalid-etag')
+    expect(() => assertSafeRepoFilePath('../outside')).toThrow('unsafe-file-path')
+    expect(() => assertSafeRepoFilePath('nested\\outside')).toThrow('unsafe-file-path')
+  })
+
+  it('creates only direct, validated cache directories', () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), 'omh-worker-cache-'))
+    roots.push(cacheDir)
+    const repoDir = join(cacheDir, 'models--org--repo')
+
+    const result = prepareSafeCacheDirectories({
+      cacheDir,
+      repoDir,
+      expectedCommit: 'a'.repeat(40),
+      path: 'nested/model.bin'
+    })
+
+    const realRepo = realpathSync(repoDir)
+    expect(result.blobsDir).toBe(join(realRepo, 'blobs'))
+    expect(result.snapshotParent).toBe(join(realRepo, 'snapshots', 'a'.repeat(40), 'nested'))
+  })
+
+  it.runIf(process.platform !== 'win32')(
+    'rejects a repository symlink before any worker write',
+    () => {
+      const cacheDir = mkdtempSync(join(tmpdir(), 'omh-worker-cache-'))
+      roots.push(cacheDir)
+      const outside = join(cacheDir, 'outside')
+      mkdirSync(outside)
+      const repoDir = join(cacheDir, 'models--org--repo')
+      symlinkSync(outside, repoDir, 'dir')
+
+      expect(() =>
+        prepareSafeCacheDirectories({
+          cacheDir,
+          repoDir,
+          expectedCommit: 'a'.repeat(40),
+          path: 'model.bin'
+        })
+      ).toThrow('unsafe-cache-layout:repository')
+    }
+  )
+})
 
 describe('Throttle', () => {
   afterEach(() => {

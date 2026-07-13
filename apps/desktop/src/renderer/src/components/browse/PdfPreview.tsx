@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownToLine, ChevronLeft, ChevronRight, FileQuestion } from 'lucide-react'
 import type { RepoKind } from '@oh-my-huggingface/shared'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { invoke } from '@/lib/ipc'
 import { formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -35,15 +36,11 @@ export function PdfPreview({
   const [error, setError] = useState<'tooLarge' | 'unreadable' | null>(null)
   const [loading, setLoading] = useState(true)
   // Keep the pdf.js document across page flips without re-fetching.
-  const docRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null)
+  const docRef = useRef<PDFDocumentProxy | null>(null)
   const workerRef = useRef<Worker | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
-    setPage(1)
-    setPageCount(0)
     docRef.current = null
 
     void (async () => {

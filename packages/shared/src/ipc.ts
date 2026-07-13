@@ -23,13 +23,12 @@ import type {
   CanPostResult,
   DownloadRequest,
   DownloadTask,
-  ExportResult,
+  ExportStartRequest,
   HubProfileSettings,
   HubProfileUpdate,
   HubSessionConnectResult,
   PostComment,
   ExportTarget,
-  ExportTool,
   FavoriteItem,
   FileTextResult,
   FileTreeEntry,
@@ -37,6 +36,7 @@ import type {
   Follow,
   FollowTargetType,
   HistoryItem,
+  IntegrationTask,
   InboxItem,
   InferenceRequest,
   InferenceResult,
@@ -54,11 +54,11 @@ import type {
   SearchQuery,
   SpaceSecret,
   SpaceVariable,
-  UploadProgress,
-  UploadRequest,
-  UploadResult,
+  UploadSelection,
+  UploadStartRequest,
   WatchedEntry,
   AppUpdateState,
+  SettingsPatch,
   UserOverview,
   UserSearchResult,
   OrgSearchResult,
@@ -70,8 +70,6 @@ import type {
 export interface IpcInvokeContract {
   'system:getAppInfo': { req: void; res: AppInfo }
   'system:openExternal': { req: { url: string }; res: void }
-  'system:showItemInFolder': { req: { path: string }; res: void }
-  'system:pickFolder': { req: void; res: string | null }
 
   'updater:getState': { req: void; res: AppUpdateState }
   'updater:check': { req: void; res: AppUpdateState }
@@ -79,7 +77,9 @@ export interface IpcInvokeContract {
   'updater:install': { req: void; res: void }
 
   'settings:get': { req: void; res: AppSettings }
-  'settings:set': { req: { patch: Partial<AppSettings> }; res: AppSettings }
+  'settings:set': { req: { patch: SettingsPatch }; res: AppSettings }
+  'settings:selectCacheDir': { req: void; res: AppSettings | null }
+  'settings:resetCacheDir': { req: void; res: AppSettings }
 
   /** Wipe selected app SQLite library tables; optional Hub sign-out. Never deletes HF cache files. */
   'privacy:clearLocalData': {
@@ -460,13 +460,15 @@ export interface IpcInvokeContract {
   'downloads:pauseAll': { req: void; res: DownloadTask[] }
   'downloads:resumeAll': { req: void; res: DownloadTask[] }
   'downloads:clearCompleted': { req: void; res: DownloadTask[] }
+  'downloads:reveal': { req: { id: string }; res: void }
 
   'cache:scan': { req: void; res: CacheReport }
   'cache:deleteRevisions': {
-    req: { repoPath: string; commitHashes: string[] }
+    req: { kind: RepoKind; repoId: string; commitHashes: string[] }
     res: CacheReport
   }
-  'cache:cleanPartials': { req: { repoPath: string }; res: CacheReport }
+  'cache:cleanPartials': { req: { kind: RepoKind; repoId: string }; res: CacheReport }
+  'cache:revealRepo': { req: { kind: RepoKind; repoId: string }; res: void }
 
   'follows:list': { req: void; res: Follow[] }
   'follows:add': { req: { type: FollowTargetType; target: string }; res: Follow[] }
@@ -478,12 +480,14 @@ export interface IpcInvokeContract {
   'inbox:pollNow': { req: void; res: { added: number } }
 
   'export:targets': { req: void; res: ExportTarget[] }
-  'export:run': {
-    req: { tool: ExportTool; kind: RepoKind; repoId: string; filePath: string }
-    res: ExportResult
-  }
+  'export:start': { req: { request: ExportStartRequest }; res: { id: string } }
+  'export:cancel': { req: { id: string }; res: { canceled: boolean } }
 
-  'upload:createRepo': { req: { request: UploadRequest }; res: UploadResult }
+  'upload:selectFolder': { req: void; res: UploadSelection | null }
+  'upload:start': { req: { request: UploadStartRequest }; res: { id: string } }
+  'upload:cancel': { req: { id: string }; res: { canceled: boolean } }
+  'integrationTasks:list': { req: void; res: IntegrationTask[] }
+  'integrationTasks:revealOutput': { req: { id: string }; res: void }
 
   'inference:run': { req: { request: InferenceRequest }; res: InferenceResult }
   /** Streams deltas through the `evt:inference` channel, correlated by id. */
@@ -502,7 +506,7 @@ export interface IpcEventContract {
   'evt:inbox': InboxItem[]
   /** Ask the renderer to navigate to an in-app route (menu items, notification clicks). */
   'evt:navigate': string
-  'evt:upload': UploadProgress
+  'evt:integrationTasks': IntegrationTask[]
   'evt:inference': InferenceStreamEvent
   'evt:updater': AppUpdateState
 }
@@ -513,14 +517,14 @@ export type IpcEventPayload<C extends IpcEventChannel> = IpcEventContract[C]
 export const IPC_INVOKE_CHANNELS = [
   'system:getAppInfo',
   'system:openExternal',
-  'system:showItemInFolder',
-  'system:pickFolder',
   'updater:getState',
   'updater:check',
   'updater:download',
   'updater:install',
   'settings:get',
   'settings:set',
+  'settings:selectCacheDir',
+  'settings:resetCacheDir',
   'settings:export',
   'settings:import',
   'privacy:clearLocalData',
@@ -631,9 +635,11 @@ export const IPC_INVOKE_CHANNELS = [
   'downloads:pauseAll',
   'downloads:resumeAll',
   'downloads:clearCompleted',
+  'downloads:reveal',
   'cache:scan',
   'cache:deleteRevisions',
   'cache:cleanPartials',
+  'cache:revealRepo',
   'follows:list',
   'follows:add',
   'follows:remove',
@@ -642,8 +648,13 @@ export const IPC_INVOKE_CHANNELS = [
   'inbox:clear',
   'inbox:pollNow',
   'export:targets',
-  'export:run',
-  'upload:createRepo',
+  'export:start',
+  'export:cancel',
+  'upload:selectFolder',
+  'upload:start',
+  'upload:cancel',
+  'integrationTasks:list',
+  'integrationTasks:revealOutput',
   'inference:run',
   'inference:stream',
   'inference:cancel'
@@ -664,7 +675,7 @@ export const IPC_EVENT_CHANNELS: readonly IpcEventChannel[] = [
   'evt:auth',
   'evt:inbox',
   'evt:navigate',
-  'evt:upload',
+  'evt:integrationTasks',
   'evt:inference',
   'evt:updater'
 ] as const

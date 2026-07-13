@@ -4,6 +4,7 @@ import { invoke, openExternal } from '@/lib/ipc'
 import { useToasts } from '@/components/ui/toaster'
 import { useHubSession } from '@/hooks/use-hub-session'
 import { useAppStore } from '@/stores/app'
+import { hubUserUrl, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 
 export interface WatchSyncTarget {
   username: string
@@ -30,6 +31,8 @@ export function useWatchSync(): (action: 'add' | 'delete', targets: WatchSyncTar
   const openSettings = useAppStore((s) => s.openSettings)
   const signedIn = auth.status === 'signedIn'
   const hubSession = useHubSession()
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
+  const endpointKey = normalizeHubEndpoint(endpoint)
 
   return (action, targets) => {
     if (!signedIn || targets.length === 0) return
@@ -37,7 +40,7 @@ export function useWatchSync(): (action: 'add' | 'delete', targets: WatchSyncTar
       push(t('profile:watchSyncNotApplied'), 'info', {
         action: {
           label: t('profile:watchOnHub'),
-          onClick: () => openExternal(`https://huggingface.co/${targets[0]!.username}`)
+          onClick: () => openExternal(hubUserUrl(targets[0]!.username, endpoint))
         }
       })
       return
@@ -55,7 +58,7 @@ export function useWatchSync(): (action: 'add' | 'delete', targets: WatchSyncTar
     )
       .then((results) => {
         const last = results[results.length - 1]
-        if (last !== undefined) queryClient.setQueryData(['hub-watched'], last.watched)
+        if (last !== undefined) queryClient.setQueryData(['hub-watched', endpointKey], last.watched)
         if (results.every((r) => r.applied)) {
           push(t(watching ? 'profile:watchSuccess' : 'profile:unwatchSuccess'), 'success')
           return

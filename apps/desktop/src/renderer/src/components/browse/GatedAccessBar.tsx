@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BadgeCheck, Clock3, Lock } from 'lucide-react'
@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToasts } from '@/components/ui/toaster'
 import { useHubSession } from '@/hooks/use-hub-session'
 import { useAppStore } from '@/stores/app'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 /**
  * Slim status banner for gated repos: shows whether access is already
@@ -39,11 +40,12 @@ export function GatedAccessBar({
   const hubSession = useHubSession()
   const push = useToasts((s) => s.push)
   const queryClient = useQueryClient()
+  const endpointKey = useHubEndpointKey()
   const [formOpen, setFormOpen] = useState(false)
   const [values, setValues] = useState<Record<string, string>>({})
 
   const gate = useQuery({
-    queryKey: ['repo-access', kind, repoId],
+    queryKey: ['repo-access', kind, repoId, endpointKey],
     queryFn: () => invoke('hub:repoAccessGate', { kind, repoId }),
     enabled: auth.status === 'signedIn',
     staleTime: 60_000
@@ -90,7 +92,12 @@ export function GatedAccessBar({
         <>
           <Lock className="size-3.5 shrink-0 text-warning" aria-hidden />
           <span className="min-w-0 flex-1">{t('detail:gate.ask')}</span>
-          <Button variant="cta" size="sm" className="h-6 px-2 text-[12px]" onClick={() => setFormOpen(true)}>
+          <Button
+            variant="cta"
+            size="sm"
+            className="h-6 px-2 text-[12px]"
+            onClick={() => setFormOpen(true)}
+          >
             {t('detail:gate.request')}
           </Button>
         </>
@@ -155,32 +162,49 @@ function GateField({
   value: string
   onChange: (value: string) => void
 }): React.JSX.Element {
-  const label = (
-    <span className="text-[12.5px] text-ink">
+  const inputId = useId()
+  const labelId = `${inputId}-label`
+  const labelContent = (
+    <>
       {field.name}
-      {field.required && <span className="text-error"> *</span>}
-    </span>
+      {field.required ? (
+        <span className="text-error" aria-hidden>
+          {' '}
+          *
+        </span>
+      ) : null}
+    </>
   )
 
   if (field.type === 'checkbox') {
     return (
-      <label className="flex items-start gap-2">
+      <label htmlFor={inputId} className="flex items-start gap-2 text-[12.5px] text-ink">
         <input
+          id={inputId}
           type="checkbox"
+          required={field.required}
+          aria-required={field.required || undefined}
           checked={value === 'on'}
           onChange={(e) => onChange(e.target.checked ? 'on' : '')}
           className="mt-0.5 accent-select"
         />
-        {label}
+        <span>{labelContent}</span>
       </label>
     )
   }
   if (field.type === 'select') {
     return (
       <div className="flex flex-col gap-1.5">
-        {label}
+        <label id={labelId} htmlFor={inputId} className="text-[12.5px] text-ink">
+          {labelContent}
+        </label>
         <Select value={value || undefined} onValueChange={onChange}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger
+            id={inputId}
+            aria-labelledby={labelId}
+            aria-required={field.required || undefined}
+            className="w-full"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -197,15 +221,27 @@ function GateField({
   if (field.type === 'textarea') {
     return (
       <div className="flex flex-col gap-1.5">
-        {label}
-        <Textarea rows={3} value={value} onChange={(e) => onChange(e.target.value)} />
+        <label htmlFor={inputId} className="text-[12.5px] text-ink">
+          {labelContent}
+        </label>
+        <Textarea
+          id={inputId}
+          required={field.required}
+          rows={3}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
       </div>
     )
   }
   return (
     <div className="flex flex-col gap-1.5">
-      {label}
+      <label htmlFor={inputId} className="text-[12.5px] text-ink">
+        {labelContent}
+      </label>
       <Input
+        id={inputId}
+        required={field.required}
         type={field.type === 'date' ? 'date' : 'text'}
         value={value}
         onChange={(e) => onChange(e.target.value)}

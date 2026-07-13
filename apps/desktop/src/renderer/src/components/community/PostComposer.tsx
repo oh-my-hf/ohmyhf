@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { useToasts } from '@/components/ui/toaster'
 import { MarkdownEditor } from '@/components/browse/MarkdownEditor'
 import { useHubSession } from '@/hooks/use-hub-session'
+import { normalizeHubEndpoint } from '@oh-my-huggingface/shared'
+import { useAppStore } from '@/stores/app'
 
 /**
  * Compose a new community post. Posting is cookie-session only AND gated by the
@@ -19,13 +21,14 @@ export function PostComposer(): React.JSX.Element | null {
   const hubSession = useHubSession()
   const push = useToasts((s) => s.push)
   const queryClient = useQueryClient()
+  const endpointKey = normalizeHubEndpoint(useAppStore((s) => s.settings.hubEndpoint))
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
 
   // Only ask the Hub whether posting is allowed once a web session exists —
   // without one the answer is always "no" and the composer stays hidden.
   const canPost = useQuery({
-    queryKey: ['post-can-create'],
+    queryKey: ['post-can-create', endpointKey],
     queryFn: () => invoke('hub:postCanCreate', undefined),
     enabled: hubSession,
     staleTime: 5 * 60_000

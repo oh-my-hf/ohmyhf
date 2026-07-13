@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ArrowDownToLine, Heart, Lock, ShieldAlert } from 'lucide-react'
-import type { RepoKind, RepoSummary, SearchQuery } from '@oh-my-huggingface/shared'
+import {
+  normalizeHubEndpoint,
+  type RepoKind,
+  type RepoSummary,
+  type SearchQuery
+} from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { describeError } from '@/lib/errors'
 import { hardwareBucketOf } from '@/lib/catalog'
@@ -39,6 +44,7 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
   const appInfo = useAppStore((s) => s.appInfo)
   const filterPanelOpen = useAppStore((s) => s.filterPanelOpen)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const search = useDebounced(filters.search, 250)
   const parentRef = useRef<HTMLDivElement>(null)
   const isSpace = kind === 'space'
@@ -78,7 +84,7 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
 
   const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useInfiniteQuery({
-      queryKey: ['search', query],
+      queryKey: ['search', query, endpointKey],
       queryFn: ({ pageParam }) =>
         invoke('hub:search', { query: pageParam ? { ...query, cursor: pageParam } : query }),
       initialPageParam: '',
@@ -128,6 +134,7 @@ export function RepoList({ kind, selectedId, onSelect }: RepoListProps): React.J
   const rowCount = Math.ceil(items.length / perRow)
   const rowHeight = isSpace ? SPACE_ROW_HEIGHT : ROW_HEIGHT
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual intentionally exposes mutable measurement callbacks.
   const virtualizer = useVirtualizer({
     count: rowCount + (hasNextPage ? 1 : 0),
     getScrollElement: () => parentRef.current,

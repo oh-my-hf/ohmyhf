@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueries } from '@tanstack/react-query'
 import { CircleX, Columns3, Plus, X } from 'lucide-react'
-import { isValidRepoId } from '@oh-my-huggingface/shared'
+import { isValidRepoId, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 import { describeError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { formatCount, formatDate, formatParams } from '@/lib/utils'
@@ -69,13 +69,14 @@ export function ComparePage(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const [ids, setIds] = useState<string[]>([])
   const [draft, setDraft] = useState('')
   const [draftInvalid, setDraftInvalid] = useState(false)
 
   const results = useQueries({
     queries: ids.map((id) => ({
-      queryKey: ['repo', 'model' as const, id],
+      queryKey: ['repo', 'model' as const, id, endpointKey],
       queryFn: () => invoke('hub:repoDetail', { kind: 'model', repoId: id })
     }))
   })

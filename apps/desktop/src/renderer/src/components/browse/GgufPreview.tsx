@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 const MAX_GGUF_HEADER_BYTES = 8 * 1024 * 1024
 
@@ -30,9 +31,10 @@ export function GgufPreview({
   downloading
 }: GgufPreviewProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpointKey = useHubEndpointKey()
 
   const header = useQuery({
-    queryKey: ['ggufHeader', kind, repoId, path, size],
+    queryKey: ['ggufHeader', kind, repoId, path, size, endpointKey],
     retry: false,
     queryFn: async () => {
       const end = Math.min(size, MAX_GGUF_HEADER_BYTES) - 1
@@ -81,7 +83,7 @@ export function GgufPreview({
     'general.file_type',
     'general.quantization_version'
   ]
-    .map((key) => (metadata[key] != null ? [key, metadata[key]!] as const : null))
+    .map((key) => (metadata[key] != null ? ([key, metadata[key]!] as const) : null))
     .filter((x): x is readonly [string, string] => x != null)
 
   const metaEntries = Object.entries(metadata).sort(([a], [b]) => a.localeCompare(b))
@@ -90,13 +92,17 @@ export function GgufPreview({
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b px-4 py-3">
         <div>
-          <div className="text-[11px] font-medium text-ink-faint">{t('detail:preview.tensors')}</div>
+          <div className="text-[11px] font-medium text-ink-faint">
+            {t('detail:preview.tensors')}
+          </div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {tensors.length}
           </div>
         </div>
         <div>
-          <div className="text-[11px] font-medium text-ink-faint">{t('detail:ggufPreview.size')}</div>
+          <div className="text-[11px] font-medium text-ink-faint">
+            {t('detail:ggufPreview.size')}
+          </div>
           <div className="nums font-mono text-[15px] font-semibold text-ink-strong">
             {formatBytes(size)}
           </div>

@@ -259,9 +259,7 @@ describe('HubClient.getUserLikes', () => {
     )
     const client = new HubClient({ fetchImpl, ...FAST })
     const likes = await client.getUserLikes('julien')
-    expect(requestOf(fetchImpl).url).toBe(
-      'https://huggingface.co/api/users/julien/likes?limit=100'
-    )
+    expect(requestOf(fetchImpl).url).toBe('https://huggingface.co/api/users/julien/likes?limit=100')
     expect(likes).toHaveLength(1)
     expect(likes[0]).toMatchObject({
       id: 'meta/llama',

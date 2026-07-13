@@ -59,13 +59,17 @@
   --c-ink-strong: oklch(0.21 0.034 264.665); /* gray-900: headings, repo names, links */
   --c-ink: oklch(0.373 0.034 259.733); /* gray-700: body (10.3:1) */
   --c-ink-muted: oklch(0.446 0.03 256.802); /* gray-600: secondary text (7.6:1) */
-  --c-ink-faint: oklch(0.551 0.027 264.364); /* gray-500: metadata TEXT (4.8:1 — HF's gray-400 fails WCAG) */
+  --c-ink-faint: oklch(
+    0.551 0.027 264.364
+  ); /* gray-500: metadata TEXT (4.8:1 — HF's gray-400 fails WCAG) */
   --c-decor: oklch(0.707 0.022 261.325); /* gray-400: decorative glyphs/dots only, never text */
   /* Interactive vocabulary */
   --c-cta: oklch(0.21 0.034 264.665); /* black-pill CTA, inverts on hover */
   --c-cta-ink: oklch(1 0 0);
   --c-link: oklch(0.21 0.034 264.665); /* inline links: near-black */
-  --c-hover-title: var(--c-select); /* mono title hover recolor — follows accent (indigo-600 stock) */
+  --c-hover-title: var(
+    --c-select
+  ); /* mono title hover recolor — follows accent (indigo-600 stock) */
   --c-focus: oklch(0.623 0.214 259.815); /* blue-500: focus rings, ::selection */
   --c-select: oklch(0.511 0.262 276.966); /* indigo-600: selection tint, progress, switch */
   /* Brand accents — badges, star fills, small marks. Never CTAs. */
@@ -555,6 +559,23 @@ html[data-density='compact'] .px-3 {
 }
 .prose-card .shiki {
   background: transparent !important;
+}
+
+.code-highlight {
+  min-width: 0;
+}
+.code-highlight-notice {
+  @apply flex items-center gap-2 border-t border-border-card bg-panel-2 px-3 py-1.5 text-[11px] text-ink-muted;
+}
+.code-highlight-retry {
+  @apply rounded font-medium text-link underline decoration-decor underline-offset-2 hover:decoration-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link;
+}
+
+/* Shiki emits light colors plus `--shiki-dark*` in one token tree. */
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

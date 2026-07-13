@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, FileWarning, MessageSquare } from 'lucide-react'
-import type { PostSummary } from '@oh-my-huggingface/shared'
+import { normalizeHubEndpoint, type PostSummary } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,12 @@ import { useHubSession } from '@/hooks/use-hub-session'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 /** Apply one reaction toggle to cached post data (optimistic layer). */
-function withReaction(post: PostSummary, emoji: string, active: boolean, user: string): PostSummary {
+function withReaction(
+  post: PostSummary,
+  emoji: string,
+  active: boolean,
+  user: string
+): PostSummary {
   const rows = post.reactions.map((r) => ({ ...r, users: [...r.users] }))
   const row = rows.find((r) => r.emoji === emoji)
   if (active) {
@@ -61,6 +66,7 @@ export function PostPage(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const hubSession = useHubSession()
   const push = useToasts((s) => s.push)
   const queryClient = useQueryClient()
@@ -68,7 +74,7 @@ export function PostPage(): React.JSX.Element {
   // Quote-reply request threaded from a comment's button into the composer.
   const [quote, setQuote] = useState<{ text: string; nonce: number }>()
 
-  const queryKey = ['post', author, slug]
+  const queryKey = ['post', author, slug, endpointKey]
   const post = useQuery({
     queryKey,
     queryFn: () => invoke('hub:postDetail', { author, slug }),
@@ -83,7 +89,10 @@ export function PostPage(): React.JSX.Element {
       await queryClient.cancelQueries({ queryKey })
       const prev = queryClient.getQueryData<PostSummary>(queryKey)
       if (prev && currentUser !== undefined) {
-        queryClient.setQueryData<PostSummary>(queryKey, withReaction(prev, emoji, active, currentUser))
+        queryClient.setQueryData<PostSummary>(
+          queryKey,
+          withReaction(prev, emoji, active, currentUser)
+        )
       }
       return { prev }
     },
@@ -190,9 +199,7 @@ export function PostPage(): React.JSX.Element {
                   locale={locale}
                   currentUser={currentUser}
                   onToggle={
-                    hubSession
-                      ? (emoji, active) => react.mutate({ emoji, active })
-                      : undefined
+                    hubSession ? (emoji, active) => react.mutate({ emoji, active }) : undefined
                   }
                   pending={react.isPending}
                 />
@@ -221,7 +228,7 @@ export function PostPage(): React.JSX.Element {
                       push(t('profile:post.comment.posted'), 'success')
                       void queryClient.invalidateQueries({ queryKey })
                       void queryClient.invalidateQueries({
-                        queryKey: ['post-comments', author, slug]
+                        queryKey: ['post-comments', author, slug, endpointKey]
                       })
                     }}
                   />

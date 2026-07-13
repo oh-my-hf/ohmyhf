@@ -5,5 +5,15 @@
   "notFound": "Not found on the Hub — it may have been moved, renamed, or made private.",
   "rateLimit": "The Hugging Face API is rate-limiting requests. The app backs off and retries automatically — please wait a moment before trying again.",
   "unknown": "Something went wrong. Please try again.",
-  "server": "The Hugging Face API returned a server error. Please try again in a moment."
+  "server": "The Hugging Face API returned a server error. Please try again in a moment.",
+  "query": {
+    "title": "Couldn't load this content"
+  },
+  "boundary": {
+    "title": "This view stopped unexpectedly",
+    "body": "Reload the app to restore the view. If the problem continues, copy the redacted details for a bug report."
+  },
+  "details": "Technical details (redacted)",
+  "copyDetails": "Copy details",
+  "reload": "Reload app"
 }

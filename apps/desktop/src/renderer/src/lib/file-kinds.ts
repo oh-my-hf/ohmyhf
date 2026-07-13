@@ -1,4 +1,8 @@
-import type { RepoKind } from '@oh-my-huggingface/shared'
+import {
+  hubBlobUrl as buildHubBlobUrl,
+  hubResolveUrl,
+  type RepoKind
+} from '@oh-my-huggingface/shared'
 
 /** How a repo file should be previewed in the renderer. */
 export type FileKind =
@@ -16,13 +20,6 @@ export type FileKind =
   | 'notebook'
   | 'parquet'
   | 'binary'
-
-/** Hub URL path prefix per repo kind (models live at the root). */
-export const RESOLVE_PREFIX: Record<RepoKind, string> = {
-  model: '',
-  dataset: 'datasets/',
-  space: 'spaces/'
-}
 
 const MARKDOWN_EXTENSIONS = new Set(['md', 'markdown', 'mdx'])
 
@@ -58,6 +55,7 @@ const TEXT_EXTENSIONS = new Set([
   'bash',
   'zsh',
   'bat',
+  'cmd',
   'ps1',
   'rs',
   'go',
@@ -66,6 +64,9 @@ const TEXT_EXTENSIONS = new Set([
   'cpp',
   'hpp',
   'cc',
+  'cs',
+  'm',
+  'mm',
   'java',
   'rb',
   'swift',
@@ -194,7 +195,8 @@ export function fileKindOf(path: string): FileKind {
   if (ext === 'safetensors') return 'safetensors'
   if (ext === 'ipynb') return 'notebook'
   if (ext === 'parquet') return 'parquet'
-  if (TEXT_EXTENSIONS.has(ext) || TEXT_BASENAMES.has(name)) return 'text'
+  if (TEXT_EXTENSIONS.has(ext) || TEXT_BASENAMES.has(name) || name.startsWith('.env.'))
+    return 'text'
   return 'binary'
 }
 
@@ -202,7 +204,10 @@ export function fileKindOf(path: string): FileKind {
  * Best-effort MIME for streaming previews. Prefer a concrete Hub Content-Type;
  * fall back by extension when it is missing or generic.
  */
-export function mimeForPreview(path: string, contentType: string | null | undefined): string | null {
+export function mimeForPreview(
+  path: string,
+  contentType: string | null | undefined
+): string | null {
   const raw = contentType?.split(';')[0]?.trim().toLowerCase()
   if (raw && raw !== 'application/octet-stream' && raw !== 'binary/octet-stream') {
     return raw
@@ -210,8 +215,139 @@ export function mimeForPreview(path: string, contentType: string | null | undefi
   return MIME_BY_EXTENSION[extensionOf(path)] ?? null
 }
 
+/**
+ * The complete grammar set bundled by the renderer. Keep this list in sync
+ * with the explicit dynamic imports in `syntax-highlighting.ts`; the shared
+ * union makes a missing loader a type error instead of a runtime fallback.
+ */
+export const SHIKI_LANGUAGE_IDS = [
+  'astro',
+  'bash',
+  'batch',
+  'bibtex',
+  'c',
+  'clojure',
+  'cmake',
+  'cpp',
+  'csharp',
+  'css',
+  'dart',
+  'diff',
+  'docker',
+  'dotenv',
+  'elixir',
+  'fish',
+  'fsharp',
+  'go',
+  'graphql',
+  'groovy',
+  'handlebars',
+  'haskell',
+  'hcl',
+  'html',
+  'ini',
+  'java',
+  'javascript',
+  'jinja',
+  'json',
+  'jsx',
+  'julia',
+  'kotlin',
+  'latex',
+  'log',
+  'lua',
+  'make',
+  'markdown',
+  'nim',
+  'nix',
+  'nushell',
+  'objective-c',
+  'ocaml',
+  'perl',
+  'php',
+  'powershell',
+  'properties',
+  'proto',
+  'python',
+  'r',
+  'rst',
+  'ruby',
+  'rust',
+  'scala',
+  'shellsession',
+  'sql',
+  'svelte',
+  'swift',
+  'toml',
+  'tsx',
+  'typescript',
+  'vue',
+  'xml',
+  'yaml',
+  'zig'
+] as const
+
+export type ShikiLanguage = (typeof SHIKI_LANGUAGE_IDS)[number]
+
+const SHIKI_LANGUAGE_SET = new Set<string>(SHIKI_LANGUAGE_IDS)
+
+/** User-, Markdown-, and notebook-facing aliases normalized to bundled IDs. */
+const SHIKI_LANGUAGE_ALIASES: Record<string, ShikiLanguage> = {
+  'c#': 'csharp',
+  'c++': 'cpp',
+  'objective-c': 'objective-c',
+  'objective-c++': 'objective-c',
+  'shell-session': 'shellsession',
+  bat: 'batch',
+  cplusplus: 'cpp',
+  cs: 'csharp',
+  cmd: 'batch',
+  console: 'shellsession',
+  dockerfile: 'docker',
+  env: 'dotenv',
+  gql: 'graphql',
+  ipython: 'python',
+  ipython3: 'python',
+  js: 'javascript',
+  jsonl: 'json',
+  jl: 'julia',
+  kt: 'kotlin',
+  makefile: 'make',
+  md: 'markdown',
+  node: 'javascript',
+  nodejs: 'javascript',
+  nu: 'nushell',
+  objc: 'objective-c',
+  objectivec: 'objective-c',
+  ps1: 'powershell',
+  py: 'python',
+  python3: 'python',
+  rb: 'ruby',
+  rs: 'rust',
+  sh: 'bash',
+  shell: 'bash',
+  shellscript: 'bash',
+  ts: 'typescript',
+  yml: 'yaml',
+  zsh: 'bash'
+}
+
+/**
+ * Normalize a file extension, Markdown fence, or notebook kernel language.
+ * Unknown and explicit plain-text names return undefined by design.
+ */
+export function normalizeShikiLanguage(
+  language: string | null | undefined
+): ShikiLanguage | undefined {
+  const raw = language?.trim().toLowerCase()
+  if (!raw) return undefined
+  const normalized = raw.replace(/^language-/, '')
+  if (SHIKI_LANGUAGE_SET.has(normalized)) return normalized as ShikiLanguage
+  return SHIKI_LANGUAGE_ALIASES[normalized]
+}
+
 /** Shiki language id for syntax highlighting; undefined renders as plain text. */
-const CODE_LANGUAGES: Record<string, string> = {
+const CODE_LANGUAGES: Record<string, ShikiLanguage> = {
   json: 'json',
   jsonl: 'json',
   yaml: 'yaml',
@@ -226,8 +362,11 @@ const CODE_LANGUAGES: Record<string, string> = {
   sh: 'bash',
   bash: 'bash',
   zsh: 'bash',
-  fish: 'bash',
-  nu: 'bash',
+  fish: 'fish',
+  nu: 'nushell',
+  bat: 'batch',
+  cmd: 'batch',
+  ps1: 'powershell',
   toml: 'toml',
   ini: 'ini',
   cfg: 'ini',
@@ -243,6 +382,9 @@ const CODE_LANGUAGES: Record<string, string> = {
   cpp: 'cpp',
   hpp: 'cpp',
   cc: 'cpp',
+  cs: 'csharp',
+  m: 'objective-c',
+  mm: 'objective-c',
   java: 'java',
   rb: 'ruby',
   swift: 'swift',
@@ -250,6 +392,8 @@ const CODE_LANGUAGES: Record<string, string> = {
   lua: 'lua',
   diff: 'diff',
   patch: 'diff',
+  log: 'log',
+  env: 'dotenv',
   proto: 'proto',
   r: 'r',
   rmd: 'markdown',
@@ -291,21 +435,17 @@ const CODE_LANGUAGES: Record<string, string> = {
   plist: 'xml',
   lock: 'json',
   editorconfig: 'ini',
-  dockerignore: 'ignore',
   npmrc: 'ini'
 }
 
-export function codeLanguageOf(path: string): string | undefined {
+export function codeLanguageOf(path: string): ShikiLanguage | undefined {
   const name = (path.split('/').at(-1) ?? path).toLowerCase()
-  if (name === 'dockerfile') return 'docker'
-  if (name === 'makefile') return 'make'
-  if (name === 'gemfile') return 'ruby'
-  if (name === 'cmakelists.txt') return 'cmake'
-  return CODE_LANGUAGES[extensionOf(path)]
-}
-
-function encodePath(path: string): string {
-  return path.split('/').map(encodeURIComponent).join('/')
+  if (name === 'dockerfile') return normalizeShikiLanguage('dockerfile')
+  if (name === 'makefile') return normalizeShikiLanguage('makefile')
+  if (name === 'gemfile') return normalizeShikiLanguage('ruby')
+  if (name === 'cmakelists.txt') return normalizeShikiLanguage('cmake')
+  if (name === '.env' || name.startsWith('.env.')) return normalizeShikiLanguage('dotenv')
+  return normalizeShikiLanguage(CODE_LANGUAGES[extensionOf(path)])
 }
 
 /** Direct https URL to the raw file contents. */
@@ -313,9 +453,10 @@ export function resolveUrl(
   kind: RepoKind,
   repoId: string,
   path: string,
-  revision = 'main'
+  revision = 'main',
+  endpoint?: string | null
 ): string {
-  return `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}/resolve/${revision}/${encodePath(path)}`
+  return hubResolveUrl(kind, repoId, revision, path, endpoint)
 }
 
 /** Hub web page for the file (the "blob" view). */
@@ -323,7 +464,8 @@ export function hubBlobUrl(
   kind: RepoKind,
   repoId: string,
   path: string,
-  revision = 'main'
+  revision = 'main',
+  endpoint?: string | null
 ): string {
-  return `https://huggingface.co/${RESOLVE_PREFIX[kind]}${repoId}/blob/${revision}/${encodePath(path)}`
+  return buildHubBlobUrl(kind, repoId, revision, path, endpoint)
 }

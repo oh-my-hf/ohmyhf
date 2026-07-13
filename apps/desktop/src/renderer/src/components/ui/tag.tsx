@@ -13,7 +13,13 @@ export interface TagProps extends HTMLAttributes<HTMLSpanElement> {
  * HF-style tag: 28px pill-adjacent chip with a faint vertical gradient and,
  * optionally, a 32×28 leading icon tile tinted by category hue.
  */
-export function Tag({ hue, icon: Icon, className, children, ...props }: TagProps): React.JSX.Element {
+export function Tag({
+  hue,
+  icon: Icon,
+  className,
+  children,
+  ...props
+}: TagProps): React.JSX.Element {
   return (
     <span
       className={cn(

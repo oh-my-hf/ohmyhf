@@ -53,9 +53,14 @@ function tensorElemTypeName(elemType: number | null | undefined): string | undef
   return names[elemType] ?? `elem_${elemType}`
 }
 
-function valueTypeLabel(type: {
-  tensorType?: { elemType?: number | null } | null
-} | null | undefined): string | undefined {
+function valueTypeLabel(
+  type:
+    | {
+        tensorType?: { elemType?: number | null } | null
+      }
+    | null
+    | undefined
+): string | undefined {
   return tensorElemTypeName(type?.tensorType?.elemType ?? undefined)
 }
 
@@ -74,8 +79,18 @@ export function toOnnxPreviewData(model: {
   opsetImport?: { domain?: string | null; version?: unknown }[] | null
   graph?: {
     name?: string | null
-    input?: { name?: string | null; type?: { tensorType?: { elemType?: number | null } | null } | null }[] | null
-    output?: { name?: string | null; type?: { tensorType?: { elemType?: number | null } | null } | null }[] | null
+    input?:
+      | {
+          name?: string | null
+          type?: { tensorType?: { elemType?: number | null } | null } | null
+        }[]
+      | null
+    output?:
+      | {
+          name?: string | null
+          type?: { tensorType?: { elemType?: number | null } | null } | null
+        }[]
+      | null
     node?: { name?: string | null; opType?: string | null }[] | null
   } | null
 }): OnnxPreviewData {
@@ -94,7 +109,7 @@ export function toOnnxPreviewData(model: {
   }))
   const allNodes = model.graph?.node ?? []
   const nodes = allNodes.slice(0, ONNX_PREVIEW_NODE_LIMIT).map((n) => ({
-    name: n.name && n.name.length > 0 ? n.name : n.opType ?? '',
+    name: n.name && n.name.length > 0 ? n.name : (n.opType ?? ''),
     opType: n.opType ?? ''
   }))
   return {
@@ -117,7 +132,9 @@ export async function parseOnnxBytes(bytes: Uint8Array): Promise<OnnxPreviewData
     const mod = (await import('onnx-proto')) as {
       onnx?: { ModelProto: { decode: (b: Uint8Array) => Parameters<typeof toOnnxPreviewData>[0] } }
       default?: {
-        onnx?: { ModelProto: { decode: (b: Uint8Array) => Parameters<typeof toOnnxPreviewData>[0] } }
+        onnx?: {
+          ModelProto: { decode: (b: Uint8Array) => Parameters<typeof toOnnxPreviewData>[0] }
+        }
         ModelProto?: { decode: (b: Uint8Array) => Parameters<typeof toOnnxPreviewData>[0] }
       }
     }

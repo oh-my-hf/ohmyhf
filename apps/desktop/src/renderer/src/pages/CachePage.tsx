@@ -74,7 +74,8 @@ export function CachePage(): React.JSX.Element {
   const deleteRevisions = useMutation({
     mutationFn: (args: PendingDelete) =>
       invoke('cache:deleteRevisions', {
-        repoPath: args.repo.path,
+        kind: args.repo.kind,
+        repoId: args.repo.id,
         commitHashes: args.commitHashes
       }),
     onSuccess: (next, args) => {
@@ -89,7 +90,8 @@ export function CachePage(): React.JSX.Element {
   })
 
   const cleanPartials = useMutation({
-    mutationFn: (repo: CachedRepo) => invoke('cache:cleanPartials', { repoPath: repo.path }),
+    mutationFn: (repo: CachedRepo) =>
+      invoke('cache:cleanPartials', { kind: repo.kind, repoId: repo.id }),
     onSuccess: (next, repo) => {
       queryClient.setQueryData(['cache'], next)
       push(t('cache:deleted', { size: formatBytes(repo.partialSize ?? 0) }), 'success')
@@ -178,11 +180,12 @@ export function CachePage(): React.JSX.Element {
 
         {report.error === null &&
           report.data?.repos.map((repo) => {
-            const isOpen = expanded.has(repo.path)
+            const repoKey = `${repo.kind}:${repo.id}`
+            const isOpen = expanded.has(repoKey)
             const stale = staleOf(repo)
             const Icon = KIND_ICON[repo.kind]
             return (
-              <div key={repo.path} className="rounded-lg border">
+              <div key={repoKey} className="rounded-lg border">
                 <div
                   className={cn(
                     'flex items-center gap-2 rounded-t-lg px-3 py-2.5 transition-colors duration-150 hover:bg-panel',
@@ -191,7 +194,7 @@ export function CachePage(): React.JSX.Element {
                 >
                   <button
                     type="button"
-                    onClick={() => toggle(repo.path)}
+                    onClick={() => toggle(repoKey)}
                     aria-expanded={isOpen}
                     className="flex min-w-0 flex-1 items-center gap-2 text-left"
                   >
@@ -225,7 +228,9 @@ export function CachePage(): React.JSX.Element {
                     variant="ghost"
                     size="icon"
                     aria-label={t('common:showInFolder')}
-                    onClick={() => void invoke('system:showItemInFolder', { path: repo.path })}
+                    onClick={() =>
+                      void invoke('cache:revealRepo', { kind: repo.kind, repoId: repo.id })
+                    }
                   >
                     <FolderOpen className="size-4" aria-hidden />
                   </Button>

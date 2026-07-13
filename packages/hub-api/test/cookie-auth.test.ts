@@ -230,7 +230,9 @@ describe('HubClient upvotes', () => {
     const slug = 'deepreinforce-ai/ornith-10-6a3caf42676d2e4b66ffc96c'
     const client = cookieClient(fetchImpl)
     await client.setCollectionUpvote(slug, true)
-    expect(requestOf(fetchImpl, 0).url).toBe(`https://huggingface.co/api/collections/${slug}/upvote`)
+    expect(requestOf(fetchImpl, 0).url).toBe(
+      `https://huggingface.co/api/collections/${slug}/upvote`
+    )
     expect(requestOf(fetchImpl, 0).init.method).toBe('POST')
     await client.setCollectionUpvote(slug, false)
     expect(requestOf(fetchImpl, 1).init.method).toBe('DELETE')
@@ -332,7 +334,9 @@ describe('HubClient.getPostComments', () => {
   })
 
   it('degrades to an empty thread when the island is missing', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response('<html>no island</html>', { status: 200 }))
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response('<html>no island</html>', { status: 200 }))
     await expect(
       new HubClient({ fetchImpl, ...FAST }).getPostComments('julien', '12345')
     ).resolves.toEqual([])
@@ -342,9 +346,16 @@ describe('HubClient.getPostComments', () => {
 describe('HubClient.hidePostComment', () => {
   it('POSTs to the hide endpoint with the verbatim reason (cookie-authed)', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({}))
-    await cookieClient(fetchImpl).hidePostComment('julien', '12345', '6608ca7bbc8b7a1e30ba53e1', 'Off-Topic')
+    await cookieClient(fetchImpl).hidePostComment(
+      'julien',
+      '12345',
+      '6608ca7bbc8b7a1e30ba53e1',
+      'Off-Topic'
+    )
     const { url, init } = requestOf(fetchImpl)
-    expect(url).toBe('https://huggingface.co/api/posts/julien/12345/comment/6608ca7bbc8b7a1e30ba53e1/hide')
+    expect(url).toBe(
+      'https://huggingface.co/api/posts/julien/12345/comment/6608ca7bbc8b7a1e30ba53e1/hide'
+    )
     expect(init.method).toBe('POST')
     expect(jsonBodyOf(init)).toEqual({ reason: 'Off-Topic' })
     expect(headersOf(init).Cookie).toBe('token=session_cookie')
@@ -416,9 +427,7 @@ LLMs &amp; agents</textarea>
 
 describe('HubClient profile settings', () => {
   it('parses the Settings → Profile form from the SSR page', async () => {
-    const fetchImpl = vi
-      .fn()
-      .mockResolvedValue(new Response(PROFILE_PAGE, { status: 200 }))
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(PROFILE_PAGE, { status: 200 }))
     const settings = await cookieClient(fetchImpl).getProfileSettings()
     expect(settings).toEqual({
       fullname: 'Morax & Co',
@@ -535,9 +544,7 @@ describe('HubClient profile settings', () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(new Response(PROFILE_PAGE, { status: 200 }))
-      .mockResolvedValueOnce(
-        new Response('', { status: 302, headers: { Location: '/login' } })
-      )
+      .mockResolvedValueOnce(new Response('', { status: 302, headers: { Location: '/login' } }))
     await expect(
       cookieClient(fetchImpl).updateProfileSettings({
         fullname: 'n',
@@ -631,7 +638,9 @@ describe('HubClient profile settings', () => {
   it('a login page instead of the form surfaces as a 401 (stale cookie)', async () => {
     const fetchImpl = vi
       .fn()
-      .mockResolvedValue(new Response('<!doctype html><form><input name="username"></form>', { status: 200 }))
+      .mockResolvedValue(
+        new Response('<!doctype html><form><input name="username"></form>', { status: 200 })
+      )
     const attempt = cookieClient(fetchImpl).getProfileSettings()
     await expect(attempt).rejects.toSatisfy(isUnauthorized)
   })

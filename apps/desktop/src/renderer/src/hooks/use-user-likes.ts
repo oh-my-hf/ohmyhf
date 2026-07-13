@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
+import { normalizeHubEndpoint, type RepoKind, type RepoSummary } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { useAppStore } from '@/stores/app'
 
@@ -19,10 +19,15 @@ export interface UserLikes {
 export function useUserLikes(): UserLikes {
   const auth = useAppStore((s) => s.auth)
   const username = auth.status === 'signedIn' ? auth.user.name : undefined
+  const endpointKey = normalizeHubEndpoint(useAppStore((s) => s.settings.hubEndpoint))
+  const likesQueryKey = useMemo(
+    () => ['user-likes', username, endpointKey] as const,
+    [username, endpointKey]
+  )
   const queryClient = useQueryClient()
 
   const likes = useQuery({
-    queryKey: ['user-likes', username],
+    queryKey: likesQueryKey,
     queryFn: () => invoke('hub:userLikes', { username: username ?? '' }),
     enabled: username !== undefined,
     staleTime: 5 * 60_000
@@ -42,7 +47,7 @@ export function useUserLikes(): UserLikes {
 
   const setLiked = useCallback(
     (kind: RepoKind, repoId: string, liked: boolean): void => {
-      queryClient.setQueryData<RepoSummary[]>(['user-likes', username], (prev) => {
+      queryClient.setQueryData<RepoSummary[]>(likesQueryKey, (prev) => {
         if (prev === undefined) return prev
         const rest = prev.filter((r) => !(r.kind === kind && r.id === repoId))
         if (!liked) return rest
@@ -62,7 +67,7 @@ export function useUserLikes(): UserLikes {
         return [stub, ...rest]
       })
     },
-    [queryClient, username]
+    [queryClient, likesQueryKey]
   )
 
   return { isPending: username !== undefined && likes.isPending, isLiked, setLiked }

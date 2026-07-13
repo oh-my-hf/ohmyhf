@@ -19,9 +19,7 @@ function flatEntries(obj: Record<string, unknown>, prefix = ''): Array<[string, 
 /** Plural suffixes differ per language (en has _one, zh-CN does not); compare base keys. */
 function baseKeys(obj: Record<string, unknown>): string[] {
   return [
-    ...new Set(
-      flatEntries(obj).map(([key]) => key.replace(/_(zero|one|two|few|many|other)$/, ''))
-    )
+    ...new Set(flatEntries(obj).map(([key]) => key.replace(/_(zero|one|two|few|many|other)$/, '')))
   ].sort()
 }
 

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -23,6 +23,7 @@ import type {
   RepoSummary,
   UserOverview
 } from '@oh-my-huggingface/shared'
+import { hubSettingsUrl, hubUserUrl, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { formatCount, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -91,7 +92,11 @@ function AccountChip({
           onClick={() => onNavigate(account.name)}
           className="inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border border-border-card bg-bg px-1.5 py-0.5 text-left outline-none transition-colors duration-150 hover:border-border hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
         >
-          <ProfileAvatar name={account.name} url={account.avatarUrl} className="size-5 text-[10px]" />
+          <ProfileAvatar
+            name={account.name}
+            url={account.avatarUrl}
+            className="size-5 text-[10px]"
+          />
           <span className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted">
             {account.name}
           </span>
@@ -149,8 +154,9 @@ function UserRepoList({
   locale: string
 }): React.JSX.Element {
   const { t } = useTranslation(['profile', 'common'])
+  const endpointKey = normalizeHubEndpoint(useAppStore((s) => s.settings.hubEndpoint))
   const list = useQuery({
-    queryKey: ['user-repos', username, kind],
+    queryKey: ['user-repos', username, kind, endpointKey],
     queryFn: () =>
       invoke('hub:search', { query: { kind, author: username, sort: 'downloads', limit: 30 } }),
     staleTime: STALE_TIME
@@ -197,18 +203,24 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
   const appInfo = useAppStore((s) => s.appInfo)
   const openSettings = useAppStore((s) => s.openSettings)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const hubSession = useHubSession()
   const [tabChoice, setTabChoice] = useState<RepoKind | null>(null)
   const signedIn = auth.status === 'signedIn'
 
+  const overviewQueryKey = useMemo(
+    () => ['user-overview', username, endpointKey] as const,
+    [username, endpointKey]
+  )
+  const watchedQueryKey = useMemo(() => ['hub-watched', endpointKey] as const, [endpointKey])
   const overview = useQuery({
-    queryKey: ['user-overview', username],
+    queryKey: overviewQueryKey,
     queryFn: () => invoke('hub:userOverview', { username }),
     staleTime: STALE_TIME
   })
 
   const watched = useQuery({
-    queryKey: ['hub-watched'],
+    queryKey: watchedQueryKey,
     queryFn: () => invoke('hub:watchList', undefined),
     enabled: signedIn,
     staleTime: 60_000
@@ -218,11 +230,11 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
   useEffect(() => {
     if (!signedIn) return
     const onFocus = (): void => {
-      void queryClient.invalidateQueries({ queryKey: ['hub-watched'] })
+      void queryClient.invalidateQueries({ queryKey: watchedQueryKey })
     }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
-  }, [signedIn, queryClient])
+  }, [signedIn, queryClient, watchedQueryKey])
 
   const data = overview.data
   const isOrg = data?.isOrg === true
@@ -245,21 +257,20 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
     )
 
   const members = useQuery({
-    queryKey: ['org-members', username],
+    queryKey: ['org-members', username, endpointKey],
     queryFn: () => invoke('hub:orgMembers', { org: username, limit: 24 }),
     enabled: isOrg,
     staleTime: STALE_TIME
   })
 
   const setFollow = useMutation({
-    mutationFn: (next: boolean) =>
-      invoke('hub:followSet', { username, following: next, isOrg }),
+    mutationFn: (next: boolean) => invoke('hub:followSet', { username, following: next, isOrg }),
     onMutate: async (next) => {
-      await queryClient.cancelQueries({ queryKey: ['user-overview', username] })
-      const prev = queryClient.getQueryData<UserOverview>(['user-overview', username])
+      await queryClient.cancelQueries({ queryKey: overviewQueryKey })
+      const prev = queryClient.getQueryData<UserOverview>(overviewQueryKey)
       if (prev) {
         const delta = next ? 1 : -1
-        queryClient.setQueryData<UserOverview>(['user-overview', username], {
+        queryClient.setQueryData<UserOverview>(overviewQueryKey, {
           ...prev,
           isFollowing: next,
           numFollowers: Math.max(0, prev.numFollowers + delta)
@@ -268,7 +279,7 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
       return { prev }
     },
     onError: (err, _next, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(['user-overview', username], ctx.prev)
+      if (ctx?.prev) queryClient.setQueryData(overviewQueryKey, ctx.prev)
       push(t('profile:followError', { error: err.message }), 'error')
     },
     onSuccess: async (_res, next) => {
@@ -307,7 +318,7 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
         watching: next
       }),
     onSuccess: (result, next) => {
-      queryClient.setQueryData(['hub-watched'], result.watched)
+      queryClient.setQueryData(watchedQueryKey, result.watched)
       if (result.applied) {
         push(t(next ? 'profile:watchSuccess' : 'profile:unwatchSuccess'), 'success')
         return
@@ -324,11 +335,11 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
         return
       }
       // No web session: watch mutations need one — open the website control.
-      openExternal(`https://huggingface.co/${username}`)
+      openExternal(hubUserUrl(username, settings.hubEndpoint))
       push(t(next ? 'profile:watchOpenHub' : 'profile:unwatchOpenHub'), 'info', {
         action: {
           label: t('profile:watchOnHub'),
-          onClick: () => openExternal(`https://huggingface.co/${username}`)
+          onClick: () => openExternal(hubUserUrl(username, settings.hubEndpoint))
         }
       })
     },
@@ -352,9 +363,7 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
     : []
 
   const memberAccounts: FollowedAccount[] = members.data ?? []
-  const badgeKind = data
-    ? planBadgeKind({ isPro: data.isPro, plan: data.plan, isOrg })
-    : undefined
+  const badgeKind = data ? planBadgeKind({ isPro: data.isPro, plan: data.plan, isOrg }) : undefined
 
   return (
     <div className="h-full overflow-y-auto">
@@ -479,7 +488,7 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
                       variant="ghost"
                       size="icon"
                       aria-label={t('common:openOnHub')}
-                      onClick={() => openExternal(`https://huggingface.co/${data.name}`)}
+                      onClick={() => openExternal(hubUserUrl(data.name, settings.hubEndpoint))}
                     >
                       <ExternalLink className="size-4" aria-hidden />
                     </Button>
@@ -491,7 +500,7 @@ export function UserProfile({ username }: { username: string }): React.JSX.Eleme
                     variant="outline"
                     size="md"
                     className="gap-1.5"
-                    onClick={() => openExternal('https://huggingface.co/settings/profile')}
+                    onClick={() => openExternal(hubSettingsUrl('profile', settings.hubEndpoint))}
                   >
                     <SquarePen className="size-3.5" aria-hidden />
                     {t('profile:editProfile')}

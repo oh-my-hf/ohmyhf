@@ -3,10 +3,16 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { ArrowDownToLine, Boxes, Database, Heart, LayoutGrid, TrendingUp } from 'lucide-react'
-import type { Page, RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
+import {
+  normalizeHubEndpoint,
+  type Page,
+  type RepoKind,
+  type RepoSummary
+} from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatCount, formatRelativeTime } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { QueryErrorState } from '@/components/errors/QueryErrorState'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
@@ -28,8 +34,9 @@ const KIND_ICON: Record<RepoKind, React.ComponentType<{ className?: string }>> =
 type Segment = 'all' | RepoKind
 
 function useTrending(kind: RepoKind): UseQueryResult<Page<RepoSummary>> {
+  const endpointKey = normalizeHubEndpoint(useAppStore((s) => s.settings.hubEndpoint))
   return useQuery({
-    queryKey: ['home', 'trending', kind],
+    queryKey: ['home', 'trending', kind, endpointKey],
     queryFn: () => invoke('hub:search', { query: { kind, sort: 'trending', limit: 6 } }),
     staleTime: STALE_TIME
   })
@@ -117,6 +124,11 @@ export function TrendingRail(): React.JSX.Element {
 
   const anyPending = models.isPending || datasets.isPending || spaces.isPending
   const showSkeleton = rows.length === 0 && anyPending
+  const activeQueries =
+    segment === 'all'
+      ? [models, datasets, spaces]
+      : [segment === 'model' ? models : segment === 'dataset' ? datasets : spaces]
+  const failedQueries = activeQueries.filter((query) => query.isError)
 
   const segments: Array<{ id: Segment; label: string }> = [
     { id: 'all', label: t('home:trending.all') },
@@ -156,6 +168,13 @@ export function TrendingRail(): React.JSX.Element {
               <Skeleton key={i} className="h-11" />
             ))}
           </div>
+        ) : rows.length === 0 && failedQueries.length > 0 ? (
+          <QueryErrorState
+            compact
+            error={failedQueries[0]!.error}
+            onRetry={() => failedQueries.forEach((query) => void query.refetch())}
+            className="px-2"
+          />
         ) : rows.length === 0 ? (
           <p className="px-2 py-4 text-[12px] text-ink-faint">{t('home:trending.empty')}</p>
         ) : (

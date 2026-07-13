@@ -328,9 +328,7 @@ describe('HubClient spaces gallery mapping', () => {
   it('keeps gallery fields undefined for models even when cardData exists', async () => {
     const fetchImpl = vi
       .fn()
-      .mockResolvedValue(
-        jsonResponse([{ id: 'a/b', cardData: { emoji: '🤖', colorFrom: 'red' } }])
-      )
+      .mockResolvedValue(jsonResponse([{ id: 'a/b', cardData: { emoji: '🤖', colorFrom: 'red' } }]))
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
     const page = await client.searchRepos({ kind: 'model', sort: 'trending' })
     expect(page.items[0]!.emoji).toBeUndefined()

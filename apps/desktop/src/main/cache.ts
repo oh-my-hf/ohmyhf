@@ -1,10 +1,36 @@
 import { existsSync } from 'node:fs'
-import { lstat, readFile, readdir, readlink, rm, stat, unlink } from 'node:fs/promises'
-import { join, resolve, sep } from 'node:path'
+import { lstat, readFile, readdir, readlink, realpath, rm, unlink } from 'node:fs/promises'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { Worker } from 'node:worker_threads'
-import type { CacheReport } from '@oh-my-huggingface/shared'
-import { defaultCacheDir } from '@oh-my-huggingface/hub-api'
+import { defaultCacheDir, repoCachePaths } from '@oh-my-huggingface/hub-api'
+import { isValidRepoId, type CacheReport, type RepoKind } from '@oh-my-huggingface/shared'
 import type { SettingsStore } from './settings'
+
+const COMMIT_HASH = /^[0-9a-f]{40}$/
+const PARTIAL_MAX_AGE_MS = 10 * 60_000
+
+interface SafeRepo {
+  repo: string
+  blobsDir: string
+  snapshotsDir: string
+  refsDir: string
+  blobsExist: boolean
+  snapshotsExist: boolean
+  refsExist: boolean
+}
+
+interface SnapshotDirectory {
+  name: string
+  path: string
+}
+
+interface RevisionDeletionPlan {
+  repo: string
+  snapshots: string[]
+  refs: string[]
+  blobs: string[]
+  removeRepo: boolean
+}
 
 export class CacheManager {
   /**
@@ -12,10 +38,17 @@ export class CacheManager {
    *   partials are still resumable; their `.incomplete.<id>-*` files are spared
    *   by cleanPartials even when the mtime looks stale (a paused download's
    *   partial has a frozen mtime but is not an orphan).
+   * @param protectedCommitHashes returns commits used by active or resumable
+   *   downloads for one repository. Renderer input is deliberately not used for
+   *   this decision.
    */
   constructor(
     private readonly settings: SettingsStore,
-    private readonly protectedTaskIds: () => Set<string> = () => new Set()
+    private readonly protectedTaskIds: () => ReadonlySet<string> = () => new Set(),
+    private readonly protectedCommitHashes: (
+      kind: RepoKind,
+      repoId: string
+    ) => ReadonlySet<string> = () => new Set()
   ) {}
 
   cacheDir(): string {
@@ -49,141 +82,396 @@ export class CacheManager {
   }
 
   /**
-   * Delete snapshot revisions, their refs, and any blobs no longer referenced by a
-   * remaining snapshot. Refuses paths outside the active cache dir.
+   * Resolve a repository from its logical identity. This is the only path that
+   * cache reveal IPC should use; it applies the same anti-symlink and boundary
+   * checks as destructive cache operations.
    */
-  async deleteRevisions(repoPath: string, commitHashes: string[]): Promise<CacheReport> {
-    await deleteRevisionFiles(this.resolveRepoPath(repoPath), commitHashes)
+  async resolveRepo(kind: RepoKind, repoId: string): Promise<string> {
+    const safeRepo = await resolveSafeRepo(this.cacheDir(), kind, repoId)
+    if (!safeRepo) throw new Error('Repository cache does not exist')
+    return safeRepo.repo
+  }
+
+  /**
+   * Delete snapshot revisions, their refs, and blobs no longer referenced by a
+   * remaining snapshot. The repository path is always derived in main from the
+   * configured cache root and the logical repository identity.
+   */
+  async deleteRevisions(
+    kind: RepoKind,
+    repoId: string,
+    commitHashes: string[]
+  ): Promise<CacheReport> {
+    await deleteRevisionFiles(
+      this.cacheDir(),
+      kind,
+      repoId,
+      commitHashes,
+      this.protectedCommitHashes(kind, repoId)
+    )
     return this.scan()
   }
 
   /**
-   * Delete leftover `*.incomplete*` download partials in a repo's blobs dir.
-   * DownloadManager cleans its own partials on cancel/remove — this handles
-   * orphans left by crashes and older app versions. Partials belonging to a
-   * still-resumable task are skipped so a paused download is never wiped.
+   * Delete leftover `*.incomplete*` download partials in a repository's blobs
+   * directory. The path is derived and validated in main before any deletion.
    */
-  async cleanPartials(repoPath: string): Promise<CacheReport> {
-    await deleteRepoPartials(this.resolveRepoPath(repoPath), this.protectedTaskIds())
+  async cleanPartials(kind: RepoKind, repoId: string): Promise<CacheReport> {
+    await deleteRepoPartials(this.cacheDir(), kind, repoId, this.protectedTaskIds())
     return this.scan()
   }
-
-  private resolveRepoPath(repoPath: string): string {
-    const root = resolve(this.cacheDir())
-    const repo = resolve(repoPath)
-    if (repo !== root && !repo.startsWith(root + sep)) {
-      throw new Error('Repository path is outside the configured cache directory')
-    }
-    return repo
-  }
 }
 
 /**
- * Filesystem half of deleteRevisions, exported for tests. Blob GC only runs when
- * references are provable: the copy-fallback layout (Windows without the symlink
- * privilege) yields zero symlinks, and treating its blobs as "unreferenced" would
- * wipe the whole store on any single-revision delete — with revisions remaining
- * and nothing referenced, blob GC is skipped entirely.
+ * Filesystem half of deleteRevisions, exported for focused tests. It performs a
+ * complete read-only preflight before the first mutation so one unsafe revision,
+ * ref, blob, symlink, or junction cannot leave a partially deleted repository.
+ *
+ * Blob GC only runs when references are provable: the copy-fallback layout
+ * (Windows without the symlink privilege) yields zero symlinks, and treating its
+ * blobs as unreferenced would wipe the store. With revisions remaining and no
+ * detectable references, blob GC is skipped entirely.
  */
-export async function deleteRevisionFiles(repo: string, commitHashes: string[]): Promise<void> {
-  const snapshotsDir = join(repo, 'snapshots')
-  for (const hash of commitHashes) {
-    await rm(join(snapshotsDir, hash), { recursive: true, force: true })
+export async function deleteRevisionFiles(
+  cacheDir: string,
+  kind: RepoKind,
+  repoId: string,
+  commitHashes: string[],
+  protectedCommitHashes: ReadonlySet<string> = new Set()
+): Promise<void> {
+  const hashes = validateCommitHashes(commitHashes)
+  const protectedHash = hashes.find((hash) => protectedCommitHashes.has(hash))
+  if (protectedHash) {
+    throw new Error(`Cannot delete revision used by an active download: ${protectedHash}`)
   }
 
-  // Remove refs (possibly nested, e.g. refs/pr/1) that pointed at the deleted revisions.
-  for (const refPath of await listFilesRecursive(join(repo, 'refs'))) {
-    try {
-      const target = (await readFile(refPath, 'utf8')).trim()
-      if (commitHashes.includes(target)) await unlink(refPath)
-    } catch {
-      /* ignore unreadable refs */
-    }
-  }
+  const safeRepo = await resolveSafeRepo(cacheDir, kind, repoId)
+  if (!safeRepo) return
 
-  // Garbage-collect blobs unreferenced by the remaining snapshots.
-  const referenced = new Set<string>()
-  const remaining = await safeReaddir(snapshotsDir)
-  for (const commit of remaining) {
-    await collectSymlinkTargets(join(snapshotsDir, commit), referenced)
-  }
-  if (remaining.length === 0 || referenced.size > 0) {
-    const blobsDir = join(repo, 'blobs')
-    for (const blob of await safeReaddir(blobsDir)) {
-      const full = join(blobsDir, blob)
-      if (!referenced.has(resolve(full)) && !blob.includes('.incomplete')) {
-        await rm(full, { force: true })
-      }
-    }
-  }
+  const plan = await prepareRevisionDeletion(safeRepo, hashes)
+  if (!plan) return
 
-  // Remove the whole repo folder when nothing is left.
-  if ((await safeReaddir(snapshotsDir)).length === 0) {
-    await rm(repo, { recursive: true, force: true })
+  // All paths and contents were validated above. No mutation happens before
+  // this point, preserving all-or-nothing behavior for validation failures.
+  for (const snapshot of plan.snapshots) {
+    await rm(snapshot, { recursive: true, force: true })
   }
+  for (const ref of plan.refs) await unlink(ref)
+  for (const blob of plan.blobs) await rm(blob, { force: true })
+  if (plan.removeRepo) await rm(plan.repo, { recursive: true, force: true })
 }
 
 /**
- * Delete leftover `*.incomplete*` partials in a repo's blobs dir; exported for
- * tests. Two guards keep a live or resumable download safe: a partial written
- * in the last 10 minutes is kept (an active writer touches it every chunk), and
- * a partial whose name carries a still-tracked task id (`.incomplete.<id>-*`)
- * is kept regardless of mtime — a paused download's mtime is frozen but the
- * file is not an orphan.
+ * Delete leftover `*.incomplete*` partials from a logically addressed repo.
+ * Every blobs entry is validated before stale candidates are removed, preventing
+ * a malicious blobs symlink/junction from redirecting cleanup outside the cache.
  */
 export async function deleteRepoPartials(
-  repo: string,
-  protectedTaskIds: Set<string> = new Set()
+  cacheDir: string,
+  kind: RepoKind,
+  repoId: string,
+  protectedTaskIds: ReadonlySet<string> = new Set()
 ): Promise<void> {
-  const blobsDir = join(repo, 'blobs')
-  for (const name of await safeReaddir(blobsDir)) {
+  const safeRepo = await resolveSafeRepo(cacheDir, kind, repoId)
+  if (!safeRepo?.blobsExist) return
+
+  const stalePartials: string[] = []
+  const protectedMarkers = [...protectedTaskIds].map((id) => `.incomplete.${id}`)
+  for (const name of await readdir(safeRepo.blobsDir)) {
+    const full = join(safeRepo.blobsDir, name)
+    const entry = await lstat(full)
+    assertRegularFile(entry, `blob ${name}`)
+    assertDirectChild(safeRepo.blobsDir, await realpath(full), `blob ${name}`)
+
     if (!name.includes('.incomplete')) continue
-    if ([...protectedTaskIds].some((id) => name.includes(`.incomplete.${id}`))) continue
-    try {
-      const full = join(blobsDir, name)
-      if (Date.now() - (await stat(full)).mtimeMs < 10 * 60_000) continue
-      await rm(full, { force: true })
-    } catch {
-      /* vanished mid-clean */
+    if (protectedMarkers.some((marker) => name.includes(marker))) continue
+    if (Date.now() - entry.mtimeMs < PARTIAL_MAX_AGE_MS) continue
+    stalePartials.push(full)
+  }
+
+  // The loop above is a complete read-only preflight of the blobs directory.
+  for (const partial of stalePartials) await rm(partial, { force: true })
+}
+
+async function prepareRevisionDeletion(
+  safeRepo: SafeRepo,
+  hashes: string[]
+): Promise<RevisionDeletionPlan | null> {
+  const snapshots = await inspectSnapshotDirectories(safeRepo)
+  const selected = snapshots.filter(({ name }) => hashes.includes(name))
+  if (selected.length === 0) return null
+
+  const remaining = snapshots.filter(({ name }) => !hashes.includes(name))
+  const blobFiles = await inspectBlobFiles(safeRepo)
+  const refFiles = await inspectRefFiles(safeRepo)
+
+  // Validate every selected tree too. `rm` unlinks leaf symlinks rather than
+  // following them, but accepting a link outside blobs would make the safety
+  // invariant hard to audit and could become dangerous after a future refactor.
+  for (const snapshot of selected) {
+    await collectSnapshotReferences(snapshot.path, safeRepo, new Set())
+  }
+
+  const referenced = new Set<string>()
+  for (const snapshot of remaining) {
+    await collectSnapshotReferences(snapshot.path, safeRepo, referenced)
+  }
+
+  const refs: string[] = []
+  for (const refPath of refFiles) {
+    const target = (await readFile(refPath, 'utf8')).trim()
+    if (hashes.includes(target)) refs.push(refPath)
+  }
+
+  const blobs: string[] = []
+  if (remaining.length === 0 || referenced.size > 0) {
+    for (const { name, path } of blobFiles) {
+      if (!referenced.has(path) && !name.includes('.incomplete')) blobs.push(path)
     }
   }
-}
 
-async function safeReaddir(dir: string): Promise<string[]> {
-  try {
-    return await readdir(dir)
-  } catch {
-    return []
+  if (remaining.length === 0) await validateExtraRepoEntries(safeRepo)
+
+  return {
+    repo: safeRepo.repo,
+    snapshots: selected.map(({ path }) => path),
+    refs,
+    blobs,
+    removeRepo: remaining.length === 0
   }
 }
 
-async function listFilesRecursive(dir: string): Promise<string[]> {
-  const out: string[] = []
-  for (const entry of await safeReaddir(dir)) {
-    const full = join(dir, entry)
-    try {
-      const st = await lstat(full)
-      if (st.isDirectory()) out.push(...(await listFilesRecursive(full)))
-      else out.push(full)
-    } catch {
-      /* ignore */
+async function resolveSafeRepo(
+  cacheDir: string,
+  kind: RepoKind,
+  repoId: string
+): Promise<SafeRepo | null> {
+  if (!isAbsolute(cacheDir)) throw new Error('Cache directory must be absolute')
+  if (!isValidRepoId(repoId)) throw new Error('Invalid repository id')
+
+  const cacheRoot = resolve(cacheDir)
+  const derived = repoCachePaths(cacheRoot, kind, repoId)
+  const expectedRepo = resolve(derived.repoDir)
+  const expectedRelative = relative(cacheRoot, expectedRepo)
+  if (!isSinglePathSegment(expectedRelative)) {
+    throw new Error('Derived repository path is outside the configured cache directory')
+  }
+
+  const rootEntry = await lstatIfExists(cacheRoot)
+  if (!rootEntry) return null
+  assertDirectory(rootEntry, 'cache root')
+  const realRoot = await realpath(cacheRoot)
+
+  const repoEntry = await lstatIfExists(expectedRepo)
+  if (!repoEntry) return null
+  assertDirectory(repoEntry, 'repository')
+  const realRepo = await realpath(expectedRepo)
+  const actualRelative = relative(realRoot, realRepo)
+  if (actualRelative !== expectedRelative || !isSinglePathSegment(actualRelative)) {
+    throw new Error('Repository resolves outside the configured cache directory')
+  }
+
+  const blobs = await resolveStructuralDirectory(realRepo, 'blobs')
+  const snapshots = await resolveStructuralDirectory(realRepo, 'snapshots')
+  const refs = await resolveStructuralDirectory(realRepo, 'refs')
+  return {
+    repo: realRepo,
+    blobsDir: blobs.path,
+    snapshotsDir: snapshots.path,
+    refsDir: refs.path,
+    blobsExist: blobs.exists,
+    snapshotsExist: snapshots.exists,
+    refsExist: refs.exists
+  }
+}
+
+async function resolveStructuralDirectory(
+  repo: string,
+  name: 'blobs' | 'snapshots' | 'refs'
+): Promise<{ path: string; exists: boolean }> {
+  const path = join(repo, name)
+  const entry = await lstatIfExists(path)
+  if (!entry) return { path, exists: false }
+  assertDirectory(entry, name)
+  const real = await realpath(path)
+  if (relative(repo, real) !== name) {
+    throw new Error(`Unsafe cache path: ${name} resolves outside its repository`)
+  }
+  return { path: real, exists: true }
+}
+
+async function inspectSnapshotDirectories(safeRepo: SafeRepo): Promise<SnapshotDirectory[]> {
+  if (!safeRepo.snapshotsExist) return []
+  const snapshots: SnapshotDirectory[] = []
+  for (const name of await readdir(safeRepo.snapshotsDir)) {
+    const path = join(safeRepo.snapshotsDir, name)
+    const entry = await lstat(path)
+    assertDirectory(entry, `snapshot ${name}`)
+    const real = await realpath(path)
+    assertDirectChild(safeRepo.snapshotsDir, real, `snapshot ${name}`)
+    snapshots.push({ name, path: real })
+  }
+  return snapshots
+}
+
+async function inspectBlobFiles(
+  safeRepo: SafeRepo
+): Promise<Array<{ name: string; path: string }>> {
+  if (!safeRepo.blobsExist) return []
+  const blobs: Array<{ name: string; path: string }> = []
+  for (const name of await readdir(safeRepo.blobsDir)) {
+    const path = join(safeRepo.blobsDir, name)
+    const entry = await lstat(path)
+    assertRegularFile(entry, `blob ${name}`)
+    const real = await realpath(path)
+    assertDirectChild(safeRepo.blobsDir, real, `blob ${name}`)
+    blobs.push({ name, path: real })
+  }
+  return blobs
+}
+
+async function inspectRefFiles(safeRepo: SafeRepo): Promise<string[]> {
+  if (!safeRepo.refsExist) return []
+  return listRegularFilesRecursive(safeRepo.refsDir, safeRepo.refsDir, 'ref')
+}
+
+async function listRegularFilesRecursive(
+  directory: string,
+  boundary: string,
+  label: string
+): Promise<string[]> {
+  const files: string[] = []
+  for (const name of await readdir(directory)) {
+    const path = join(directory, name)
+    const entry = await lstat(path)
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Unsafe cache path: ${label} ${name} is a symbolic link or junction`)
     }
+    if (entry.isDirectory()) {
+      const real = await realpath(path)
+      assertContained(boundary, real, `${label} directory ${name}`)
+      files.push(...(await listRegularFilesRecursive(real, boundary, label)))
+      continue
+    }
+    assertRegularFile(entry, `${label} ${name}`)
+    const real = await realpath(path)
+    assertContained(boundary, real, `${label} ${name}`)
+    files.push(real)
   }
-  return out
+  return files
 }
 
-async function collectSymlinkTargets(dir: string, out: Set<string>): Promise<void> {
-  for (const entry of await safeReaddir(dir)) {
-    const full = join(dir, entry)
-    try {
-      const st = await lstat(full)
-      if (st.isDirectory()) {
-        await collectSymlinkTargets(full, out)
-      } else if (st.isSymbolicLink()) {
-        out.add(resolve(dir, await readlink(full)))
+async function collectSnapshotReferences(
+  directory: string,
+  safeRepo: SafeRepo,
+  out: Set<string>
+): Promise<void> {
+  for (const name of await readdir(directory)) {
+    const path = join(directory, name)
+    const entry = await lstat(path)
+    if (entry.isDirectory()) {
+      const real = await realpath(path)
+      assertContained(directory, real, `snapshot directory ${name}`)
+      await collectSnapshotReferences(real, safeRepo, out)
+      continue
+    }
+    if (entry.isSymbolicLink()) {
+      if (!safeRepo.blobsExist) {
+        throw new Error(`Unsafe cache path: snapshot link ${name} has no blobs directory`)
       }
-    } catch {
-      /* ignore */
+      const target = resolve(dirname(path), await readlink(path))
+      assertContained(safeRepo.blobsDir, target, `snapshot link ${name}`)
+      const targetEntry = await lstatIfExists(target)
+      if (!targetEntry) throw new Error(`Unsafe cache path: snapshot link ${name} is broken`)
+      assertRegularFile(targetEntry, `snapshot link target ${name}`)
+      const realTarget = await realpath(target)
+      assertDirectChild(safeRepo.blobsDir, realTarget, `snapshot link ${name}`)
+      out.add(realTarget)
+      continue
     }
+    assertRegularFile(entry, `snapshot file ${name}`)
   }
+}
+
+/** Validate non-standard repo entries before recursively removing the last snapshot. */
+async function validateExtraRepoEntries(safeRepo: SafeRepo): Promise<void> {
+  for (const name of await readdir(safeRepo.repo)) {
+    if (name === 'blobs' || name === 'snapshots' || name === 'refs') continue
+    await validateNoLinks(join(safeRepo.repo, name), safeRepo.repo)
+  }
+}
+
+async function validateNoLinks(path: string, boundary: string): Promise<void> {
+  const entry = await lstat(path)
+  if (entry.isSymbolicLink()) {
+    throw new Error(`Unsafe cache path: ${relative(boundary, path)} is a symbolic link or junction`)
+  }
+  if (entry.isDirectory()) {
+    const real = await realpath(path)
+    assertContained(boundary, real, `directory ${relative(boundary, path)}`)
+    for (const name of await readdir(real)) await validateNoLinks(join(real, name), boundary)
+    return
+  }
+  assertRegularFile(entry, `entry ${relative(boundary, path)}`)
+  assertContained(boundary, await realpath(path), `entry ${relative(boundary, path)}`)
+}
+
+function validateCommitHashes(commitHashes: string[]): string[] {
+  if (commitHashes.length < 1 || commitHashes.length > 100) {
+    throw new Error('Expected between 1 and 100 commit hashes')
+  }
+  const hashes = [...new Set(commitHashes)]
+  if (hashes.some((hash) => !COMMIT_HASH.test(hash))) throw new Error('Invalid commit hash')
+  return hashes
+}
+
+function assertDirectory(entry: Awaited<ReturnType<typeof lstat>>, label: string): void {
+  if (entry.isSymbolicLink()) {
+    throw new Error(`Unsafe cache path: ${label} is a symbolic link or junction`)
+  }
+  if (!entry.isDirectory()) throw new Error(`Unsafe cache path: ${label} is not a directory`)
+}
+
+function assertRegularFile(entry: Awaited<ReturnType<typeof lstat>>, label: string): void {
+  if (entry.isSymbolicLink()) {
+    throw new Error(`Unsafe cache path: ${label} is a symbolic link or junction`)
+  }
+  if (!entry.isFile()) throw new Error(`Unsafe cache path: ${label} is not a regular file`)
+}
+
+function assertDirectChild(parent: string, child: string, label: string): void {
+  const rel = relative(parent, child)
+  if (!isSinglePathSegment(rel)) {
+    throw new Error(`Unsafe cache path: ${label} resolves outside its parent`)
+  }
+}
+
+function assertContained(parent: string, child: string, label: string): void {
+  const rel = relative(parent, child)
+  if (rel === '' || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+    throw new Error(`Unsafe cache path: ${label} resolves outside its parent`)
+  }
+}
+
+function isSinglePathSegment(path: string): boolean {
+  return (
+    path !== '' &&
+    path !== '..' &&
+    !path.startsWith(`..${sep}`) &&
+    !isAbsolute(path) &&
+    !path.includes(sep)
+  )
+}
+
+async function lstatIfExists(path: string): Promise<Awaited<ReturnType<typeof lstat>> | null> {
+  try {
+    return await lstat(path)
+  } catch (error) {
+    if (isNodeError(error) && error.code === 'ENOENT') return null
+    throw error
+  }
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error
 }

@@ -1,10 +1,544 @@
-import { describe, expect, it } from 'vitest'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { repoCachePaths } from '@oh-my-huggingface/hub-api'
 import { computeSpeedShare } from '@oh-my-huggingface/shared'
 
-/**
- * DownloadManager itself needs electron + better-sqlite3 (Electron ABI), so only
- * the pure share math it applies per worker is unit-tested here.
- */
+vi.mock('electron', () => ({ app: { getVersion: () => '0.0.0-test' } }))
+
+import {
+  DownloadManager,
+  buildFrozenResolveUrl,
+  isResolvedCommit,
+  isSafeRepoFilePath
+} from './downloads'
+
+const COMMIT_A = '0123456789abcdef0123456789abcdef01234567'
+const COMMIT_B = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+interface PersistCall extends Record<string, unknown> {
+  id: string
+}
+
+class FakeDatabase {
+  readonly writes: PersistCall[] = []
+
+  constructor(private readonly rows: Record<string, unknown>[] = []) {}
+
+  prepare(sql: string): {
+    all: () => Record<string, unknown>[]
+    run: (params?: PersistCall | string) => void
+  } {
+    if (sql.includes('SELECT * FROM downloads')) {
+      return { all: () => this.rows, run: () => undefined }
+    }
+    if (sql.includes('INSERT INTO downloads')) {
+      return {
+        all: () => [],
+        run: (params) => {
+          if (params && typeof params !== 'string') this.writes.push({ ...params })
+        }
+      }
+    }
+    return { all: () => [], run: () => undefined }
+  }
+
+  transaction<T>(fn: () => T): () => T {
+    return () => fn()
+  }
+}
+
+function createSettings(
+  overrides: Partial<{
+    downloadConcurrency: number
+    speedLimitBps: number | null
+    hfCacheDir: string | null
+    proxyUrl: string | null
+  }> = {}
+) {
+  const value = {
+    downloadConcurrency: 0,
+    speedLimitBps: null,
+    hfCacheDir: '/tmp/omh-download-test-cache',
+    proxyUrl: 'http://127.0.0.1:7890',
+    ...overrides
+  }
+  return { get: () => value }
+}
+
+function createHub() {
+  return {
+    baseUrl: 'https://hub.example.test',
+    getRepoDetail: vi.fn().mockResolvedValue({ sha: COMMIT_A }),
+    getFileTree: vi
+      .fn()
+      .mockResolvedValue([
+        { type: 'file', path: 'weights.bin', size: 42, lfs: { oid: 'f'.repeat(64), size: 42 } }
+      ])
+  }
+}
+
+function createManager(
+  db: FakeDatabase,
+  hub = createHub(),
+  settings = createSettings()
+): DownloadManager {
+  return new DownloadManager(
+    db as never,
+    settings as never,
+    hub as never,
+    { show: vi.fn() } as never,
+    () => 'hf_test',
+    vi.fn()
+  )
+}
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+describe('download environment helpers', () => {
+  it('accepts only immutable 40-hex commits', () => {
+    expect(isResolvedCommit(COMMIT_A)).toBe(true)
+    expect(isResolvedCommit(COMMIT_A.toUpperCase())).toBe(true)
+    expect(isResolvedCommit('main')).toBe(false)
+    expect(isResolvedCommit('../escape')).toBe(false)
+  })
+
+  it('builds a commit-pinned URL on the frozen endpoint', () => {
+    expect(
+      buildFrozenResolveUrl(
+        'https://hub.example.test/',
+        'dataset',
+        'org/repo',
+        COMMIT_A,
+        'data/a b.json'
+      )
+    ).toBe(`https://hub.example.test/datasets/org/repo/resolve/${COMMIT_A}/data/a%20b.json`)
+  })
+
+  it('rejects file-tree paths that could escape a snapshot', () => {
+    expect(isSafeRepoFilePath('src/model.py')).toBe(true)
+    expect(isSafeRepoFilePath('../outside')).toBe(false)
+    expect(isSafeRepoFilePath('src\\outside')).toBe(false)
+  })
+})
+
+describe('DownloadManager frozen environment', () => {
+  it('resolves the revision first, then enumerates the tree at that commit', async () => {
+    vi.useFakeTimers()
+    const db = new FakeDatabase()
+    const hub = createHub()
+    const manager = createManager(db, hub)
+
+    const tasks = await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+
+    expect(hub.getRepoDetail).toHaveBeenCalledWith('model', 'org/repo', 'main')
+    expect(hub.getFileTree).toHaveBeenCalledWith('model', 'org/repo', COMMIT_A, '', {
+      recursive: true
+    })
+    expect(tasks[0]).toMatchObject({ revision: 'main', resolvedCommit: COMMIT_A, resumable: true })
+    expect(tasks[0]).not.toHaveProperty('environment')
+    expect(tasks[0]).not.toHaveProperty('endpoint')
+    expect(tasks[0]).not.toHaveProperty('proxyUrl')
+    expect(tasks[0]).not.toHaveProperty('cacheDir')
+    expect(db.writes.at(-1)).toMatchObject({
+      resolvedCommit: COMMIT_A,
+      endpoint: 'https://hub.example.test',
+      proxyUrl: 'http://127.0.0.1:7890',
+      cacheDir: '/tmp/omh-download-test-cache',
+      environmentVersion: 1
+    })
+    manager.shutdown()
+  })
+
+  it('does not deduplicate the same branch after it moves to a new commit', async () => {
+    vi.useFakeTimers()
+    const db = new FakeDatabase()
+    const hub = createHub()
+    hub.getRepoDetail
+      .mockResolvedValueOnce({ sha: COMMIT_A })
+      .mockResolvedValueOnce({ sha: COMMIT_B })
+    const manager = createManager(db, hub)
+
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const tasks = await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+
+    expect(tasks.map((task) => task.resolvedCommit).sort()).toEqual([COMMIT_A, COMMIT_B].sort())
+    manager.shutdown()
+  })
+
+  it('resumes with the frozen endpoint after the applied endpoint changes', async () => {
+    vi.useFakeTimers()
+    const db = new FakeDatabase()
+    const hub = createHub()
+    const manager = createManager(db, hub)
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const id = manager.list()[0]!.id
+    manager.pause(id)
+    hub.baseUrl = 'https://another-hub.example.test'
+
+    const resumed = manager.resume(id).find((task) => task.id === id)
+
+    expect(resumed).toMatchObject({
+      status: 'queued',
+      resolvedCommit: COMMIT_A,
+      resumable: true
+    })
+    expect(resumed?.errorCode).toBeUndefined()
+    manager.shutdown()
+  })
+
+  it('flushes every dirty task in one timer window instead of only the first', async () => {
+    vi.useFakeTimers()
+    const db = new FakeDatabase()
+    const hub = createHub()
+    hub.getRepoDetail
+      .mockResolvedValueOnce({ sha: COMMIT_A })
+      .mockResolvedValueOnce({ sha: COMMIT_B })
+    const manager = createManager(db, hub)
+    await manager.start({ repoId: 'org/a', kind: 'model' })
+    await manager.start({ repoId: 'org/b', kind: 'model' })
+    const internals = manager as unknown as {
+      tasks: Map<string, unknown>
+      schedulePersist: (task: unknown) => void
+    }
+    const tasks = [...internals.tasks.values()]
+    db.writes.length = 0
+
+    for (const task of tasks) internals.schedulePersist(task)
+    await vi.advanceTimersByTimeAsync(3_000)
+
+    expect(new Set(db.writes.map((write) => write.id))).toEqual(
+      new Set(tasks.map((task) => (task as { id: string }).id))
+    )
+    manager.shutdown()
+  })
+
+  it('applies bulk pause, resume, completed cleanup, and clear actions', async () => {
+    vi.useFakeTimers()
+    const manager = createManager(new FakeDatabase())
+    await manager.start({ repoId: 'org/a', kind: 'model' })
+    await manager.start({ repoId: 'org/b', kind: 'model' })
+
+    expect(manager.pauseAll().every((task) => task.status === 'paused')).toBe(true)
+    expect(manager.resumeAll().every((task) => task.status === 'queued')).toBe(true)
+
+    const internals = manager as unknown as {
+      tasks: Map<string, { status: string }>
+    }
+    const first = [...internals.tasks.values()][0]!
+    first.status = 'completed'
+    expect(manager.clearCompleted()).toHaveLength(1)
+    expect(manager.clearAll()).toHaveLength(0)
+    manager.shutdown()
+  })
+
+  it('waits for an old worker to exit before pumping an immediate resume', async () => {
+    vi.useFakeTimers()
+    const db = new FakeDatabase()
+    const settings = createSettings()
+    const manager = createManager(db, createHub(), settings)
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const internals = manager as unknown as {
+      tasks: Map<
+        string,
+        {
+          id: string
+          status: string
+          files: Array<{ path: string; status: string }>
+        }
+      >
+      workers: Map<
+        string,
+        {
+          postMessage: ReturnType<typeof vi.fn>
+          removeAllListeners: ReturnType<typeof vi.fn>
+          terminate: ReturnType<typeof vi.fn>
+        }
+      >
+      stoppingTasks: Map<string, Promise<unknown>>
+    }
+    const task = [...internals.tasks.values()][0]!
+    const file = task.files[0]!
+    task.status = 'running'
+    file.status = 'running'
+    let finishTermination!: () => void
+    const terminated = new Promise<void>((resolve) => {
+      finishTermination = resolve
+    })
+    const worker = {
+      postMessage: vi.fn(),
+      removeAllListeners: vi.fn(),
+      terminate: vi.fn(() => terminated)
+    }
+    internals.workers.set(`${task.id} ${file.path}`, worker)
+    settings.get().downloadConcurrency = 1
+
+    manager.pause(task.id)
+    manager.resume(task.id)
+
+    expect(worker.terminate).toHaveBeenCalledOnce()
+    expect(internals.stoppingTasks.has(task.id)).toBe(true)
+    expect(internals.workers.size).toBe(0)
+    const stopping = internals.stoppingTasks.get(task.id)!
+    settings.get().downloadConcurrency = 0
+    finishTermination()
+    await stopping
+    expect(internals.stoppingTasks.has(task.id)).toBe(false)
+    manager.shutdown()
+  })
+
+  it('publishes the revision ref only after every file completes', async () => {
+    vi.useFakeTimers()
+    const cacheDir = mkdtempSync(join(tmpdir(), 'omh-download-ref-'))
+    const db = new FakeDatabase()
+    const manager = createManager(db, createHub(), createSettings({ hfCacheDir: cacheDir }))
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const { repoDir, refsDir } = repoCachePaths(cacheDir, 'model', 'org/repo')
+    mkdirSync(repoDir)
+    const refPath = join(refsDir, 'main')
+    expect(existsSync(refPath)).toBe(false)
+
+    const internals = manager as unknown as {
+      tasks: Map<string, { files: Array<{ status: string; receivedBytes: number; size: number }> }>
+      settleTask: (task: unknown) => void
+    }
+    const task = [...internals.tasks.values()][0]!
+    for (const file of task.files) {
+      file.status = 'completed'
+      file.receivedBytes = file.size
+    }
+    internals.settleTask(task)
+
+    expect(readFileSync(refPath, 'utf8')).toBe(COMMIT_A)
+    expect(manager.list()[0]).toMatchObject({ status: 'completed', resumable: false })
+    manager.shutdown()
+  })
+
+  it('does not let an older branch resolution overwrite the newest revision ref', async () => {
+    vi.useFakeTimers()
+    const cacheDir = mkdtempSync(join(tmpdir(), 'omh-download-ref-order-'))
+    const hub = createHub()
+    hub.getRepoDetail
+      .mockResolvedValueOnce({ sha: COMMIT_A })
+      .mockResolvedValueOnce({ sha: COMMIT_B })
+    const manager = createManager(new FakeDatabase(), hub, createSettings({ hfCacheDir: cacheDir }))
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const { repoDir, refsDir } = repoCachePaths(cacheDir, 'model', 'org/repo')
+    mkdirSync(repoDir)
+    const internals = manager as unknown as {
+      tasks: Map<
+        string,
+        {
+          resolvedCommit: string
+          files: Array<{ status: string; receivedBytes: number; size: number }>
+        }
+      >
+      settleTask: (task: unknown) => void
+    }
+    const tasks = [...internals.tasks.values()]
+    const older = tasks.find((task) => task.resolvedCommit === COMMIT_A)!
+    const newer = tasks.find((task) => task.resolvedCommit === COMMIT_B)!
+    for (const task of [newer, older]) {
+      for (const file of task.files) {
+        file.status = 'completed'
+        file.receivedBytes = file.size
+      }
+      internals.settleTask(task)
+    }
+
+    expect(readFileSync(join(refsDir, 'main'), 'utf8')).toBe(COMMIT_B)
+    manager.shutdown()
+  })
+
+  it('orders branch aliases by request start even when the older file tree returns last', async () => {
+    vi.useFakeTimers()
+    const cacheDir = mkdtempSync(join(tmpdir(), 'omh-download-ref-concurrent-'))
+    const hub = createHub()
+    hub.getRepoDetail
+      .mockResolvedValueOnce({ sha: COMMIT_A })
+      .mockResolvedValueOnce({ sha: COMMIT_B })
+    const tree = [
+      {
+        type: 'file' as const,
+        path: 'weights.bin',
+        size: 42,
+        lfs: { oid: 'f'.repeat(64), size: 42 }
+      }
+    ]
+    let releaseSlowTree!: () => void
+    let markSlowTreeStarted!: () => void
+    const slowTreeStarted = new Promise<void>((resolve) => {
+      markSlowTreeStarted = resolve
+    })
+    const slowTree = new Promise<typeof tree>((resolve) => {
+      releaseSlowTree = () => resolve(tree)
+    })
+    hub.getFileTree
+      .mockImplementationOnce(() => {
+        markSlowTreeStarted()
+        return slowTree
+      })
+      .mockResolvedValueOnce(tree)
+    const manager = createManager(new FakeDatabase(), hub, createSettings({ hfCacheDir: cacheDir }))
+
+    const olderStart = manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    await slowTreeStarted
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    releaseSlowTree()
+    await olderStart
+
+    const { repoDir, refsDir } = repoCachePaths(cacheDir, 'model', 'org/repo')
+    mkdirSync(repoDir)
+    const internals = manager as unknown as {
+      tasks: Map<
+        string,
+        {
+          resolvedCommit: string
+          files: Array<{ status: string; receivedBytes: number; size: number }>
+        }
+      >
+      settleTask: (task: unknown) => void
+    }
+    const tasks = [...internals.tasks.values()]
+    const newer = tasks.find((task) => task.resolvedCommit === COMMIT_B)!
+    const older = tasks.find((task) => task.resolvedCommit === COMMIT_A)!
+    for (const task of [newer, older]) {
+      for (const file of task.files) {
+        file.status = 'completed'
+        file.receivedBytes = file.size
+      }
+      internals.settleTask(task)
+    }
+
+    expect(readFileSync(join(refsDir, 'main'), 'utf8')).toBe(COMMIT_B)
+    manager.shutdown()
+  })
+
+  it('refuses to publish a revision ref through a symlinked refs directory', async () => {
+    vi.useFakeTimers()
+    const cacheDir = mkdtempSync(join(tmpdir(), 'omh-download-ref-link-'))
+    const outside = mkdtempSync(join(tmpdir(), 'omh-download-ref-outside-'))
+    const db = new FakeDatabase()
+    const manager = createManager(db, createHub(), createSettings({ hfCacheDir: cacheDir }))
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const { repoDir, refsDir } = repoCachePaths(cacheDir, 'model', 'org/repo')
+    mkdirSync(repoDir)
+    symlinkSync(outside, refsDir, process.platform === 'win32' ? 'junction' : 'dir')
+
+    const internals = manager as unknown as {
+      tasks: Map<string, { files: Array<{ status: string; receivedBytes: number; size: number }> }>
+      settleTask: (task: unknown) => void
+    }
+    const task = [...internals.tasks.values()][0]!
+    for (const file of task.files) {
+      file.status = 'completed'
+      file.receivedBytes = file.size
+    }
+    internals.settleTask(task)
+
+    expect(existsSync(join(outside, 'main'))).toBe(false)
+    expect(manager.list()[0]).toMatchObject({
+      status: 'error',
+      errorCode: 'integrity',
+      resumable: false
+    })
+    expect(manager.protectedTaskIds()).not.toContain(manager.list()[0]!.id)
+    manager.shutdown()
+  })
+
+  it('cleans only partials with the exact task-owned file name', async () => {
+    vi.useFakeTimers()
+    const cacheDir = mkdtempSync(join(tmpdir(), 'omh-download-partials-'))
+    const manager = createManager(
+      new FakeDatabase(),
+      createHub(),
+      createSettings({ hfCacheDir: cacheDir })
+    )
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const internals = manager as unknown as {
+      tasks: Map<string, { id: string }>
+      deleteTaskPartials: (task: unknown) => Promise<void>
+    }
+    const task = [...internals.tasks.values()][0]!
+    const { blobsDir } = repoCachePaths(cacheDir, 'model', 'org/repo')
+    mkdirSync(blobsDir, { recursive: true })
+    const owned = join(blobsDir, `${'a'.repeat(64)}.incomplete.${task.id}-12345678`)
+    const decoy = join(blobsDir, `${'b'.repeat(64)}.incomplete.${task.id}extra-12345678`)
+    writeFileSync(owned, 'owned')
+    writeFileSync(decoy, 'decoy')
+
+    await internals.deleteTaskPartials(task)
+
+    expect(existsSync(owned)).toBe(false)
+    expect(existsSync(decoy)).toBe(true)
+    manager.shutdown()
+  })
+
+  it('ignores a delayed settlement after a task has been removed', async () => {
+    vi.useFakeTimers()
+    const db = new FakeDatabase()
+    const manager = createManager(db)
+    await manager.start({ repoId: 'org/repo', kind: 'model', revision: 'main' })
+    const internals = manager as unknown as {
+      tasks: Map<string, { id: string }>
+      settleTask: (task: unknown) => void
+    }
+    const task = [...internals.tasks.values()][0]!
+    manager.remove(task.id)
+    const writesAfterRemove = db.writes.length
+
+    internals.settleTask(task)
+
+    expect(manager.list()).toHaveLength(0)
+    expect(db.writes).toHaveLength(writesAfterRemove)
+    manager.shutdown()
+  })
+
+  it('keeps legacy in-flight rows visible but non-resumable', () => {
+    const db = new FakeDatabase([
+      {
+        id: 'legacy',
+        repo_id: 'org/repo',
+        kind: 'model',
+        revision: 'main',
+        resolved_commit: null,
+        endpoint: null,
+        proxy_url: null,
+        cache_dir: null,
+        environment_version: null,
+        status: 'paused',
+        total_bytes: 1,
+        received_bytes: 0,
+        files_json: JSON.stringify([{ path: 'a', size: 1, receivedBytes: 0, status: 'paused' }]),
+        error: null,
+        error_code: null,
+        created_at: '2026-01-01T00:00:00.000Z',
+        completed_at: null
+      }
+    ])
+    const manager = createManager(db)
+
+    expect(manager.list()[0]).toMatchObject({
+      id: 'legacy',
+      status: 'error',
+      errorCode: 'legacy-task',
+      resumable: false
+    })
+    manager.shutdown()
+  })
+})
+
 describe('computeSpeedShare', () => {
   it('returns null (unlimited) when no limit is configured', () => {
     expect(computeSpeedShare(null, 3)).toBeNull()

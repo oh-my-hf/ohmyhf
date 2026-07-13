@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { BrowserWindow, app, dialog, nativeTheme, protocol, shell } from 'electron'
 import { HubApiError } from '@oh-my-huggingface/hub-api'
 import type { IpcEventChannel, IpcEventPayload } from '@oh-my-huggingface/shared'
-import { isValidRepoId } from '@oh-my-huggingface/shared'
+import { isAllowedExternalUrl, isValidRepoId } from '@oh-my-huggingface/shared'
 import { AuthManager } from './auth'
 import { mimeForOmhfFile } from './preview-mime'
 import { CacheManager } from './cache'
@@ -11,9 +11,11 @@ import { DownloadManager } from './downloads'
 import { FollowsPoller } from './follows'
 import { createHubClient, createHubProxy, rebuildHubClient, type HubHolder } from './hub'
 import { MainI18n, matchLocale } from './i18n'
+import { IntegrationTaskManager } from './integration-tasks'
 import { registerIpcHandlers } from './ipc'
 import { Library } from './library'
 import { buildMenu } from './menu'
+import { NotificationService } from './notifications'
 import { applyAppProxy } from './proxy'
 import { SettingsStore } from './settings'
 import { TrayManager } from './tray'
@@ -179,24 +181,37 @@ if (!gotLock) {
     })
 
     const library = new Library(db, () => settings.get().historyLimit)
+    const notifications = new NotificationService(settings, i18n, navigate)
     const downloads = new DownloadManager(
       db,
       settings,
       hub,
-      i18n,
+      notifications,
       () => auth.accessToken(),
-      (tasks) => broadcast('evt:downloads', tasks),
-      navigate
+      (tasks) => broadcast('evt:downloads', tasks)
     )
     // Cache cleanup must spare partials of still-resumable downloads.
-    const cache = new CacheManager(settings, () => downloads.protectedTaskIds())
+    const cache = new CacheManager(
+      settings,
+      () => downloads.protectedTaskIds(),
+      (kind, repoId) => downloads.protectedCommits(kind, repoId)
+    )
+    const integrationTasks = new IntegrationTaskManager({
+      accessToken: () => auth.accessToken(),
+      username: () => {
+        const state = auth.getState()
+        return state.status === 'signedIn' ? state.user.name : undefined
+      },
+      cacheDir: () => cache.cacheDir(),
+      broadcast: (tasks) => broadcast('evt:integrationTasks', tasks),
+      notifications
+    })
     const follows = new FollowsPoller(
       library,
       hub,
       settings,
-      i18n,
       (items) => broadcast('evt:inbox', items),
-      navigate
+      notifications
     )
     const updater = new UpdateManager({
       currentVersion: app.getVersion(),
@@ -299,6 +314,7 @@ if (!gotLock) {
       downloads,
       cache,
       follows,
+      integrationTasks,
       updater,
       i18n,
       rebuildMenu,
@@ -353,13 +369,13 @@ if (!gotLock) {
 
       // Every external navigation goes through the system browser; the window never leaves the app.
       win.webContents.setWindowOpenHandler(({ url }) => {
-        if (url.startsWith('https://')) void shell.openExternal(url)
+        if (isAllowedExternalUrl(url, settings.get().hubEndpoint)) void shell.openExternal(url)
         return { action: 'deny' }
       })
       win.webContents.on('will-navigate', (event, url) => {
         if (url !== win.webContents.getURL()) {
           event.preventDefault()
-          if (url.startsWith('https://')) void shell.openExternal(url)
+          if (isAllowedExternalUrl(url, settings.get().hubEndpoint)) void shell.openExternal(url)
         }
       })
 
@@ -480,6 +496,7 @@ if (!gotLock) {
     app.on('before-quit', () => {
       isQuitting = true
       downloads.shutdown()
+      integrationTasks.shutdown()
       follows.stop()
       tray.destroy()
     })

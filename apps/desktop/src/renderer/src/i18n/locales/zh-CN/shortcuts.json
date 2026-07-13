@@ -1,5 +1,9 @@
 {
   "back": "后退",
+  "cache": "打开缓存",
+  "datasets": "打开数据集",
+  "downloads": "打开下载",
+  "favorites": "打开收藏",
   "focusSearch": "聚焦列表搜索框",
   "forward": "前进",
   "groups": {
@@ -9,11 +13,16 @@
     "palette": "命令面板"
   },
   "help": "显示此面板",
+  "history": "打开浏览历史",
+  "inbox": "打开收件箱",
   "listNav": "移动列表选中项",
   "palette": "命令面板 / 全局搜索",
   "paletteClose": "关闭",
   "paletteNavigate": "在结果间移动",
   "paletteSelect": "选择",
+  "models": "打开模型",
+  "papers": "打开论文",
+  "spaces": "打开 Space",
   "settings": "打开设置",
   "title": "键盘快捷键",
   "toggleSidebar": "收起或展开侧边栏"

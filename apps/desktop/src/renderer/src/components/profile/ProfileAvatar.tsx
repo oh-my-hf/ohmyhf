@@ -1,9 +1,11 @@
 import { cn } from '@/lib/utils'
 import { ProSparkleIcon } from '@/components/profile/ProSparkleIcon'
+import { hubRelativeUrl } from '@oh-my-huggingface/shared'
+import { useAppStore } from '@/stores/app'
 
 /** The hub sometimes returns avatar paths relative to the site root. */
-function absoluteAvatarUrl(url: string): string {
-  return url.startsWith('/') ? `https://huggingface.co${url}` : url
+function absoluteAvatarUrl(url: string, endpoint?: string | null): string {
+  return hubRelativeUrl(url, endpoint)
 }
 
 export type ProfileAvatarFrame = 'profile' | 'compact'
@@ -30,10 +32,11 @@ export function ProfileAvatar({
   /** Skip lazy-loading (e.g. TopBar account chip). */
   eager?: boolean
 }): React.JSX.Element {
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
   const face =
     url !== undefined && url !== '' ? (
       <img
-        src={absoluteAvatarUrl(url)}
+        src={absoluteAvatarUrl(url, endpoint)}
         alt=""
         loading={eager === true ? 'eager' : 'lazy'}
         decoding="async"

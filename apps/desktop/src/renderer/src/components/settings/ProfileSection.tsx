@@ -19,6 +19,7 @@ import { useToasts } from '@/components/ui/toaster'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'
 import { useHubSession } from '@/hooks/use-hub-session'
 import { useAppStore } from '@/stores/app'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 /** Radix Select rejects empty item values; this stands in for "no primary org". */
 const NO_ORG = '\0none'
@@ -35,9 +36,10 @@ export function ProfileSection(): React.JSX.Element {
   const { t } = useTranslation(['settings'])
   const hubSession = useHubSession()
   const openSettings = useAppStore((s) => s.openSettings)
+  const endpointKey = useHubEndpointKey()
 
   const profile = useQuery({
-    queryKey: ['hub-profile'],
+    queryKey: ['hub-profile', endpointKey],
     queryFn: () => invoke('hub:profileGet', undefined),
     enabled: hubSession
   })

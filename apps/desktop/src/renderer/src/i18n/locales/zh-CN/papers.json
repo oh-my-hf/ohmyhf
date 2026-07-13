@@ -6,6 +6,9 @@
     "posted": "评论已发布"
   },
   "empty": "暂无论文。",
+  "listError": "无法加载每日论文",
+  "detailError": "无法加载此论文",
+  "retryMore": "重试加载更多",
   "published": "发布于 {{time}}",
   "readOnArxiv": "在 arXiv 阅读",
   "readOnHub": "在 Hub 打开",

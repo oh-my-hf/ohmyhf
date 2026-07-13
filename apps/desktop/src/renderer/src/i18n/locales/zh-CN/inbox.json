@@ -16,6 +16,8 @@
   "follows": {
     "add": "关注",
     "empty": "还没有关注任何内容。",
+    "loadError": "无法加载关注来源",
+    "targetLabel": "要关注的用户、组织或仓库",
     "imported": "已导入 {{count}} 个你在 Hub 上关注的账号",
     "imported_other": "已导入 {{count}} 个你在 Hub 上关注的账号",
     "importFromHub": "从 Hugging Face 导入",
@@ -32,6 +34,7 @@
   },
   "hub": {
     "clearAll": "全部清除",
+    "loadError": "无法加载 Hub 通知",
     "confirmClear": {
       "body": "这将永久删除你 Hugging Face 收件箱中的所有通知。",
       "confirm": "全部清除",
@@ -69,6 +72,11 @@
     "repo-update": "更新"
   },
   "markAllRead": "全部标为已读",
+  "local": {
+    "loadError": "无法加载本地收件箱"
+  },
+  "unreadCount": "{{count}} 条未读动态",
+  "unreadCount_other": "{{count}} 条未读动态",
   "tabs": {
     "hub": "Hub 通知",
     "local": "关注动态"

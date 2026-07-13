@@ -163,9 +163,11 @@ describe('HubClient.createCollection', () => {
   })
 
   it('omits empty or undefined description from the POST body', async () => {
-    const fetchImpl = vi.fn().mockImplementation(() =>
-      Promise.resolve(jsonResponse({ ...rawCollection, items: [], private: false }))
-    )
+    const fetchImpl = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(jsonResponse({ ...rawCollection, items: [], private: false }))
+      )
     const client = new HubClient({ fetchImpl, ...FAST })
     await client.createCollection({
       namespace: 'julien',

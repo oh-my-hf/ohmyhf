@@ -25,6 +25,7 @@ import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
 import { useAppStore } from '@/stores/app'
 import { WRITE_COLLECTIONS_SCOPE, scopeMissing } from '@/lib/scopes'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 export interface AddToCollectionMenuProps {
   /** Collection item type of the target (papers use 'paper', repos their RepoKind). */
@@ -46,6 +47,7 @@ export function AddToCollectionMenu({
   const queryClient = useQueryClient()
   const push = useToasts((s) => s.push)
   const auth = useAppStore((s) => s.auth)
+  const endpointKey = useHubEndpointKey()
   const me = auth.status === 'signedIn' ? auth.user.name : undefined
   const orgs = auth.status === 'signedIn' ? auth.user.orgs : []
   const writeGated = scopeMissing(auth, WRITE_COLLECTIONS_SCOPE)
@@ -58,7 +60,7 @@ export function AddToCollectionMenu({
   const owner = namespace === '' ? (me ?? '') : namespace
 
   const collections = useQuery({
-    queryKey: ['collections', me],
+    queryKey: ['collections', me, endpointKey],
     queryFn: () => invoke('hub:collections', { owner: me ?? '' }),
     enabled: me !== undefined && menuOpen && !writeGated
   })

@@ -2,7 +2,11 @@ import type { HTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 /** Key-hint chip for shortcut hints (palette footer, tooltips, help overlay). */
-export function Kbd({ className, children, ...props }: HTMLAttributes<HTMLElement>): React.JSX.Element {
+export function Kbd({
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLElement>): React.JSX.Element {
   return (
     <kbd
       className={cn(

@@ -27,6 +27,7 @@ import {
 } from '@/components/admin/RepoActionDialogs'
 import { MANAGE_REPOS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 const KIND_PATH: Record<RepoKind, string> = {
   model: 'models',
@@ -72,6 +73,7 @@ export function RepoManagePanel({
   const queryClient = useQueryClient()
   const push = useToasts((s) => s.push)
   const auth = useAppStore((s) => s.auth)
+  const endpointKey = useHubEndpointKey()
 
   const [dialog, setDialog] = useState<'rename' | 'duplicate' | 'delete' | null>(null)
   const [branch, setBranch] = useState('')
@@ -83,7 +85,7 @@ export function RepoManagePanel({
 
   // Shares the cache key used by the repo detail view.
   const detail = useQuery({
-    queryKey: ['repo', kind, repoId],
+    queryKey: ['repo', kind, repoId, endpointKey],
     queryFn: () => invoke('hub:repoDetail', { kind, repoId }),
     enabled: canManage
   })
@@ -482,12 +484,13 @@ function AccessRequestsSection({
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = useHubEndpointKey()
 
   const [status, setStatus] = useState<AccessStatus>('pending')
   const [grantUser, setGrantUser] = useState('')
 
   const requests = useQuery({
-    queryKey: ['access-requests', kind, repoId, status],
+    queryKey: ['access-requests', kind, repoId, status, endpointKey],
     queryFn: () => invoke('hub:accessRequests', { kind, repoId, status }),
     enabled: gatedEnabled
   })
@@ -497,8 +500,11 @@ function AccessRequestsSection({
   }
 
   const handle = useMutation({
-    mutationFn: (args: { user: string; status: 'accepted' | 'rejected'; rejectionReason?: string }) =>
-      invoke('hub:accessRequestHandle', { kind, repoId, ...args }),
+    mutationFn: (args: {
+      user: string
+      status: 'accepted' | 'rejected'
+      rejectionReason?: string
+    }) => invoke('hub:accessRequestHandle', { kind, repoId, ...args }),
     onSuccess: () => {
       push(t('admin:access.handled'), 'success')
       invalidateAll()
@@ -519,7 +525,9 @@ function AccessRequestsSection({
   return (
     <section className="flex flex-col gap-3">
       <SectionHeading icon={Users}>{t('admin:access.title')}</SectionHeading>
-      {!gatedEnabled && <p className="text-[12.5px] text-ink-muted">{t('admin:access.notGated')}</p>}
+      {!gatedEnabled && (
+        <p className="text-[12.5px] text-ink-muted">{t('admin:access.notGated')}</p>
+      )}
       {gatedEnabled && (
         <>
           <div className="flex items-center gap-1.5">

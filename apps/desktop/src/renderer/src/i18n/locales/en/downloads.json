@@ -11,6 +11,16 @@
     "pauseAll": "Pause all",
     "resumeAll": "Resume all"
   },
+  "commands": {
+    "actions": "Actions",
+    "downloadCurrentRepository": "Download {{repo}}",
+    "downloadRepository": "Download repository",
+    "downloadSelectedFile": "Download {{file}}",
+    "searchPlaceholder": "Search models, datasets, and Spaces to download…",
+    "started": "Download started",
+    "starting": "Starting download…",
+    "typeToSearch": "Type a repository name to start a download."
+  },
   "confirmRemove": {
     "body": "This download is still in progress. Removing it cancels the transfer and drops it from the list.",
     "confirm": "Cancel and remove",

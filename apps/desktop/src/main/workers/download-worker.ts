@@ -16,14 +16,15 @@ import {
   createReadStream,
   createWriteStream,
   existsSync,
+  lstatSync,
   mkdirSync,
+  realpathSync,
   renameSync,
   rmSync,
   statSync,
-  symlinkSync,
-  writeFileSync
+  symlinkSync
 } from 'node:fs'
-import { dirname, join, relative } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { parentPort, workerData } from 'node:worker_threads'
 import { ProxyAgent, fetch as undiciFetch } from 'undici'
 
@@ -34,9 +35,12 @@ export interface DownloadJob {
   url: string
   /** "models--org--name" repo directory inside the cache. */
   repoDir: string
+  /** Frozen absolute cache root used to validate repoDir before any write. */
+  cacheDir: string
   /** Repo-relative file path. */
   path: string
-  revision: string
+  /** Commit resolved by the manager before the file tree was enumerated. */
+  expectedCommit: string
   authToken?: string
   /** Per-worker share of the aggregate speed limit; null/undefined = unlimited. */
   speedLimitBps?: number | null
@@ -98,6 +102,49 @@ interface FileMetadata {
 }
 
 /**
+ * Reject a drifting or malicious resolve response before any cache directory is
+ * created. The manager only schedules 40-hex commit-pinned URLs; the response
+ * must attest to that exact commit as well.
+ */
+export function assertExpectedCommit(actual: string, expected: string): string {
+  const normalizedActual = actual.toLowerCase()
+  const normalizedExpected = expected.toLowerCase()
+  if (
+    !/^[0-9a-f]{40}$/.test(normalizedActual) ||
+    !/^[0-9a-f]{40}$/.test(normalizedExpected) ||
+    normalizedActual !== normalizedExpected
+  ) {
+    throw new Error('commit-mismatch')
+  }
+  return normalizedActual
+}
+
+export function assertSafeCacheKey(value: string): string {
+  const normalized = value.toLowerCase()
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(normalized)) {
+    throw new Error('invalid-etag')
+  }
+  return normalized
+}
+
+export function assertSafeRepoFilePath(path: string): void {
+  const segments = path.split('/')
+  if (
+    path.startsWith('/') ||
+    segments.some(
+      (segment) =>
+        !segment ||
+        segment === '.' ||
+        segment === '..' ||
+        segment.includes('\\') ||
+        segment.includes('\0')
+    )
+  ) {
+    throw new Error('unsafe-file-path')
+  }
+}
+
+/**
  * HF puts LFS metadata on the *redirect* response, so redirects are handled manually
  * (mirrors huggingface_hub's hf_hub_download).
  */
@@ -113,10 +160,8 @@ async function fetchMetadata(): Promise<FileMetadata> {
   }
   const linkedEtag = res.headers.get('x-linked-etag')
   const rawEtag = linkedEtag ?? res.headers.get('etag') ?? ''
-  const etag = rawEtag.replace(/^W\//, '').replace(/"/g, '')
-  if (!etag) throw new Error('No ETag on resolve response')
-  const commit = res.headers.get('x-repo-commit') ?? ''
-  if (!commit) throw new Error('No x-repo-commit header on resolve response')
+  const etag = assertSafeCacheKey(rawEtag.replace(/^W\//, '').replace(/"/g, ''))
+  const commit = assertExpectedCommit(res.headers.get('x-repo-commit') ?? '', job.expectedCommit)
   const location = res.headers.get('location')
   const downloadUrl = location ? new URL(location, job.url).toString() : job.url
 
@@ -194,7 +239,6 @@ export class Throttle {
 const throttle = new Throttle(job.speedLimitBps ?? null)
 
 function linkSnapshot(snapshotFile: string, blobPath: string): void {
-  mkdirSync(dirname(snapshotFile), { recursive: true })
   rmSync(snapshotFile, { force: true })
   const target = relative(dirname(snapshotFile), blobPath)
   try {
@@ -215,9 +259,70 @@ function partialPath(blobPath: string): string {
   return `${blobPath}.incomplete.${job.taskId}-${pathHash}`
 }
 
+function directChildName(parent: string, child: string): string | null {
+  const rel = relative(parent, child)
+  return rel && rel !== '..' && !rel.startsWith(`..${sep}`) && !rel.includes(sep) ? rel : null
+}
+
+function ensureDirectDirectory(parent: string, name: string, label: string): string {
+  const path = join(parent, name)
+  if (!existsSync(path)) mkdirSync(path)
+  const entry = lstatSync(path)
+  if (entry.isSymbolicLink() || !entry.isDirectory()) {
+    throw new Error(`unsafe-cache-layout:${label}`)
+  }
+  const real = realpathSync(path)
+  if (directChildName(parent, real) !== name) throw new Error(`unsafe-cache-layout:${label}`)
+  return real
+}
+
+function assertExistingRegularFile(path: string, parent: string, label: string): void {
+  if (!existsSync(path)) return
+  const entry = lstatSync(path)
+  if (entry.isSymbolicLink() || !entry.isFile()) throw new Error(`unsafe-cache-layout:${label}`)
+  if (directChildName(parent, realpathSync(path)) === null) {
+    throw new Error(`unsafe-cache-layout:${label}`)
+  }
+}
+
+/**
+ * Create and validate every directory the worker may write. No recursive mkdir
+ * is used below the cache root, so a pre-existing repo/blob/snapshot symlink or
+ * junction cannot redirect writes outside the frozen cache.
+ */
+export function prepareSafeCacheDirectories(
+  input: Pick<DownloadJob, 'cacheDir' | 'repoDir' | 'expectedCommit' | 'path'>
+): { blobsDir: string; snapshotParent: string } {
+  if (!isAbsolute(input.cacheDir) || !isAbsolute(input.repoDir)) {
+    throw new Error('unsafe-cache-layout:absolute-path-required')
+  }
+  const cachePath = resolve(input.cacheDir)
+  const repoPath = resolve(input.repoDir)
+  const expectedRepoName = directChildName(cachePath, repoPath)
+  if (!expectedRepoName) throw new Error('unsafe-cache-layout:repository-boundary')
+
+  if (!existsSync(cachePath)) mkdirSync(cachePath, { recursive: true })
+  const rootEntry = lstatSync(cachePath)
+  if (rootEntry.isSymbolicLink() || !rootEntry.isDirectory()) {
+    throw new Error('unsafe-cache-layout:cache-root')
+  }
+  const realRoot = realpathSync(cachePath)
+  const realRepo = ensureDirectDirectory(realRoot, expectedRepoName, 'repository')
+  const blobsDir = ensureDirectDirectory(realRepo, 'blobs', 'blobs')
+  const snapshotsDir = ensureDirectDirectory(realRepo, 'snapshots', 'snapshots')
+  let snapshotParent = ensureDirectDirectory(snapshotsDir, input.expectedCommit, 'snapshot-commit')
+  const segments = input.path.split('/')
+  for (const segment of segments.slice(0, -1)) {
+    snapshotParent = ensureDirectDirectory(snapshotParent, segment, 'snapshot-directory')
+  }
+  return { blobsDir, snapshotParent }
+}
+
 async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<number> {
   const incomplete = partialPath(blobPath)
-  mkdirSync(dirname(blobPath), { recursive: true })
+  const blobsDir = dirname(blobPath)
+  assertExistingRegularFile(blobPath, blobsDir, 'blob')
+  assertExistingRegularFile(incomplete, blobsDir, 'partial')
 
   let offset = 0
   if (existsSync(incomplete)) {
@@ -289,24 +394,29 @@ async function downloadToBlob(meta: FileMetadata, blobPath: string): Promise<num
     }
     verified = true
   }
+  rmSync(blobPath, { force: true })
   renameSync(incomplete, blobPath)
   return verified ? 1 : 0
 }
 
 async function run(): Promise<void> {
+  assertSafeRepoFilePath(job.path)
   const meta = await fetchMetadata()
   post({ type: 'meta', commit: meta.commit, etag: meta.etag, size: meta.size, isLfs: meta.isLfs })
 
-  const blobPath = join(job.repoDir, 'blobs', meta.etag)
-  const snapshotFile = join(job.repoDir, 'snapshots', meta.commit, ...job.path.split('/'))
+  const { blobsDir, snapshotParent } = prepareSafeCacheDirectories(job)
+  const blobPath = join(blobsDir, meta.etag)
+  const snapshotFile = join(snapshotParent, job.path.split('/').at(-1)!)
+  assertExistingRegularFile(blobPath, blobsDir, 'blob')
 
   let verified = false
   let haveBlob = false
   if (existsSync(blobPath) && (meta.size === 0 || statSync(blobPath).size === meta.size)) {
     if (meta.isLfs) {
-      // Blob names ARE the sha256; a full re-hash on every reuse is too slow.
-      haveBlob = true
-      verified = true
+      // Existing caches may predate strict verification. Re-hash before reuse;
+      // a same-size corrupt blob must never be linked into a completed snapshot.
+      verified = (await sha256OfFile(blobPath)) === meta.etag
+      haveBlob = verified
     } else if (/^[0-9a-f]{40}$/.test(meta.etag)) {
       // Cheap for small non-LFS files; redownload if a pre-verification blob is corrupt.
       verified = (await gitBlobSha1OfFile(blobPath)) === meta.etag
@@ -319,18 +429,6 @@ async function run(): Promise<void> {
     verified = (await downloadToBlob(meta, blobPath)) === 1
   }
   linkSnapshot(snapshotFile, blobPath)
-
-  // Record the ref so transformers/CLI resolve this revision without a network
-  // call. Nested refs (e.g. "refs/pr/1") live at their real path like the standard
-  // layout; commit-pinned downloads get no ref file.
-  if (!/^[0-9a-f]{40}$/.test(job.revision)) {
-    const segments = job.revision.split('/')
-    if (segments.every((s) => s && s !== '.' && s !== '..')) {
-      const refPath = join(job.repoDir, 'refs', ...segments)
-      mkdirSync(dirname(refPath), { recursive: true })
-      writeFileSync(refPath, meta.commit)
-    }
-  }
 
   post({
     type: 'done',

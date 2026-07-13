@@ -4,19 +4,32 @@
     "copied": "已导出到 {{path}}。",
     "failed": "导出失败：{{error}}",
     "invalidPath": "无效的文件路径：{{file}}",
-    "notImplemented": "该导出功能尚未实现。",
     "notInCache": "{{file}} 尚未在本地缓存中，请先下载。",
     "ollamaDone": "已创建 Ollama 模型 {{name}}。",
     "ollamaFailed": "Ollama 导入失败：{{error}}",
-    "ollamaMissing": "未找到 Ollama。请从 ollama.com 安装后重试。"
+    "ollamaMissing": "未找到 Ollama。请从 ollama.com 安装后重试。",
+    "targetsError": "无法检测导出目标"
+  },
+  "task": {
+    "canceled": "任务已取消。",
+    "done": "任务已完成。",
+    "failed": "任务失败。",
+    "phase": {
+      "copying": "正在复制文件…",
+      "preparing": "正在准备导出…",
+      "running": "正在执行导出…"
+    }
   },
   "upload": {
     "done": "已将 {{repo}} 上传到 Hub。",
     "emptyFolder": "所选文件夹中没有可上传的文件。",
     "failed": "上传失败：{{error}}",
+    "ignoreUnreadable": "无法安全读取文件夹中的 .gitignore 或 .hfignore。",
+    "invalidPath": "文件夹包含无法在 Hub 上安全表示的文件名。",
     "needWriteScope": "当前会话没有写入权限。请退出登录后重新登录以授予写入权限。",
-    "notImplemented": "上传管线尚未实现。",
+    "selectionStale": "所选文件夹已发生变化，请重新选择后再上传。",
     "signInFirst": "上传前请先登录 Hugging Face 账号。",
+    "specialFile": "文件夹包含 socket、FIFO、设备或其他特殊文件，无法安全上传。",
     "tooManyFiles": "文件夹内文件过多，当前上限为 {{max}} 个。"
   }
 }

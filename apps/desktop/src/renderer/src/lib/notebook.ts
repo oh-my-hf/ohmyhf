@@ -1,3 +1,5 @@
+import { normalizeShikiLanguage } from './file-kinds'
+
 /**
  * Minimal Jupyter notebook (.ipynb) parser. Normalizes the nbformat v4 shape
  * into cells the renderer can display without knowing the on-disk quirks
@@ -122,10 +124,17 @@ function detectLanguage(metadata: unknown): string | undefined {
   if (typeof metadata !== 'object' || metadata === null) return undefined
   const m = metadata as Record<string, unknown>
   const info = m.language_info as Record<string, unknown> | undefined
-  if (info && typeof info.name === 'string') return info.name
   const kernel = m.kernelspec as Record<string, unknown> | undefined
-  if (kernel && typeof kernel.language === 'string') return kernel.language
-  return undefined
+  const candidates = [info?.name, kernel?.language, kernel?.name].filter(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0
+  )
+  for (const candidate of candidates) {
+    const normalized = normalizeShikiLanguage(candidate)
+    if (normalized) return normalized
+  }
+  // Keep a real but unsupported kernel name so CodeBlock can explain why it
+  // rendered plain text instead of silently pretending highlighting succeeded.
+  return candidates[0]
 }
 
 /** Parse notebook JSON; returns null if the text is not a valid notebook. */

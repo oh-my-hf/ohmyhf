@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Globe, RotateCcw, Wifi } from 'lucide-react'
+import { DEFAULT_HUB_ENDPOINT, normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
+import { isHubRemoteQuery } from '@/lib/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToasts } from '@/components/ui/toaster'
 import { useAppStore } from '@/stores/app'
 
-/** Mirrors hub-api DEFAULT_ENDPOINT; do not import hub-api in the renderer (Node-only deps). */
-const DEFAULT_HUB_ENDPOINT = 'https://huggingface.co'
 const DEFAULT_PROXY_PLACEHOLDER = 'http://127.0.0.1:7890'
+const ENDPOINT_INPUT_ID = 'settings-network-endpoint'
+const ENDPOINT_ERROR_ID = 'settings-network-endpoint-error'
+const PROXY_INPUT_ID = 'settings-network-proxy'
+const PROXY_ERROR_ID = 'settings-network-proxy-error'
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -33,6 +37,8 @@ export function NetworkSection(): React.JSX.Element {
   const { t } = useTranslation(['settings', 'common'])
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const setAuth = useAppStore((s) => s.setAuth)
+  const queryClient = useQueryClient()
   const push = useToasts((s) => s.push)
 
   const [endpointDraft, setEndpointDraft] = useState(settings.hubEndpoint ?? '')
@@ -41,6 +47,33 @@ export function NetworkSection(): React.JSX.Element {
   const [proxyError, setProxyError] = useState(false)
   const [syncedEndpoint, setSyncedEndpoint] = useState(settings.hubEndpoint)
   const [syncedProxy, setSyncedProxy] = useState(settings.proxyUrl)
+
+  const applyNetworkSettings = async (
+    hubEndpoint: string | null,
+    proxyUrl: string | null
+  ): Promise<void> => {
+    const previousEndpoint = normalizeHubEndpoint(settings.hubEndpoint)
+    const endpointChanged = previousEndpoint !== normalizeHubEndpoint(hubEndpoint)
+    if (endpointChanged) {
+      await queryClient.cancelQueries({
+        predicate: (query) => isHubRemoteQuery(query.queryKey)
+      })
+    }
+    await updateSettings({ hubEndpoint, proxyUrl })
+    if (!endpointChanged) return
+    // Every endpoint-aware remote key ends in its canonical endpoint. Remove
+    // only the old partition, then reset any legacy/unkeyed active observers
+    // against the newly attached main-process HubClient.
+    queryClient.removeQueries({
+      predicate: (query) =>
+        isHubRemoteQuery(query.queryKey) && query.queryKey.at(-1) === previousEndpoint
+    })
+    await queryClient.resetQueries({
+      predicate: (query) =>
+        isHubRemoteQuery(query.queryKey) && query.queryKey.at(-1) !== previousEndpoint
+    })
+    setAuth(await invoke('auth:refreshUser', undefined))
+  }
 
   // Reset drafts when store values change externally (e.g. reset / apply from elsewhere).
   if (settings.hubEndpoint !== syncedEndpoint) {
@@ -61,7 +94,10 @@ export function NetworkSection(): React.JSX.Element {
       if (!endpoint.ok || !proxy.ok) {
         throw new Error(t('settings:network.invalidUrl'))
       }
-      await updateSettings({ hubEndpoint: endpoint.value, proxyUrl: proxy.value })
+      await applyNetworkSettings(
+        endpoint.value === null ? null : normalizeHubEndpoint(endpoint.value),
+        proxy.value
+      )
     },
     onSuccess: () => push(t('settings:network.saved'), 'success'),
     onError: (err) => push(err.message, 'error')
@@ -79,7 +115,7 @@ export function NetworkSection(): React.JSX.Element {
         throw new Error(t('settings:network.invalidUrl'))
       }
       return invoke('network:testConnection', {
-        endpoint: endpoint.value,
+        endpoint: endpoint.value === null ? null : normalizeHubEndpoint(endpoint.value),
         proxyUrl: proxy.value
       })
     },
@@ -99,22 +135,26 @@ export function NetworkSection(): React.JSX.Element {
       </p>
 
       <div className="flex flex-col gap-3 rounded-lg border p-4">
-        <label className="flex flex-col gap-1.5">
+        <label htmlFor={ENDPOINT_INPUT_ID} className="flex flex-col gap-1.5">
           <span className="text-[12.5px] font-medium text-ink-strong">
             {t('settings:network.hubEndpoint')}
           </span>
           <Input
+            id={ENDPOINT_INPUT_ID}
             value={endpointDraft}
             placeholder={DEFAULT_HUB_ENDPOINT}
             spellCheck={false}
             aria-invalid={endpointError}
+            aria-describedby={endpointError ? ENDPOINT_ERROR_ID : undefined}
             onChange={(e) => {
               setEndpointDraft(e.target.value)
               setEndpointError(false)
             }}
           />
           {endpointError && (
-            <span className="text-[12px] text-error">{t('settings:network.invalidUrl')}</span>
+            <span id={ENDPOINT_ERROR_ID} className="text-[12px] text-error">
+              {t('settings:network.invalidUrl')}
+            </span>
           )}
         </label>
         <div className="flex flex-wrap gap-2">
@@ -124,7 +164,7 @@ export function NetworkSection(): React.JSX.Element {
             onClick={() => {
               setEndpointDraft('')
               setEndpointError(false)
-              void updateSettings({ hubEndpoint: null }).then(() =>
+              void applyNetworkSettings(null, settings.proxyUrl).then(() =>
                 push(t('settings:network.resetEndpoint'), 'success')
               )
             }}
@@ -136,22 +176,26 @@ export function NetworkSection(): React.JSX.Element {
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border p-4">
-        <label className="flex flex-col gap-1.5">
+        <label htmlFor={PROXY_INPUT_ID} className="flex flex-col gap-1.5">
           <span className="text-[12.5px] font-medium text-ink-strong">
             {t('settings:network.proxyUrl')}
           </span>
           <Input
+            id={PROXY_INPUT_ID}
             value={proxyDraft}
             placeholder={DEFAULT_PROXY_PLACEHOLDER}
             spellCheck={false}
             aria-invalid={proxyError}
+            aria-describedby={proxyError ? PROXY_ERROR_ID : undefined}
             onChange={(e) => {
               setProxyDraft(e.target.value)
               setProxyError(false)
             }}
           />
           {proxyError && (
-            <span className="text-[12px] text-error">{t('settings:network.invalidUrl')}</span>
+            <span id={PROXY_ERROR_ID} className="text-[12px] text-error">
+              {t('settings:network.invalidUrl')}
+            </span>
           )}
         </label>
         <div className="flex flex-wrap gap-2">

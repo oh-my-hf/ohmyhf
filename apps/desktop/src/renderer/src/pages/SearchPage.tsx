@@ -11,6 +11,7 @@ import {
   Heart,
   Library,
   LayoutGrid,
+  CircleAlert,
   Search,
   User
 } from 'lucide-react'
@@ -27,16 +28,13 @@ import { openRepo } from '@/lib/repo-open'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { QueryErrorState } from '@/components/errors/QueryErrorState'
 import { RepoDetail } from '@/components/browse/RepoDetail'
 import { CollectionDetail } from '@/pages/CollectionPage'
 import { PaperDetailPane } from '@/pages/PapersPage'
 import { UserProfile } from '@/pages/UserPage'
 import { resolveLocale, useAppStore } from '@/stores/app'
-import {
-  useSearchPage,
-  type SearchPageBuckets,
-  type SearchPageType
-} from '@/hooks/use-search-page'
+import { useSearchPage, type SearchPageBuckets, type SearchPageType } from '@/hooks/use-search-page'
 
 type NonRepoType = Exclude<SearchPageType, 'all' | RepoKind>
 type BucketKey = keyof SearchPageBuckets
@@ -136,9 +134,7 @@ function RepoResultRow({
       aria-current={selected ? 'true' : undefined}
       className={cn(
         'group flex w-full items-start gap-3 rounded-lg border bg-card-gradient p-3 text-left transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-        selected
-          ? 'border-select/40 bg-select/5'
-          : 'border-border-card hover:border-border'
+        selected ? 'border-select/40 bg-select/5' : 'border-border-card hover:border-border'
       )}
     >
       <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-panel-2 ring-1 ring-border-card">
@@ -188,22 +184,24 @@ function AccountResultRow({
       aria-current={selected ? 'true' : undefined}
       className={cn(
         'flex w-full items-center gap-3 rounded-lg border bg-card-gradient p-3 text-left transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-        selected
-          ? 'border-select/40 bg-select/5'
-          : 'border-border-card hover:border-border'
+        selected ? 'border-select/40 bg-select/5' : 'border-border-card hover:border-border'
       )}
     >
       {account.avatarUrl ? (
-        <img src={account.avatarUrl} alt="" loading="lazy" decoding="async" className="size-9 shrink-0 rounded-full border" />
+        <img
+          src={account.avatarUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="size-9 shrink-0 rounded-full border"
+        />
       ) : (
         <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-panel-2 ring-1 ring-border-card">
           <Icon className="size-4 text-ink-muted" aria-hidden />
         </div>
       )}
       <div className="min-w-0">
-        <p className="truncate font-mono text-[13px] font-medium text-ink-strong">
-          {account.name}
-        </p>
+        <p className="truncate font-mono text-[13px] font-medium text-ink-strong">{account.name}</p>
         {account.fullname ? (
           <p className="truncate text-[12.5px] text-ink-muted">{account.fullname}</p>
         ) : null}
@@ -228,9 +226,7 @@ function PaperResultRow({
       aria-current={selected ? 'true' : undefined}
       className={cn(
         'flex w-full items-start gap-3 rounded-lg border bg-card-gradient p-3 text-left transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-        selected
-          ? 'border-select/40 bg-select/5'
-          : 'border-border-card hover:border-border'
+        selected ? 'border-select/40 bg-select/5' : 'border-border-card hover:border-border'
       )}
     >
       <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-panel-2 ring-1 ring-border-card">
@@ -260,9 +256,7 @@ function CollectionResultRow({
       aria-current={selected ? 'true' : undefined}
       className={cn(
         'flex w-full items-start gap-3 rounded-lg border bg-card-gradient p-3 text-left transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-        selected
-          ? 'border-select/40 bg-select/5'
-          : 'border-border-card hover:border-border'
+        selected ? 'border-select/40 bg-select/5' : 'border-border-card hover:border-border'
       )}
     >
       <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-panel-2 ring-1 ring-border-card">
@@ -304,8 +298,7 @@ export function SearchPage(): React.JSX.Element {
   const rawType = searchParams.get('type')
   const activeType: SearchPageType = isSearchPageType(rawType) ? rawType : 'all'
   // Prefer `id`; keep reading legacy `repo` so older search URLs still open.
-  const selectedId =
-    searchParams.get('id')?.trim() || searchParams.get('repo')?.trim() || undefined
+  const selectedId = searchParams.get('id')?.trim() || searchParams.get('repo')?.trim() || undefined
   const search = useSearchPage(trimmedQuery, activeType)
 
   // Always show every type's count from preview buckets so switching tabs
@@ -321,10 +314,7 @@ export function SearchPage(): React.JSX.Element {
       }
       if (n > 0) next.set(section.type, n)
     }
-    const allTotal = ALL_SECTIONS.reduce(
-      (sum, section) => sum + (next.get(section.type) ?? 0),
-      0
-    )
+    const allTotal = ALL_SECTIONS.reduce((sum, section) => sum + (next.get(section.type) ?? 0), 0)
     if (allTotal > 0) next.set('all', allTotal)
     return next
   }, [activeType, search.buckets, search.repoItems.length, trimmedQuery])
@@ -358,7 +348,8 @@ export function SearchPage(): React.JSX.Element {
 
   const renderRows = (typeToRender: Exclude<SearchPageType, 'all'>): React.JSX.Element[] => {
     if (isRepoType(typeToRender)) {
-      const repos = activeType === 'all' ? search.buckets[REPO_BUCKET[typeToRender]] : search.repoItems
+      const repos =
+        activeType === 'all' ? search.buckets[REPO_BUCKET[typeToRender]] : search.repoItems
       return repos.map((repo) => (
         <RepoResultRow
           key={repo.id}
@@ -449,7 +440,14 @@ export function SearchPage(): React.JSX.Element {
     return (
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">{rows}</div>
-        {isRepoType(activeType) && search.repoHasMore ? (
+        {isRepoType(activeType) && search.repoLoadMoreError ? (
+          <QueryErrorState
+            error={search.repoLoadMoreError}
+            onRetry={search.repoFetchMore}
+            compact
+            className="min-h-0"
+          />
+        ) : isRepoType(activeType) && search.repoHasMore ? (
           <div className="flex justify-center pt-2">
             <Button
               variant="secondary"
@@ -484,6 +482,15 @@ export function SearchPage(): React.JSX.Element {
     )
   } else if (search.isLoading) {
     content = <LoadingResults />
+  } else if (search.isError) {
+    content = (
+      <QueryErrorState
+        error={search.error}
+        onRetry={search.retry}
+        title={t('nav:searchPage.errorTitle')}
+        className="h-full"
+      />
+    )
   } else if (totalResults === 0) {
     content = (
       <EmptyState
@@ -502,7 +509,9 @@ export function SearchPage(): React.JSX.Element {
   let detail: React.ReactNode = null
   if (selectedId && activeType !== 'all') {
     if (isRepoType(activeType)) {
-      detail = <RepoDetail key={`${activeType}:${selectedId}`} kind={activeType} repoId={selectedId} />
+      detail = (
+        <RepoDetail key={`${activeType}:${selectedId}`} kind={activeType} repoId={selectedId} />
+      )
     } else if (activeType === 'user' || activeType === 'org') {
       detail = <UserProfile key={selectedId} username={selectedId} />
     } else if (activeType === 'paper') {
@@ -530,6 +539,7 @@ export function SearchPage(): React.JSX.Element {
               <button
                 key={option}
                 type="button"
+                aria-pressed={selected}
                 onClick={() => setType(option)}
                 className={cn(
                   'flex h-8 items-center gap-2 rounded-lg px-2.5 text-left text-[12.5px] transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus max-[760px]:shrink-0',
@@ -559,10 +569,7 @@ export function SearchPage(): React.JSX.Element {
           )}
         >
           <div
-            className={cn(
-              'min-h-0 flex-1 overflow-y-auto',
-              showDetail ? 'px-3 py-3' : 'px-6 py-5'
-            )}
+            className={cn('min-h-0 flex-1 overflow-y-auto', showDetail ? 'px-3 py-3' : 'px-6 py-5')}
           >
             <div
               className={cn(
@@ -583,6 +590,24 @@ export function SearchPage(): React.JSX.Element {
                   {trimmedQuery || t('nav:searchPage.emptyQueryTitle')}
                 </h1>
               </header>
+              {search.partialError ? (
+                <div
+                  role="status"
+                  className="flex items-start gap-2 rounded-lg border border-warning/25 bg-warning/8 px-3 py-2 text-[12.5px] text-ink"
+                >
+                  <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden />
+                  <p className="min-w-0 flex-1 leading-relaxed">
+                    {t('nav:searchPage.partialError', {
+                      types: search.failedTypes
+                        .map((failedType) => t(TYPE_LABEL_KEY[failedType]))
+                        .join(', ')
+                    })}
+                  </p>
+                  <Button variant="ghost" size="sm" onClick={search.retry}>
+                    {t('common:retry')}
+                  </Button>
+                </div>
+              ) : null}
               {content}
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { createContext, useContext, useId, useState, type ComponentProps } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -31,7 +31,7 @@ import type {
   RepoSort,
   UiDensity
 } from '@oh-my-huggingface/shared'
-import { SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
+import { hubSettingsUrl, normalizeHubEndpoint, SUPPORTED_LOCALES } from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { ACCENT_SWATCH } from '@/lib/appearance'
 import { changeLanguage } from '@/i18n'
@@ -46,12 +46,12 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger,
+  SelectTrigger as BaseSelectTrigger,
   SelectValue
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
-import { Switch } from '@/components/ui/switch'
+import { Switch as BaseSwitch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'
 import type { SettingsSection } from '@/stores/app'
 import { resolveLocale, useAppStore } from '@/stores/app'
@@ -74,6 +74,35 @@ const FONT_SCALE_STEP = 5
 const ACCENT_OPTIONS: AccentPreset[] = ['default', 'blue', 'green', 'orange', 'violet']
 const PAGE_SIZE_OPTIONS: BrowsePageSize[] = [20, 30, 50]
 const HISTORY_LIMIT_OPTIONS: HistoryLimit[] = [50, 100, 200, 500]
+
+interface RowA11yContextValue {
+  labelId: string
+  descriptionId?: string
+}
+
+const RowA11yContext = createContext<RowA11yContextValue | undefined>(undefined)
+
+function RowSelectTrigger(props: ComponentProps<typeof BaseSelectTrigger>): React.JSX.Element {
+  const a11y = useContext(RowA11yContext)
+  return (
+    <BaseSelectTrigger
+      {...props}
+      aria-labelledby={props['aria-labelledby'] ?? a11y?.labelId}
+      aria-describedby={props['aria-describedby'] ?? a11y?.descriptionId}
+    />
+  )
+}
+
+function RowSwitch(props: ComponentProps<typeof BaseSwitch>): React.JSX.Element {
+  const a11y = useContext(RowA11yContext)
+  return (
+    <BaseSwitch
+      {...props}
+      aria-labelledby={props['aria-labelledby'] ?? a11y?.labelId}
+      aria-describedby={props['aria-describedby'] ?? a11y?.descriptionId}
+    />
+  )
+}
 
 interface NavEntry {
   id: SettingsSection
@@ -145,13 +174,25 @@ function Row({
   description?: string
   children: React.ReactNode
 }): React.JSX.Element {
+  const id = useId()
+  const labelId = `${id}-label`
+  const descriptionId = description ? `${id}-description` : undefined
+
   return (
     <div className="flex min-h-8 items-center justify-between gap-4">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[13px] text-ink-muted">{label}</span>
-        {description ? <span className="text-[11.5px] text-ink-faint">{description}</span> : null}
+        <span id={labelId} className="text-[13px] text-ink-muted">
+          {label}
+        </span>
+        {description ? (
+          <span id={descriptionId} className="text-[11.5px] text-ink-faint">
+            {description}
+          </span>
+        ) : null}
       </div>
-      {children}
+      <RowA11yContext.Provider value={{ labelId, descriptionId }}>
+        {children}
+      </RowA11yContext.Provider>
     </div>
   )
 }
@@ -238,6 +279,7 @@ function AccountSection(): React.JSX.Element {
 function TokenSignInForm({ onDone }: { onDone?: () => void }): React.JSX.Element {
   const { t } = useTranslation(['auth'])
   const setAuth = useAppStore((s) => s.setAuth)
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
   const [token, setToken] = useState('')
   const [error, setError] = useState<'invalid' | 'forbidden' | 'network' | null>(null)
 
@@ -302,7 +344,7 @@ function TokenSignInForm({ onDone }: { onDone?: () => void }): React.JSX.Element
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => openExternal('https://huggingface.co/settings/tokens')}
+          onClick={() => openExternal(hubSettingsUrl('tokens', endpoint))}
         >
           <ExternalLink className="size-3.5" aria-hidden />
           {t('auth:tokenSignIn.createLink')}
@@ -332,6 +374,7 @@ function TokenAccountBlock({
   hubSession: boolean
 }): React.JSX.Element {
   const { t } = useTranslation(['settings', 'auth'])
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
 
   return (
     <div className="flex flex-col gap-3 border-t pt-4">
@@ -359,7 +402,7 @@ function TokenAccountBlock({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => openExternal('https://huggingface.co/settings/tokens')}
+          onClick={() => openExternal(hubSettingsUrl('tokens', endpoint))}
         >
           <ExternalLink className="size-3.5" aria-hidden />
           {t('auth:tokenSignIn.createLink')}
@@ -444,9 +487,10 @@ function BillingUsageCard(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
 
   const usage = useQuery({
-    queryKey: ['hub-billing-usage'],
+    queryKey: ['hub-billing-usage', endpointKey],
     queryFn: () => invoke('hub:billingUsage', undefined),
     // A 401/403 is a capability gap, not a transient failure — do not retry it.
     retry: (failureCount, error) => failureCount < 2 && !isAuthError(error.message)
@@ -542,9 +586,9 @@ function AppearanceSection(): React.JSX.Element {
     <SectionShell title={t('settings:appearance.title')}>
       <Row label={t('settings:appearance.language')}>
         <Select value={settings.locale} onValueChange={setLocale}>
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             <SelectItem value="system">{t('common:language.system')}</SelectItem>
             {SUPPORTED_LOCALES.map((locale) => (
@@ -560,9 +604,9 @@ function AppearanceSection(): React.JSX.Element {
           value={settings.theme}
           onValueChange={(theme) => void updateSettings({ theme: theme as typeof settings.theme })}
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             <SelectItem value="system">{t('common:theme.system')}</SelectItem>
             <SelectItem value="light">{t('common:theme.light')}</SelectItem>
@@ -625,9 +669,9 @@ function AppearanceSection(): React.JSX.Element {
           value={settings.uiDensity}
           onValueChange={(v) => void updateSettings({ uiDensity: v as UiDensity })}
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             <SelectItem value="comfortable">
               {t('settings:appearance.densityOptions.comfortable')}
@@ -670,7 +714,7 @@ function AppearanceSection(): React.JSX.Element {
         </div>
       </Row>
       <Row label={t('settings:appearance.sidebarCollapsed')}>
-        <Switch
+        <RowSwitch
           checked={settings.sidebarCollapsed}
           onCheckedChange={(sidebarCollapsed) => void updateSettings({ sidebarCollapsed })}
         />
@@ -680,9 +724,9 @@ function AppearanceSection(): React.JSX.Element {
           value={settings.defaultHome}
           onValueChange={(v) => void updateSettings({ defaultHome: v as DefaultHome })}
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             {homeOptions.map((home) => (
               <SelectItem key={home} value={home}>
@@ -697,9 +741,9 @@ function AppearanceSection(): React.JSX.Element {
           value={settings.defaultRepoSort}
           onValueChange={(v) => void updateSettings({ defaultRepoSort: v as RepoSort })}
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             {sortOptions.map((sort) => (
               <SelectItem key={sort} value={sort}>
@@ -716,9 +760,9 @@ function AppearanceSection(): React.JSX.Element {
             void updateSettings({ browsePageSize: Number(v) as BrowsePageSize })
           }
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             {PAGE_SIZE_OPTIONS.map((n) => (
               <SelectItem key={n} value={String(n)}>
@@ -733,9 +777,9 @@ function AppearanceSection(): React.JSX.Element {
           value={settings.repoOpenTarget}
           onValueChange={(v) => void updateSettings({ repoOpenTarget: v as RepoOpenTarget })}
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             <SelectItem value="app">{t('settings:appearance.openTarget.app')}</SelectItem>
             <SelectItem value="browser">{t('settings:appearance.openTarget.browser')}</SelectItem>
@@ -747,9 +791,9 @@ function AppearanceSection(): React.JSX.Element {
           value={String(settings.historyLimit)}
           onValueChange={(v) => void updateSettings({ historyLimit: Number(v) as HistoryLimit })}
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             {HISTORY_LIMIT_OPTIONS.map((n) => (
               <SelectItem key={n} value={String(n)}>
@@ -767,13 +811,21 @@ function DownloadsSection(): React.JSX.Element {
   const { t } = useTranslation(['settings'])
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
+  const setSettings = useAppStore((s) => s.setSettings)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const push = useToasts((s) => s.push)
 
   const pickCacheDir = useMutation({
-    mutationFn: () => invoke('system:pickFolder', undefined),
-    onSuccess: (path) => {
-      if (path) void updateSettings({ hfCacheDir: path })
-    }
+    mutationFn: () => invoke('settings:selectCacheDir', undefined),
+    onSuccess: (next) => {
+      if (next) setSettings(next)
+    },
+    onError: (error) => push(error.message, 'error')
+  })
+  const resetCacheDir = useMutation({
+    mutationFn: () => invoke('settings:resetCacheDir', undefined),
+    onSuccess: setSettings,
+    onError: (error) => push(error.message, 'error')
   })
 
   return (
@@ -783,9 +835,9 @@ function DownloadsSection(): React.JSX.Element {
           value={String(settings.downloadConcurrency)}
           onValueChange={(v) => void updateSettings({ downloadConcurrency: Number(v) })}
         >
-          <SelectTrigger className="w-24">
+          <RowSelectTrigger className="w-24">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             {[1, 2, 3, 4, 6, 8].map((n) => (
               <SelectItem key={n} value={String(n)}>
@@ -802,9 +854,9 @@ function DownloadsSection(): React.JSX.Element {
             void updateSettings({ speedLimitBps: v === 'unlimited' ? null : Number(v) })
           }
         >
-          <SelectTrigger className="w-44">
+          <RowSelectTrigger className="w-44">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             <SelectItem value="unlimited">{t('settings:downloads.unlimited')}</SelectItem>
             {SPEED_OPTIONS.map((mb) => (
@@ -832,7 +884,8 @@ function DownloadsSection(): React.JSX.Element {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => void updateSettings({ hfCacheDir: null })}
+              loading={resetCacheDir.isPending}
+              onClick={() => resetCacheDir.mutate()}
             >
               {t('settings:downloads.reset')}
             </Button>
@@ -851,7 +904,7 @@ function NotificationsSection(): React.JSX.Element {
   return (
     <SectionShell title={t('settings:notifications.title')}>
       <Row label={t('settings:notifications.enabled')}>
-        <Switch
+        <RowSwitch
           checked={settings.notificationsEnabled}
           onCheckedChange={(notificationsEnabled) => void updateSettings({ notificationsEnabled })}
         />
@@ -861,9 +914,9 @@ function NotificationsSection(): React.JSX.Element {
           value={String(settings.pollIntervalMinutes)}
           onValueChange={(v) => void updateSettings({ pollIntervalMinutes: Number(v) })}
         >
-          <SelectTrigger className="w-32">
+          <RowSelectTrigger className="w-32">
             <SelectValue />
-          </SelectTrigger>
+          </RowSelectTrigger>
           <SelectContent>
             {[15, 30, 60, 180, 360].map((minutes) => (
               <SelectItem key={minutes} value={String(minutes)}>

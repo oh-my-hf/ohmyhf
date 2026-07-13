@@ -15,14 +15,7 @@ export interface ClearLocalDataOptions {
   signOut?: boolean
 }
 
-const CATEGORIES = [
-  'favorites',
-  'history',
-  'downloads',
-  'follows',
-  'inbox',
-  'otherKv'
-] as const
+const CATEGORIES = ['favorites', 'history', 'downloads', 'follows', 'inbox', 'otherKv'] as const
 
 export function clearLocalAppData(
   db: AppDatabase,

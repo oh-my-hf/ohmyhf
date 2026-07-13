@@ -1,0 +1,32 @@
+{
+  "clear": "Clear history",
+  "clearFilters": "Clear filters",
+  "cleared": "Browse history cleared",
+  "confirm": {
+    "body": "This permanently removes all {{count}} history entries stored on this device.",
+    "confirm": "Clear history",
+    "error": "History could not be cleared. Try again.",
+    "title": "Clear browse history?"
+  },
+  "count": "{{count}} total",
+  "empty": {
+    "body": "Repositories you open will appear here for quick access.",
+    "title": "No browsing history yet"
+  },
+  "error": {
+    "body": "Your local browsing history could not be loaded.",
+    "title": "Could not load history"
+  },
+  "filter": {
+    "all": "All types"
+  },
+  "filterLabel": "Filter by repository type",
+  "filteredEmpty": {
+    "body": "Try another repository ID or type.",
+    "title": "No matching history"
+  },
+  "searchLabel": "Search browsing history by repository ID",
+  "searchPlaceholder": "Search repository ID…",
+  "showing": "Showing {{shown}} of {{total}}",
+  "title": "Browse history"
+}

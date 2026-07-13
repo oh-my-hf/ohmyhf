@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { EyeOff, MoreVertical, Quote, Reply } from 'lucide-react'
-import type { PostComment } from '@oh-my-huggingface/shared'
-import { HUB_HIDE_REASONS } from '@oh-my-huggingface/shared'
+import { HUB_HIDE_REASONS, normalizeHubEndpoint, type PostComment } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -66,6 +65,7 @@ export function PostComments({
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const hubSession = useHubSession()
   const push = useToasts((s) => s.push)
   const queryClient = useQueryClient()
@@ -73,7 +73,7 @@ export function PostComments({
   const [replyingTo, setReplyingTo] = useState<string>()
   const [hideTarget, setHideTarget] = useState<PostComment>()
 
-  const queryKey = ['post-comments', author, slug]
+  const queryKey = ['post-comments', author, slug, endpointKey]
   const refetch = (): void => void queryClient.invalidateQueries({ queryKey })
   const comments = useQuery({
     queryKey,
@@ -141,7 +141,10 @@ export function PostComments({
         <CommentCard key={comment.id} comment={comment} depth={0} ctx={ctx} />
       ))}
 
-      <Dialog open={hideTarget !== undefined} onOpenChange={(open) => !open && setHideTarget(undefined)}>
+      <Dialog
+        open={hideTarget !== undefined}
+        onOpenChange={(open) => !open && setHideTarget(undefined)}
+      >
         <DialogContent>
           <DialogTitle className="flex items-center gap-2 text-[14px] font-semibold">
             <EyeOff className="size-4" aria-hidden />
@@ -150,7 +153,13 @@ export function PostComments({
           <DialogDescription className="mt-2 text-[13px] text-ink-muted">
             {t('profile:post.hide.selectReason')}
           </DialogDescription>
-          {hideTarget && <HideReasonForm comment={hideTarget} hide={hide} onCancel={() => setHideTarget(undefined)} />}
+          {hideTarget && (
+            <HideReasonForm
+              comment={hideTarget}
+              hide={hide}
+              onCancel={() => setHideTarget(undefined)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
@@ -227,7 +236,11 @@ function CommentCard({
         </p>
       ) : (
         <>
-          <MarkdownView markdown={comment.content} kind="model" repoId={`${ctx.author}/${ctx.slug}`} />
+          <MarkdownView
+            markdown={comment.content}
+            kind="model"
+            repoId={`${ctx.author}/${ctx.slug}`}
+          />
           <div className="mt-2.5 flex flex-wrap items-center gap-2">
             <ReactionBar
               reactions={comment.reactions}

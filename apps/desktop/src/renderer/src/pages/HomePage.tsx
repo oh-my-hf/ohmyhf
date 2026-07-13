@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { CloudOff, Newspaper, UserPlus } from 'lucide-react'
-import type { PaperSummary, PostSummary, RepoSummary } from '@oh-my-huggingface/shared'
+import {
+  normalizeHubEndpoint,
+  type PaperSummary,
+  type PostSummary,
+  type RepoSummary
+} from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { describeError } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
@@ -36,17 +41,18 @@ export function HomePage(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
 
   // Each source is an independent query: one failing (e.g. posts while the
   // endpoint is not implemented yet) must not blank the rest of the feed.
   const posts = useQuery({
-    queryKey: ['home', 'posts'],
+    queryKey: ['home', 'posts', endpointKey],
     queryFn: () => invoke('hub:posts', {}),
     staleTime: STALE_TIME
   })
 
   const papers = useQuery({
-    queryKey: ['home', 'papers'],
+    queryKey: ['home', 'papers', endpointKey],
     queryFn: () => invoke('hub:papers', {}),
     staleTime: STALE_TIME
   })
@@ -69,7 +75,7 @@ export function HomePage(): React.JSX.Element {
   // the merged posts/repos/papers feed below is the fallback (and the signed-out
   // experience).
   const recentActivity = useQuery({
-    queryKey: ['home', 'recent-activity'],
+    queryKey: ['home', 'recent-activity', endpointKey],
     enabled: signedIn,
     staleTime: STALE_TIME,
     queryFn: () => invoke('hub:recentActivity', {})
@@ -78,7 +84,7 @@ export function HomePage(): React.JSX.Element {
   const personalized = signedIn && recentActivity.isSuccess && activityItems.length > 0
 
   const hubFollowing = useQuery({
-    queryKey: ['hub-following', me],
+    queryKey: ['hub-following', me, endpointKey],
     enabled: Boolean(me),
     staleTime: STALE_TIME,
     queryFn: () => invoke('hub:userFollowing', { username: me ?? '' })
@@ -106,7 +112,7 @@ export function HomePage(): React.JSX.Element {
   }, [hubFollowing.data, follows.data])
 
   const activity = useQuery({
-    queryKey: ['home', 'activity', followTargets],
+    queryKey: ['home', 'activity', followTargets, endpointKey],
     enabled: followTargets.length > 0,
     staleTime: STALE_TIME,
     queryFn: async (): Promise<RepoSummary[]> => {

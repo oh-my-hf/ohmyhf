@@ -4,12 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import type { RepoKind } from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { useToasts } from '@/components/ui/toaster'

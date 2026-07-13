@@ -76,7 +76,6 @@ const settingsPatch = z
     theme: z.enum(['system', 'light', 'dark']),
     downloadConcurrency: z.number().int().min(1).max(8),
     speedLimitBps: z.number().int().min(1024).nullable(),
-    hfCacheDir: z.string().max(1024).nullable(),
     notificationsEnabled: z.boolean(),
     pollIntervalMinutes: z
       .number()
@@ -99,6 +98,7 @@ const settingsPatch = z
     historyLimit: z.union([z.literal(50), z.literal(100), z.literal(200), z.literal(500)])
   })
   .partial()
+  .strict()
 
 /** On-disk settings export envelope (import/export). */
 export const settingsExportFileSchema = z.object({
@@ -106,8 +106,6 @@ export const settingsExportFileSchema = z.object({
   exportedAt: z.string().min(1),
   settings: settingsPatch
 })
-
-const absolutePath = z.string().min(1).max(4096)
 
 const username = z
   .string()
@@ -154,8 +152,7 @@ const watchTargets = z
  * are validated by asserting the payload is undefined/null.
  */
 export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> = {
-  'system:openExternal': z.object({ url: z.url({ protocol: /^https$/ }) }),
-  'system:showItemInFolder': z.object({ path: absolutePath }),
+  'system:openExternal': z.object({ url: z.url({ protocol: /^https?$/ }) }),
   'settings:set': z.object({ patch: settingsPatch }),
   'privacy:clearLocalData': z.object({
     favorites: z.boolean().optional(),
@@ -552,34 +549,43 @@ export const ipcRequestSchemas: Partial<Record<IpcInvokeChannel, z.ZodTypeAny>> 
   'downloads:resume': z.object({ id: z.uuid() }),
   'downloads:cancel': z.object({ id: z.uuid() }),
   'downloads:remove': z.object({ id: z.uuid() }),
+  'downloads:reveal': z.object({ id: z.uuid() }),
   'cache:deleteRevisions': z.object({
-    repoPath: absolutePath,
+    kind: repoKind,
+    repoId,
     commitHashes: z
       .array(z.string().regex(/^[0-9a-f]{40}$/))
       .min(1)
       .max(100)
   }),
-  'cache:cleanPartials': z.object({ repoPath: absolutePath }),
+  'cache:cleanPartials': z.object({ kind: repoKind, repoId }),
+  'cache:revealRepo': z.object({ kind: repoKind, repoId }),
   'follows:add': z.object({
     type: z.enum(['user', 'org', 'repo', 'papers']),
     target: z.string().max(300)
   }),
   'follows:remove': z.object({ id: z.uuid() }),
   'inbox:markRead': z.object({ ids: z.array(z.string()).min(1).max(1000) }),
-  'export:run': z.object({
-    tool: z.enum(['ollama', 'lmstudio', 'comfyui']),
-    kind: repoKind,
-    repoId,
-    filePath: relPath
-  }),
-  'upload:createRepo': z.object({
+  'export:start': z.object({
     request: z.object({
+      tool: z.enum(['ollama', 'lmstudio', 'comfyui']),
+      kind: repoKind,
+      repoId,
+      filePath: relPath
+    })
+  }),
+  'export:cancel': z.object({ id: z.uuid() }),
+  'upload:start': z.object({
+    request: z.object({
+      selectionId: z.uuid(),
       kind: repoKind,
       name: z.string().min(1).max(200),
       private: z.boolean(),
-      folderPath: absolutePath
+      acknowledgedWarningCodes: z.array(z.enum(['sensitive-path', 'large-upload'])).max(2)
     })
   }),
+  'upload:cancel': z.object({ id: z.uuid() }),
+  'integrationTasks:revealOutput': z.object({ id: z.uuid() }),
   'inference:run': z.object({
     request: z.object({ model: repoId, input: z.string().max(65536) })
   }),

@@ -1,8 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowDownToLine, ChevronRight, File, FileSearch, Folder, Share } from 'lucide-react'
-import type { ExportTool, FileTreeEntry, RepoKind } from '@oh-my-huggingface/shared'
+import { ArrowDownToLine, ChevronRight, File, FileSearch, Folder, Share, X } from 'lucide-react'
+import type {
+  ExportIntegrationTask,
+  ExportTool,
+  FileTreeEntry,
+  RepoKind
+} from '@oh-my-huggingface/shared'
+import { normalizeHubEndpoint } from '@oh-my-huggingface/shared'
 import { describeError } from '@/lib/errors'
 import { invoke } from '@/lib/ipc'
 import { cn, formatBytes } from '@/lib/utils'
@@ -15,8 +21,12 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { EmptyState } from '@/components/ui/empty-state'
+import { QueryErrorState } from '@/components/errors/QueryErrorState'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 import { useToasts } from '@/components/ui/toaster'
+import { useCommandActions } from '@/hooks/use-command-actions'
+import { useAppStore } from '@/stores/app'
 import { FilePreview } from '@/components/browse/FilePreview'
 
 const TOOL_LABELS: Record<ExportTool, string> = {
@@ -51,17 +61,18 @@ export function FileTreeView({
   kind: RepoKind
   repoId: string
 }): React.JSX.Element {
-  const { t } = useTranslation(['detail', 'common', 'integrations', 'errors'])
+  const { t } = useTranslation(['detail', 'common', 'integrations', 'errors', 'downloads'])
   const [path, setPath] = useState('')
   // Selection is a full repo-relative path (plus the entry metadata the preview
   // header needs), independent of the browsed directory. It only resets when
   // repoId changes because the parent keys RepoDetail — and thus this
   // component — by repoId.
   const [selected, setSelected] = useState<FileTreeEntry | null>(null)
+  const endpointKey = normalizeHubEndpoint(useAppStore((state) => state.settings.hubEndpoint))
   const push = useToasts((s) => s.push)
 
   const tree = useQuery({
-    queryKey: ['tree', kind, repoId, path],
+    queryKey: ['tree', kind, repoId, path, endpointKey],
     queryFn: () => invoke('hub:fileTree', { kind, repoId, path: path || undefined })
   })
   const targets = useQuery({
@@ -69,6 +80,18 @@ export function FileTreeView({
     queryFn: () => invoke('export:targets', undefined),
     staleTime: 5 * 60_000
   })
+  const integrationTasks = useQuery({
+    queryKey: ['integration-tasks'],
+    queryFn: () => invoke('integrationTasks:list', undefined),
+    staleTime: Infinity
+  })
+  const activeExport = integrationTasks.data?.find(
+    (task): task is ExportIntegrationTask =>
+      task.kind === 'export' &&
+      task.repoKind === kind &&
+      task.repoId === repoId &&
+      (task.status === 'preparing' || task.status === 'running')
+  )
 
   const download = useMutation({
     mutationFn: (files: string[]) =>
@@ -78,11 +101,47 @@ export function FileTreeView({
   })
   const exportRun = useMutation({
     mutationFn: (args: { tool: ExportTool; filePath: string }) =>
-      invoke('export:run', { tool: args.tool, kind, repoId, filePath: args.filePath }),
-    onSuccess: (res) =>
-      push(t(`integrations:${res.messageKey}`, res.params), res.ok ? 'success' : 'error'),
+      invoke('export:start', {
+        request: { tool: args.tool, kind, repoId, filePath: args.filePath }
+      }),
+    onSuccess: () => push(t('common:running'), 'info'),
     onError: (err) => push(describeError(t, err), 'error')
   })
+  const cancelExport = useMutation({
+    mutationFn: (id: string) => invoke('export:cancel', { id }),
+    onError: (err) => push(describeError(t, err), 'error')
+  })
+  const fileCommands = useMemo(() => {
+    if (!selected || selected.type !== 'file') return []
+    const commands = [
+      {
+        id: `download-file:${kind}:${repoId}:${selected.path}`,
+        label: t('downloads:commands.downloadSelectedFile', {
+          file: selected.path.split('/').at(-1) ?? selected.path
+        }),
+        icon: ArrowDownToLine,
+        disabled: download.isPending,
+        run: async () => {
+          await download.mutateAsync([selected.path])
+        }
+      }
+    ]
+    const supported = exportToolsFor(selected.path)
+    for (const target of targets.data ?? []) {
+      if (!target.detected || !supported.includes(target.tool)) continue
+      commands.push({
+        id: `export-file:${target.tool}:${kind}:${repoId}:${selected.path}`,
+        label: t('detail:files.exportTo', { tool: TOOL_LABELS[target.tool] }),
+        icon: Share,
+        disabled: Boolean(activeExport) || exportRun.isPending,
+        run: async () => {
+          await exportRun.mutateAsync({ tool: target.tool, filePath: selected.path })
+        }
+      })
+    }
+    return commands
+  }, [activeExport, download, exportRun, kind, repoId, selected, t, targets.data])
+  useCommandActions('file-tree', fileCommands)
 
   const crumbs = path ? path.split('/') : []
   const files = tree.data?.filter((entry) => entry.type === 'file') ?? []
@@ -134,6 +193,29 @@ export function FileTreeView({
             </span>
           ))}
         </div>
+        {activeExport && (
+          <div className="flex flex-col gap-1 border-b bg-panel px-3 py-2 text-[11px]">
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate font-mono text-ink-muted">
+                {activeExport.filePath}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6"
+                aria-label={t('common:cancel')}
+                loading={cancelExport.isPending}
+                onClick={() => cancelExport.mutate(activeExport.id)}
+              >
+                <X className="size-3.5" aria-hidden />
+              </Button>
+            </div>
+            <Progress
+              value={activeExport.progress}
+              indeterminate={activeExport.progress === undefined}
+            />
+          </div>
+        )}
 
         <div className="min-h-0 flex-1 overflow-y-auto p-1.5" onKeyDown={onListKeyDown}>
           {tree.isLoading && (
@@ -143,10 +225,13 @@ export function FileTreeView({
               ))}
             </div>
           )}
-          {tree.error && (
-            <div className="p-6 text-center text-[13px] text-ink-muted">
-              {t('common:error.network')}
-            </div>
+          {tree.isError && !tree.data && (
+            <QueryErrorState
+              compact
+              error={tree.error}
+              onRetry={() => void tree.refetch()}
+              className="px-2"
+            />
           )}
           {tree.data?.length === 0 && (
             <div className="p-6 text-center text-[13px] text-ink-muted">
@@ -218,6 +303,7 @@ export function FileTreeView({
                             size="icon"
                             className="size-6 text-ink-faint"
                             aria-label={t('detail:files.export')}
+                            disabled={Boolean(activeExport) || exportRun.isPending}
                           >
                             <Share className="size-3.5" aria-hidden />
                           </Button>
@@ -259,7 +345,17 @@ export function FileTreeView({
         </div>
       </div>
 
-      {selected ? (
+      {targets.isError && (
+        <QueryErrorState
+          compact
+          error={targets.error}
+          onRetry={() => void targets.refetch()}
+          title={t('integrations:export.targetsError')}
+          className="min-w-0 flex-1"
+        />
+      )}
+
+      {!targets.isError && selected ? (
         <div className="min-w-0 flex-1">
           <FilePreview
             key={selected.path}
@@ -270,7 +366,7 @@ export function FileTreeView({
             downloading={download.isPending}
           />
         </div>
-      ) : (
+      ) : !targets.isError ? (
         <div className="flex min-w-0 flex-1 items-center justify-center">
           <EmptyState
             icon={FileSearch}
@@ -278,7 +374,7 @@ export function FileTreeView({
             body={t('detail:preview.pickFileBody')}
           />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

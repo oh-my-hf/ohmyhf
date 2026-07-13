@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { hubRepoUrl } from '@oh-my-huggingface/shared'
+import { useAppStore } from '@/stores/app'
 
 const ERROR_STAGES = new Set(['BUILD_ERROR', 'CONFIG_ERROR', 'RUNTIME_ERROR'])
 
@@ -24,10 +26,11 @@ export function SpaceRunner({
   detail: RepoDetail | undefined
 }): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
   // Bumping the key remounts the iframe — the only reliable cross-origin reload.
   const [frameKey, setFrameKey] = useState(0)
   const [loaded, setLoaded] = useState(false)
-  const hubUrl = `https://huggingface.co/spaces/${repoId}`
+  const hubUrl = hubRepoUrl('space', repoId, endpoint)
 
   if (!detail) {
     return (

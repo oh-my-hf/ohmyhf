@@ -12,7 +12,12 @@ import {
   TextQuote,
   type LucideIcon
 } from 'lucide-react'
-import type { RepoKind, UserSearchResult } from '@oh-my-huggingface/shared'
+import {
+  hubUserUrl,
+  normalizeHubEndpoint,
+  type RepoKind,
+  type UserSearchResult
+} from '@oh-my-huggingface/shared'
 import { invoke } from '@/lib/ipc'
 import { cn } from '@/lib/utils'
 import { useDebounced } from '@/hooks/use-debounced'
@@ -22,6 +27,7 @@ import { Button } from '@/components/ui/button'
 import { useToasts } from '@/components/ui/toaster'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MarkdownView } from '@/components/browse/MarkdownView'
+import { useAppStore } from '@/stores/app'
 
 /** Comment attachments cap out at 64 MB (see the hub:commentAssetUpload schema). */
 const MAX_UPLOAD_BYTES = 64 * 1024 * 1024
@@ -159,10 +165,10 @@ const MENTION_TOKEN = /(^|[\s([{>])@([\w.-]{1,30})/g
  * Turn @mentions into profile links so the Preview shows what the posted comment
  * will actually look like (the Hub linkifies mentions in rendered markdown).
  */
-function linkifyMentions(markdown: string): string {
+function linkifyMentions(markdown: string, endpoint?: string | null): string {
   return markdown.replace(
     MENTION_TOKEN,
-    (_, boundary: string, name: string) => `${boundary}[@${name}](https://huggingface.co/${name})`
+    (_, boundary: string, name: string) => `${boundary}[@${name}](${hubUserUrl(name, endpoint)})`
   )
 }
 
@@ -198,6 +204,8 @@ export function MarkdownEditor({
   const { t } = useTranslation('detail')
   const push = useToasts((s) => s.push)
   const hubSession = useHubSession()
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
+  const endpointKey = normalizeHubEndpoint(endpoint)
   // Upload is a default input capability wherever a web session is connected.
   const enableUpload = enableUploadProp ?? hubSession
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -216,7 +224,7 @@ export function MarkdownEditor({
 
   const mentionQuery = useDebounced(mention?.query ?? '', 200)
   const userSearch = useQuery({
-    queryKey: ['user-search', mentionQuery],
+    queryKey: ['user-search', mentionQuery, endpointKey],
     queryFn: () => invoke('hub:searchUsers', { query: mentionQuery }),
     enabled: mention !== null && mentionQuery.length >= 1,
     staleTime: 60_000
@@ -366,7 +374,10 @@ export function MarkdownEditor({
         const isImage = file.type.startsWith('image/')
         insertAtCaret(`${isImage ? '!' : ''}[${name}](${url})`)
       } catch (err) {
-        push(t('editor.uploadError', { error: err instanceof Error ? err.message : String(err) }), 'error')
+        push(
+          t('editor.uploadError', { error: err instanceof Error ? err.message : String(err) }),
+          'error'
+        )
       } finally {
         setUploading((n) => n - 1)
       }
@@ -492,11 +503,7 @@ export function MarkdownEditor({
         {/* forceMount keeps the contenteditable alive across Preview round-trips;
             without it Radix unmounts the pane and the DOM (but not `value`) is lost.
             Inactive state is hidden via data-state so both panes don't stack. */}
-        <TabsContent
-          value="write"
-          forceMount
-          className="relative data-[state=inactive]:hidden"
-        >
+        <TabsContent value="write" forceMount className="relative data-[state=inactive]:hidden">
           <div
             ref={setEditorRef}
             contentEditable
@@ -608,7 +615,7 @@ export function MarkdownEditor({
           {value.trim() === '' ? (
             <p className="text-[12.5px] text-ink-faint">{t('editor.previewEmpty')}</p>
           ) : (
-            <MarkdownView markdown={linkifyMentions(value)} kind={kind} repoId={repoId} />
+            <MarkdownView markdown={linkifyMentions(value, endpoint)} kind={kind} repoId={repoId} />
           )}
         </TabsContent>
       </Tabs>

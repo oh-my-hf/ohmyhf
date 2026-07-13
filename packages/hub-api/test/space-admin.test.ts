@@ -38,7 +38,11 @@ describe('HubClient space secrets', () => {
   it('lists secrets from the object map response', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({
-        HF_TOKEN: { key: 'HF_TOKEN', description: 'api key', updatedAt: '2026-07-01T00:00:00.000Z' },
+        HF_TOKEN: {
+          key: 'HF_TOKEN',
+          description: 'api key',
+          updatedAt: '2026-07-01T00:00:00.000Z'
+        },
         OTHER: { key: 'OTHER' }
       })
     )

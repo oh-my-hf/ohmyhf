@@ -27,6 +27,23 @@ describe('parseNotebook', () => {
     expect(parseNotebook('{"cells":[]}')?.language).toBeUndefined()
   })
 
+  it('normalizes notebook language aliases and kernelspec names', () => {
+    const python3 = JSON.stringify({ metadata: { language_info: { name: 'python3' } }, cells: [] })
+    const cpp = JSON.stringify({ metadata: { kernelspec: { language: 'C++' } }, cells: [] })
+    const kernelName = JSON.stringify({ metadata: { kernelspec: { name: 'ipython3' } }, cells: [] })
+    expect(parseNotebook(python3)?.language).toBe('python')
+    expect(parseNotebook(cpp)?.language).toBe('cpp')
+    expect(parseNotebook(kernelName)?.language).toBe('python')
+  })
+
+  it('keeps an unsupported kernel name for an explicit plain-text fallback', () => {
+    const custom = JSON.stringify({
+      metadata: { language_info: { name: 'custom-kernel' } },
+      cells: []
+    })
+    expect(parseNotebook(custom)?.language).toBe('custom-kernel')
+  })
+
   it('joins string[] source into one string for markdown and code cells', () => {
     const parsed = parse(
       nb({

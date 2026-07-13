@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { TFunction } from 'i18next'
 import { HUB_SESSION_REQUIRED_CODE } from '@oh-my-huggingface/shared'
-import { classifyError, describeError, isAuthError, isHubSessionRequired } from './errors'
+import {
+  classifyError,
+  describeError,
+  isAuthError,
+  isHubSessionRequired,
+  sanitizeErrorDetails
+} from './errors'
 
 /** Message shape the hub client emits: "GET <url> failed: <status> <statusText>". */
 const hubError = (status: number, statusText: string): Error =>
@@ -99,5 +105,26 @@ describe('isHubSessionRequired', () => {
     expect(isHubSessionRequired(new Error(`boom ${HUB_SESSION_REQUIRED_CODE}`))).toBe(true)
     expect(isHubSessionRequired(new Error('boom'))).toBe(false)
     expect(isHubSessionRequired('not an error')).toBe(false)
+  })
+})
+
+describe('sanitizeErrorDetails', () => {
+  it('redacts credentials, authenticated query values, and user paths', () => {
+    const details = sanitizeErrorDetails(
+      new Error(
+        'Bearer secret-value hf_1234567890 GET https://hub.test/api?token=top-secret at /Users/alice/project/main.ts:1'
+      )
+    )
+
+    expect(details).not.toContain('secret-value')
+    expect(details).not.toContain('hf_1234567890')
+    expect(details).not.toContain('top-secret')
+    expect(details).not.toContain('/Users/alice')
+    expect(details).toContain('<redacted>')
+    expect(details).toContain('/<path>')
+  })
+
+  it('bounds copied diagnostics', () => {
+    expect(sanitizeErrorDetails('x'.repeat(3_000))).toHaveLength(2_002)
   })
 })

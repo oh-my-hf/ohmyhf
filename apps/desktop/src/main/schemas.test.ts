@@ -81,6 +81,9 @@ describe('ipcRequestSchemas', () => {
     expect(schema.safeParse({ patch: { fontScale: 80 } }).success).toBe(false)
     expect(schema.safeParse({ patch: { browsePageSize: 25 } }).success).toBe(false)
     expect(schema.safeParse({ patch: { accent: 'pink' } }).success).toBe(false)
+    expect(schema.safeParse({ patch: { hfCacheDir: '/tmp/renderer-controlled' } }).success).toBe(
+      false
+    )
   })
 
   it('accepts a version-1 settings export envelope', () => {

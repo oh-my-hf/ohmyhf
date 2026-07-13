@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDownToLine, ExternalLink, Heart, Star } from 'lucide-react'
-import type { RepoKind, RepoSummary } from '@oh-my-huggingface/shared'
+import {
+  hubRepoUrl,
+  normalizeHubEndpoint,
+  type RepoKind,
+  type RepoSummary
+} from '@oh-my-huggingface/shared'
 import { invoke, openExternal } from '@/lib/ipc'
 import { cn, formatCount } from '@/lib/utils'
 import { useSettledValue } from '@/hooks/use-settled-value'
+import { useCommandActions } from '@/hooks/use-command-actions'
 import { taskHue, taskIcon } from '@/lib/tag-colors'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,12 +35,6 @@ import { LikeButton } from '@/components/community/LikeButton'
 import { UserLink } from '@/components/profile/UserLink'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
-const HUB_PREFIX: Record<RepoKind, string> = {
-  model: '',
-  dataset: 'datasets/',
-  space: 'spaces/'
-}
-
 /** Pipeline tags whose models the Hub can serve through chat completion. */
 const CHAT_PIPELINE_TAGS = new Set(['text-generation', 'image-text-to-text'])
 
@@ -57,11 +57,12 @@ export function RepoDetail({
   kind: RepoKind
   repoId: string
 }): React.JSX.Element {
-  const { t } = useTranslation(['detail', 'common'])
+  const { t } = useTranslation(['detail', 'common', 'downloads'])
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const auth = useAppStore((s) => s.auth)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const queryClient = useQueryClient()
   const push = useToasts((s) => s.push)
 
@@ -72,12 +73,12 @@ export function RepoDetail({
   const queriesEnabled = settledRepoId === repoId
 
   const detail = useQuery({
-    queryKey: ['repo', kind, settledRepoId],
+    queryKey: ['repo', kind, settledRepoId, endpointKey],
     queryFn: () => invoke('hub:repoDetail', { kind, repoId: settledRepoId }),
     enabled: queriesEnabled
   })
   const readme = useQuery({
-    queryKey: ['readme', kind, settledRepoId],
+    queryKey: ['readme', kind, settledRepoId, endpointKey],
     queryFn: () => invoke('hub:readme', { kind, repoId: settledRepoId }),
     enabled: queriesEnabled
   })
@@ -87,7 +88,7 @@ export function RepoDetail({
   })
   // The playground tab only exists when some inference provider actually serves the model.
   const inferenceAvailable = useQuery({
-    queryKey: ['inference-available', settledRepoId],
+    queryKey: ['inference-available', settledRepoId, endpointKey],
     queryFn: () => invoke('hub:inferenceAvailable', { repoId: settledRepoId }),
     enabled: kind === 'model' && queriesEnabled,
     staleTime: 10 * 60_000
@@ -104,8 +105,13 @@ export function RepoDetail({
     if (detailData) {
       const summary: RepoSummary = { ...detailData }
       void invoke('history:record', { summary })
+        .then(() => queryClient.invalidateQueries({ queryKey: ['history'] }))
+        .catch(() => {
+          // History is a local convenience; a write failure must not block the
+          // repository detail the user already opened successfully.
+        })
     }
-  }, [detailData])
+  }, [detailData, queryClient])
 
   const isFavorite = favorites.data?.some((f) => f.repoId === repoId && f.kind === kind) ?? false
 
@@ -140,8 +146,23 @@ export function RepoDetail({
     onSuccess: () => push(t('detail:downloadStarted'), 'success'),
     onError: (err) => push(t('detail:downloadFailed', { error: err.message }), 'error')
   })
+  const repoCommands = useMemo(
+    () => [
+      {
+        id: `download-repo:${kind}:${repoId}`,
+        label: t('downloads:commands.downloadCurrentRepository', { repo: repoId }),
+        icon: ArrowDownToLine,
+        disabled: download.isPending,
+        run: async () => {
+          await download.mutateAsync()
+        }
+      }
+    ],
+    [download, kind, repoId, t]
+  )
+  useCommandActions('repo-detail', repoCommands)
 
-  const hubUrl = `https://huggingface.co/${HUB_PREFIX[kind]}${repoId}`
+  const hubUrl = hubRepoUrl(kind, repoId, settings.hubEndpoint)
   const isModel = kind === 'model'
   // Provider-served AND chat-capable: the playground only speaks chat
   // completion, so non-conversational tasks (embeddings, text-to-image, …)

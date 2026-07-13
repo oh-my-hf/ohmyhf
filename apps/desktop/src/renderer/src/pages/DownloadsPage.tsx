@@ -22,7 +22,6 @@ import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useAppStore } from '@/stores/app'
 
 const STATUS_DOT: Record<DownloadStatus, string> = {
   queued: 'bg-ink-faint',
@@ -40,7 +39,6 @@ type BulkAction = 'downloads:pauseAll' | 'downloads:resumeAll' | 'downloads:clea
 function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
   const { t } = useTranslation(['downloads', 'common', 'errors'])
   const queryClient = useQueryClient()
-  const appInfo = useAppStore((s) => s.appInfo)
   const push = useToasts((s) => s.push)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
@@ -60,9 +58,7 @@ function TaskCard({ task }: { task: DownloadTask }): React.JSX.Element {
   const active = task.status === 'running' || task.status === 'queued'
 
   const openFolder = (): void => {
-    if (!appInfo) return
-    const folder = `${task.kind}s--${task.repoId.split('/').join('--')}`
-    void invoke('system:showItemInFolder', { path: `${appInfo.hfCacheDir}/${folder}` })
+    void invoke('downloads:reveal', { id: task.id })
   }
 
   return (

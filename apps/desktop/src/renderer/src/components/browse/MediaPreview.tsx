@@ -5,6 +5,7 @@ import type { RepoKind } from '@oh-my-huggingface/shared'
 import { repoFileUrl } from '@/components/browse/MarkdownView'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
+import { useAppStore } from '@/stores/app'
 
 interface MediaPreviewProps {
   kind: RepoKind
@@ -24,8 +25,10 @@ export function MediaPreview({
   downloading
 }: MediaPreviewProps): React.JSX.Element {
   const { t } = useTranslation('detail')
-  const [failed, setFailed] = useState(false)
-  const src = repoFileUrl(kind, repoId, path)
+  const endpoint = useAppStore((s) => s.settings.hubEndpoint)
+  const src = repoFileUrl(kind, repoId, path, 'main', endpoint)
+  const [failedSrc, setFailedSrc] = useState<string>()
+  const failed = failedSrc === src
 
   if (failed) {
     return (
@@ -48,12 +51,7 @@ export function MediaPreview({
   return (
     <div className="flex h-full items-center justify-center p-6">
       {mode === 'audio' ? (
-        <audio
-          controls
-          src={src}
-          className="w-full max-w-xl"
-          onError={() => setFailed(true)}
-        >
+        <audio controls src={src} className="w-full max-w-xl" onError={() => setFailedSrc(src)}>
           <track kind="captions" />
         </audio>
       ) : (
@@ -61,7 +59,7 @@ export function MediaPreview({
           controls
           src={src}
           className="max-h-full max-w-full rounded-md border border-border-card bg-black"
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src)}
         >
           <track kind="captions" />
         </video>

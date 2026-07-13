@@ -40,6 +40,7 @@ import { WRITE_DISCUSSIONS_SCOPE, scopeMissing } from '@/lib/scopes'
 import { UserLink } from '@/components/profile/UserLink'
 import { useHubSession } from '@/hooks/use-hub-session'
 import { resolveLocale, useAppStore } from '@/stores/app'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 const STATUS_VARIANT = {
   open: 'success',
@@ -224,6 +225,7 @@ function Thread({
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = useHubEndpointKey()
   const [reply, setReply] = useState('')
   // Bumped by a comment's "quote reply" to focus the editor after prefilling.
   const [quoteNonce, setQuoteNonce] = useState(0)
@@ -234,13 +236,13 @@ function Thread({
   const push = useToasts((s) => s.push)
 
   const thread = useQuery({
-    queryKey: ['discussion', kind, repoId, num],
+    queryKey: ['discussion', kind, repoId, num, endpointKey],
     queryFn: () => invoke('hub:discussionDetail', { kind, repoId, num })
   })
   const isPr = thread.data?.isPullRequest === true
 
   const diff = useQuery({
-    queryKey: ['discussionDiff', kind, repoId, num],
+    queryKey: ['discussionDiff', kind, repoId, num, endpointKey],
     queryFn: () => invoke('hub:discussionDiff', { kind, repoId, num }),
     enabled: isPr && filesTabVisited,
     retry: false
@@ -646,6 +648,7 @@ export function DiscussionsPanel({
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = useHubEndpointKey()
   const [selected, setSelected] = useState<number | null>(null)
   const [segment, setSegment] = useState<DiscussionType>('discussion')
   const [status, setStatus] = useState<StatusFilter>('open')
@@ -659,7 +662,7 @@ export function DiscussionsPanel({
   useEffect(() => () => onActiveDiscussion?.(null), [onActiveDiscussion])
 
   const list = useInfiniteQuery({
-    queryKey: ['discussions', kind, repoId, segment, status],
+    queryKey: ['discussions', kind, repoId, segment, status, endpointKey],
     queryFn: ({ pageParam }) =>
       invoke('hub:discussions', {
         kind,

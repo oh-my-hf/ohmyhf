@@ -42,6 +42,7 @@
     "downloads": "下载",
     "cache": "本地缓存",
     "inbox": "收件箱",
+    "history": "浏览历史",
     "github": "GitHub 仓库",
     "reportIssue": "报告问题…",
     "disclaimer": "关于与免责声明"
@@ -52,9 +53,11 @@
     "downloadFailed": "下载失败",
     "downloadFailedBody": "{{repo}}：{{error}}",
     "inboxUpdates": "你的关注有 {{count}} 条新动态",
+    "inboxUpdatesBody": "打开收件箱查看详情。",
     "inboxSingle": "{{title}}",
+    "inboxSingleBody": "打开收件箱查看这条动态。",
     "exportComplete": "导出完成",
-    "exportCompleteBody": "{{name}} 已在 Ollama 中可用。",
+    "exportCompleteBody": "{{name}} 已成功导出。",
     "uploadComplete": "上传完成",
     "uploadCompleteBody": "{{repo}} 已上传到 Hub。"
   },

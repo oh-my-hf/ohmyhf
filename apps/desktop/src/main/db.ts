@@ -7,7 +7,8 @@ export type AppDatabase = Database.Database
 /**
  * All local state lives in one SQLite file under userData:
  * favorites, history, download tasks, follows, inbox, settings, and the
- * safeStorage-encrypted access token. Nothing ever leaves the machine.
+ * app metadata. Access tokens use the separate safeStorage-encrypted credentials
+ * file; the auth table remains only for one-way migration from older releases.
  */
 const MIGRATIONS: string[] = [
   `
@@ -66,6 +67,22 @@ const MIGRATIONS: string[] = [
     updated_at TEXT NOT NULL
   );
   CREATE INDEX idx_inbox_created ON inbox (created_at DESC);
+  `,
+  `
+  ALTER TABLE downloads ADD COLUMN resolved_commit TEXT;
+  ALTER TABLE downloads ADD COLUMN endpoint TEXT;
+  ALTER TABLE downloads ADD COLUMN proxy_url TEXT;
+  ALTER TABLE downloads ADD COLUMN cache_dir TEXT;
+  ALTER TABLE downloads ADD COLUMN environment_version INTEGER;
+  ALTER TABLE downloads ADD COLUMN error_code TEXT;
+
+  -- Pre-environment downloads cannot be resumed safely: their endpoint,
+  -- proxy, and cache root are unknowable. Terminal rows remain visible.
+  UPDATE downloads
+     SET status = 'error',
+         error_code = 'legacy-task',
+         error = 'This download was created by an older version and cannot be resumed.'
+   WHERE status IN ('queued', 'running', 'paused', 'error');
   `
 ]
 

@@ -5,6 +5,19 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export type RepoKind = 'model' | 'dataset' | 'space'
 
+/** Native menu and renderer shortcut help consume this same navigation map. */
+export const NAVIGATION_SHORTCUTS = [
+  { key: '1', route: '/models', menuKey: 'menu.models', labelKey: 'models' },
+  { key: '2', route: '/datasets', menuKey: 'menu.datasets', labelKey: 'datasets' },
+  { key: '3', route: '/spaces', menuKey: 'menu.spaces', labelKey: 'spaces' },
+  { key: '4', route: '/papers', menuKey: 'menu.papers', labelKey: 'papers' },
+  { key: '5', route: '/favorites', menuKey: 'menu.favorites', labelKey: 'favorites' },
+  { key: '6', route: '/downloads', menuKey: 'menu.downloads', labelKey: 'downloads' },
+  { key: '7', route: '/cache', menuKey: 'menu.cache', labelKey: 'cache' },
+  { key: '8', route: '/inbox', menuKey: 'menu.inbox', labelKey: 'inbox' },
+  { key: '9', route: '/history', menuKey: 'menu.history', labelKey: 'history' }
+] as const
+
 export interface RepoSummary {
   id: string
   kind: RepoKind
@@ -200,7 +213,13 @@ export interface DownloadTask {
   id: string
   repoId: string
   kind: RepoKind
+  /** User-requested branch, tag, or commit. */
   revision: string
+  /** Immutable 40-hex commit resolved before the task was queued. */
+  resolvedCommit?: string
+  errorCode?: 'legacy-task' | 'environment-mismatch' | 'commit-mismatch' | 'network' | 'integrity'
+  /** False when continuing the task could mix endpoint/cache environments. */
+  resumable: boolean
   status: DownloadStatus
   totalBytes: number
   receivedBytes: number
@@ -231,7 +250,6 @@ export interface CachedRevision {
 export interface CachedRepo {
   id: string
   kind: RepoKind
-  path: string
   sizeOnDisk: number
   revisions: CachedRevision[]
   lastModified?: string
@@ -654,6 +672,9 @@ export interface AppSettings {
   historyLimit: HistoryLimit
 }
 
+/** Renderer-writable settings. Cache roots are selected and persisted by main. */
+export type SettingsPatch = Partial<Omit<AppSettings, 'hfCacheDir'>>
+
 export const DEFAULT_SETTINGS: AppSettings = {
   locale: 'system',
   theme: 'system',
@@ -735,6 +756,77 @@ export interface ExportResult {
   params?: Record<string, string>
 }
 
+export type UploadWarningCode = 'sensitive-path' | 'large-upload'
+
+export interface UploadWarning {
+  code: UploadWarningCode
+  /** Relative paths only; never an executable local absolute path. */
+  paths?: string[]
+  overflow?: number
+  requiresAcknowledgement: true
+}
+
+/** Opaque, one-use directory grant created by the main process. */
+export interface UploadSelection {
+  selectionId: string
+  label: string
+  expiresAt: string
+  fileCount: number
+  totalBytes: number
+  excludedCount: number
+  warnings: UploadWarning[]
+}
+
+export interface UploadStartRequest {
+  selectionId: string
+  kind: RepoKind
+  name: string
+  private: boolean
+  acknowledgedWarningCodes: UploadWarningCode[]
+}
+
+export interface ExportStartRequest {
+  tool: ExportTool
+  kind: RepoKind
+  repoId: string
+  filePath: string
+}
+
+export type IntegrationTaskStatus = 'preparing' | 'running' | 'done' | 'error' | 'canceled'
+
+export interface IntegrationTaskBase {
+  id: string
+  kind: 'upload' | 'export'
+  status: IntegrationTaskStatus
+  phase: string
+  /** 0..1 when the underlying operation exposes determinate progress. */
+  progress?: number
+  messageKey?: string
+  params?: Record<string, string>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UploadIntegrationTask extends IntegrationTaskBase {
+  kind: 'upload'
+  repoId?: string
+  repoKind: RepoKind
+  path?: string
+  repoUrl?: string
+}
+
+export interface ExportIntegrationTask extends IntegrationTaskBase {
+  kind: 'export'
+  tool: ExportTool
+  repoKind: RepoKind
+  repoId: string
+  filePath: string
+  /** Tracked main-process output; renderer reveals it only by task id. */
+  outputLabel?: string
+}
+
+export type IntegrationTask = UploadIntegrationTask | ExportIntegrationTask
+
 export interface InferenceRequest {
   model: string
   input: string
@@ -751,29 +843,6 @@ export interface InferenceStreamEvent {
   delta?: string
   done?: boolean
   error?: string
-}
-
-export interface UploadRequest {
-  kind: RepoKind
-  name: string
-  private: boolean
-  folderPath: string
-}
-
-export interface UploadResult {
-  ok: boolean
-  repoUrl?: string
-  messageKey: string
-  params?: Record<string, string>
-}
-
-export interface UploadProgress {
-  phase: 'preparing' | 'hashing' | 'uploading' | 'done' | 'error'
-  /** 0..1 overall */
-  progress: number
-  path?: string
-  messageKey?: string
-  params?: Record<string, string>
 }
 
 export interface FileTextResult {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { IntegrationTask } from '@oh-my-huggingface/shared'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster, useToasts } from '@/components/ui/toaster'
 import { CommandPalette } from '@/components/CommandPalette'
@@ -16,11 +17,12 @@ import { isEditableTarget } from '@/lib/utils'
 import { useAppStore } from '@/stores/app'
 
 const UPDATE_TOAST_ID = 10_001
+const INTEGRATION_TASKS_QUERY_KEY = ['integration-tasks'] as const
 
 export function AppShell(): React.JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
-  const { t } = useTranslation('settings')
+  const { t } = useTranslation(['settings', 'integrations', 'upload', 'common'])
   const queryClient = useQueryClient()
   // Keyed by top-level section only: switching sections replays the fade-rise,
   // in-section navigation (e.g. /papers/:id) must not remount the page.
@@ -33,9 +35,16 @@ export function AppShell(): React.JSX.Element {
   const push = useToasts((s) => s.push)
   const dismiss = useToasts((s) => s.dismiss)
   const lastUpdateToast = useRef<string | null>(null)
+  const integrationToastIds = useRef(new Map<string, number>())
+  const integrationUpdates = useRef(new Map<string, string>())
   const updateQuery = useQuery({
     queryKey: APP_UPDATE_QUERY_KEY,
     queryFn: () => invoke('updater:getState', undefined),
+    staleTime: Infinity
+  })
+  const integrationTasks = useQuery({
+    queryKey: INTEGRATION_TASKS_QUERY_KEY,
+    queryFn: () => invoke('integrationTasks:list', undefined),
     staleTime: Infinity
   })
 
@@ -64,6 +73,13 @@ export function AppShell(): React.JSX.Element {
   useIpcEvent(
     'evt:downloads',
     useCallback((tasks) => queryClient.setQueryData(['downloads'], tasks), [queryClient])
+  )
+  useIpcEvent(
+    'evt:integrationTasks',
+    useCallback(
+      (tasks) => queryClient.setQueryData(INTEGRATION_TASKS_QUERY_KEY, tasks),
+      [queryClient]
+    )
   )
   useIpcEvent(
     'evt:inbox',
@@ -101,6 +117,64 @@ export function AppShell(): React.JSX.Element {
       }
     )
   }, [dismiss, openSettings, push, t, updateQuery.data])
+
+  useEffect(() => {
+    const tasks: IntegrationTask[] = integrationTasks.data ?? []
+    for (const task of tasks) {
+      if (integrationUpdates.current.get(task.id) === task.updatedAt) continue
+      integrationUpdates.current.set(task.id, task.updatedAt)
+      const id = integrationToastIds.current.get(task.id)
+      const options = id === undefined ? {} : { id }
+      if (task.status === 'preparing' || task.status === 'running') {
+        const phase =
+          task.kind === 'upload'
+            ? t(`upload:phase.${task.phase}`, { defaultValue: task.phase })
+            : t(`integrations:task.phase.${task.phase}`, { defaultValue: task.phase })
+        const percent = task.progress === undefined ? '' : ` ${Math.round(task.progress * 100)}%`
+        const toastId = push(`${phase}${percent}`, 'info', {
+          ...options,
+          duration: null,
+          action: {
+            label: t('common:cancel'),
+            onClick: () =>
+              void invoke(task.kind === 'upload' ? 'upload:cancel' : 'export:cancel', {
+                id: task.id
+              })
+          }
+        })
+        integrationToastIds.current.set(task.id, toastId)
+        continue
+      }
+
+      const message =
+        task.status === 'canceled'
+          ? t('integrations:task.canceled')
+          : task.messageKey
+            ? t(`integrations:${task.messageKey}`, task.params)
+            : t(task.status === 'done' ? 'integrations:task.done' : 'integrations:task.failed')
+      const action =
+        task.status === 'done' && task.kind === 'upload' && task.repoId
+          ? {
+              label: t('common:open'),
+              onClick: () =>
+                navigate(
+                  `/${task.repoKind === 'model' ? 'models' : task.repoKind === 'dataset' ? 'datasets' : 'spaces'}/${task.repoId}`
+                )
+            }
+          : task.status === 'done' && task.kind === 'export' && task.tool !== 'ollama'
+            ? {
+                label: t('common:showInFolder'),
+                onClick: () => void invoke('integrationTasks:revealOutput', { id: task.id })
+              }
+            : undefined
+      const toastId = push(
+        message,
+        task.status === 'done' ? 'success' : task.status === 'error' ? 'error' : 'info',
+        { ...options, action }
+      )
+      integrationToastIds.current.set(task.id, toastId)
+    }
+  }, [integrationTasks.data, navigate, push, t])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {

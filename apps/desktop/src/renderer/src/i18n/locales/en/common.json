@@ -28,6 +28,10 @@
     "zh-CN": "简体中文"
   },
   "loading": "Loading…",
+  "progress": {
+    "indeterminate": "In progress"
+  },
+  "open": "Open",
   "openOnHub": "Open on the Hub",
   "private": "Private",
   "remove": "Remove",
@@ -41,5 +45,7 @@
     "system": "System"
   },
   "undo": "Undo",
-  "unofficial": "Unofficial"
+  "unofficial": "Unofficial",
+  "zoomImage": "Open image viewer",
+  "zoomImageNamed": "Open image viewer for {{name}}"
 }

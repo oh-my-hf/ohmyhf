@@ -8,6 +8,7 @@ import { formatBytes } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useHubEndpointKey } from '@/hooks/use-hub-endpoint'
 
 const PAGE_SIZE = 25
 /** Prefix window for Arrow IPC / Feather files (under hub:fileRange's 64 MiB cap). */
@@ -63,10 +64,11 @@ export function ArrowPreview({
   downloading
 }: ArrowPreviewProps): React.JSX.Element {
   const { t } = useTranslation(['detail', 'common'])
+  const endpointKey = useHubEndpointKey()
   const [page, setPage] = useState(0)
 
   const table = useQuery<ArrowTablePreview>({
-    queryKey: ['arrowPreview', kind, repoId, path, size],
+    queryKey: ['arrowPreview', kind, repoId, path, size, endpointKey],
     retry: false,
     queryFn: async () => {
       const end = Math.min(size, MAX_ARROW_BYTES) - 1
@@ -121,9 +123,7 @@ export function ArrowPreview({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-b px-4 py-2 text-[12px]">
-        <span className="text-ink-muted">
-          {t('detail:arrowPreview.rows', { count: numRows })}
-        </span>
+        <span className="text-ink-muted">{t('detail:arrowPreview.rows', { count: numRows })}</span>
         <span className="text-ink-muted">
           {t('detail:arrowPreview.columns', { count: columns.length })}
         </span>

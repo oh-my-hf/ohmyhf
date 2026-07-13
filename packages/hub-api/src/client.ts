@@ -39,6 +39,11 @@ import type {
   PaperSearchResult,
   CollectionSearchResult
 } from '@oh-my-huggingface/shared'
+import {
+  DEFAULT_HUB_ENDPOINT,
+  hubRelativeUrl,
+  normalizeHubEndpoint
+} from '@oh-my-huggingface/shared'
 import { CookieRequiredError, HubApiError, isNotFound } from './errors'
 import {
   mapAccessRequest,
@@ -68,7 +73,7 @@ import {
   type WhoAmIDetailed
 } from './mappers'
 
-export const DEFAULT_ENDPOINT = 'https://huggingface.co'
+export const DEFAULT_ENDPOINT = DEFAULT_HUB_ENDPOINT
 
 export const DATASETS_SERVER = 'https://datasets-server.huggingface.co'
 
@@ -397,7 +402,15 @@ export class HubClient {
   private readonly slotWaiters: Array<() => void> = []
 
   constructor(options: HubClientOptions = {}) {
-    this.endpoint = (options.endpoint ?? DEFAULT_ENDPOINT).replace(/\/$/, '')
+    const requestedEndpoint = options.endpoint ?? DEFAULT_ENDPOINT
+    let endpoint = requestedEndpoint.replace(/\/$/, '')
+    try {
+      endpoint = normalizeHubEndpoint(requestedEndpoint)
+    } catch {
+      // Preserve the historical invalid-endpoint behavior used by the auth
+      // allow-list hardening path; application settings are schema-validated.
+    }
+    this.endpoint = endpoint
     let endpointHost = ''
     try {
       endpointHost = new URL(this.endpoint).hostname
@@ -675,8 +688,9 @@ export class HubClient {
     }
   }
 
-  async getRepoDetail(kind: RepoKind, repoId: string): Promise<RepoDetail> {
-    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}`
+  async getRepoDetail(kind: RepoKind, repoId: string, revision?: string): Promise<RepoDetail> {
+    const revisionSuffix = revision ? `/revision/${encodeURIComponent(revision)}` : ''
+    const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}${revisionSuffix}`
     const { body } = await this.getJson<unknown>(url)
     return mapRepoDetail(body as never, kind)
   }
@@ -776,7 +790,7 @@ export class HubClient {
     const url = `${this.endpoint}/api/${API_PATH[kind]}/${repoId}/discussions/${num}`
     const { body } = await this.getJson<{ diffUrl?: string }>(url, { ttl: 5_000 })
     if (!body.diffUrl) return ''
-    const diffUrl = new URL(body.diffUrl, this.endpoint).toString()
+    const diffUrl = hubRelativeUrl(body.diffUrl, this.endpoint)
     const diff = await this.getText(diffUrl)
     if (diff.length <= DIFF_MAX_CHARS) return diff
     return `${diff.slice(0, DIFF_MAX_CHARS)}\n... (diff truncated)`
@@ -1232,7 +1246,7 @@ export class HubClient {
       .map((m) => ({
         name: m.user ?? '',
         fullname: m.fullname,
-        avatarUrl: m.avatarUrl ? new URL(m.avatarUrl, this.endpoint).toString() : undefined,
+        avatarUrl: m.avatarUrl ? hubRelativeUrl(m.avatarUrl, this.endpoint) : undefined,
         isOrg: m.type === 'org'
       }))
   }
@@ -1256,7 +1270,7 @@ export class HubClient {
         all.push({
           name: raw.user,
           fullname: raw.fullname,
-          avatarUrl: raw.avatarUrl ? new URL(raw.avatarUrl, this.endpoint).toString() : undefined,
+          avatarUrl: raw.avatarUrl ? hubRelativeUrl(raw.avatarUrl, this.endpoint) : undefined,
           isOrg: raw.type === 'org'
         })
       }
@@ -1281,7 +1295,7 @@ export class HubClient {
         .map((u) => ({
           name: u.user ?? '',
           fullname: u.fullname,
-          avatarUrl: u.avatarUrl ? new URL(u.avatarUrl, this.endpoint).toString() : undefined
+          avatarUrl: u.avatarUrl ? hubRelativeUrl(u.avatarUrl, this.endpoint) : undefined
         }))
     } catch {
       return []
@@ -1303,7 +1317,7 @@ export class HubClient {
         .map((o) => ({
           name: o.name ?? '',
           fullname: o.fullname,
-          avatarUrl: o.avatarUrl ? new URL(o.avatarUrl, this.endpoint).toString() : undefined
+          avatarUrl: o.avatarUrl ? hubRelativeUrl(o.avatarUrl, this.endpoint) : undefined
         }))
     } catch {
       return []

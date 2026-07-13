@@ -93,7 +93,8 @@ function ToastCard({ toast }: { toast: Toast }): React.JSX.Element {
 
   return (
     <div
-      role="status"
+      role={toast.variant === 'error' ? 'alert' : 'status'}
+      aria-live={toast.variant === 'error' ? 'assertive' : 'polite'}
       onMouseEnter={pause}
       onMouseLeave={resume}
       onFocusCapture={pause}

@@ -1,5 +1,9 @@
 {
   "back": "Go back",
+  "cache": "Open cache",
+  "datasets": "Open datasets",
+  "downloads": "Open downloads",
+  "favorites": "Open favorites",
   "focusSearch": "Focus the list search",
   "forward": "Go forward",
   "groups": {
@@ -9,11 +13,16 @@
     "palette": "Command palette"
   },
   "help": "Show this overlay",
+  "history": "Open browse history",
+  "inbox": "Open inbox",
   "listNav": "Move list selection",
   "palette": "Command palette / global search",
   "paletteClose": "Close",
   "paletteNavigate": "Navigate results",
   "paletteSelect": "Select",
+  "models": "Open models",
+  "papers": "Open papers",
+  "spaces": "Open Spaces",
   "settings": "Open settings",
   "title": "Keyboard shortcuts",
   "toggleSidebar": "Collapse or expand the sidebar"

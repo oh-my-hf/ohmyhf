@@ -16,6 +16,7 @@ describe('MainI18n', () => {
     const i18n = new MainI18n()
     i18n.setLocale('en')
     expect(i18n.t('menu.models')).toBe('Models')
+    expect(i18n.t('menu.history')).toBe('Browse History')
     expect(i18n.t('notifications.downloadCompleteBody', { repo: 'a/b' })).toBe(
       'a/b finished downloading.'
     )
@@ -25,6 +26,7 @@ describe('MainI18n', () => {
     const i18n = new MainI18n()
     i18n.setLocale('zh-CN')
     expect(i18n.t('menu.models')).toBe('模型')
+    expect(i18n.t('menu.history')).toBe('浏览历史')
     expect(i18n.t('does.not.exist')).toBe('does.not.exist')
   })
 })

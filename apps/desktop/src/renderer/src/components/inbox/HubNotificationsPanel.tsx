@@ -15,8 +15,12 @@ import {
   MessageSquare,
   ShieldAlert
 } from 'lucide-react'
-import type { HubNotification } from '@oh-my-huggingface/shared'
-import { isAuthError } from '@/lib/errors'
+import {
+  hubRelativeUrl,
+  normalizeHubEndpoint,
+  type HubNotification
+} from '@oh-my-huggingface/shared'
+import { describeError, isAuthError } from '@/lib/errors'
 import { invoke, openExternal } from '@/lib/ipc'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -25,6 +29,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToasts } from '@/components/ui/toaster'
+import { QueryErrorState } from '@/components/errors/QueryErrorState'
 import { resolveLocale, useAppStore } from '@/stores/app'
 
 /** The Hub serves a fixed 20 notifications per page (see HubClient.getNotifications). */
@@ -35,8 +40,6 @@ const PAGE_SIZE = 20
  * read /api/notifications; insufficient tokens surface the unauthorized empty
  * state with a link to Hub settings and the web inbox.
  */
-const HUB_NOTIFICATIONS_URL = 'https://huggingface.co/notifications'
-
 const KIND_ICON: Record<HubNotification['kind'], React.ComponentType<{ className?: string }>> = {
   repo: GitBranch,
   paper: FileText,
@@ -60,6 +63,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const appInfo = useAppStore((s) => s.appInfo)
   const locale = resolveLocale(settings, appInfo)
+  const endpointKey = normalizeHubEndpoint(settings.hubEndpoint)
   const auth = useAppStore((s) => s.auth)
   const openSettings = useAppStore((s) => s.openSettings)
   const signedIn = auth.status === 'signedIn'
@@ -67,7 +71,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
   const [confirmClear, setConfirmClear] = useState(false)
 
   const notifications = useQuery({
-    queryKey: ['hub-notifications', page],
+    queryKey: ['hub-notifications', page, endpointKey],
     queryFn: () => invoke('hub:notifications', { page }),
     enabled: signedIn,
     placeholderData: keepPreviousData,
@@ -80,7 +84,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
     mutationFn: (discussionIds: string[]) =>
       invoke('hub:notificationsMarkRead', { discussionIds, read: true }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['hub-notifications'] }),
-    onError: (err) => push(err.message, 'error')
+    onError: (err) => push(describeError(t, err), 'error')
   })
   const clearAll = useMutation({
     mutationFn: () => invoke('hub:notificationsClear', undefined),
@@ -89,7 +93,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
       setPage(0)
       void queryClient.invalidateQueries({ queryKey: ['hub-notifications'] })
     },
-    onError: (err) => push(err.message, 'error')
+    onError: (err) => push(describeError(t, err), 'error')
   })
 
   const openItem = (item: HubNotification): void => {
@@ -134,7 +138,7 @@ export function HubNotificationsPanel(): React.JSX.Element {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => openExternal(HUB_NOTIFICATIONS_URL)}
+                onClick={() => openExternal(hubRelativeUrl('notifications', settings.hubEndpoint))}
               >
                 {t('inbox:hub.unauthorized.action')}
               </Button>
@@ -144,12 +148,12 @@ export function HubNotificationsPanel(): React.JSX.Element {
       )
     }
     return (
-      <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-        <p className="max-w-sm text-[12.5px] text-ink-muted">{notifications.error.message}</p>
-        <Button size="sm" onClick={() => void notifications.refetch()}>
-          {t('common:retry')}
-        </Button>
-      </div>
+      <QueryErrorState
+        error={notifications.error}
+        onRetry={() => void notifications.refetch()}
+        title={t('inbox:hub.loadError')}
+        className="h-full"
+      />
     )
   }
 

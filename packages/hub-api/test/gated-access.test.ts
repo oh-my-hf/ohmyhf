@@ -49,7 +49,10 @@ const VIEWER_PAGE = `<!doctype html><div data-target="DatasetViewer" data-props=
           },
           {
             rowIdx: 1,
-            cells: { json: { kind: 'dict', value: { nested: true } }, __key__: { kind: 'string', value: 'k1' } }
+            cells: {
+              json: { kind: 'dict', value: { nested: true } },
+              __key__: { kind: 'string', value: 'k1' }
+            }
           }
         ],
         truncated: true

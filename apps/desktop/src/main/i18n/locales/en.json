@@ -42,6 +42,7 @@
     "downloads": "Downloads",
     "cache": "Local Cache",
     "inbox": "Inbox",
+    "history": "Browse History",
     "github": "GitHub Repository",
     "reportIssue": "Report an Issue…",
     "disclaimer": "About & Disclaimer"
@@ -52,9 +53,11 @@
     "downloadFailed": "Download failed",
     "downloadFailedBody": "{{repo}}: {{error}}",
     "inboxUpdates": "{{count}} new update(s) from your follows",
+    "inboxUpdatesBody": "Open the inbox to review them.",
     "inboxSingle": "{{title}}",
+    "inboxSingleBody": "Open the inbox to review this update.",
     "exportComplete": "Export complete",
-    "exportCompleteBody": "{{name}} is now available in Ollama.",
+    "exportCompleteBody": "{{name}} was exported successfully.",
     "uploadComplete": "Upload complete",
     "uploadCompleteBody": "{{repo}} was uploaded to the Hub."
   },

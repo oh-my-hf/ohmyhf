@@ -17,9 +17,7 @@ describe('toGgufPreviewData', () => {
         'general.file_type': 15,
         'llama.context_length': 4096n
       },
-      tensorInfos: [
-        { name: 'token_embd.weight', shape: [32000n, 4096n], type: 12 }
-      ]
+      tensorInfos: [{ name: 'token_embd.weight', shape: [32000n, 4096n], type: 12 }]
     })
     expect(out.metadata['general.architecture']).toBe('llama')
     expect(out.metadata['general.file_type']).toBe('15')

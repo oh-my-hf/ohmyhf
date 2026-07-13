@@ -3,8 +3,8 @@
  * Each payload is validated (zod) before any work happens; channels that accept no
  * payload reject anything non-null. No string channels appear outside the contract.
  */
-import { BrowserWindow, app, dialog, ipcMain, shell } from 'electron'
-import { readFile, writeFile } from 'node:fs/promises'
+import { BrowserWindow, app, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
+import { lstat, readFile, realpath, writeFile } from 'node:fs/promises'
 import type {
   AppInfo,
   AppSettings,
@@ -17,6 +17,7 @@ import type {
 import {
   DEFAULT_SETTINGS,
   SUPPORTED_LOCALES,
+  isAllowedExternalUrl,
   ipcRequestSchemas,
   settingsExportFileSchema
 } from '@oh-my-huggingface/shared'
@@ -30,15 +31,14 @@ import type { AppDatabase } from './db'
 import type { DownloadManager } from './downloads'
 import type { FollowsPoller } from './follows'
 import type { MainI18n } from './i18n'
+import type { IntegrationTaskManager } from './integration-tasks'
 import type { Library } from './library'
 import { clearLocalAppData } from './privacy'
 import type { SettingsStore } from './settings'
 import type { UpdateManager } from './updater'
 import {
   cancelInference,
-  createRepoAndUpload,
   detectExportTargets,
-  runExport,
   runInference,
   runInferenceStream
 } from './integrations'
@@ -53,6 +53,7 @@ export interface AppContext {
   downloads: DownloadManager
   cache: CacheManager
   follows: FollowsPoller
+  integrationTasks: IntegrationTaskManager
   updater: UpdateManager
   i18n: MainI18n
   rebuildMenu: () => void
@@ -69,21 +70,24 @@ export interface AppContext {
 
 function handle<C extends IpcInvokeChannel>(
   channel: C,
-  handler: (req: IpcRequest<C>) => Promise<IpcResponse<C>> | IpcResponse<C>
+  handler: (
+    req: IpcRequest<C>,
+    event: IpcMainInvokeEvent
+  ) => Promise<IpcResponse<C>> | IpcResponse<C>
 ): void {
-  ipcMain.handle(channel, async (_event, payload: unknown) => {
+  ipcMain.handle(channel, async (event, payload: unknown) => {
     const schema = ipcRequestSchemas[channel]
     if (schema) {
       const parsed = schema.safeParse(payload)
       if (!parsed.success) {
         throw new Error(`Invalid payload for ${channel}: ${parsed.error.message}`)
       }
-      return handler(parsed.data as IpcRequest<C>)
+      return handler(parsed.data as IpcRequest<C>, event)
     }
     if (payload !== undefined && payload !== null) {
       throw new Error(`Channel ${channel} accepts no payload`)
     }
-    return handler(undefined as IpcRequest<C>)
+    return handler(undefined as IpcRequest<C>, event)
   })
 }
 
@@ -147,16 +151,11 @@ export function registerIpcHandlers(ctx: AppContext): void {
     }
   })
   handle('system:openExternal', async ({ url }) => {
+    if (!isAllowedExternalUrl(url, ctx.settings.get().hubEndpoint)) {
+      throw new Error('External URL is not allowed')
+    }
     await shell.openExternal(url)
   })
-  handle('system:showItemInFolder', ({ path }) => {
-    shell.showItemInFolder(path)
-  })
-  handle('system:pickFolder', async () => {
-    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
-    return result.canceled ? null : (result.filePaths[0] ?? null)
-  })
-
   // --- updater --------------------------------------------------------------
   handle('updater:getState', () => ctx.updater.getState())
   handle('updater:check', () => ctx.updater.checkForUpdates())
@@ -189,6 +188,18 @@ export function registerIpcHandlers(ctx: AppContext): void {
   // --- settings ---------------------------------------------------------------
   handle('settings:get', () => ctx.settings.get())
   handle('settings:set', async ({ patch }) => applySettingsPatch(ctx, patch))
+  handle('settings:selectCacheDir', async () => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    const selected = result.filePaths[0]
+    if (result.canceled || !selected) return null
+    const entry = await lstat(selected)
+    if (!entry.isDirectory() || entry.isSymbolicLink()) {
+      throw new Error('Selected cache directory is not a regular directory')
+    }
+    const canonical = await realpath(selected)
+    return applySettingsPatch(ctx, { hfCacheDir: canonical })
+  })
+  handle('settings:resetCacheDir', () => applySettingsPatch(ctx, { hfCacheDir: null }))
 
   handle('settings:export', async () => {
     const result = await dialog.showSaveDialog({
@@ -196,10 +207,11 @@ export function registerIpcHandlers(ctx: AppContext): void {
       filters: [{ name: 'JSON', extensions: ['json'] }]
     })
     if (result.canceled || !result.filePath) return { canceled: true as const }
+    const { hfCacheDir: _machineCacheDir, ...portableSettings } = ctx.settings.get()
     const payload = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),
-      settings: ctx.settings.get()
+      settings: portableSettings
     }
     await writeFile(result.filePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
     return { canceled: false as const, path: result.filePath }
@@ -502,13 +514,19 @@ export function registerIpcHandlers(ctx: AppContext): void {
   handle('downloads:pauseAll', () => ctx.downloads.pauseAll())
   handle('downloads:resumeAll', () => ctx.downloads.resumeAll())
   handle('downloads:clearCompleted', () => ctx.downloads.clearCompleted())
+  handle('downloads:reveal', async ({ id }) => {
+    shell.showItemInFolder(await ctx.downloads.resolveRevealPath(id))
+  })
 
   // --- cache -------------------------------------------------------------------------
   handle('cache:scan', () => ctx.cache.scan())
-  handle('cache:deleteRevisions', ({ repoPath, commitHashes }) =>
-    ctx.cache.deleteRevisions(repoPath, commitHashes)
+  handle('cache:deleteRevisions', ({ kind, repoId, commitHashes }) =>
+    ctx.cache.deleteRevisions(kind, repoId, commitHashes)
   )
-  handle('cache:cleanPartials', ({ repoPath }) => ctx.cache.cleanPartials(repoPath))
+  handle('cache:cleanPartials', ({ kind, repoId }) => ctx.cache.cleanPartials(kind, repoId))
+  handle('cache:revealRepo', async ({ kind, repoId }) => {
+    shell.showItemInFolder(await ctx.cache.resolveRepo(kind, repoId))
+  })
 
   // --- follows & inbox ------------------------------------------------------------------
   handle('follows:list', () => ctx.library.listFollows())
@@ -521,17 +539,17 @@ export function registerIpcHandlers(ctx: AppContext): void {
 
   // --- phase E ----------------------------------------------------------------------------
   handle('export:targets', () => detectExportTargets())
-  handle('export:run', ({ tool, kind, repoId, filePath }) =>
-    runExport(tool, kind, repoId, filePath, { cacheDir: ctx.cache.cacheDir() })
+  handle('export:start', ({ request }) => ctx.integrationTasks.startExport(request))
+  handle('export:cancel', ({ id }) => ctx.integrationTasks.cancel(id, 'export'))
+  handle('upload:selectFolder', (_request, event) =>
+    ctx.integrationTasks.selectUploadFolder(event.sender)
   )
-  handle('upload:createRepo', ({ request }) => {
-    const state = ctx.auth.getState()
-    return createRepoAndUpload(request, {
-      accessToken: ctx.auth.accessToken(),
-      username: state.status === 'signedIn' ? state.user.name : undefined,
-      broadcast: ctx.broadcast
-    })
-  })
+  handle('upload:start', ({ request }, event) =>
+    ctx.integrationTasks.startUpload(request, event.sender.id)
+  )
+  handle('upload:cancel', ({ id }) => ctx.integrationTasks.cancel(id, 'upload'))
+  handle('integrationTasks:list', () => ctx.integrationTasks.list())
+  handle('integrationTasks:revealOutput', ({ id }) => ctx.integrationTasks.revealOutput(id))
   handle('inference:run', ({ request }) => runInference(request, ctx.auth.accessToken()))
   handle('inference:stream', ({ id, request }) =>
     runInferenceStream(id, request, {

@@ -4,12 +4,19 @@ export type Broadcast = <C extends IpcEventChannel>(channel: C, payload: IpcEven
 
 export interface ExportDeps {
   cacheDir: string
-}
-
-export interface UploadDeps {
-  accessToken: string | undefined
-  username: string | undefined
-  broadcast: Broadcast
+  signal: AbortSignal
+  onProgress: (progress: { phase: 'preparing' | 'copying' | 'running'; progress?: number }) => void
+  /** Optional runtime seams keep tests inside temporary directories. */
+  homeDir?: string
+  tempDir?: string
+  comfyuiPaths?: string[]
+  linkFile?: (source: string, destination: string) => Promise<void>
+  ollamaBinary?: string
+  runOllama?: (
+    binary: string,
+    args: string[],
+    options: { timeout: number; maxBuffer: number; signal: AbortSignal }
+  ) => Promise<unknown>
 }
 
 export interface InferenceDeps {

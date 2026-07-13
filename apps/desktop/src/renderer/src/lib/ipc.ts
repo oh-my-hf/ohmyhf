@@ -22,7 +22,8 @@ export function onIpcEvent<C extends IpcEventChannel>(
 }
 
 export function openExternal(url: string): void {
-  if (url.startsWith('https://')) {
-    void invoke('system:openExternal', { url })
-  }
+  // The main process owns the allow-list (all HTTPS, plus the configured
+  // HTTP Hub origin/path). Keeping policy there avoids renderer drift when the
+  // endpoint changes and still treats untrusted Markdown links as untrusted.
+  void invoke('system:openExternal', { url }).catch(() => undefined)
 }

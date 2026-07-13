@@ -14,8 +14,7 @@ export class SettingsStore {
 
   private load(): AppSettings {
     const row = this.db.prepare('SELECT value FROM kv WHERE key = ?').get('settings') as
-      | { value: string }
-      | undefined
+      { value: string } | undefined
     if (!row) return { ...DEFAULT_SETTINGS }
     try {
       return { ...DEFAULT_SETTINGS, ...(JSON.parse(row.value) as Partial<AppSettings>) }

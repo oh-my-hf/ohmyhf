@@ -67,7 +67,11 @@ export function FavoritesPage(): React.JSX.Element {
     )
   } else if (favorites.data?.length === 0) {
     content = (
-      <EmptyState icon={Star} title={t('detail:favoritesEmpty.title')} body={t('detail:favoritesEmpty.body')} />
+      <EmptyState
+        icon={Star}
+        title={t('detail:favoritesEmpty.title')}
+        body={t('detail:favoritesEmpty.body')}
+      />
     )
   } else {
     content = (

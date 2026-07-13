@@ -14,6 +14,14 @@ function jsonResponse(body: unknown, init: { status?: number; link?: string } = 
 describe('HubClient.buildSearchUrl', () => {
   const client = new HubClient({ cacheTtlMs: 0 })
 
+  it('normalizes a path-prefixed custom endpoint', () => {
+    const custom = new HubClient({ endpoint: 'https://hub.example.test/hf///?ignored=1#x' })
+    expect(custom.baseUrl).toBe('https://hub.example.test/hf')
+    expect(new URL(custom.buildSearchUrl({ kind: 'model', sort: 'trending' })).pathname).toBe(
+      '/hf/api/models'
+    )
+  })
+
   it('builds a model search URL with filters and sort', () => {
     const url = new URL(
       client.buildSearchUrl({
@@ -130,6 +138,28 @@ describe('HubClient caching', () => {
 })
 
 describe('HubClient errors and readme', () => {
+  it('resolves repo detail at the requested revision', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'a/b',
+          author: 'a',
+          sha: '0123456789abcdef0123456789abcdef01234567',
+          tags: []
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    )
+    const client = new HubClient({ fetchImpl, cacheTtlMs: 0, minRequestGapMs: 0 })
+
+    await client.getRepoDetail('model', 'a/b', 'refs/pr/12')
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://huggingface.co/api/models/a/b/revision/refs%2Fpr%2F12',
+      expect.any(Object)
+    )
+  })
+
   it('throws HubApiError with status on failure', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response('nope', { status: 500 }))
     const client = new HubClient({ fetchImpl, cacheTtlMs: 0 })

@@ -1,27 +1,12 @@
-/**
- * Real upload pipeline against @huggingface/hub: walk the folder, create the repo,
- * then stream `commitIter` generator events out through `evt:upload`. Every SDK
- * call gets the configured hub endpoint and proxied fetch so uploads ride the
- * same network path as the rest of the app.
- */
-import { promises as fs } from 'node:fs'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+/** Upload execution over a main-process-owned, immutable file manifest. */
+import { lstat, open, realpath, stat, type FileHandle } from 'node:fs/promises'
+import { isAbsolute, relative, sep } from 'node:path'
 import { DEFAULT_ENDPOINT } from '@oh-my-huggingface/hub-api'
-import type {
-  RepoKind,
-  UploadProgress,
-  UploadRequest,
-  UploadResult
-} from '@oh-my-huggingface/shared'
+import type { RepoKind } from '@oh-my-huggingface/shared'
 import { createProxiedFetch, getHubNetworkOptions } from '../hub'
-import type { UploadDeps } from './types'
-import { notifyDone } from './notify'
 
-const SKIP_NAMES = new Set(['.git', 'node_modules', '.DS_Store'])
-const MAX_FILES = 10_000
-/** Progress events are throttled so a large upload does not flood the IPC channel. */
 const EMIT_INTERVAL_MS = 100
+const MAX_OPEN_UPLOAD_FILES = 32
 
 const REPO_URL_PREFIX: Record<RepoKind, string> = {
   model: '',
@@ -29,163 +14,523 @@ const REPO_URL_PREFIX: Record<RepoKind, string> = {
   space: 'spaces/'
 }
 
-class TooManyFilesError extends Error {}
-
-interface WalkedFile {
-  /** posix-style path relative to the upload root — becomes the path in the repo */
-  rel: string
-  abs: string
+export interface UploadManifestFile {
+  relativePath: string
+  absolutePath: string
   size: number
+  mtimeMs: number
+  dev: number
+  ino: number
 }
 
-async function walkFolder(root: string): Promise<WalkedFile[]> {
-  const out: WalkedFile[] = []
-  const visit = async (dir: string, relPrefix: string): Promise<void> => {
-    const entries = await fs.readdir(dir, { withFileTypes: true })
-    for (const entry of entries) {
-      if (SKIP_NAMES.has(entry.name) || entry.isSymbolicLink()) continue
-      const abs = join(dir, entry.name)
-      const rel = relPrefix ? `${relPrefix}/${entry.name}` : entry.name
-      if (entry.isDirectory()) {
-        await visit(abs, rel)
-      } else if (entry.isFile()) {
-        const stat = await fs.stat(abs)
-        out.push({ rel, abs, size: stat.size })
-        if (out.length > MAX_FILES) throw new TooManyFilesError()
-      }
+export interface UploadManifest {
+  rootPath: string
+  rootRealPath: string
+  rootDev: number
+  rootIno: number
+  files: UploadManifestFile[]
+}
+
+export interface UploadPipelineRequest {
+  kind: RepoKind
+  name: string
+  private: boolean
+  manifest: UploadManifest
+}
+
+export interface UploadPipelineProgress {
+  phase: 'preparing' | 'hashing' | 'uploading' | 'committing'
+  progress: number
+  path?: string
+}
+
+export type UploadPipelineResult =
+  | {
+      ok: true
+      repoId: string
+      repoUrl: string
+      messageKey: string
+      params: Record<string, string>
     }
-  }
-  await visit(root, '')
-  return out
+  | { ok: false; messageKey: string; params?: Record<string, string>; progress: number }
+
+export interface UploadPipelineDeps {
+  accessToken: string | undefined
+  username: string | undefined
+  signal: AbortSignal
+  onProgress: (progress: UploadPipelineProgress) => void
 }
 
 function trimError(err: unknown): string {
   return (err instanceof Error ? err.message : String(err)).trim().slice(0, 200)
 }
 
-/** SDK-facing hub URL: the configured endpoint (sans trailing slash) or the default. */
-export function resolveHubUrl(endpoint: string | null): string {
-  return (endpoint ?? DEFAULT_ENDPOINT).replace(/\/$/, '')
+function isInside(root: string, candidate: string): boolean {
+  const rel = relative(root, candidate)
+  return (
+    rel !== '' &&
+    !isAbsolute(rel) &&
+    rel !== '..' &&
+    !rel.startsWith(`..${sep}`) &&
+    !rel.includes(`..${sep}`)
+  )
 }
 
-/** Repo page URL on the active hub endpoint. */
+/** Revalidate every selected file immediately before any network request. */
+export async function validateUploadManifest(manifest: UploadManifest): Promise<void> {
+  try {
+    const rootEntry = await lstat(manifest.rootPath)
+    const rootResolved = await realpath(manifest.rootPath)
+    const rootStats = await stat(rootResolved)
+    if (
+      rootEntry.isSymbolicLink() ||
+      !rootStats.isDirectory() ||
+      rootResolved !== manifest.rootRealPath ||
+      rootStats.dev !== manifest.rootDev ||
+      rootStats.ino !== manifest.rootIno
+    ) {
+      throw new Error('selection-stale')
+    }
+
+    for (const file of manifest.files) {
+      const entry = await lstat(file.absolutePath)
+      const resolved = await realpath(file.absolutePath)
+      const current = await stat(resolved)
+      if (
+        entry.isSymbolicLink() ||
+        !current.isFile() ||
+        !isInside(rootResolved, resolved) ||
+        current.dev !== file.dev ||
+        current.ino !== file.ino ||
+        current.size !== file.size ||
+        current.mtimeMs !== file.mtimeMs
+      ) {
+        throw new Error('selection-stale')
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === 'selection-stale') throw error
+    throw new Error('selection-stale', { cause: error })
+  }
+}
+
+/** SDK-facing Hub URL: configured endpoint without trailing slashes, or default. */
+export function resolveHubUrl(endpoint: string | null): string {
+  return (endpoint ?? DEFAULT_ENDPOINT).replace(/\/+$/, '')
+}
+
+/** Repo page URL on the active Hub endpoint. */
 export function buildRepoUrl(hubUrl: string, kind: RepoKind, repoName: string): string {
   return `${hubUrl}/${REPO_URL_PREFIX[kind]}${repoName}`
 }
 
-export async function createRepoAndUpload(
-  request: UploadRequest,
-  deps: UploadDeps
-): Promise<UploadResult> {
-  const { accessToken, username, broadcast } = deps
-  if (!accessToken || !username) {
-    return { ok: false, messageKey: 'upload.signInFirst' }
-  }
+function combineSignal(
+  fetchSignal: AbortSignal | null | undefined,
+  taskSignal: AbortSignal
+): AbortSignal {
+  return fetchSignal ? AbortSignal.any([fetchSignal, taskSignal]) : taskSignal
+}
 
-  const emit = (progress: UploadProgress): void => broadcast('evt:upload', progress)
-  const failWith = (
-    messageKey: string,
-    params?: Record<string, string>,
-    progress = 0
-  ): UploadResult => {
-    emit({ phase: 'error', progress, messageKey, params })
-    return { ok: false, messageKey, params }
-  }
+class FileHandleSemaphore {
+  private active = 0
+  private readonly queue: Array<{
+    signal: AbortSignal
+    resolve: (release: () => void) => void
+    reject: (error: unknown) => void
+    onAbort: () => void
+  }> = []
 
-  const repoName = `${username}/${request.name}`
-  emit({ phase: 'preparing', progress: 0 })
+  constructor(private readonly limit: number) {}
 
-  let files: WalkedFile[]
-  try {
-    files = await walkFolder(request.folderPath)
-  } catch (err) {
-    if (err instanceof TooManyFilesError) {
-      return failWith('upload.tooManyFiles', { max: String(MAX_FILES) })
+  acquire(signal: AbortSignal): Promise<() => void> {
+    signal.throwIfAborted()
+    if (this.active < this.limit) {
+      this.active++
+      return Promise.resolve(this.createRelease())
     }
-    return failWith('upload.failed', { error: trimError(err) })
+    return new Promise((resolve, reject) => {
+      const pending = {
+        signal,
+        resolve,
+        reject,
+        onAbort: () => {
+          const index = this.queue.indexOf(pending)
+          if (index >= 0) this.queue.splice(index, 1)
+          reject(signal.reason)
+        }
+      }
+      signal.addEventListener('abort', pending.onAbort, { once: true })
+      this.queue.push(pending)
+    })
   }
-  if (files.length === 0) return failWith('upload.emptyFolder')
+
+  private createRelease(): () => void {
+    let released = false
+    return () => {
+      if (released) return
+      released = true
+      this.active--
+      while (this.queue.length > 0) {
+        const pending = this.queue.shift()!
+        pending.signal.removeEventListener('abort', pending.onAbort)
+        if (pending.signal.aborted) {
+          pending.reject(pending.signal.reason)
+          continue
+        }
+        this.active++
+        pending.resolve(this.createRelease())
+        break
+      }
+    }
+  }
+}
+
+class UploadFileHandleRegistry {
+  private readonly entries = new Map<FileHandle, () => void>()
+  private closed = false
+
+  async register(handle: FileHandle, release: () => void): Promise<boolean> {
+    if (this.closed) {
+      await handle.close().catch(() => undefined)
+      release()
+      return false
+    }
+    this.entries.set(handle, release)
+    return true
+  }
+
+  async close(handle: FileHandle): Promise<void> {
+    const release = this.entries.get(handle)
+    if (!release) return
+    this.entries.delete(handle)
+    try {
+      await handle.close().catch(() => undefined)
+    } finally {
+      release()
+    }
+  }
+
+  async closeAll(): Promise<void> {
+    if (this.closed && this.entries.size === 0) return
+    this.closed = true
+    const entries = [...this.entries.entries()]
+    this.entries.clear()
+    await Promise.all(
+      entries.map(async ([handle, release]) => {
+        try {
+          await handle.close().catch(() => undefined)
+        } finally {
+          release()
+        }
+      })
+    )
+  }
+}
+
+/** Lazily opens and revalidates one manifest file. A semaphore keeps large
+ * selections independent from the process file-descriptor limit. */
+class ValidatedFileBlob extends Blob {
+  constructor(
+    private readonly manifest: UploadManifest,
+    private readonly file: UploadManifestFile,
+    private readonly startOffset: number,
+    private readonly endOffset: number,
+    private readonly signal: AbortSignal,
+    private readonly semaphore: FileHandleSemaphore,
+    private readonly registry: UploadFileHandleRegistry
+  ) {
+    super([])
+  }
+
+  override get size(): number {
+    return this.endOffset - this.startOffset
+  }
+
+  override get type(): string {
+    return ''
+  }
+
+  override slice(start = 0, end = this.size): Blob {
+    const normalizedStart = start < 0 ? Math.max(this.size + start, 0) : Math.min(start, this.size)
+    const normalizedEnd = end < 0 ? Math.max(this.size + end, 0) : Math.min(end, this.size)
+    return new ValidatedFileBlob(
+      this.manifest,
+      this.file,
+      this.startOffset + normalizedStart,
+      this.startOffset + Math.max(normalizedStart, normalizedEnd),
+      this.signal,
+      this.semaphore,
+      this.registry
+    )
+  }
+
+  override stream(): ReadableStream<Uint8Array<ArrayBuffer>> {
+    let position = this.startOffset
+    const end = this.endOffset
+    const signal = this.signal
+    const manifest = this.manifest
+    const file = this.file
+    const semaphore = this.semaphore
+    const registry = this.registry
+    let handle: FileHandle | undefined
+    let release: (() => void) | undefined
+    let registered = false
+    const close = async (): Promise<void> => {
+      const activeHandle = handle
+      handle = undefined
+      if (activeHandle) {
+        if (registered) await registry.close(activeHandle)
+        else await activeHandle.close().catch(() => undefined)
+      }
+      if (!registered) release?.()
+      registered = false
+      release = undefined
+    }
+    return new ReadableStream<Uint8Array<ArrayBuffer>>({
+      async pull(controller) {
+        try {
+          signal.throwIfAborted()
+          if (!handle) {
+            release = await semaphore.acquire(signal)
+            try {
+              signal.throwIfAborted()
+              handle = await open(file.absolutePath, 'r')
+              registered = await registry.register(handle, release)
+              release = undefined
+              if (!registered) throw signal.reason ?? new Error('Upload task is closed')
+              await validateOpenManifestFile(manifest, file, handle)
+            } catch (error) {
+              await close()
+              throw error
+            }
+          }
+          const remaining = end - position
+          if (remaining <= 0) {
+            await validateOpenManifestFile(manifest, file, handle)
+            await close()
+            controller.close()
+            return
+          }
+          const buffer = Buffer.allocUnsafe(Math.min(256 * 1024, remaining))
+          const { bytesRead } = await handle.read(buffer, 0, buffer.length, position)
+          if (bytesRead === 0) throw new Error('selection-stale')
+          position += bytesRead
+          const chunk = new Uint8Array(new ArrayBuffer(bytesRead))
+          chunk.set(buffer.subarray(0, bytesRead))
+          controller.enqueue(chunk)
+        } catch (error) {
+          await close()
+          controller.error(error)
+        }
+      },
+      async cancel() {
+        await close()
+      }
+    })
+  }
+
+  override async arrayBuffer(): Promise<ArrayBuffer> {
+    const bytes = await this.bytes()
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+  }
+
+  override async bytes(): Promise<Uint8Array<ArrayBuffer>> {
+    const output = new Uint8Array(new ArrayBuffer(this.size))
+    const reader = this.stream().getReader()
+    let offset = 0
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      output.set(value, offset)
+      offset += value.byteLength
+    }
+    return output
+  }
+
+  override async text(): Promise<string> {
+    return new TextDecoder().decode(await this.bytes())
+  }
+}
+
+async function validateOpenManifestFile(
+  manifest: UploadManifest,
+  file: UploadManifestFile,
+  handle: FileHandle
+): Promise<void> {
+  try {
+    const [entry, resolved, pathStats, handleStats] = await Promise.all([
+      lstat(file.absolutePath),
+      realpath(file.absolutePath),
+      stat(file.absolutePath),
+      handle.stat()
+    ])
+    const matches = (current: typeof handleStats): boolean =>
+      current.isFile() &&
+      current.dev === file.dev &&
+      current.ino === file.ino &&
+      current.size === file.size &&
+      current.mtimeMs === file.mtimeMs
+    if (
+      entry.isSymbolicLink() ||
+      resolved !== file.absolutePath ||
+      !isInside(manifest.rootRealPath, resolved) ||
+      !matches(pathStats) ||
+      !matches(handleStats) ||
+      pathStats.dev !== handleStats.dev ||
+      pathStats.ino !== handleStats.ino
+    ) {
+      throw new Error('selection-stale')
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === 'selection-stale') throw error
+    throw new Error('selection-stale', { cause: error })
+  }
+}
+
+export async function createRepoAndUpload(
+  request: UploadPipelineRequest,
+  deps: UploadPipelineDeps
+): Promise<UploadPipelineResult> {
+  const { accessToken, username, signal, onProgress } = deps
+  if (!accessToken || !username) {
+    return { ok: false, messageKey: 'upload.signInFirst', progress: 0 }
+  }
+  if (request.manifest.files.length === 0) {
+    return { ok: false, messageKey: 'upload.emptyFolder', progress: 0 }
+  }
+
+  signal.throwIfAborted()
+  onProgress({ phase: 'preparing', progress: 0 })
+  try {
+    await validateUploadManifest(request.manifest)
+  } catch (err) {
+    if (signal.aborted) throw err
+    const stale = err instanceof Error && err.message === 'selection-stale'
+    return {
+      ok: false,
+      messageKey: stale ? 'upload.selectionStale' : 'upload.failed',
+      params: stale ? undefined : { error: trimError(err) },
+      progress: 0
+    }
+  }
 
   const { createRepo, commitIter, HubApiError } = await import('@huggingface/hub')
+  const repoName = `${username}/${request.name}`
   const repo = { type: request.kind, name: repoName }
-  // Same endpoint + proxy as HubClient — the SDK's default fetch is global,
-  // unproxied, and hard-wired to huggingface.co.
   const { endpoint, proxyUrl } = getHubNetworkOptions()
   const hubUrl = resolveHubUrl(endpoint)
-  const fetchImpl = createProxiedFetch(proxyUrl)
+  const proxiedFetch = createProxiedFetch(proxyUrl)
+  const abortableFetch: typeof fetch = (input, init) =>
+    proxiedFetch(input, { ...init, signal: combineSignal(init?.signal, signal) })
 
   try {
-    await createRepo({ repo, private: request.private, accessToken, hubUrl, fetch: fetchImpl })
+    await createRepo({
+      repo,
+      private: request.private,
+      accessToken,
+      hubUrl,
+      fetch: abortableFetch
+    })
   } catch (err) {
+    if (signal.aborted) throw err
     if (err instanceof HubApiError && err.statusCode === 409) {
-      // Repo already exists — uploading into it is fine.
+      // Uploading into an existing repository is intentional.
     } else if (err instanceof HubApiError && err.statusCode === 403) {
-      return failWith('upload.needWriteScope')
+      return { ok: false, messageKey: 'upload.needWriteScope', progress: 0 }
     } else {
-      return failWith('upload.failed', { error: trimError(err) })
+      return {
+        ok: false,
+        messageKey: 'upload.failed',
+        params: { error: trimError(err) },
+        progress: 0
+      }
     }
   }
 
-  // Overall progress = size-weighted hashing + uploading halves, kept strictly below 1
-  // until the commit lands so the renderer's "done" comes only from the done event.
+  const files = request.manifest.files
   const totalBytes = Math.max(
     1,
-    files.reduce((sum, f) => sum + f.size, 0)
+    files.reduce((sum, file) => sum + file.size, 0)
   )
-  const sizeByPath = new Map(files.map((f) => [f.rel, f.size]))
+  const sizeByPath = new Map(files.map((file) => [file.relativePath, file.size]))
   const fraction = { hashing: new Map<string, number>(), uploading: new Map<string, number>() }
+  const semaphore = new FileHandleSemaphore(MAX_OPEN_UPLOAD_FILES)
+  const registry = new UploadFileHandleRegistry()
+  const closeOnAbort = (): void => void registry.closeAll()
+  signal.addEventListener('abort', closeOnAbort, { once: true })
   let doneBytes = 0
-  let phase: UploadProgress['phase']
   let progress = 0.01
   let lastEmit = 0
 
   try {
-    // `commitIter` is what `uploadFilesWithProgress` wraps: same progress events,
-    // but it accepts hubUrl + fetch (the XHR upload-progress wrapper the latter
-    // adds needs XMLHttpRequest, which the main process doesn't have anyway).
     const generator = commitIter({
       repo,
-      operations: files.map((f) => ({
+      operations: files.map((file) => ({
         operation: 'addOrUpdate' as const,
-        path: f.rel,
-        content: pathToFileURL(f.abs)
+        path: file.relativePath,
+        content: new ValidatedFileBlob(
+          request.manifest,
+          file,
+          0,
+          file.size,
+          signal,
+          semaphore,
+          registry
+        )
       })),
       accessToken,
       title: 'Upload from Oh My HuggingFace',
       hubUrl,
-      fetch: fetchImpl
+      fetch: abortableFetch,
+      abortSignal: signal
     })
     for await (const event of generator) {
+      signal.throwIfAborted()
       if (event.event === 'phase') {
-        phase = event.phase === 'preuploading' ? 'hashing' : 'uploading'
-        if (event.phase === 'committing') progress = Math.max(progress, 0.97)
-        emit({ phase, progress })
+        const phase =
+          event.phase === 'preuploading'
+            ? 'hashing'
+            : event.phase === 'committing'
+              ? 'committing'
+              : 'uploading'
+        if (phase === 'committing') {
+          await validateUploadManifest(request.manifest)
+          progress = Math.max(progress, 0.97)
+        }
+        onProgress({ phase, progress })
         lastEmit = Date.now()
       } else if (event.event === 'fileProgress' && event.state !== 'error') {
         const seen = fraction[event.state]
         const previous = seen.get(event.path) ?? 0
         doneBytes += (event.progress - previous) * (sizeByPath.get(event.path) ?? 0)
         seen.set(event.path, event.progress)
-        phase = event.state
         progress = Math.max(progress, Math.min(0.97, 0.02 + 0.95 * (doneBytes / (2 * totalBytes))))
         const now = Date.now()
         if (now - lastEmit >= EMIT_INTERVAL_MS) {
-          emit({ phase, progress, path: event.path })
+          onProgress({ phase: event.state, progress, path: event.path })
           lastEmit = now
         }
       }
     }
   } catch (err) {
-    return failWith('upload.failed', { error: trimError(err) }, progress)
+    if (signal.aborted) throw err
+    if (err instanceof Error && err.message === 'selection-stale') {
+      return { ok: false, messageKey: 'upload.selectionStale', progress }
+    }
+    return {
+      ok: false,
+      messageKey: 'upload.failed',
+      params: { error: trimError(err) },
+      progress
+    }
+  } finally {
+    signal.removeEventListener('abort', closeOnAbort)
+    await registry.closeAll()
   }
-
-  emit({ phase: 'done', progress: 1 })
-  notifyDone('notifications.uploadComplete', 'notifications.uploadCompleteBody', {
-    repo: repoName
-  })
   return {
     ok: true,
     messageKey: 'upload.done',
+    repoId: repoName,
     repoUrl: buildRepoUrl(hubUrl, request.kind, repoName),
     params: { repo: repoName }
   }

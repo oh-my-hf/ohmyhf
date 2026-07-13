@@ -31,6 +31,7 @@ import type {
   UserOverview,
   UserProfile
 } from '@oh-my-huggingface/shared'
+import { hubRelativeUrl } from '@oh-my-huggingface/shared'
 
 /** Plural URL segment per repo kind (kept local: client.ts imports this module). */
 const REPO_URL_SEGMENT: Record<RepoKind, string> = {
@@ -295,7 +296,7 @@ function mapPostAttachments(
 
 export function mapPost(raw: RawPost, endpoint: string): PostSummary {
   const absolutize = (u: string | undefined): string | undefined =>
-    u ? new URL(u, endpoint).toString() : undefined
+    u ? hubRelativeUrl(u, endpoint) : undefined
   const author = raw.author?.name ?? ''
   const slug = raw.slug ?? ''
   const reactions = normalizeReactions(raw.reactions)
@@ -365,7 +366,7 @@ export function parsePostComments(html: string, endpoint: string): PostComment[]
     return []
   }
   const absolutize = (u: string | undefined): string | undefined =>
-    u ? new URL(u, endpoint).toString() : undefined
+    u ? hubRelativeUrl(u, endpoint) : undefined
   const mapOne = (c: RawPostComment): PostComment[] => {
     if (c.type !== 'comment' || !c.id) return []
     const hidden = c.data?.hidden === true
@@ -576,7 +577,7 @@ export function mapUserOverview(
   isOrg = false
 ): UserOverview {
   const absolutize = (u: string | undefined): string | undefined =>
-    u ? new URL(u, endpoint).toString() : undefined
+    u ? hubRelativeUrl(u, endpoint) : undefined
   return {
     internalId: raw._id,
     name: raw.user ?? raw.name ?? '',
@@ -627,7 +628,7 @@ export function mapWhoAmI(raw: RawWhoAmI, endpoint: string): UserProfile {
   // absolutize so consumers can render them directly (the renderer has its own
   // origin, so a relative src would 404).
   const absolutize = (u: string | undefined): string | undefined =>
-    u ? new URL(u, endpoint).toString() : undefined
+    u ? hubRelativeUrl(u, endpoint) : undefined
   return {
     name: raw.name ?? '',
     fullname: raw.fullname,
@@ -788,7 +789,7 @@ interface RawNotification {
 
 export function mapNotification(raw: RawNotification, endpoint: string): HubNotification {
   const absolutize = (u: string | undefined): string | undefined =>
-    u ? new URL(u, endpoint).toString() : undefined
+    u ? hubRelativeUrl(u, endpoint) : undefined
   const participants = (
     list: RawNotificationParticipant[] | undefined
   ): HubNotification['participants'] =>
@@ -907,7 +908,7 @@ export function mapAccessRequest(raw: RawAccessRequest, endpoint: string): Acces
     user: {
       name: raw.user?.user ?? '',
       fullname: raw.user?.fullname,
-      avatarUrl: raw.user?.avatarUrl ? new URL(raw.user.avatarUrl, endpoint).toString() : undefined
+      avatarUrl: raw.user?.avatarUrl ? hubRelativeUrl(raw.user.avatarUrl, endpoint) : undefined
     },
     timestamp: raw.timestamp,
     fields: raw.fields
@@ -1037,7 +1038,7 @@ export function mapActivityFeed(
   endpoint: string
 ): ActivityFeed {
   const abs = (u: string | undefined): string | undefined =>
-    u ? new URL(u, endpoint).toString() : undefined
+    u ? hubRelativeUrl(u, endpoint) : undefined
   const items: ActivityItem[] = []
   for (const a of raw.recentActivity ?? []) {
     const actor = a.user ?? ''

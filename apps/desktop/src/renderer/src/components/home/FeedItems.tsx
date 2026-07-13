@@ -106,8 +106,7 @@ export function PostCard({
         className={cn(
           'relative max-h-40 overflow-hidden',
           // Fade the text itself (theme-proof), and only when actually clamped.
-          clamped &&
-            '[mask-image:linear-gradient(to_bottom,black_calc(100%-2.5rem),transparent)]'
+          clamped && '[mask-image:linear-gradient(to_bottom,black_calc(100%-2.5rem),transparent)]'
         )}
         onClick={(e) => {
           // Links inside markdown open externally; don't also navigate the card.

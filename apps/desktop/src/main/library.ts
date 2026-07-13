@@ -21,9 +21,12 @@ export class Library {
   ) {}
 
   listFavorites(): FavoriteItem[] {
-    const rows = this.db
-      .prepare('SELECT * FROM favorites ORDER BY added_at DESC')
-      .all() as Array<{ repo_id: string; kind: string; added_at: string; summary_json: string }>
+    const rows = this.db.prepare('SELECT * FROM favorites ORDER BY added_at DESC').all() as Array<{
+      repo_id: string
+      kind: string
+      added_at: string
+      summary_json: string
+    }>
     return rows.map((r) => ({
       repoId: r.repo_id,
       kind: r.kind as RepoKind,
@@ -124,8 +127,7 @@ export class Library {
 
   getFollowState(id: string): Record<string, unknown> {
     const row = this.db.prepare('SELECT state_json FROM follows WHERE id = ?').get(id) as
-      | { state_json: string | null }
-      | undefined
+      { state_json: string | null } | undefined
     if (!row?.state_json) return {}
     try {
       return JSON.parse(row.state_json) as Record<string, unknown>
