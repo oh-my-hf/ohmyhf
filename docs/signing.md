@@ -17,13 +17,13 @@ requires both the renderer action and a native main-process confirmation.
 ### Current: self-signed releases, ad-hoc local builds
 
 Squirrel.Mac does **not** literally require Developer ID: before installing an update it checks
-that the downloaded app satisfies the *designated requirement* (DR) of the running app. What kind
+that the downloaded app satisfies the _designated requirement_ (DR) of the running app. What kind
 of DR you get depends on the signature:
 
 - **ad-hoc** (`identity: '-'`) → DR is `cdhash H"…"`, unique per build → validation can never
   pass, so ad-hoc apps cannot auto-update.
 - **any real certificate** → DR is `identifier "dev.oh-my-huggingface.desktop" and
-  certificate root = H"<hash of the certificate>"` → stable across versions as long as every
+certificate root = H"<hash of the certificate>"` → stable across versions as long as every
   release is signed with the **same certificate**. Evaluating this DR on the user's machine
   hashes the embedded certificate; it does not require the certificate to be trusted there.
 
@@ -39,7 +39,7 @@ How the pieces fit:
   `-c.mac.identity=OhMyHF-Release`; plain `build:mac` keeps ad-hoc for local builds.
 - `.github/workflows/release.yml` imports the `.p12` into a throwaway keychain and runs
   `sudo security add-trusted-cert -d` — electron-builder only accepts identities that
-  `security find-identity -v -p codesigning` lists as *valid*, which requires trust on the
+  `security find-identity -v -p codesigning` lists as _valid_, which requires trust on the
   **build machine** (runners have passwordless sudo). End users never need this.
 - `mac.forceCodeSigning: true` in `electron-builder.yml` fails the release build instead of
   silently shipping an unsigned (broken-seal) app if the secrets are missing.

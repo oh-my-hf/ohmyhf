@@ -1,177 +1,138 @@
 name: Release
 
-# A release is cut by landing a commit on main whose subject is:
-#   [RELEASE] Vx.y.z
-# The version must already match apps/desktop/package.json. This job then tags
-# vx.y.z, drafts a GitHub Release whose notes are the commits since the previous
-# tag, builds all three platforms, uploads their artifacts, and publishes.
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and verify every release artifact without creating a tag or release
+        required: true
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ohmyhf-release
+  cancel-in-progress: false
 
 jobs:
-  prepare:
+  detect:
+    name: Detect release version
     runs-on: ubuntu-latest
     outputs:
-      release: ${{ steps.check.outputs.release }}
-      version: ${{ steps.check.outputs.version }}
+      release: ${{ steps.detect.outputs.release }}
+      version: ${{ steps.detect.outputs.version }}
+      dry_run: ${{ steps.detect.outputs.dry_run }}
+      commit_sha: ${{ steps.detect.outputs.commit_sha }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          # Full history + tags so the changelog range and previous-tag lookup work.
-          fetch-depth: 0
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - id: check
-        name: Detect [RELEASE] commit and validate the version
-        run: |
-          set -euo pipefail
-          msg="$(git log -1 --pretty=%s)"
-          echo "Head commit subject: $msg"
-          if [[ ! "$msg" =~ ^\[RELEASE\] ]]; then
-            echo "Not a [RELEASE] commit; nothing to release."
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # It IS a release commit: the version must be a plain semver x.y.z.
-          # Fail loudly on a malformed version rather than silently doing nothing.
-          if [[ "$msg" =~ ^\[RELEASE\][[:space:]]+[vV]?([0-9]+\.[0-9]+\.[0-9]+)([[:space:]].*)?$ ]]; then
-            version="${BASH_REMATCH[1]}"
-          else
-            echo "::error::[RELEASE] subject must be '[RELEASE] Vx.y.z' with a plain semver version (no pre-release or build suffix). Got: $msg"
-            exit 1
-          fi
-          pkg="$(jq -r .version apps/desktop/package.json)"
-          if [[ "$version" != "$pkg" ]]; then
-            echo "::error::[RELEASE] version v$version does not match apps/desktop/package.json ($pkg). Bump the package version first."
-            exit 1
-          fi
-          if git rev-parse "v$version" >/dev/null 2>&1; then
-            echo "::error::Tag v$version already exists; use a new version."
-            exit 1
-          fi
-          echo "release=true" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Releasing v$version"
-
-      - name: Generate changelog, tag, and draft the release
-        if: steps.check.outputs.release == 'true'
+      - id: detect
+        name: Parse version and validate workspace manifests
+        shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.check.outputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_DRY_RUN: ${{ inputs.dry_run || false }}
         run: |
           set -euo pipefail
-          tag="v$VERSION"
-          prev="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
-          if [[ -n "$prev" ]]; then
-            range="$prev..HEAD"
-          else
-            range="HEAD"
+          arguments=()
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            arguments=(--subject "$(git log -1 --pretty=%s)")
           fi
-          {
-            echo "## What's changed"
-            echo
-            # One bullet per non-merge commit since the previous release; drop the
-            # [RELEASE] commit itself. Fall back to a placeholder if the range is empty.
-            body="$(git log --no-merges --pretty='- %s (%h)' "$range" | grep -v '^- \[RELEASE\]' || true)"
-            if [[ -n "$body" ]]; then
-              echo "$body"
-            else
-              echo "- Maintenance release."
-            fi
-            echo
-            if [[ -n "$prev" ]]; then
-              echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${prev}...${tag}"
-            fi
-          } > CHANGELOG_RELEASE.md
-          echo "----- release notes -----"
-          cat CHANGELOG_RELEASE.md
-          echo "-------------------------"
-          # Create the tag and a DRAFT release; the matrix build uploads assets to it.
-          git tag "$tag"
-          git push origin "$tag"
-          gh release create "$tag" --draft --title "$tag" --notes-file CHANGELOG_RELEASE.md
+          result="$(node .github/scripts/release-tools/detect-version.mjs "${arguments[@]}")"
+          echo "$result"
+          echo "release=$(jq -r .release <<<"$result")" >>"$GITHUB_OUTPUT"
+          echo "version=$(jq -r .version <<<"$result")" >>"$GITHUB_OUTPUT"
+          echo "dry_run=$REQUESTED_DRY_RUN" >>"$GITHUB_OUTPUT"
+          echo "commit_sha=$GITHUB_SHA" >>"$GITHUB_OUTPUT"
+
+  verify:
+    needs: detect
+    if: needs.detect.outputs.release == 'true'
+    uses: ./.github/workflows/verify.yml
 
   build:
-    needs: prepare
-    if: needs.prepare.outputs.release == 'true'
-    strategy:
-      # Don't cancel the other platforms if one fails; the draft stays for inspection.
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: build:linux
-          - os: macos-latest
-            target: build:mac:release
-          - os: windows-latest
-            target: build:win
-    runs-on: ${{ matrix.os }}
+    needs: [detect, verify]
+    if: needs.detect.outputs.release == 'true'
+    uses: ./.github/workflows/packaged-smoke.yml
+    with:
+      commit_sha: ${{ needs.detect.outputs.commit_sha }}
+      publishable: true
+      signed_macos: ${{ needs.detect.outputs.dry_run != 'true' }}
+    secrets:
+      MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+      MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+
+  preflight:
+    name: Verify release assets and updater metadata
+    needs: [detect, build]
+    if: needs.detect.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out verification scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: v${{ needs.prepare.outputs.version }}
-      - uses: actions/setup-node@v4
+          ref: ${{ needs.detect.outputs.commit_sha }}
+
+      - name: Download all platform release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          node-version: 22
-      - name: Enable corepack (pnpm)
-        run: corepack enable
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      # Self-signed release certificate (CN OhMyHF-Release): electron-builder only
-      # accepts identities that `security find-identity -v -p codesigning` lists as
-      # valid, and that requires the certificate to be TRUSTED, not just imported.
-      # macOS runners have passwordless sudo, so trust it in the admin domain.
-      # See docs/signing.md for why this certificate exists (Squirrel.Mac updates).
-      - name: Import macOS signing certificate
-        if: runner.os == 'macOS'
-        env:
-          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          pattern: release-*-${{ github.run_id }}
+          path: dist/release
+          merge-multiple: true
+
+      - name: Validate installers, manifests, references, and SHA-512
+        run: node .github/scripts/release-tools/preflight.mjs dist/release "${{ needs.detect.outputs.version }}"
+
+      - name: Record dry-run result
+        if: needs.detect.outputs.dry_run == 'true'
         run: |
-          set -euo pipefail
-          if [[ -z "$MAC_CSC_LINK" || -z "$MAC_CSC_KEY_PASSWORD" ]]; then
-            echo "::error::MAC_CSC_LINK / MAC_CSC_KEY_PASSWORD secrets are missing; macOS builds must be signed (docs/signing.md)."
-            exit 1
-          fi
-          KEYCHAIN="$RUNNER_TEMP/ohmyhf-sign.keychain-db"
-          KEYCHAIN_PW="$(openssl rand -hex 16)"
-          printf '%s' "$MAC_CSC_LINK" | base64 -d > "$RUNNER_TEMP/sign.p12"
-          security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN"
-          security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
-          security import "$RUNNER_TEMP/sign.p12" -k "$KEYCHAIN" -P "$MAC_CSC_KEY_PASSWORD" -T /usr/bin/codesign
-          # Allow codesign to use the key without a UI prompt (headless runner).
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PW" "$KEYCHAIN" > /dev/null
-          security find-certificate -c OhMyHF-Release -p "$KEYCHAIN" > "$RUNNER_TEMP/sign.pem"
-          sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$RUNNER_TEMP/sign.pem"
-          rm "$RUNNER_TEMP/sign.p12"
-          # codesign resolves identities by NAME through the keychain SEARCH LIST,
-          # not the --keychain hint, so the throwaway keychain must be on it.
-          existing=$(security list-keychains -d user | tr -d '" ')
-          security list-keychains -d user -s "$KEYCHAIN" $existing
-          # electron-builder reads CSC_KEYCHAIN when no CSC_LINK is set.
-          echo "CSC_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
-          echo "--- identities now valid for codesigning:"
-          security find-identity -v -p codesigning "$KEYCHAIN"
-      - name: Build and upload to the draft release
-        run: pnpm --filter oh-my-huggingface-desktop ${{ matrix.target }} --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Never pick up a stray local identity; macOS uses the explicit
-          # OhMyHF-Release identity from build:mac:release. See docs/signing.md.
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          echo "### Release dry-run passed" >>"$GITHUB_STEP_SUMMARY"
+          echo "All three platforms were built and smoke-tested; no tag or release was created." \
+            >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Upload preflight-approved release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verified-release-assets-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: dist/release/
 
   publish:
-    needs: [prepare, build]
-    # Only when every platform built; a partial matrix leaves the release drafted.
-    if: needs.prepare.outputs.release == 'true'
+    name: Create and publish verified GitHub release
+    needs: [detect, preflight]
+    if: >-
+      needs.detect.outputs.release == 'true' &&
+      needs.detect.outputs.dry_run != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - name: Publish the release
+      - name: Check out verified source and release history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.detect.outputs.commit_sha }}
+          fetch-depth: 0
+
+      - name: Download preflight-approved assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: verified-release-assets-${{ github.run_id }}
+          path: dist/release
+
+      - name: Create tag and draft, verify remote assets, then publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "v${{ needs.prepare.outputs.version }}" --draft=false --latest
+        run: >-
+          bash .github/scripts/release-tools/publish-release.sh
+          "${{ needs.detect.outputs.version }}"
+          "${{ needs.detect.outputs.commit_sha }}"
+          dist/release
+          dist/release/release-assets.json
